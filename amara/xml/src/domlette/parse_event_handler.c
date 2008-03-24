@@ -1,0 +1,848 @@
+#include "domlette.h"
+#include "parse_event_handler.h"
+#include "expat_interface.h"
+
+/*#define DEBUG_PARSER */
+#define INITIAL_CHILDREN 4
+
+typedef struct _context {
+  struct _context *next;
+  NodeObject *node;
+
+  NodeObject **children;
+  Py_ssize_t children_allocated;
+  Py_ssize_t children_size;
+} Context;
+
+typedef struct {
+  ExpatReader *reader;
+
+  Context *context;
+  Context *free_context;
+
+  NodeFactories *factories;
+
+  PyObject *new_namespaces;
+
+  DocumentObject *owner_document;
+} ParserState;
+
+static PyObject *xmlns_string;
+static PyObject *process_includes_string;
+static PyObject *strip_elements_string;
+static PyObject *empty_args_tuple;
+static PyObject *gc_enable_function;
+static PyObject *gc_disable_function;
+static PyObject *gc_isenabled_function;
+
+/** Context ************************************************************/
+
+static Context *Context_New(NodeObject *node)
+{
+  Context *self = PyMem_New(Context, 1);
+  if (self == NULL) {
+    PyErr_NoMemory();
+    return NULL;
+  }
+  memset(self, 0, sizeof(Context));
+
+  self->node = node;
+
+  self->children = PyMem_New(NodeObject *, INITIAL_CHILDREN);
+  if (self->children == NULL) {
+    PyErr_NoMemory();
+    PyMem_Free(self);
+    return NULL;
+  }
+  self->children_allocated = INITIAL_CHILDREN;
+  return self;
+}
+
+static void Context_Del(Context *self)
+{
+  Py_ssize_t i;
+
+  /* This will only be set when an error has occurred, so it must be freed. */
+  if (self->node) {
+    Py_DECREF(self->node);
+  }
+
+  for (i = self->children_size; --i >= 0;) {
+    Py_DECREF(self->children[i]);
+  }
+  PyMem_Free(self->children);
+
+  if (self->next) {
+    Context_Del(self->next);
+  }
+
+  PyMem_Free(self);
+}
+
+/** ParserState ********************************************************/
+
+static ParserState *ParserState_New(DocumentObject *doc,
+                                    NodeFactories *factories)
+{
+  ParserState *self = PyMem_New(ParserState, 1);
+  if (self == NULL) {
+    PyErr_NoMemory();
+    return NULL;
+  }
+
+  /* context */
+  if ((self->context = Context_New((NodeObject *)doc)) == NULL) {
+    PyMem_Free(self);
+    return NULL;
+  }
+  self->free_context = NULL;
+
+  self->factories = factories;
+
+  self->new_namespaces = NULL;
+
+  Py_INCREF(doc);
+  self->owner_document = doc;
+
+  return self;
+}
+
+static void ParserState_Del(ParserState *self)
+{
+  if (self->context) {
+    Context_Del(self->context);
+  }
+  if (self->free_context) {
+    Context_Del(self->free_context);
+  }
+  Py_CLEAR(self->new_namespaces);
+  Py_CLEAR(self->owner_document);
+  PyMem_Free(self);
+}
+
+static Context *ParserState_AddContext(ParserState *self, NodeObject *node)
+{
+  Context *context = self->free_context;
+  if (context != NULL) {
+    /* reuse an existing context */
+    context->node = node;
+    self->free_context = context->next;
+  } else {
+    /* create a new context */
+    context = Context_New(node);
+    if (context == NULL) return NULL;
+  }
+
+  /* make it the active context */
+  context->next = self->context;
+  self->context = context;
+  return context;
+}
+
+static void ParserState_FreeContext(ParserState *self)
+{
+  Context *context = self->context;
+  if (context != NULL) {
+    /* switch the active context to the following one */
+    self->context = context->next;
+
+    /* move this one to the free list */
+    context->next = self->free_context;
+    self->free_context = context;
+
+    /* reset its values */
+    context->node = NULL;
+    context->children_size = 0;
+  }
+}
+
+static int ParserState_AddNode(ParserState *self, NodeObject *node)
+{
+  Context *context = self->context;
+  NodeObject **children;
+  Py_ssize_t newsize;
+
+  if (node == NULL || context == NULL) {
+#ifdef DEBUG_PARSER
+    abort();
+#else
+    PyErr_BadInternalCall();
+    return -1;
+#endif
+  }
+
+  /* increase size of child array, if needed */
+  children = context->children;
+  newsize = context->children_size + 1;
+  if (newsize >= context->children_allocated) {
+    size_t new_allocated = newsize << 1;
+    if (PyMem_Resize(children, NodeObject *, new_allocated) == NULL) {
+      PyErr_NoMemory();
+      return -1;
+    }
+    context->children = children;
+    context->children_allocated = new_allocated;
+  }
+
+  /* add the node to the children array */
+  children[context->children_size] = node;
+  context->children_size = newsize;
+  return 0;
+}
+
+/** handlers ***********************************************************/
+
+static ExpatStatus builder_EndDocument(void *userState)
+{
+  ParserState *state = (ParserState *)userState;
+  Context *context = state->context;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_EndDocument()\n");
+#endif
+
+  /* Set the document's children */
+  if (_Node_SetChildren(context->node, context->children,
+                        context->children_size)) {
+    return EXPAT_STATUS_ERROR;
+  }
+
+  /* Mark the current context as free */
+  ParserState_FreeContext(state);
+  return EXPAT_STATUS_OK;
+}
+
+static ExpatStatus builder_StartNamespaceDecl(void *userState,
+                                              PyObject *prefix,
+                                              PyObject *uri)
+{
+  ParserState *state = (ParserState *)userState;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_StartNamespaceDecl(prefix=");
+  PyObject_Print(prefix, stderr, 0);
+  fprintf(stderr, ", uri=");
+  PyObject_Print(uri, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  if (state->new_namespaces == NULL) {
+    /* first namespace for this element */
+    state->new_namespaces = PyDict_New();
+    if (state->new_namespaces == NULL) {
+      return EXPAT_STATUS_ERROR;
+    }
+  }
+
+  if (uri == Py_None) {
+    /* Use an empty string as this will be added as an attribute value.
+       Fixes SF#834917
+    */
+    uri = PyUnicode_FromUnicode(NULL, 0);
+    if (uri == NULL) {
+      return EXPAT_STATUS_ERROR;
+    }
+  } else {
+    Py_INCREF(uri);
+  }
+
+  if (PyDict_SetItem(state->new_namespaces, prefix, uri) < 0) {
+    Py_DECREF(uri);
+    return EXPAT_STATUS_ERROR;
+  }
+
+  Py_DECREF(uri);
+  return EXPAT_STATUS_OK;
+}
+
+static AttrObject *add_attribute(ParserState *state,
+                                 ElementObject *element,
+                                 PyObject *namespaceURI,
+                                 PyObject *qualifiedName,
+                                 PyObject *localName,
+                                 PyObject *value)
+{
+  NodeFactories *factories = state->factories;
+  AttrObject *attr;
+
+  if (factories && factories->attr_new) {
+    PyObject *ob = PyObject_CallFunction(factories->attr_new, "OO",
+                                         namespaceURI, qualifiedName);
+    if (ob == NULL)
+      return NULL;
+    else if (!Attr_Check(ob)) {
+      PyErr_Format(PyExc_TypeError,
+                   "ATTRIBUTE_NODE factory returned non-Attr (type %.200s)",
+                   ob->ob_type->tp_name);
+      Py_DECREF(ob);
+      return NULL;
+    }
+    if (PyObject_SetAttrString(ob, "value", value) < 0) {
+      Py_DECREF(ob);
+      return NULL;
+    }
+    attr = Attr(ob);
+    if (Element_CheckExact(element)) {
+      ob = Element_SetAttributeNodeNS(element, attr);
+    } else {
+      static PyObject *funcname = NULL;
+      PyObject *func, *args;
+      if (funcname == NULL) {
+        funcname = PyString_FromString("setAttributeNodeNS");
+        if (funcname == NULL)
+          return NULL;
+      }
+      func = PyObject_GetAttr((PyObject *)element, funcname);
+      if (func == NULL)
+        return NULL;
+      args = PyTuple_Pack(1, attr);
+      if (args == NULL)
+        return NULL;
+      ob = PyObject_Call(func, args, NULL);
+      Py_DECREF(func);
+      Py_DECREF(args);
+    }
+    if (ob == NULL) {
+      Py_CLEAR(attr);
+    }
+  } else {
+    if (Element_CheckExact(element)) {
+      attr = Element_SetAttributeNS(element, namespaceURI, qualifiedName,
+                                    localName, value);
+    } else {
+      static PyObject *funcname = NULL;
+      PyObject *func, *args;
+      if (funcname == NULL) {
+        funcname = PyString_FromString("setAttributeNS");
+        if (funcname == NULL)
+          return NULL;
+      }
+      func = PyObject_GetAttr((PyObject *)element, funcname);
+      if (func == NULL)
+        return NULL;
+      args = PyTuple_Pack(3, namespaceURI, qualifiedName, value);
+      if (args == NULL)
+        return NULL;
+      attr = Attr(PyObject_Call(func, args, NULL));
+      Py_DECREF(func);
+      Py_DECREF(args);
+    }
+  }
+  return attr;
+}
+
+static ExpatStatus builder_StartElement(void *userState, ExpatName *name,
+                                        ExpatAttribute atts[], int natts)
+{
+  ParserState *state = (ParserState *)userState;
+  NodeFactories *factories = state->factories;
+  ElementObject *elem = NULL;
+  Py_ssize_t i;
+  PyObject *key, *value;
+  PyObject *localName, *qualifiedName, *prefix;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_StartElement(name=");
+  PyObject_Print(name->qualifiedName, stderr, 0);
+  fprintf(stderr, ", atts={");
+  for (i = 0; i < natts; i++) {
+    if (i > 0) {
+      fprintf(stderr, ", ");
+    }
+    PyObject_Print(atts[i].qualifiedName, stderr, 0);
+    fprintf(stderr, ", ");
+    PyObject_Print(atts[i].value, stderr, 0);
+  }
+  fprintf(stderr, "})\n");
+#endif
+
+  if (factories && factories->element_new) {
+    PyObject *obj = PyObject_CallFunction(factories->element_new, "OO",
+                                          name->namespaceURI,
+                                          name->qualifiedName);
+    if (obj && !Element_Check(obj)) {
+      PyErr_Format(PyExc_TypeError,
+                   "ELEMENT_NODE factory returned non-Element"
+                   " (type %.200s)",
+                   obj->ob_type->tp_name);
+      Py_CLEAR(obj);
+    }
+    elem = Element(obj);
+  } else {
+    elem = Element_New(name->namespaceURI, name->qualifiedName,
+                       name->localName);
+  }
+  if (elem == NULL) {
+    return EXPAT_STATUS_ERROR;
+  }
+
+  /** namespaces *******************************************************/
+
+  /* new_namespaces is a dictionary where key is the prefix and value
+   * is the uri.
+   */
+  if (state->new_namespaces) {
+    i = 0;
+    while (PyDict_Next(state->new_namespaces, &i, &key, &value)) {
+      AttrObject *nsattr;
+      if (key != Py_None) {
+        prefix = xmlns_string;
+        localName = key;
+      } else {
+        prefix = key;
+        localName = xmlns_string;
+      }
+
+      qualifiedName = XmlString_MakeQName(prefix, localName);
+      if (qualifiedName == NULL) {
+        Py_DECREF(elem);
+        return EXPAT_STATUS_ERROR;
+      }
+
+      nsattr = add_attribute(state, elem, g_xmlnsNamespace, qualifiedName,
+                             localName, value);
+      Py_DECREF(qualifiedName);
+      if (nsattr == NULL) {
+        Py_DECREF(elem);
+        return EXPAT_STATUS_ERROR;
+      }
+      Py_DECREF(nsattr);
+    }
+    /* make sure children don't set these namespaces */
+    Py_DECREF(state->new_namespaces);
+    state->new_namespaces = NULL;
+  }
+
+  /** attributes *******************************************************/
+
+  for (i = 0; i < natts; i++) {
+    AttrObject *attr = add_attribute(state, elem, atts[i].namespaceURI,
+                                     atts[i].qualifiedName, atts[i].localName,
+                                     atts[i].value);
+    if (attr == NULL) {
+      Py_DECREF(elem);
+      return EXPAT_STATUS_ERROR;
+    }
+
+    /* save the attribute type as well (for getElementById) */
+    attr->type = atts[i].type;
+
+    Py_DECREF(attr);
+  }
+
+  /* save states on the context */
+  if (ParserState_AddContext(state, (NodeObject *) elem) == NULL) {
+    Py_DECREF(elem);
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_EndElement(void *userState, ExpatName *name)
+{
+  ParserState *state = (ParserState *)userState;
+  Context *context = state->context;
+  NodeObject *node;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_EndElement(name=");
+  PyObject_Print(name->qualifiedName, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  /* Get the newly constructed element */
+  node = context->node;
+
+  /* Set the element's children */
+  if (_Node_SetChildren(node, context->children, context->children_size)) {
+    return EXPAT_STATUS_ERROR;
+  }
+
+  /* Mark the current context as free */
+  ParserState_FreeContext(state);
+
+  /* ParserState_AddNode steals the reference to the new node */
+  if (ParserState_AddNode(state, node) < 0) {
+    Py_DECREF(node);
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_CharacterData(void *userState, PyObject *data)
+{
+  ParserState *state = (ParserState *)userState;
+  NodeFactories *factories = state->factories;
+  NodeObject *node;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_CharacterData(data=");
+  PyObject_Print(data, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  if (factories && factories->text_new) {
+    PyObject *obj = PyObject_CallFunction(factories->text_new, "O", data);
+    if (obj && !Text_Check(obj)) {
+      PyErr_Format(PyExc_TypeError,
+                   "TEXT_NODE factory returned non-Text"
+                   " (type %.200s)",
+                   obj->ob_type->tp_name);
+      Py_CLEAR(obj);
+    }
+    node = (NodeObject *)obj;
+  } else {
+    node = (NodeObject *)Text_New(data);
+  }
+
+  /* ParserState_AddNode steals the reference to the new node */
+  if (ParserState_AddNode(state, node) < 0) {
+    Py_DECREF(node);
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_ProcessingInstruction(void *userState,
+                                                 PyObject *target,
+                                                 PyObject *data)
+{
+  ParserState *state = (ParserState *)userState;
+  NodeFactories *factories = state->factories;
+  NodeObject *node;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_ProcessingInstruction(target=");
+  PyObject_Print(target, stderr, 0);
+  fprintf(stderr, ", data=");
+  PyObject_Print(data, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  if (factories && factories->processing_instruction_new) {
+    PyObject *obj =
+      PyObject_CallFunction(factories->processing_instruction_new,
+                            "OO", target, data);
+    if (obj && !ProcessingInstruction_Check(obj)) {
+      PyErr_Format(PyExc_TypeError,
+                   "PROCESSING_INSTRUCTION_NODE factory returned"
+                   " non-ProcessingInstruction (type %.200s)",
+                   obj->ob_type->tp_name);
+      Py_CLEAR(obj);
+    }
+    node = (NodeObject *)obj;
+  } else {
+    node = (NodeObject *)ProcessingInstruction_New(target, data);
+  }
+
+  /* ParserState_AddNode steals the reference to the new node */
+  if (ParserState_AddNode(state, node) < 0) {
+    Py_DECREF(node);
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_Comment(void *userState, PyObject *data)
+{
+  ParserState *state = (ParserState *)userState;
+  NodeFactories *factories = state->factories;
+  NodeObject *node;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_Comment(data=");
+  PyObject_Print(data, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  if (factories && factories->comment_new) {
+    PyObject *obj = PyObject_CallFunction(factories->comment_new, "O", data);
+    if (obj && !Comment_Check(obj)) {
+      PyErr_Format(PyExc_TypeError,
+                   "COMMENT_NODE factory returned non-Comment"
+                   " (type %.200s)",
+                   obj->ob_type->tp_name);
+      Py_CLEAR(obj);
+    }
+    node = (NodeObject *)obj;
+  } else {
+    node = (NodeObject *)Comment_New(data);
+  }
+
+  /* ParserState_AddNode steals the reference to the new node */
+  if (ParserState_AddNode(state, node) < 0) {
+    Py_DECREF(node);
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_DoctypeDecl(void *userState, PyObject *name,
+                                       PyObject *systemId, PyObject *publicId)
+{
+  ParserState *state = (ParserState *)userState;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_DoctypeDecl(name=");
+  PyObject_Print(name, stderr, 0);
+  fprintf(stderr, ", systemId=");
+  PyObject_Print(systemId, stderr, 0);
+  fprintf(stderr, ", publicId=");
+  PyObject_Print(publicId, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  Py_DECREF(state->owner_document->systemId);
+  Py_INCREF(systemId);
+  state->owner_document->systemId = systemId;
+
+  Py_DECREF(state->owner_document->publicId);
+  Py_INCREF(publicId);
+  state->owner_document->publicId = publicId;
+
+  return EXPAT_STATUS_OK;
+}
+
+
+static ExpatStatus builder_UnparsedEntityDecl(void *userState,
+                                              PyObject *name,
+                                              PyObject *publicId,
+                                              PyObject *systemId,
+                                              PyObject *notationName)
+{
+  ParserState *state = (ParserState *)userState;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_UnparsedEntityDecl(name=");
+  PyObject_Print(name, stderr, 0);
+  fprintf(stderr, ", publicId=");
+  PyObject_Print(publicId, stderr, 0);
+  fprintf(stderr, ", systemId=");
+  PyObject_Print(systemId, stderr, 0);
+  fprintf(stderr, ", notationName=");
+  PyObject_Print(notationName, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  if (PyDict_SetItem(state->owner_document->unparsedEntities, name, systemId))
+    return EXPAT_STATUS_ERROR;
+
+  return EXPAT_STATUS_OK;
+}
+
+
+/** External Routines *************************************************/
+
+
+static ExpatReader *createParser(ParserState *state) {
+  ExpatReader *reader;
+
+  reader = ExpatReader_New(state);
+  if (reader == NULL) {
+    return NULL;
+  }
+
+  Expat_SetEndDocumentHandler(reader, builder_EndDocument);
+  Expat_SetStartElementHandler(reader, builder_StartElement);
+  Expat_SetEndElementHandler(reader, builder_EndElement);
+  Expat_SetStartNamespaceDeclHandler(reader, builder_StartNamespaceDecl);
+  Expat_SetCharacterDataHandler(reader, builder_CharacterData);
+  Expat_SetIgnorableWhitespaceHandler(reader, builder_CharacterData);
+  Expat_SetProcessingInstructionHandler(reader, builder_ProcessingInstruction);
+  Expat_SetCommentHandler(reader, builder_Comment);
+  Expat_SetStartDoctypeDeclHandler(reader, builder_DoctypeDecl);
+  Expat_SetUnparsedEntityDeclHandler(reader, builder_UnparsedEntityDecl);
+
+  return reader;
+}
+
+static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
+                               NodeFactories *factories, int asEntity,
+                               PyObject *namespaces)
+{
+  ParserState *state;
+  DocumentObject *document;
+  PyObject *uri, *strip_elements;
+  PyObject *temp;
+  ExpatStatus status;
+  int process_xincludes, gc_enabled;
+
+  uri = PyObject_GetAttrString(inputSource, "uri");
+  if (uri == NULL) {
+    return NULL;
+  } else if (!PyUnicode_Check(uri)) {
+    PyObject *temp = PyObject_Unicode(uri);
+    Py_DECREF(uri);
+    if (temp == NULL) return NULL;
+    uri = temp;
+  }
+
+  if (factories && factories->document_new) {
+    temp = PyObject_CallFunction(factories->document_new, "O", uri);
+    if (temp && !Document_Check(temp)) {
+      PyErr_Format(PyExc_TypeError,
+                   "DOCUMENT_NODE factory returned non-Document"
+                   " (type %.200s)",
+                   temp->ob_type->tp_name);
+      Py_CLEAR(temp);
+    }
+    document = Document(temp);
+  } else {
+    document = Document_New(uri);
+  }
+  Py_DECREF(uri);
+  if (document == NULL) {
+    return NULL;
+  }
+
+  /* Takes ownership of `document` */
+  state = ParserState_New(document, factories);
+  if (state == NULL) {
+    Py_DECREF(document);
+    return NULL;
+  }
+
+  state->reader = createParser(state);
+  if (state->reader == NULL) {
+    ParserState_Del(state);
+    return NULL;
+  }
+
+//   /* XSLT whitespace stripping rules */
+//   strip_elements = PyObject_GetAttr(inputSource, strip_elements_string);
+//   if (strip_elements == NULL) {
+//     ParserState_Del(state);
+//     return NULL;
+//   }
+//   status = Expat_SetWhitespaceRules(state->reader, strip_elements);
+//   if (status == EXPAT_STATUS_ERROR) {
+//     Py_DECREF(strip_elements);
+//     ParserState_Del(state);
+//     return NULL;
+//   }
+//   Py_DECREF(strip_elements);
+//
+//   /* Determine whether XInclude processing is enabled */
+//   temp = PyObject_GetAttr(inputSource, process_includes_string);
+//   if (temp == NULL) {
+//     ParserState_Del(state);
+//     return NULL;
+//   }
+//   process_xincludes = PyObject_IsTrue(temp);
+//   Py_DECREF(temp);
+//   Expat_SetXIncludeProcessing(state->reader, process_xincludes);
+
+  /* Disable GC (if enabled) while building the DOM tree */
+  temp = PyObject_Call(gc_isenabled_function, empty_args_tuple, NULL);
+  if (temp == NULL) {
+    ExpatReader_Del(state->reader);
+    ParserState_Del(state);
+    return NULL;
+  }
+  gc_enabled = PyObject_IsTrue(temp);
+  Py_DECREF(temp);
+  if (gc_enabled) {
+    temp = PyObject_Call(gc_disable_function, empty_args_tuple, NULL);
+    if (temp == NULL) {
+      ExpatReader_Del(state->reader);
+      ParserState_Del(state);
+      return NULL;
+    }
+    Py_DECREF(temp);
+  }
+
+  Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
+  Expat_SetParamEntityParsing(state->reader, parseType);
+
+  if (asEntity)
+    status = ExpatReader_ParseEntity(state->reader, inputSource, namespaces);
+  else
+    status = ExpatReader_Parse(state->reader, inputSource);
+
+  if (gc_enabled) {
+    temp = PyObject_Call(gc_enable_function, empty_args_tuple, NULL);
+    if (temp == NULL) {
+      ExpatReader_Del(state->reader);
+      ParserState_Del(state);
+      return NULL;
+    }
+    Py_DECREF(temp);
+  }
+
+  ExpatReader_Del(state->reader);
+  ParserState_Del(state);
+
+  if (status == EXPAT_STATUS_OK)
+    return (PyObject *) document;
+  else
+    return NULL;
+}
+
+PyObject *ParseDocument(PyObject *source, ParseType parseType,
+                        NodeFactories *factories)
+{
+  return builder_parse(source, parseType, factories, 0, NULL);
+}
+
+PyObject *ParseFragment(PyObject *source, PyObject *namespaces,
+                        NodeFactories *factories)
+{
+  return builder_parse(source, 0, factories, 1, namespaces);
+}
+
+/** Module Setup & Teardown *******************************************/
+
+
+int DomletteBuilder_Init(PyObject *module)
+{
+  PyObject *import;
+
+  if (Expat_IMPORT == NULL) return -1;
+
+  xmlns_string = XmlString_FromASCII("xmlns");
+  if (xmlns_string == NULL) return -1;
+
+  process_includes_string = PyString_FromString("processIncludes");
+  if (process_includes_string == NULL) return -1;
+
+  strip_elements_string = PyString_FromString("stripElements");
+  if (strip_elements_string == NULL) return -1;
+
+  empty_args_tuple = PyTuple_New((Py_ssize_t)0);
+  if (empty_args_tuple == NULL) return -1;
+
+  import = PyImport_ImportModule("gc");
+  if (import == NULL) return -1;
+
+#define GET_GC_FUNC(NAME)                                       \
+  gc_##NAME##_function = PyObject_GetAttrString(import, #NAME); \
+  if (gc_##NAME##_function == NULL) {                           \
+    Py_DECREF(import);                                          \
+    return -1;                                                  \
+  }
+
+  GET_GC_FUNC(enable);
+  GET_GC_FUNC(disable);
+  GET_GC_FUNC(isenabled);
+
+  Py_DECREF(import);
+
+  return 0;
+}
+
+
+void DomletteBuilder_Fini(void)
+{
+  Py_DECREF(xmlns_string);
+  Py_DECREF(process_includes_string);
+  Py_DECREF(strip_elements_string);
+  Py_DECREF(empty_args_tuple);
+  Py_DECREF(gc_enable_function);
+  Py_DECREF(gc_disable_function);
+  Py_DECREF(gc_isenabled_function);
+}

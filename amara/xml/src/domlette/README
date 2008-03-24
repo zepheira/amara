@@ -1,0 +1,65 @@
+cDomlette - technical details
+=============================
+
+Overview
+--------
+
+cDomlette is a DOM-like interface for Python implemented in C.
+
+Features
+--------
+
+ * DOM-based node creation and manipulation API
+ * Expat parser for creating cDomlette documents from XML text
+   - XInclude processing (http://www.w3.org/TR/xinclude)
+ * Support for xml:base (http://www.w3.org/TR/xmlbase)
+ * string pooling (using intern semantics) for efficiency
+
+The state machine
+-----------------
+
+The Expat parser uses an explicit state machine in its operation.  The
+core of the state machine is in state_machine.c and state_machine.h.
+
+Character encoding notes
+------------------------
+
+Domlette registers an unknown-encoding handler with Expat in order to
+process documents that are in encodings other than those that Expat
+supports natively (UTF-16, UTF-16LE, UTF-16BE, UTF-8, ISO-8859-1, and
+US-ASCII). It uses Python's codecs.lookup(). Unfortunately, not all
+encodings supported by Python are supported by Expat. In particular,
+the encodings must meet the following criteria:
+
+- The encoding must not be stateful (i.e., each unique byte sequence
+  must represent the same character every time).
+- Every ASCII character that can appear in a well-formed XML document,
+  other than the characters $@\^`{}~ must be represented by a single
+  byte, and that byte must be the same byte that represents that
+  character in ASCII.
+- No character may require more than 4 bytes to encode.
+- All characters encoded must have Unicode scalar values <= 0xFFFF,
+  (i.e., characters that would be encoded by surrogates in
+  UTF-16 are not allowed).  Note that this restriction doesn't
+  apply to the built-in support for UTF-8 and UTF-16.
+- No Unicode character may be encoded by more than one distinct
+  sequence of bytes.
+
+NOTE: this is subject to change after Expat 2.0 is released.
+
+Other parsers that we considered using have constraints of their own.
+libxml doesn't support stateful encodings unless iconv is used (which
+is an issue for Windows). libxml and Xerces-C both expect the codec
+to differentiate between incomplete sequence and invalid sequence
+(Python doesn't).
+
+In order to support multi-byte encodings, the most complete solution
+would be to use an additional codecs package which has an API that
+more closely matches what XML parsers are looking for.  To that end,
+there are two good options (probably more but these are well
+supported): IBM's ICU and GNU's iconv/libiconv.  As we would be
+providing all the encodings which would be available to the XML
+parser, ICU is more appealing, as its license is an "X License",
+whereas libiconv is LGPL.  ICU considers our target platforms to be
+"reference" platforms, which is something that cannot be said of
+libiconv. No decisions along these lines have been made yet.
