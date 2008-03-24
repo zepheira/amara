@@ -4194,7 +4194,7 @@ static Expat_APIObject Expat_API = {
   */
 };
 
-static void module_fini(void *capi)
+static void fini_expat(void *capi)
 {
   PySys_WriteStderr(EXPAT_MODULE_NAME " finalizing\n");
   _Expat_Util_Fini();
@@ -4234,7 +4234,7 @@ static void module_fini(void *capi)
   Py_XDECREF(expat_library_error);
 }
 
-PyMODINIT_FUNC initExpatReader(void)
+PyMODINIT_FUNC init_expat(void)
 {
   PyObject *module, *import;
 
@@ -4245,7 +4245,7 @@ PyMODINIT_FUNC initExpatReader(void)
   if ((PycString_IMPORT) == NULL) return;
   if ((XmlString_IMPORT) == NULL) return;
 
-  module = Py_InitModule3("ExpatReader", module_methods, module_doc);
+  module = Py_InitModule3("_expat", module_methods, module_doc);
   if (module == NULL) return;
 
   if (_Expat_Util_Init(module) < 0)
@@ -4291,7 +4291,7 @@ PyMODINIT_FUNC initExpatReader(void)
   DEFINE_XMLSTRING(attribute_decl_required, "#REQUIRED");
   DEFINE_XMLSTRING(attribute_decl_fixed, "#FIXED");
 
-  import = PyImport_ImportModule("Ft.Lib");
+  import = PyImport_ImportModule("amara.lib");
   if (import == NULL) return;
   UriException = PyObject_GetAttrString(import, "UriException");
   if (UriException == NULL) {
@@ -4304,16 +4304,16 @@ PyMODINIT_FUNC initExpatReader(void)
                                                        "RESOURCE_ERROR");
   if (UriException_RESOURCE_ERROR == NULL) return;
 
-  import = PyImport_ImportModule("Ft.Lib.Uri");
+  import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return;
-  absolutize_function = PyObject_GetAttrString(import, "Absolutize");
+  absolutize_function = PyObject_GetAttrString(import, "absolutize");
   if (absolutize_function == NULL) {
     Py_DECREF(import);
     return;
   }
   Py_DECREF(import);
 
-  import = PyImport_ImportModule("Ft.Xml");
+  import = PyImport_ImportModule("amara.xml");
   if (import == NULL) return;
   xml_namespace_string = PyObject_GetAttrString(import, "XML_NAMESPACE");
   xml_namespace_string = XmlString_FromObjectInPlace(xml_namespace_string);
@@ -4401,5 +4401,5 @@ PyMODINIT_FUNC initExpatReader(void)
 
   /* Export C API - done last to serve as a cleanup function as well */
   PyModule_AddObject(module, "CAPI",
-                     PyCObject_FromVoidPtr((void *)&Expat_API, module_fini));
+                     PyCObject_FromVoidPtr((void *)&Expat_API, fini_expat));
 }
