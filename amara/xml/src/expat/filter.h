@@ -11,16 +11,11 @@ extern "C" {
   struct FilterCriterionStruct;
   typedef struct FilterCriterionStruct FilterCriterion;
 
-  typedef struct FilterContext {
-    struct FilterContext *next;
-    int matched;
-    int depth;
-    StateTable *state_table;
-    StateId accepting;
-    ExpatFilter *handlers;
-  } FilterContext;
+  struct FilterState;
+  typedef struct FilterState FilterState;
 
   typedef enum {
+    DOCUMENT_TEST,        /* XPattern '/' */
     ELEMENT_ID,           /* Shorthand and element() scheme */
     ELEMENT_COUNT,        /* element() and xpointer() scheme */
     ELEMENT_MATCH,        /* xpointer() scheme */
@@ -34,10 +29,10 @@ extern "C" {
      iterable object producing iterable objects. */
   FilterCriterion *FilterCriterion_FromSeq(PyObject *seq);
 
-  FilterContext *FilterContext_New(int size);
-  void FilterContext_Del(FilterContext *context);
+  FilterState *FilterState_New(int size);
+  void FilterState_Del(FilterState *state);
 
-  FilterContext *FilterContext_FromSeq(PyObject *seq);
+  FilterState *FilterState_FromSeq(PyObject *seq);
 
 #ifdef __cplusplus
 }

@@ -87,51 +87,6 @@ Py_LOCAL_INLINE(void) Debug_Print(const char *format, ...) { }
 #define Debug_ReturnStatus(name, status)
 #endif
 
-#ifdef DEBUG_CALLBACKS
-#define Debug_StartElement(func, name, atts) {      \
-  const XML_Char **ppattr = (atts);                 \
-  fprintf(stderr, "=== " #func "(name=");            \
-  XMLChar_Print(stderr, (name));                    \
-  fprintf(stderr, ", atts={");                      \
-  if (*ppattr) {                                    \
-    XMLChar_Print(stderr, *ppattr++);               \
-    while (*ppattr) {                               \
-      fprintf(stderr, ", ");                        \
-      XMLChar_Print(stderr, *ppattr++);             \
-    }                                               \
-  }                                                 \
-  fprintf(stderr, "})\n");                          \
-}
-#define Debug_EndElement(func, name) {          \
-  fprintf(stderr, "=== " #func "(name=");        \
-  XMLChar_Print(stderr, (name));                \
-  fprintf(stderr, ")\n");                       \
-}
-#define Debug_CharacterData(func, data, len) {  \
-  fprintf(stderr, "=== " #func "(data=");        \
-  XMLChar_NPrint(stderr, (data), (len));        \
-  fprintf(stderr, ")\n");                       \
-}
-#define Debug_ProcessingInstruction(func, target, data) {   \
-  fprintf(stderr, "=== " #func "(target=");                  \
-  XMLChar_Print(stderr, (target));                          \
-  fprintf(stderr, ", data=");                               \
-  XMLChar_Print(stderr, (data));                            \
-  fprintf(stderr, ")\n");                                   \
-}
-#define Debug_Comment(func, data) {             \
-  fprintf(stderr, "=== " #func "(data=");        \
-  XMLChar_Print(stderr, (data));                \
-  fprintf(stderr, ")\n");                       \
-}
-#else
-#define Debug_StartElement(func, name, atts)
-#define Debug_EndElement(func, name)
-#define Debug_CharacterData(func, data, len)
-#define Debug_ProcessingInstruction(func, target, data)
-#define Debug_Comment(func, data)
-#endif
-
 #ifdef __cplusplus
 }
 #endif

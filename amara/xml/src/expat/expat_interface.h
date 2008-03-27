@@ -24,6 +24,7 @@ extern "C" {
 #include "structmember.h"
 #include "validation.h"
 #include "input_source.h"
+#include "filter.h"
 
   struct ExpatFilterStruct;
   typedef struct ExpatFilterStruct ExpatFilter;
@@ -192,7 +193,8 @@ extern "C" {
                                                  PyObject *systemId);
 
   typedef struct {
-    void *arg;
+    ExpatStartElementHandler start_filter;
+    ExpatEndElementHandler end_filter;
     ExpatStartDocumentHandler start_document;
     ExpatEndDocumentHandler end_document;
     ExpatStartElementHandler start_element;
@@ -222,8 +224,13 @@ extern "C" {
     ExpatResolveEntityHandler resolve_entity;
   } ExpatHandlers;
 
+#define ExpatFilter_HANDLER_TYPE (1L<<0)
+
+#define ExpatFilter_HasFlag(filter, flag) \
+  ((((ExpatFilter *)(filter))->flags & (flag)) == (flag))
+
   typedef struct {
-    ExpatReader *(*Reader_New)(PyObject *filters);
+    ExpatReader *(*Reader_New)(ExpatFilter **filters, size_t nfilters);
     void (*Reader_Del)(ExpatReader *reader);
 
     ExpatStatus (*Reader_Parse)(ExpatReader *reader, PyObject *source);
@@ -235,92 +242,6 @@ extern "C" {
     PyObject *(*GetBase)(ExpatReader *reader);
     unsigned long (*GetLineNumber)(ExpatReader *reader);
     unsigned long (*GetColumnNumber)(ExpatReader *reader);
-
-    void (*SetStartDocumentHandler)(ExpatReader *reader,
-                                    ExpatStartDocumentHandler handler);
-
-    void (*SetEndDocumentHandler)(ExpatReader *reader,
-                                  ExpatEndDocumentHandler handler);
-
-    void (*SetStartElementHandler)(ExpatReader *reader,
-                                   ExpatStartElementHandler handler);
-
-    void (*SetEndElementHandler)(ExpatReader *reader,
-                                 ExpatEndElementHandler handler);
-
-    void (*SetCharacterDataHandler)(ExpatReader *reader,
-                                    ExpatCharacterDataHandler handler);
-
-    void (*SetProcessingInstructionHandler)(
-                                    ExpatReader *reader,
-                                    ExpatProcessingInstructionHandler handler);
-
-    void (*SetCommentHandler)(ExpatReader *reader,
-                              ExpatCommentHandler handler);
-
-    void (*SetStartNamespaceDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatStartNamespaceDeclHandler handler);
-
-    void (*SetEndNamespaceDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatEndNamespaceDeclHandler handler);
-
-    void (*SetStartDoctypeDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatStartDoctypeDeclHandler handler);
-
-    void (*SetEndDoctypeDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatEndDoctypeDeclHandler handler);
-
-    void (*SetSkippedEntityHandler)(ExpatReader *reader,
-                                    ExpatSkippedEntityHandler handler);
-
-    void (*SetStartCdataSectionHandler)(
-                                    ExpatReader *reader,
-                                    ExpatStartCdataSectionHandler handler);
-
-    void (*SetEndCdataSectionHandler)(
-                                    ExpatReader *reader,
-                                    ExpatEndCdataSectionHandler handler);
-
-    void (*SetIgnorableWhitespaceHandler)(
-                                    ExpatReader *reader,
-                                    ExpatIgnorableWhitespaceHandler handler);
-
-    void (*SetWarningHandler)(ExpatReader *reader,
-                              ExpatNotificationHandler handler);
-
-    void (*SetErrorHandler)(ExpatReader *reader,
-                            ExpatNotificationHandler handler);
-
-    void (*SetFatalErrorHandler)(ExpatReader *reader,
-                                 ExpatNotificationHandler handler);
-
-    void (*SetNotationDeclHandler)(ExpatReader *reader,
-                                   ExpatNotationDeclHandler handler);
-
-    void (*SetUnparsedEntityDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatUnparsedEntityDeclHandler handler);
-
-    void (*SetElementDeclHandler)(ExpatReader *reader,
-                                  ExpatElementDeclHandler handler);
-
-    void (*SetAttributeDeclHandler)(ExpatReader *reader,
-                                    ExpatAttributeDeclHandler handler);
-
-    void (*SetInternalEntityDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatInternalEntityDeclHandler handler);
-
-    void (*SetExternalEntityDeclHandler)(
-                                    ExpatReader *reader,
-                                    ExpatExternalEntityDeclHandler handler);
-
-    void (*SetResolveEntityHandler)(ExpatReader *reader,
-                                    ExpatResolveEntityHandler handler);
 
     void (*SetValidation)(ExpatReader *reader, int doValidation);
 
@@ -335,7 +256,10 @@ extern "C" {
 #include "util.h"
 #include "debug.h"
 
-  ExpatReader *ExpatReader_New(PyObject *filters);
+  ExpatFilter *ExpatFilter_New(void *arg, ExpatHandlers *handlers, 
+                               unsigned long flags, FilterCriterion *criteria);
+
+  ExpatReader *ExpatReader_New(ExpatFilter *filters[], size_t nfilters);
   void ExpatReader_Del(ExpatReader *reader);
 
   int ExpatReader_GetValidation(ExpatReader *reader);
@@ -355,105 +279,6 @@ extern "C" {
   ExpatStatus ExpatReader_Resume(ExpatReader *reader);
   int ExpatReader_GetParsingStatus(ExpatReader *reader);
 
-  void ExpatReader_SetStartDocumentHandler(
-                                ExpatReader *reader,
-                                ExpatStartDocumentHandler handler);
-
-  void ExpatReader_SetEndDocumentHandler(
-                                ExpatReader *reader,
-                                ExpatEndDocumentHandler handler);
-
-  void ExpatReader_SetStartElementHandler(
-                                ExpatReader *reader,
-                                ExpatStartElementHandler handler);
-
-  void ExpatReader_SetEndElementHandler(
-                                ExpatReader *reader,
-                                ExpatEndElementHandler handler);
-
-  void ExpatReader_SetCharacterDataHandler(
-                                ExpatReader *reader,
-                                ExpatCharacterDataHandler handler);
-
-  void ExpatReader_SetProcessingInstructionHandler(
-                                ExpatReader *reader,
-                                ExpatProcessingInstructionHandler handler);
-
-  void ExpatReader_SetCommentHandler(
-                                ExpatReader *reader,
-                                ExpatCommentHandler handler);
-
-  void ExpatReader_SetStartNamespaceDeclHandler(
-                                ExpatReader *reader,
-                                ExpatStartNamespaceDeclHandler handler);
-
-  void ExpatReader_SetEndNamespaceDeclHandler(
-                                ExpatReader *reader,
-                                ExpatEndNamespaceDeclHandler handler);
-
-  void ExpatReader_SetStartDoctypeDeclHandler(
-                                ExpatReader *reader,
-                                ExpatStartDoctypeDeclHandler handler);
-
-  void ExpatReader_SetEndDoctypeDeclHandler(
-                                ExpatReader *reader,
-                                ExpatEndDoctypeDeclHandler handler);
-
-  void ExpatReader_SetUnparsedEntityDeclHandler(
-                                ExpatReader *reader,
-                                ExpatUnparsedEntityDeclHandler handler);
-
-  void ExpatReader_SetSkippedEntityHandler(
-                                ExpatReader *reader,
-                                ExpatSkippedEntityHandler handler);
-
-  void ExpatReader_SetStartCdataSectionHandler(
-                                ExpatReader *reader,
-                                ExpatStartCdataSectionHandler handler);
-
-  void ExpatReader_SetEndCdataSectionHandler(
-                                ExpatReader *reader,
-                                ExpatEndCdataSectionHandler handler);
-
-  void ExpatReader_SetIgnorableWhitespaceHandler(
-                                ExpatReader *reader,
-                                ExpatIgnorableWhitespaceHandler handler);
-
-  void ExpatReader_SetNotationDeclHandler(
-                                ExpatReader *reader,
-                                ExpatNotationDeclHandler handler);
-
-  void ExpatReader_SetElementDeclHandler(
-                                ExpatReader *reader,
-                                ExpatElementDeclHandler handler);
-
-  void ExpatReader_SetAttributeDeclHandler(
-                                ExpatReader *reader,
-                                ExpatAttributeDeclHandler handler);
-
-  void ExpatReader_SetInternalEntityDeclHandler(
-                                ExpatReader *reader,
-                                ExpatInternalEntityDeclHandler handler);
-
-  void ExpatReader_SetExternalEntityDeclHandler(
-                                ExpatReader *reader,
-                                ExpatExternalEntityDeclHandler handler);
-
-  void ExpatReader_SetResolveEntityHandler(
-                                ExpatReader *reader,
-                                ExpatResolveEntityHandler handler);
-
-  void ExpatReader_SetWarningHandler(
-                                ExpatReader *reader,
-                                ExpatNotificationHandler handler);
-
-  void ExpatReader_SetErrorHandler(
-                                ExpatReader *reader,
-                                ExpatNotificationHandler handler);
-
-  void ExpatReader_SetFatalErrorHandler(
-                                ExpatReader *reader,
-                                ExpatNotificationHandler handler);
 
 #else /* !Expat_BUILDING_MODULE */
 
@@ -468,6 +293,8 @@ extern "C" {
 
 #define ExpatReader_New         Expat_EXPORT(Reader_New)
 #define ExpatReader_Del         Expat_EXPORT(Reader_Del)
+#define ExpatReader_SetHandlers Expat_EXPORT(Reader_SetHandlers)
+#define ExpatReader_GetHandlers Expat_EXPORT(Reader_GetHandlers)
 #define ExpatReader_Parse       Expat_EXPORT(Reader_Parse)
 #define ExpatReader_ParseEntity Expat_EXPORT(Reader_ParseEntity)
 #define ExpatReader_Suspend     Expat_EXPORT(Reader_Suspend)
@@ -479,58 +306,6 @@ extern "C" {
   Expat_API->GetLineNumber
 #define Expat_GetColumnNumber \
   Expat_API->GetColumnNumber
-#define Expat_SetStartDocumentHandler \
-  Expat_API->SetStartDocumentHandler
-#define Expat_SetEndDocumentHandler \
-  Expat_API->SetEndDocumentHandler
-#define Expat_SetStartElementHandler \
-  Expat_API->SetStartElementHandler
-#define Expat_SetEndElementHandler \
-  Expat_API->SetEndElementHandler
-#define Expat_SetCharacterDataHandler \
-  Expat_API->SetCharacterDataHandler
-#define Expat_SetProcessingInstructionHandler \
-  Expat_API->SetProcessingInstructionHandler
-#define Expat_SetCommentHandler \
-  Expat_API->SetCommentHandler
-#define Expat_SetStartNamespaceDeclHandler \
-  Expat_API->SetStartNamespaceDeclHandler
-#define Expat_SetEndNamespaceDeclHandler \
-  Expat_API->SetEndNamespaceDeclHandler
-#define Expat_SetStartDoctypeDeclHandler \
-  Expat_API->SetStartDoctypeDeclHandler
-#define Expat_SetEndDoctypeDeclHandler \
-  Expat_API->SeEndDoctypeDeclHandler
-#define Expat_SetStartCdataSectionHandler \
-  Expat_API->SetStartCdataSectionHandler
-#define Expat_SetEndCdataSectionHandler \
-  Expat_API->SetEndCdataSectionHandler
-#define Expat_SetIgnorableWhitespaceHandler \
-  Expat_API->SetIgnorableWhitespaceHandler
-
-#define Expat_SetWarningHandler \
-  Expat_API->SetWarningHandler
-#define Expat_SetErrorHandler \
-  Expat_API->SetErrorHandler
-#define Expat_SetFatalErrorHandler \
-  Expat_API->SetFatalErrorHandler
-
-#define Expat_SetNotationDeclHandler \
-  Expat_API->SetNotationDeclHandler
-#define Expat_SetUnparsedEntityDeclHandler \
-  Expat_API->SetUnparsedEntityDeclHandler
-
-#define Expat_SetElementDeclHandler \
-  Expat_API->SetElementDeclHandler
-#define Expat_SetAttributeDeclHandler \
-  Expat_API->SetAttributeDeclHandler
-#define Expat_SetInternalEntityDeclHandler \
-  Expat_API->SetInternalEntityDeclHandler
-#define Expat_SetExternalEntityDeclHandler \
-  Expat_API->SetExternalEntityDeclHandler
-
-#define Expat_SetResolveEntityHandler \
-  Expat_API->SetResolveEntityHandler
 
 #define Expat_SetValidation \
   Expat_API->SetValidation

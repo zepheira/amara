@@ -212,14 +212,13 @@ static ExpatStatus builder_EndDocument(void *userState)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus builder_StartNamespaceDecl(void *userState,
-                                              PyObject *prefix,
-                                              PyObject *uri)
+static ExpatStatus 
+builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
 {
-  ParserState *state = (ParserState *)userState;
+  ParserState *state = (ParserState *)arg;
 
 #ifdef DEBUG_PARSER
-  fprintf(stderr, "--- builder_StartNamespaceDecl(prefix=");
+  fprintf(stderr, "--- builder_NamespaceDecl(prefix=");
   PyObject_Print(prefix, stderr, 0);
   fprintf(stderr, ", uri=");
   PyObject_Print(uri, stderr, 0);
@@ -638,6 +637,25 @@ static ExpatStatus builder_UnparsedEntityDecl(void *userState,
 
 /** External Routines *************************************************/
 
+static ExpatHandlers builder_handlers = {
+  /* start_document         */ NULL,
+  /* end_document           */ builder_EndDocument,
+  /* start_element          */ builder_StartElement,
+  /* end_element            */ builder_EndElement,
+  /* characters             */ builder_CharacterData,
+  /* ignorable_whitespace   */ builder_CharacterData,
+  /* processing_instruction */ builder_ProcessingInstruction,
+  /* comment                */ builder_Comment,
+  /* start_namespace_decl   */ builder_NamespaceDecl,
+  /* end_namespace_decl     */ NULL,
+  /* start_doctype_decl     */ builder_DoctypeDecl,
+  /* end_doctype_decl       */ NULL,
+  /* element_decl           */ NULL,
+  /* attribute_decl         */ NULL,
+  /* internal_entity_decl   */ NULL,
+  /* external_entity_decl   */ NULL,
+  /* unparsed_entity_decl   */ builder_UnparsedEntityDecl,
+};
 
 static ExpatReader *createParser(ParserState *state) {
   ExpatReader *reader;
@@ -646,18 +664,8 @@ static ExpatReader *createParser(ParserState *state) {
   if (reader == NULL) {
     return NULL;
   }
-
-  Expat_SetEndDocumentHandler(reader, builder_EndDocument);
-  Expat_SetStartElementHandler(reader, builder_StartElement);
-  Expat_SetEndElementHandler(reader, builder_EndElement);
-  Expat_SetStartNamespaceDeclHandler(reader, builder_StartNamespaceDecl);
-  Expat_SetCharacterDataHandler(reader, builder_CharacterData);
-  Expat_SetIgnorableWhitespaceHandler(reader, builder_CharacterData);
-  Expat_SetProcessingInstructionHandler(reader, builder_ProcessingInstruction);
-  Expat_SetCommentHandler(reader, builder_Comment);
-  Expat_SetStartDoctypeDeclHandler(reader, builder_DoctypeDecl);
-  Expat_SetUnparsedEntityDeclHandler(reader, builder_UnparsedEntityDecl);
-
+  ExpatReader_SetHandlers(reader, &builder_handlers);
+  ExpatReader_SetHandlerArg(reader, (void *)state);
   return reader;
 }
 

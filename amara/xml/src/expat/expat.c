@@ -110,6 +110,22 @@ typedef struct DTD {
   PyObject *used_notations;     /* PyDictObject */
 } DTD;
 
+struct ExpatFilterStruct {
+  void *arg;
+  ExpatHandlers handlers;
+  unsigned long flags;
+  FilterCriterion *criteria;
+};
+
+struct FilterState {
+  struct FilterState *next;
+  int active;
+  int depth;
+  StateTable *state_table;
+  StateId accepting;
+  ExpatFilter *filter;
+};
+
 typedef struct Context {
   struct Context *next;
   XML_Parser parser;            /* the Expat parser */
@@ -122,15 +138,15 @@ typedef struct Context {
   PyObject *xml_base;
   PyObject *xml_lang;
   DTD *dtd;
-  FilterContext *filters;       /* extra stuff for event filtering */
+  FilterState *filters;         /* extra stuff for event filtering */
 } Context;
-
-/* This flag indicates that DTD validation should be performed. */
-#define EXPAT_FLAG_VALIDATE             (1L<<0)
 
 /* This flag marks that certain infoset properties need to be adjusted for
  * a particular included entity. */
-#define EXPAT_FLAG_INFOSET_FIXUP        (1L<<1)
+#define EXPAT_FLAG_INFOSET_FIXUP        (1L<<0)
+
+/* This flag indicates that DTD validation should be performed. */
+#define EXPAT_FLAG_VALIDATE             (1L<<1)
 
 #define Expat_HasFlag(p,f) (((p)->context->flags & (f)) == (f))
 #define Expat_SetFlag(p,f) ((p)->context->flags |= (f))
@@ -152,57 +168,43 @@ typedef struct Context {
 } while(0)
 
 
-#define ExpatHandlers_GET_ARG(ob) \
-  ( ((ExpatHandlers *)(ob))->arg )
-#define ExpatHandlers_GET_SLOT(ob, name) \
-  ( ((ExpatHandlers *)(ob))->name )
-#define ExpatHandlers_StartElement(ob, name, atts, natts) \
-  ( ((ExpatHandlers *)(ob))->start_element \
-      (((ExpatHandlers *)(ob))->arg, (name), (atts), (natts)) )
-#define ExpatHandlers_EndElement(ob, name) \
-  ( ((ExpatHandlers *)(ob))->end_element \
-      (((ExpatHandlers *)(ob))->arg, (name)) )
-#define ExpatHandlers_Characters(ob, data) \
-  ( ((ExpatHandlers *)(ob))->characters \
-      (((ExpatHandlers *)(ob))->arg, (data)) )
-#define ExpatHandlers_IgnorableWhitespace(ob, data) \
-  ( ((ExpatHandlers *)(ob))->ignorable_whitespace \
-      (((ExpatHandlers *)(ob))->arg, (data)) )
-
-struct ExpatFilterStruct {
-  ExpatHandlers handlers;
-  FilterCriterion *criteria;
-  int final;
-};
-
 struct ExpatReaderStruct {
-  ExpatHandlers handlers;       /* must be first for typecasting */
+  /* event filtering */
+  ExpatFilter *filters;         /* array of event filters */
+  size_t filters_size;
 
   /* caching members */
   HashTable *name_cache;        /* element name parts */
   HashTable *unicode_cache;     /* XMLChar to unicode mapping */
   ExpatAttribute *attrs;        /* reusable attributes list */
-  int attrs_size;               /* allocated size of attributes list */
+  size_t attrs_size;            /* allocated size of attributes list */
 
   /* character data buffering */
   XML_Char *buffer;             /* buffer used for accumulating characters */
-  int buffer_size;              /* size of buffer (in XML_Char units) */
-  int buffer_used;              /* buffer units in use */
+  size_t buffer_size;           /* size of buffer (in XML_Char units) */
+  size_t buffer_used;           /* buffer units in use */
 
   /* parsing options */
-  int dtd_validation;           /* flag for DTD validation */
-  int parameter_entity_parsing; /* flag for parameter entity parsing */
+  unsigned long flags;
 
   /* parsing data */
-  Context *context;                  /* stack of parser contexts */
-  Stack *xml_base_stack;             /* current base URI w/xml:base support */
-  Stack *xml_lang_stack;             /* XInclude language fixup (xml:lang) */
-  Stack *xml_space_stack;            /* indicates xml:space='preserve' */
-
-  /* event filtering */
-  ExpatFilter *filters;         /* list of event filters */
-  int filters_size;             /* allocated size of filters list */
+  Context *context;             /* stack of parser contexts */
+  Stack *xml_base_stack;        /* current base URI w/xml:base support */
+  Stack *xml_lang_stack;        /* XInclude language fixup (xml:lang) */
+  Stack *xml_space_stack;       /* indicates xml:space='preserve' */
 };
+
+#define ExpatReader_HasFlag(p,f) ((((ExpatReader *)(p))->flags & (f)) == (f))
+#define ExpatReader_SetFlag(p,f) (((ExpatReader *)(p))->flags |= (f))
+#define ExpatReader_ClearFlag(p,f) (((ExpatReader *)(p))->flags &= ~(f))
+
+#define ExpatReader_DTD_VALIDATION       (1L<<0)
+#define ExpatReader_PARAM_ENTITY_PARSING (1L<<1)
+
+#define ExpatReader_INFOSET_HANDLERS     (1L<<2)
+#define ExpatReader_ENTITY_RESOLVER      (1L<<3)
+#define ExpatReader_ERROR_HANDLERS       (1L<<4)
+#define ExpatReader_DTD_DECLARATIONS     (1L<<5)
 
 /** DTD ***************************************************************/
 
@@ -287,6 +289,130 @@ Py_LOCAL(void) DTD_Del(DTD *dtd)
   PyObject_FREE(dtd);
 }
 
+/** ExpatFilter *******************************************************/
+
+ExpatFilter *
+ExpatFilter_New(void *arg, ExpatHandlers *handlers, unsigned long flags,
+                FilterCriterion *criteria)
+{
+  ExpatFilter *filter;
+  filter = PyMem_New(ExpatFilter, 1);
+  if (filter != NULL) {
+    filter->arg = arg;
+    if (handlers != NULL) {
+      memcpy(&filter->handlers, handlers, sizeof(ExpatHandlers));
+    }
+    filter->flags = flags;
+    filter->criteria = criteria;
+    fprintf(stderr, "ExpatFilter_New() -> %p\n", filter);
+  } else {
+    PyErr_NoMemory();
+  }
+  return filter;
+}
+
+Py_LOCAL(FilterState *)
+ExpatFilter_NewState(ExpatFilter *filter)
+{
+  FilterState *state;
+  state = PyMem_New(FilterState, 1);
+  if (state != NULL) {
+    memset(state, 0, sizeof(FilterState));
+    state->active = 1;
+    state->filter = filter;
+  } else {
+    PyErr_NoMemory();
+  }
+  fprintf(stderr, "ExpatFilter_NewState(%p) -> %p\n", filter, state);
+  return state;
+}
+
+#define FUNCTION_TEMPLATE(NAME, HANDLER, PROTO, ARGS, DEPTH) \
+Py_LOCAL_INLINE(ExpatStatus) \
+ExpatFilter_##NAME PROTO \
+{ \
+  ExpatStatus status = EXPAT_STATUS_OK; \
+  /* For each active (criteria have matched) filter, call the handler. */ \
+  while (state) { \
+    if (state->active) { \
+      ExpatFilter *filter = state->filter; \
+      ExpatHandlers handlers = filter->handlers; \
+      DEPTH; \
+      if (handlers.HANDLER) { \
+        status = handlers.HANDLER ARGS; \
+        if (status != EXPAT_STATUS_OK) break; \
+      } \
+      if (ExpatFilter_HasFlag(filter, ExpatFilter_HANDLER_TYPE)) break; \
+    } \
+    state = state->next; \
+  } \
+  return status; \
+}
+
+#define PROTO0 FilterState *state
+#define PROTO1 PROTO0, PyObject *arg1
+#define PROTO2 PROTO1, PyObject *arg2
+#define PROTO3 PROTO2, PyObject *arg3
+#define PROTO4 PROTO3, PyObject *arg4
+#define PROTO5 PROTO4, PyObject *arg5
+
+#define ARGS0 filter->arg
+#define ARGS1 ARGS0, arg1
+#define ARGS2 ARGS1, arg2
+#define ARGS3 ARGS2, arg3
+#define ARGS4 ARGS3, arg4
+#define ARGS5 ARGS4, arg5
+
+#define FUNCTION_OBJ_ARGS(NAME, HANDLER, NARGS) \
+  FUNCTION_TEMPLATE(NAME, HANDLER, (PROTO##NARGS), (ARGS##NARGS), ;)
+
+FUNCTION_TEMPLATE(StartDocument, start_document,
+                  (PROTO0), (ARGS0), state->depth++)
+FUNCTION_TEMPLATE(EndDocument, end_document,
+                  (PROTO0), (ARGS0), state->depth++)
+FUNCTION_TEMPLATE(StartElement, start_element,
+                  (PROTO0, ExpatName *name, ExpatAttribute atts[], int natts),
+                  (ARGS0, name, atts, natts), state->depth++)
+FUNCTION_TEMPLATE(EndElement, end_element, 
+                  (PROTO0, ExpatName *name), (ARGS0, name), state->depth--)
+FUNCTION_OBJ_ARGS(Characters, characters, 1)
+FUNCTION_OBJ_ARGS(IgnorableWhitespace, ignorable_whitespace, 1)
+FUNCTION_OBJ_ARGS(ProcessingInstruction, processing_instruction, 2)
+FUNCTION_OBJ_ARGS(Comment, comment, 1)
+FUNCTION_OBJ_ARGS(StartNamespaceDecl, start_namespace_decl, 2)
+FUNCTION_OBJ_ARGS(EndNamespaceDecl, end_namespace_decl, 1)
+FUNCTION_OBJ_ARGS(StartDoctypeDecl, start_doctype_decl, 3)
+FUNCTION_OBJ_ARGS(EndDoctypeDecl, end_doctype_decl, 0)
+FUNCTION_OBJ_ARGS(StartCdataSection, start_cdata_section, 0)
+FUNCTION_OBJ_ARGS(EndCdataSection, end_cdata_section, 0)
+FUNCTION_OBJ_ARGS(SkippedEntity, skipped_entity, 1)
+FUNCTION_OBJ_ARGS(ElementDecl, element_decl, 2)
+FUNCTION_OBJ_ARGS(AttributeDecl, attribute_decl, 5)
+FUNCTION_OBJ_ARGS(InternalEntityDecl, internal_entity_decl, 2)
+FUNCTION_OBJ_ARGS(ExternalEntityDecl, external_entity_decl, 3)
+FUNCTION_OBJ_ARGS(UnparsedEntityDecl, unparsed_entity_decl, 4)
+FUNCTION_OBJ_ARGS(NotationDecl, notation_decl, 3)
+
+/* ErrorHandler */
+FUNCTION_OBJ_ARGS(Warning, warning, 1)
+FUNCTION_OBJ_ARGS(Error, error, 1)
+FUNCTION_OBJ_ARGS(FatalError, fatal_error, 1)
+
+#undef FUNCTION_TEMPLATE
+#undef FUNCTION_OBJ_ARGS
+#undef PROTO0
+#undef PROTO1
+#undef PROTO2
+#undef PROTO3
+#undef PROTO4
+#undef PROTO5
+#undef ARGS0
+#undef ARGS1
+#undef ARGS2
+#undef ARGS3
+#undef ARGS4
+#undef ARGS5
+
 /** Context ***********************************************************/
 
 /* Context objects are used to store all the things that make up the current
@@ -356,24 +482,42 @@ Context_Del(Context *context)
 }
 
 /* Create a new Context object and set it as the current parsing context */
-Py_LOCAL(Context *) begin_context(ExpatReader *reader, XML_Parser parser,
-                                  PyObject *source)
+Py_LOCAL(ExpatStatus)
+begin_context(ExpatReader *reader, XML_Parser parser, PyObject *source)
 {
   Context *context;
+  FilterState *state;
+  size_t i;
 
   context = Context_New(parser, source);
 
   Debug_Return(begin_context, "%p", context);
 
-  if (context == NULL) return NULL;
+  if (context == NULL) return EXPAT_STATUS_ERROR;
 
   /* Make it the active context */
   context->next = reader->context;
   reader->context = context;
 
   /* propagate DTD parsing flag to the context */
-  if (reader->dtd_validation) {
+  if (ExpatReader_HasFlag(reader, ExpatReader_DTD_VALIDATION)) {
     Expat_SetFlag(reader, EXPAT_FLAG_VALIDATE);
+  }
+
+  /* create the FilterState for each of the defined filters */
+  for (state = NULL, i = 0; i < reader->filters_size; i++) {
+    ExpatFilter *filter = &reader->filters[i];
+    if (state) {
+      state->next = ExpatFilter_NewState(filter);
+      state = state->next;
+    } else {
+      state = ExpatFilter_NewState(filter);
+      context->filters = state;
+    }
+    if (state == NULL) {
+      Context_Del(context);
+      return EXPAT_STATUS_ERROR;
+    }
   }
 
   /* Only perform infoset fixup for included entities */
@@ -392,20 +536,20 @@ Py_LOCAL(Context *) begin_context(ExpatReader *reader, XML_Parser parser,
   /* xml:base="<document-URI>" */
   if (Stack_Push(reader->xml_base_stack, context->uri) == -1) {
     Context_Del(context);
-    return NULL;
+    return EXPAT_STATUS_ERROR;
   }
   /* xml:lang="" */
   if (Stack_Push(reader->xml_lang_stack, Py_None) == -1) {
     Context_Del(context);
-    return NULL;
+    return EXPAT_STATUS_ERROR;
   }
   /* xml:space="default" */
   if (Stack_Push(reader->xml_space_stack, Py_False) == -1) {
     Context_Del(context);
-    return NULL;
+    return EXPAT_STATUS_ERROR;
   }
 
-  return context;
+  return EXPAT_STATUS_OK;
 }
 
 /* Switch to previous parsing context and deallocate the current one */
@@ -615,10 +759,9 @@ end_handlers(ExpatReader *reader)
 
 /** Error Handling ****************************************************/
 
-Py_LOCAL_INLINE(PyObject *) create_exception(ExpatReader *reader,
-                                             const char *errorCode,
-                                             const char *argspec,
-                                             va_list va)
+Py_LOCAL_INLINE(PyObject *) 
+create_exception(ExpatReader *reader, const char *errorCode,
+                const char *argspec, va_list va)
 {
   PyObject *code, *args, *kwords, *exc;
 
@@ -686,24 +829,22 @@ _stop_parsing(ExpatReader *reader, char *filename, int lineno)
 }
 
 Py_LOCAL(ExpatStatus)
-Expat_ReportWarning(ExpatReader *reader, const char *error, char *argspec, ...)
+report_warning(ExpatReader *reader, const char *error, char *argspec, ...)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   va_list va;
   PyObject *exception;
   ExpatStatus status;
 
-  Debug_FunctionCall(Expat_ReportWarning, reader);
+  Debug_FunctionCall(report_warning, reader);
 
   va_start(va, argspec);
   exception = create_exception(reader, error, argspec, va);
   va_end(va);
-  if (exception == NULL) {
+  if (exception == NULL)
     return stop_parsing(reader);
-  }
 
-  if (handlers->warning) {
-    status = handlers->warning(handlers->arg, exception);
+  if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
+    status = ExpatFilter_Warning(reader->context->filters, exception);
   } else {
     status = EXPAT_STATUS_OK;
   }
@@ -713,53 +854,22 @@ Expat_ReportWarning(ExpatReader *reader, const char *error, char *argspec, ...)
 }
 
 Py_LOCAL(ExpatStatus)
-Expat_ReportError(ExpatReader *reader, const char *error, char *argspec, ...)
+report_error(ExpatReader *reader, const char *error, char *argspec, ...)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   va_list va;
   PyObject *exception;
   ExpatStatus status;
 
-  Debug_FunctionCall(Expat_ReportError, reader);
+  Debug_FunctionCall(report_error, reader);
 
   va_start(va, argspec);
   exception = create_exception(reader, error, argspec, va);
   va_end(va);
-  if (exception == NULL) {
+  if (exception == NULL)
     return stop_parsing(reader);
-  }
-  if (handlers->error) {
-    status = handlers->error(handlers->arg, exception);
-  } else {
-    PyErr_SetObject(ReaderException, exception);
-    status = stop_parsing(reader);
-  }
-  Py_DECREF(exception);
 
-  return status;
-}
-
-Py_LOCAL(ExpatStatus)
-Expat_ReportFatalError(ExpatReader *reader, const char *error, char *argspec, ...)
-{
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  va_list va;
-  PyObject *exception;
-  ExpatStatus status;
-
-  Debug_FunctionCall(Expat_ReportFatalError, reader);
-
-  va_start(va, argspec);
-  exception = create_exception(reader, error, argspec, va);
-  va_end(va);
-  if (exception == NULL) {
-    return stop_parsing(reader);
-  }
-
-  if (handlers->fatal_error) {
-    status = handlers->fatal_error(handlers->arg, exception);
-    /* terminate parsing regardless of what the handler did */
-    stop_parsing(reader);
+  if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
+    status = ExpatFilter_Error(reader->context->filters, exception);
   } else {
     PyErr_SetObject(ReaderException, exception);
     status = stop_parsing(reader);
@@ -913,45 +1023,35 @@ charbuf_report_error(ExpatReader *reader)
 {
   DTD *dtd = reader->context->dtd;
   PyObject *type = Validator_GetCurrentElementType(dtd->validator);
-  return Expat_ReportError(reader, "INVALID_TEXT", "{sO}",
-                           "element", ElementType_GET_NAME(type));
+  return report_error(reader, "INVALID_TEXT", "{sO}",
+                      "element", ElementType_GET_NAME(type));
 }
 
 Py_LOCAL_INLINE(ExpatStatus)
 charbuf_callback(ExpatReader *reader, PyObject *data, int is_ws)
 {
   Context *context = reader->context;
-  FilterContext *filter;
   ExpatStatus status = EXPAT_STATUS_OK;
-
-#define charbuf_CALLBACK(SLOT, CALLBACK)                                    \
-  for (filter = context->filters; filter; filter = filter->next) {          \
-    if (filter->matched) {                                                  \
-      ExpatFilter *handlers = filter->handlers;                             \
-      if (ExpatHandlers_GET_SLOT(handlers, SLOT)) {                         \
-        status = CALLBACK(handlers, data);                                  \
-        if (status != EXPAT_STATUS_OK) return status;                       \
-      }                                                                     \
-      if (handlers->final) break;                                           \
-    }                                                                       \
-  }
 
   if (Expat_HasFlag(reader, EXPAT_FLAG_VALIDATE)) {
     DTD *dtd = context->dtd;
     switch (Validator_CheckEvent(dtd->validator, content_model_pcdata)) {
     case 1: /* mixed content ok */
-      charbuf_CALLBACK(characters, ExpatHandlers_Characters);
+      status = ExpatFilter_Characters(context->filters, data);
+      if (status == EXPAT_STATUS_ERROR)
+        return stop_parsing(reader);
       break;
     case 0: /* element content only */
       /* whitespace is still an error if it occurrs for an empty model */
       switch (is_ws ? Validator_CheckEvent(dtd->validator, empty_event) : 1) {
       case 0: /* element content ok */
-        charbuf_CALLBACK(ignorable_whitespace,
-                         ExpatHandlers_IgnorableWhitespace);
+        status = ExpatFilter_IgnorableWhitespace(context->filters, data);
+        if (status == EXPAT_STATUS_ERROR)
+          return stop_parsing(reader);
         break;
       case 1:
-        if (charbuf_report_error(reader) == EXPAT_STATUS_OK) break;
-        /* fall through on error */
+        status = charbuf_report_error(reader);
+        break;
       default:
         return stop_parsing(reader);
       }
@@ -960,10 +1060,11 @@ charbuf_callback(ExpatReader *reader, PyObject *data, int is_ws)
       return stop_parsing(reader);
     }
   } else {
-    charbuf_CALLBACK(characters, ExpatHandlers_Characters);
+    status = ExpatFilter_Characters(context->filters, data);
+    if (status == EXPAT_STATUS_ERROR)
+      return stop_parsing(reader);
   }
   return status;
-#undef charbuf_CALLBACK
 }
 
 /* Do not inline as this is called from many of the handler callbacks */
@@ -1124,6 +1225,7 @@ Py_LOCAL_INLINE(XML_Parser)
 create_parser(ExpatReader *reader)
 {
   static const XML_Char sep[] = { NAMESPACE_SEP, '\0' };
+  enum XML_ParamEntityParsing parsing;
 
   XML_Parser parser = XML_ParserCreate_MM(NULL, &expat_memsuite, sep);
   if (parser == NULL) {
@@ -1132,12 +1234,13 @@ create_parser(ExpatReader *reader)
   }
 
   /* enable parsing of parameter entities if requested */
-  if (reader->dtd_validation) {
-    XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
-  } else if (reader->parameter_entity_parsing) {
-    XML_SetParamEntityParsing(parser,
-                              XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE);
-  }
+  if (ExpatReader_HasFlag(reader, ExpatReader_DTD_VALIDATION))
+    parsing = ExpatReader_PARAM_ENTITY_PARSING;
+  else if (ExpatReader_HasFlag(reader, ExpatReader_PARAM_ENTITY_PARSING))
+    parsing = XML_PARAM_ENTITY_PARSING_UNLESS_STANDALONE;
+  else
+    parsing = XML_PARAM_ENTITY_PARSING_NEVER;
+  XML_SetParamEntityParsing(parser, parsing);
 
   /* enable prefix information in names (URI + sep + local + sep + prefix) */
   XML_SetReturnNSTriplet(parser, 1);
@@ -1210,7 +1313,6 @@ static int read_object(PyObject *stream, char *buffer, int length)
 Py_LOCAL_INLINE(void)
 process_error(ExpatReader *reader)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   int error_code = XML_GetErrorCode(reader->context->parser);
   PyObject *args, *exception;
 
@@ -1260,8 +1362,8 @@ process_error(ExpatReader *reader)
     Py_DECREF(args);
     if (exception == NULL)
       break;
-    if (handlers->fatal_error) {
-      handlers->fatal_error(handlers->arg, exception);
+    if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
+      (void) ExpatFilter_FatalError(reader->context->filters, exception);
     } else {
       PyErr_SetObject(ReaderException, exception);
     }
@@ -1387,60 +1489,40 @@ do_parsing(ExpatReader *reader)
 }
 
 Py_LOCAL_INLINE(ExpatStatus)
-finish_parsing(ExpatReader *reader, ExpatStatus status)
-{
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-
-  Debug_ParserFunctionCall(continue_parsing, reader);
-
-  if (status == EXPAT_STATUS_SUSPENDED) {
-    Debug_ReturnStatus(continue_parsing, status);
-    return status;
-  }
-  else if (status == EXPAT_STATUS_OK) {
-    if (reader->buffer_used) {
-      if (charbuf_flush(reader) == EXPAT_STATUS_ERROR) {
-        Debug_ReturnStatus(continue_parsing, EXPAT_STATUS_ERROR);
-        return stop_parsing(reader);
-      }
-    }
-    if (handlers->end_document) {
-      status = handlers->end_document(handlers->arg);
-      if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-    }
-  }
-
-  /* parsing finished, cleanup parsing state */
-  destroy_contexts(reader);
-
-  Debug_ReturnStatus(continue_parsing, status);
-
-  return status;
-}
-
-Py_LOCAL_INLINE(ExpatStatus)
 start_parsing(ExpatReader *reader, XML_Parser parser, PyObject *source)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   ExpatStatus status;
 
+  Debug_ParserFunctionCall(start_parsing, reader);
+
   Py_INCREF(source);
-  if (begin_context(reader, parser, source) == NULL) {
+  status = begin_context(reader, parser, source);
+  if (status == EXPAT_STATUS_ERROR) {
     Py_DECREF(source);
-    destroy_contexts(reader);
-    return EXPAT_STATUS_ERROR;
+    goto finally;
   }
   begin_handlers(reader, &expat_handlers);
 
-  if (handlers->start_document) {
-    status = handlers->start_document(handlers->arg);
-    if (status == EXPAT_STATUS_ERROR) {
-      destroy_contexts(reader);
-      return status;
-    }
-  }
+  status = ExpatFilter_StartDocument(reader->context->filters);
+  if (status == EXPAT_STATUS_ERROR) goto cleanup;
 
-  return finish_parsing(reader, do_parsing(reader));
+  status = do_parsing(reader);
+  if (status == EXPAT_STATUS_SUSPENDED)
+    goto finally;
+  else if (status == EXPAT_STATUS_OK) {
+    if (reader->buffer_used) {
+      status = charbuf_flush(reader);
+      if (status == EXPAT_STATUS_ERROR) goto cleanup;
+    }
+    status = ExpatFilter_EndDocument(reader->context->filters);
+    if (status == EXPAT_STATUS_ERROR) goto cleanup;
+  }
+cleanup:
+  /* parsing finished, cleanup parsing state */
+  destroy_contexts(reader);
+finally:
+  Debug_ReturnStatus(start_parsing, status);
+  return status;
 }
 
 /** Expat StartElement Handler ****************************************/
@@ -1453,16 +1535,14 @@ validate_entity_ref(ExpatReader *reader, PyObject *name)
 
   notation = PyDict_GetItem(dtd->entities, name);
   if (notation == NULL) {
-    return Expat_ReportError(reader, "UNDECLARED_ENTITY",
-                             "{sO}", "entity", name);
+    return report_error(reader, "UNDECLARED_ENTITY", "{sO}", "entity", name);
   }
   if (notation == Py_None) {
-    return Expat_ReportError(reader, "INVALID_ENTITY",
-                             "{sO}", "entity", name);
+    return report_error(reader, "INVALID_ENTITY", "{sO}", "entity", name);
   }
   if (PyDict_GetItem(dtd->notations, notation) == NULL) {
-    return Expat_ReportError(reader, "UNDECLARED_NOTATION",
-                             "{sO}", "notation", notation);
+    return report_error(reader, "UNDECLARED_NOTATION", "{sO}", 
+                        "notation", notation);
   }
 
   return EXPAT_STATUS_OK;
@@ -1486,10 +1566,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_ENTITY:
     switch (XmlString_IsName(value)) {
     case 0:
-      if (Expat_ReportError(reader, "INVALID_NAME_VALUE", "{sO}",
-                            "attr", name) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "INVALID_NAME_VALUE", "{sO}", "attr", name) 
+          == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     case 1:
       break;
     default:
@@ -1500,10 +1579,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_ENTITIES:
     switch (XmlString_IsNames(value)) {
     case 0:
-      if (Expat_ReportError(reader, "INVALID_NAME_SEQ_VALUE", "{sO}",
-                            "attr", name) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "INVALID_NAME_SEQ_VALUE", "{sO}", "attr", name)
+          == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     case 1:
       break;
     default:
@@ -1513,10 +1591,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_NMTOKEN:
     switch (XmlString_IsNmtoken(value)) {
     case 0:
-      if (Expat_ReportError(reader, "INVALID_NMTOKEN_VALUE", "{sO}",
-                            "attr", name) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "INVALID_NMTOKEN_VALUE", "{sO}", "attr", name)
+          == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     case 1:
       break;
     default:
@@ -1526,10 +1603,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_NMTOKENS:
     switch (XmlString_IsNmtokens(value)) {
     case 0:
-      if (Expat_ReportError(reader, "INVALID_NMTOKEN_SEQ_VALUE", "{sO}",
-                            "attr", name) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "INVALID_NMTOKEN_SEQ_VALUE", "{sO}", 
+                       "attr", name) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     case 1:
       break;
     default:
@@ -1541,11 +1617,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
     values = AttributeType_GET_ALLOWED_VALUES(attribute_type);
     switch (PySequence_Contains(values, value)) {
     case 0:
-      if (Expat_ReportError(reader, "INVALID_ENUM_VALUE", "{sOsO}",
-                            "attr", name, "value", value)
-          == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "INVALID_ENUM_VALUE", "{sOsO}", "attr", name,
+                       "value", value) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     case 1:
       break;
     default:
@@ -1558,10 +1632,9 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   switch (AttributeType_GET_TYPE(attribute_type)) {
   case ATTRIBUTE_TYPE_ID:
     if (PyDict_GetItem(dtd->ids, value) != NULL) {
-      if (Expat_ReportError(reader, "DUPLICATE_ID", "{sO}",
-                            "id", value) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "DUPLICATE_ID", "{sO}", "id", value) 
+          == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     }
     if (PyDict_SetItem(dtd->ids, value, Py_True) < 0) {
       return stop_parsing(reader);
@@ -1623,11 +1696,9 @@ validate_attributes(ExpatReader *reader, PyObject *element_type,
     attribute_type = \
       ElementType_GET_ATTRIBUTE(element_type, attribute->qualifiedName);
     if (attribute_type == NULL) {
-      if (Expat_ReportError(reader, "UNDECLARED_ATTRIBUTE", "{sO}",
-                            "attr", attribute->qualifiedName)
-          == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "UNDECLARED_ATTRIBUTE", "{sO}", 
+                       "attr", attribute->qualifiedName) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
       continue;
     }
 
@@ -1653,10 +1724,9 @@ validate_attributes(ExpatReader *reader, PyObject *element_type,
           return stop_parsing(reader);
         }
       }
-      if (Expat_ReportError(reader, "MISSING_ATTRIBUTE", "{sO}",
-                            "attr", attribute_name) == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "MISSING_ATTRIBUTE", "{sO}",
+                       "attr", attribute_name) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
-      }
     found:
       continue;
     }
@@ -1681,10 +1751,9 @@ validate_element(ExpatReader *reader, ExpatName *element,
       return EXPAT_STATUS_OK;
     }
     /* validity constraint */
-    status = Expat_ReportError(reader, "MISSING_DOCTYPE", NULL);
-    if (status == EXPAT_STATUS_ERROR) {
+    status = report_error(reader, "MISSING_DOCTYPE", NULL);
+    if (status == EXPAT_STATUS_ERROR)
       return status;
-    }
     /* create an empty DTD so we have something to validate against */
     reader->context->dtd = dtd = DTD_New();
     if (dtd == NULL) {
@@ -1697,11 +1766,10 @@ validate_element(ExpatReader *reader, ExpatName *element,
     switch (Validator_ValidateEvent(dtd->validator,
                                     element->qualifiedName)) {
     case 0:
-      status = Expat_ReportError(reader, "INVALID_ELEMENT", "{sO}",
-                                 "element", element->qualifiedName);
-      if (status == EXPAT_STATUS_ERROR) {
+      status = report_error(reader, "INVALID_ELEMENT", "{sO}",
+                            "element", element->qualifiedName);
+      if (status == EXPAT_STATUS_ERROR)
         return status;
-      }
       /* fall through */
     case 1:
       /* everything is hunky-dory */
@@ -1714,11 +1782,10 @@ validate_element(ExpatReader *reader, ExpatName *element,
     switch (PyObject_RichCompareBool(dtd->root_element,
                                      element->qualifiedName, Py_EQ)) {
     case 0:
-      status = Expat_ReportError(reader, "ROOT_ELEMENT_MISMATCH", "{sO}",
-                                 "element", element->qualifiedName);
-      if (status == EXPAT_STATUS_ERROR) {
+      status = report_error(reader, "ROOT_ELEMENT_MISMATCH", "{sO}",
+                            "element", element->qualifiedName);
+      if (status == EXPAT_STATUS_ERROR)
         return status;
-      }
       /* fall through */
     case 1:
       /* Reference to the root element is no longer needed */
@@ -1732,11 +1799,10 @@ validate_element(ExpatReader *reader, ExpatName *element,
   switch (Validator_StartElement(dtd->validator,
                                  element->qualifiedName)) {
   case 0:
-    status = Expat_ReportError(reader, "UNDECLARED_ELEMENT", "{sO}",
-                               "element", element->qualifiedName);
-    if (status == EXPAT_STATUS_ERROR) {
+    status = report_error(reader, "UNDECLARED_ELEMENT", "{sO}",
+                          "element", element->qualifiedName);
+    if (status == EXPAT_STATUS_ERROR)
       return status;
-    }
     /* fall through */
   case 1:
     /* everything is hunky-dory */
@@ -1784,10 +1850,21 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
   ExpatAttribute *attrs, *attr;
   PyObject *xml_base, *xml_lang, *xml_space, *xml_id;
   int i, id_index, attrs_size;
-  FilterContext *filter;
 
   Debug_ParserFunctionCall(expat_StartElement, reader);
-  Debug_StartElement(expat_StartElement, expat_name, expat_atts);
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== StartElement(name=");
+  XMLChar_Print(stderr, expat_name);
+  fprintf(stderr, ", atts={");
+  if (*(ppattr = expat_atts)) {
+    XMLChar_Print(stderr, *ppattr++);
+    while (*ppattr) {
+      fprintf(stderr, ", ");
+      XMLChar_Print(stderr, *ppattr++);
+    }
+  }
+  fprintf(stderr, "})\n");
+#endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -1985,23 +2062,11 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
     xml_id = NULL;
   }
 
-  /** Callback **************************************************/
+  status = ExpatFilter_StartElement(reader->context->filters,
+                                    name, attrs, attrs_size);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 
-  for (filter = reader->context->filters; filter; filter = filter->next) {
-    if (filter->matched) {
-      ExpatFilter *handlers = filter->handlers;
-      if (ExpatHandlers_GET_SLOT(handlers, start_element)) {
-        status = ExpatHandlers_StartElement(handlers, name, attrs, attrs_size);
-        if (status == EXPAT_STATUS_ERROR) {
-          stop_parsing(reader);
-          break;
-        }
-        if (handlers->final) {
-          break;
-        }
-      }
-    }
-  }
   Py_XDECREF(xml_id);
 }
 
@@ -2012,11 +2077,14 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
 {
   ExpatStatus status;
   ExpatName *name;
-  FilterContext *filter;
   PyObject *temp;
 
   Debug_ParserFunctionCall(expat_EndElement, reader);
-  Debug_EndElement(expat_EndElement, expat_name);
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== EndElement(name=");
+  XMLChar_Print(stderr, expat_name);
+  fprintf(stderr, ")\n");
+#endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2034,8 +2102,8 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
     case 1:
       break;
     case 0:
-      status = Expat_ReportError(reader, "INCOMPLETE_ELEMENT", "{sO}",
-                                 "element", name->qualifiedName);
+      status = report_error(reader, "INCOMPLETE_ELEMENT", "{sO}",
+                            "element", name->qualifiedName);
       if (status == EXPAT_STATUS_OK) break;
     default:
       stop_parsing(reader);
@@ -2043,23 +2111,9 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
     }
   }
 
-  /* Step through the filters, calling endElement() on those that
-   * have matched. */
-  for (filter = reader->context->filters; filter; filter = filter->next) {
-    if (filter->matched) {
-      ExpatFilter *handlers = filter->handlers;
-      if (ExpatHandlers_GET_SLOT(handlers, end_element)) {
-        status = ExpatHandlers_EndElement(handlers, name);
-        if (status == EXPAT_STATUS_ERROR) {
-          stop_parsing(reader);
-          break;
-        }
-        if (handlers->final) {
-          break;
-        }
-      }
-    }
-  }
+  status = ExpatFilter_EndElement(reader->context->filters, name);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 
   /* Cleanup the xml:* attribute stacks. */
   temp = Stack_Pop(reader->xml_base_stack);
@@ -2079,7 +2133,11 @@ static void expat_CharacterData(ExpatReader *reader, const XML_Char *data,
                                 int len)
 {
   Debug_ParserFunctionCall(expat_CharacterData, reader);
-  Debug_CharacterData(expat_CharacterData, data, len);
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== CharacterData(data=");
+  XMLChar_NPrint(stderr, data, len);
+  fprintf(stderr, ")\n");
+#endif
 
   if (charbuf_write(reader, data, len) == EXPAT_STATUS_ERROR)
     stop_parsing(reader);
@@ -2092,12 +2150,17 @@ static void expat_ProcessingInstruction(ExpatReader *reader,
                                         const XML_Char *target,
                                         const XML_Char *data)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *python_target, *python_data;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_ProcessingInstruction, reader);
-  Debug_ProcessingInstruction(expat_ProcessingInstruction, target, data);
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== ProcessingInstruction(target=");
+  XMLChar_Print(stderr, target);
+  fprintf(stderr, ", data=");
+  XMLChar_Print(stderr, data);
+  fprintf(stderr, ")\n");
+#endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2114,9 +2177,10 @@ static void expat_ProcessingInstruction(ExpatReader *reader,
     return;
   }
 
-  status = handlers->processing_instruction(handlers->arg,
-                                            python_target, python_data);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+  status = ExpatFilter_ProcessingInstruction(reader->context->filters,
+                                             python_target, python_data);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 }
 
 /** Expat Comment Handler *********************************************/
@@ -2124,24 +2188,30 @@ static void expat_ProcessingInstruction(ExpatReader *reader,
 /* callback functions cannot be declared Py_LOCAL */
 static void expat_Comment(ExpatReader *reader, const XML_Char *data)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *python_data;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_Comment, reader);
-  Debug_Comment(expat_Comment, data);
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== Comment(data=");
+  XMLChar_Print(stderr, data);
+  fprintf(stderr, ")\n");
+#endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
 
+  /* Note, comment data rarely repeats, no need to intern it. */
   python_data = XMLChar_Decode(data);
   if (python_data == NULL) {
     stop_parsing(reader);
     return;
   }
 
-  status = handlers->comment(handlers->arg, python_data);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+  status = ExpatFilter_Comment(reader->context->filters, python_data);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
+
   Py_DECREF(python_data);
 }
 
@@ -2152,14 +2222,13 @@ static void expat_StartNamespaceDecl(ExpatReader *reader,
                                      const XML_Char *prefix,
                                      const XML_Char *uri)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *python_prefix, *python_uri;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_StartNamespaceDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** StartNamespaceDecl(prefix=");
+  fprintf(stderr, "=== StartNamespaceDecl(prefix=");
   XMLChar_Print(stderr, prefix);
   fprintf(stderr, ", uri=");
   XMLChar_Print(stderr, uri);
@@ -2189,9 +2258,10 @@ static void expat_StartNamespaceDecl(ExpatReader *reader,
     python_uri = Py_None;
   }
 
-  status = handlers->start_namespace_decl(handlers->arg,
+  status = ExpatFilter_StartNamespaceDecl(reader->context->filters,
                                           python_prefix, python_uri);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 }
 
 /** Expat EndNamespaceDecl Handler ************************************/
@@ -2199,14 +2269,13 @@ static void expat_StartNamespaceDecl(ExpatReader *reader,
 /* callback functions cannot be declared Py_LOCAL */
 static void expat_EndNamespaceDecl(ExpatReader *reader, const XML_Char *prefix)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *python_prefix;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_EndNamespaceDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** EndNamespaceDecl(prefix=");
+  fprintf(stderr, "=== EndNamespaceDecl(prefix=");
   XMLChar_Print(stderr, prefix);
   fprintf(stderr, ")\n");
 #endif
@@ -2224,8 +2293,10 @@ static void expat_EndNamespaceDecl(ExpatReader *reader, const XML_Char *prefix)
     python_prefix = Py_None;
   }
 
-  status = handlers->end_namespace_decl(handlers->arg, python_prefix);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+  status = ExpatFilter_EndNamespaceDecl(reader->context->filters,
+                                        python_prefix);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 }
 
 /** Expat StartDoctypeDecl Handler ************************************/
@@ -2235,15 +2306,14 @@ static void expat_StartDoctypeDecl(ExpatReader *reader, const XML_Char *name,
                                    const XML_Char *sysid, const XML_Char *pubid,
                                    int has_internal_subset)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
+  PyObject *python_name, *python_sysid, *python_pubid;
   ExpatStatus status;
   XML_Handlers *subset_handlers;
-  PyObject *python_name;
 
   Debug_ParserFunctionCall(expat_StartDoctypeDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** StartDoctypeDecl(name=");
+  fprintf(stderr, "=== StartDoctypeDecl(name=");
   XMLChar_Print(stderr, name);
   fprintf(stderr, ", sysid=");
   XMLChar_Print(stderr, sysid);
@@ -2274,43 +2344,41 @@ static void expat_StartDoctypeDecl(ExpatReader *reader, const XML_Char *name,
   }
   reader->context->dtd->root_element = python_name;
 
-  if (handlers->start_doctype_decl) {
-    PyObject *python_sysid, *python_pubid;
-
-    if (sysid) {
-      if ((python_sysid = XMLChar_Decode(sysid)) == NULL) {
-        stop_parsing(reader);
-        return;
-      }
-    } else {
-      Py_INCREF(Py_None);
-      python_sysid = Py_None;
+  if (sysid) {
+    if ((python_sysid = XMLChar_Decode(sysid)) == NULL) {
+      stop_parsing(reader);
+      return;
     }
-
-    if (pubid) {
-      if ((python_pubid = XMLChar_Decode(pubid)) == NULL) {
-        Py_DECREF(python_sysid);
-        stop_parsing(reader);
-        return;
-      }
-    } else {
-      Py_INCREF(Py_None);
-      python_pubid = Py_None;
-    }
-
-    status = handlers->start_doctype_decl(handlers->arg,
-                                          python_name, python_sysid,
-                                          python_pubid);
-    if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-    Py_DECREF(python_sysid);
-    Py_DECREF(python_pubid);
+  } else {
+    Py_INCREF(Py_None);
+    python_sysid = Py_None;
   }
 
-  /* Begin subset handlers */
-  subset_handlers = XML_Handlers_Copy(reader->context->handlers);
-  subset_handlers->processing_instruction = NULL;
-  subset_handlers->comment = NULL;
-  begin_handlers(reader, subset_handlers);
+  if (pubid) {
+    if ((python_pubid = XMLChar_Decode(pubid)) == NULL) {
+      Py_DECREF(python_sysid);
+      stop_parsing(reader);
+      return;
+    }
+  } else {
+    Py_INCREF(Py_None);
+    python_pubid = Py_None;
+  }
+
+  status = ExpatFilter_StartDoctypeDecl(reader->context->filters,
+                                        python_name, python_sysid,
+                                        python_pubid);
+  Py_DECREF(python_sysid);
+  Py_DECREF(python_pubid);
+  if (status == EXPAT_STATUS_ERROR) {
+    stop_parsing(reader);
+  } else {
+    /* Begin subset handlers */
+    subset_handlers = XML_Handlers_Copy(reader->context->handlers);
+    subset_handlers->processing_instruction = NULL;
+    subset_handlers->comment = NULL;
+    begin_handlers(reader, subset_handlers);
+  }
 }
 
 /** Expat EndDoctypeDecl Handler **************************************/
@@ -2318,16 +2386,15 @@ static void expat_StartDoctypeDecl(ExpatReader *reader, const XML_Char *name,
 /* callback functions cannot be declared Py_LOCAL */
 static void expat_EndDoctypeDecl(ExpatReader *reader)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   DTD *dtd = reader->context->dtd;
   PyObject *name, *temp;
   Py_ssize_t pos;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_EndDoctypeDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** EndDoctypeDecl()\n");
+  fprintf(stderr, "=== EndDoctypeDecl()\n");
 #endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
@@ -2335,10 +2402,9 @@ static void expat_EndDoctypeDecl(ExpatReader *reader)
 
   pos = 0;
   while (PyDict_Next(dtd->used_elements, &pos, &name, &temp)) {
-    if (Expat_ReportWarning(reader, "ATTRIBUTES_WITHOUT_ELEMENT", "{sO}",
-                            "element", name) == EXPAT_STATUS_ERROR) {
+    if (report_warning(reader, "ATTRIBUTES_WITHOUT_ELEMENT", "{sO}",
+                       "element", name) == EXPAT_STATUS_ERROR)
       return;
-    }
   }
   PyDict_Clear(dtd->used_elements);
 
@@ -2346,11 +2412,9 @@ static void expat_EndDoctypeDecl(ExpatReader *reader)
     pos = 0;
     while (PyDict_Next(dtd->used_notations, &pos, &name, &temp)) {
       /* Undeclared notations in attributes are errors */
-      if (Expat_ReportError(reader, "ATTRIBUTE_UNDECLARED_NOTATION", "{sOsO}",
-                            "attr", temp, "notation", name)
-          == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "ATTRIBUTE_UNDECLARED_NOTATION", "{sOsO}",
+                       "attr", temp, "notation", name) == EXPAT_STATUS_ERROR)
         return;
-      }
     }
   }
   PyDict_Clear(dtd->used_notations);
@@ -2358,13 +2422,12 @@ static void expat_EndDoctypeDecl(ExpatReader *reader)
   switch (Validator_StartElement(dtd->validator, dtd->root_element)) {
   }
 
-  if (handlers->end_doctype_decl) {
-    status = handlers->end_doctype_decl(handlers->arg);
-    if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-  }
-
-  /* Restore content handlers */
-  end_handlers(reader);
+  status = ExpatFilter_EndDoctypeDecl(reader->context->filters);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
+  else
+    /* Restore content handlers */
+    end_handlers(reader);
 }
 
 /** Expat CdataSection Handlers ***************************************/
@@ -2372,19 +2435,21 @@ static void expat_EndDoctypeDecl(ExpatReader *reader)
 /* callback functions cannot be declared Py_LOCAL */
 static void expat_StartCdataSection(ExpatReader *reader)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   ExpatStatus status;
-  status = handlers->start_cdata_section(handlers->arg);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+
+  status = ExpatFilter_StartCdataSection(reader->context->filters);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 }
 
 /* callback functions cannot be declared Py_LOCAL */
 static void expat_EndCdataSection(ExpatReader *reader)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   ExpatStatus status;
-  status = handlers->end_cdata_section(handlers->arg);
-  if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+
+  status = ExpatFilter_EndCdataSection(reader->context->filters);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
 }
 
 /** Expat SkippedEntity Handler ***************************************/
@@ -2394,14 +2459,13 @@ static void expat_SkippedEntity(ExpatReader *reader,
                                 const XML_Char *entityName,
                                 int is_parameter_entity)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *python_entityName;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_SkippedEntity, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** SkippedEntity(entityName=");
+  fprintf(stderr, "=== SkippedEntity(entityName=");
   XMLChar_Print(stderr, entityName);
   fprintf(stderr, ", is_parameter_entity=%d)\n", is_parameter_entity);
 #endif
@@ -2429,11 +2493,10 @@ static void expat_SkippedEntity(ExpatReader *reader,
     return;
   }
 
-  if (handlers->skipped_entity) {
-    status = handlers->skipped_entity(handlers->arg, python_entityName);
-    if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-  }
-
+  status = ExpatFilter_SkippedEntity(reader->context->filters,
+                                     python_entityName);
+  if (status == EXPAT_STATUS_ERROR)
+    stop_parsing(reader);
   Py_DECREF(python_entityName);
 }
 
@@ -2680,15 +2743,14 @@ stringify_model(ExpatReader *reader, XML_Content *model)
 static void expat_ElementDecl(ExpatReader *reader, const XML_Char *name,
                               XML_Content *content)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
-  ExpatStatus status;
   PyObject *element_name, *element_type, *model_string;
   PyObject *model = NULL;
+  ExpatStatus status;
 
   Debug_ParserFunctionCall(expat_ElementDecl, reader);
 
 #if defined(DEBUG_CALLBACKS)
-  fprintf(stderr, "*** ElementDecl(name=");
+  fprintf(stderr, "=== ElementDecl(name=");
   XMLChar_Print(stderr, name);
   fprintf(stderr, ", content=");
   model_string = stringify_model(reader, content);
@@ -2762,10 +2824,9 @@ static void expat_ElementDecl(ExpatReader *reader, const XML_Char *name,
                                    element_type)) {
   case 0:
     Py_DECREF(element_type);
-    if (Expat_ReportError(reader, "DUPLICATE_ELEMENT_DECL", "{sO}",
-                          "element", element_name) == EXPAT_STATUS_ERROR) {
+    if (report_error(reader, "DUPLICATE_ELEMENT_DECL", "{sO}",
+                     "element", element_name) == EXPAT_STATUS_ERROR)
       goto error;
-    }
     break;
   case 1:
     Py_DECREF(element_type);
@@ -2775,12 +2836,15 @@ static void expat_ElementDecl(ExpatReader *reader, const XML_Char *name,
     goto error;
   }
 
-  if (handlers->element_decl) {
+  /* only create the model string if DTD declarations are needed. */
+  if (ExpatReader_HasFlag(reader, ExpatReader_DTD_DECLARATIONS)) {
     model_string = stringify_model(reader, content);
     if (model_string == NULL) goto error;
-    status = handlers->element_decl(handlers->arg, element_name, model_string);
-    if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+    status = ExpatFilter_ElementDecl(reader->context->filters,
+                                     element_name, model_string);
     Py_DECREF(model_string);
+    if (status == EXPAT_STATUS_ERROR)
+      goto error;
   }
 
  finally:
@@ -2838,7 +2902,6 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
                               const XML_Char *attname, const XML_Char *att_type,
                               const XML_Char *dflt, int isrequired)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   DTD *dtd = reader->context->dtd;
   AttributeDecl decl;
   AttributeType type;
@@ -2850,7 +2913,7 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
   Debug_ParserFunctionCall(expat_AttlistDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** AttlistDecl(elname=");
+  fprintf(stderr, "=== AttlistDecl(elname=");
   XMLChar_Print(stderr, elname);
   fprintf(stderr, ", attname=");
   XMLChar_Print(stderr, attname);
@@ -2896,10 +2959,9 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
       type = ATTRIBUTE_TYPE_ID;
       /* VC: ID Attribute Default */
       if (dflt) {
-        if (Expat_ReportError(reader, "ID_ATTRIBUTE_DEFAULT", NULL)
-            == EXPAT_STATUS_ERROR) {
+        if (report_error(reader, "ID_ATTRIBUTE_DEFAULT", NULL)
+            == EXPAT_STATUS_ERROR) 
           return;
-        }
       }
     } else if (att_type[5] == 0) {
       type = ATTRIBUTE_TYPE_IDREF;
@@ -2956,10 +3018,8 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
   switch (PyObject_RichCompareBool(attribute_name, xml_space_string, Py_EQ)) {
   case 1:
     if (type != ATTRIBUTE_TYPE_ENUMERATION) {
-      if (Expat_ReportError(reader, "XML_SPACE_DECL", NULL)
-          == EXPAT_STATUS_ERROR) {
+      if (report_error(reader, "XML_SPACE_DECL", NULL) == EXPAT_STATUS_ERROR)
         return;
-      }
     } else {
       int cmp = 1;
       for (i = 0; cmp == 1 && i < PyTuple_GET_SIZE(allowed_values); i++) {
@@ -2971,10 +3031,9 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
       }
       switch (cmp) {
       case 0: /* value other than "default" or "preserve" in enumeration */
-        if (Expat_ReportError(reader, "XML_SPACE_VALUES", NULL)
-            == EXPAT_STATUS_ERROR) {
+        if (report_error(reader, "XML_SPACE_VALUES", NULL) 
+            == EXPAT_STATUS_ERROR)
           return;
-        }
         /* fall through */
       case 1:
         break;
@@ -3020,10 +3079,9 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
     i = 0;
     while (PyDict_Next(attributes, &i, &key, &value)) {
       if (AttributeType_GET_TYPE(value) == ATTRIBUTE_TYPE_ID) {
-        if (Expat_ReportError(reader, "DUPLICATE_ID_DECL", NULL)
-            == EXPAT_STATUS_ERROR) {
+        if (report_error(reader, "DUPLICATE_ID_DECL", NULL)
+            == EXPAT_STATUS_ERROR)
           return;
-        }
         /* Only report once */
         break;
       }
@@ -3035,19 +3093,18 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
                                    allowed_values, default_value)) {
   case 0:
     /* already declared, issue warning */
-    if (Expat_ReportWarning(reader, "ATTRIBUTE_DECLARED", "{sO}",
-                            "attr", attribute_name) == EXPAT_STATUS_ERROR) {
-      return;
-    }
+    if (report_warning(reader, "ATTRIBUTE_DECLARED", "{sO}",
+                       "attr", attribute_name) == EXPAT_STATUS_ERROR)
+      goto finally;
     break;
   case 1:
-    if (handlers->attribute_decl) {
+    if (ExpatReader_HasFlag(reader, ExpatReader_DTD_DECLARATIONS)) {
       PyObject *type_str, *decl_str;
 
       type_str = XMLChar_DecodeInterned(att_type, reader->unicode_cache);
       if (type_str == NULL) {
         stop_parsing(reader);
-        return;
+        goto finally;
       }
 
       switch (decl) {
@@ -3064,16 +3121,20 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
         decl_str = Py_None;
       }
 
-      status = handlers->attribute_decl(handlers->arg,
-                                        element_name, attribute_name,
-                                        type_str, decl_str, default_value);
-      if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
+      status = ExpatFilter_AttributeDecl(reader->context->filters,
+                                         element_name, attribute_name,
+                                         type_str, decl_str, default_value);
+      if (status == EXPAT_STATUS_ERROR) {
+        stop_parsing(reader);
+        goto finally;
+      }
     }
     break;
   default:
     stop_parsing(reader);
     break;
   }
+finally:
   Py_XDECREF(allowed_values);
 }
 
@@ -3086,7 +3147,6 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
                              const XML_Char *systemId, const XML_Char *publicId,
                              const XML_Char *notationName)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   DTD *dtd = reader->context->dtd;
   PyObject *python_entityName;
   int len;
@@ -3095,7 +3155,7 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
   Debug_ParserFunctionCall(expat_EntityDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** EntityDecl(entityName=");
+  fprintf(stderr, "=== EntityDecl(entityName=");
   XMLChar_Print(stderr, entityName);
   fprintf(stderr, ", is_parameter_entity=%d, value=", is_parameter_entity);
   XMLChar_NPrint(stderr, value, value_length);
@@ -3138,8 +3198,8 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
        * encountered is binding. */
       /* NOTE: no need to test return status of this as the handler is going
        * to exit regardless. */
-      Expat_ReportWarning(reader, "ENTITY_DECLARED", "{sO}",
-                          "entity", python_entityName);
+      (void) report_warning(reader, "ENTITY_DECLARED", "{sO}",
+                            "entity", python_entityName);
       return;
     }
   }
@@ -3177,13 +3237,11 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
 
     if (notationName == NULL) {
       python_notationName = Py_None;
-      if (handlers->external_entity_decl) {
-        status = handlers->external_entity_decl(handlers->arg,
-                                                python_entityName,
-                                                python_publicId,
-                                                python_systemId);
-        if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-      }
+      status = ExpatFilter_ExternalEntityDecl(reader->context->filters,
+                                              python_entityName,
+                                              python_publicId,
+                                              python_systemId);
+      if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
     } else {
       python_notationName = XMLChar_DecodeInterned(notationName,
                                                    reader->unicode_cache);
@@ -3193,14 +3251,12 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
         stop_parsing(reader);
         return;
       }
-      if (handlers->unparsed_entity_decl) {
-        status = handlers->unparsed_entity_decl(handlers->arg,
-                                                python_entityName,
-                                                python_publicId,
-                                                python_systemId,
-                                                python_notationName);
-        if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-      }
+      status = ExpatFilter_UnparsedEntityDecl(reader->context->filters,
+                                              python_entityName,
+                                              python_publicId,
+                                              python_systemId,
+                                              python_notationName);
+      if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
     }
     Py_DECREF(python_publicId);
     Py_DECREF(python_systemId);
@@ -3229,11 +3285,9 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
       stop_parsing(reader);
       return;
     }
-    if (handlers->internal_entity_decl) {
-      status = handlers->internal_entity_decl(handlers->arg,
-                                              python_entityName, python_value);
-      if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
-    }
+    status = ExpatFilter_InternalEntityDecl(reader->context->filters,
+                                            python_entityName, python_value);
+    if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
     Py_DECREF(python_value);
   }
 }
@@ -3245,7 +3299,6 @@ static void expat_NotationDecl(ExpatReader *reader, const XML_Char *notationName
                                const XML_Char *base, const XML_Char *systemId,
                                const XML_Char *publicId)
 {
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   DTD *dtd = reader->context->dtd;
   PyObject *python_notationName;
   ExpatStatus status;
@@ -3253,7 +3306,7 @@ static void expat_NotationDecl(ExpatReader *reader, const XML_Char *notationName
   Debug_ParserFunctionCall(expat_NotationDecl, reader);
 
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "*** NotationDecl(notationName=");
+  fprintf(stderr, "=== NotationDecl(notationName=");
   XMLChar_Print(stderr, notationName);
   fprintf(stderr, ", base=");
   XMLChar_Print(stderr, base);
@@ -3285,7 +3338,7 @@ static void expat_NotationDecl(ExpatReader *reader, const XML_Char *notationName
     }
   }
 
-  if (handlers->notation_decl) {
+  if (ExpatReader_HasFlag(reader, ExpatReader_DTD_DECLARATIONS)) {
     PyObject *python_publicId, *python_systemId;
     if (systemId) {
       python_systemId = XMLChar_Decode(systemId);
@@ -3306,9 +3359,9 @@ static void expat_NotationDecl(ExpatReader *reader, const XML_Char *notationName
       stop_parsing(reader);
       return;
     }
-
-    status = handlers->notation_decl(handlers->arg, python_notationName,
-                                     python_publicId, python_systemId);
+    status = ExpatFilter_NotationDecl(reader->context->filters,
+                                      python_notationName,
+                                      python_publicId, python_systemId);
     if (status == EXPAT_STATUS_ERROR) stop_parsing(reader);
 
     Py_DECREF(python_publicId);
@@ -3326,7 +3379,6 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
                                    const XML_Char *publicId)
 {
   ExpatReader *reader = (ExpatReader *) XML_GetUserData(parser);
-  ExpatHandlers *handlers = (ExpatHandlers *)reader;
   PyObject *python_base, *python_systemId, *python_publicId, *source;
   XML_Parser new_parser;
   ExpatStatus status;
@@ -3335,7 +3387,7 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
   Debug_ParserFunctionCall(expat_ExternalEntityRef, reader);
 
 #if defined(DEBUG_CALLBACKS)
-  fprintf(stderr, "*** ExternalEntityRef(context=");
+  fprintf(stderr, "=== ExternalEntityRef(context=");
   XMLChar_Print(stderr, context);
   fprintf(stderr, ", base=");
   XMLChar_Print(stderr, base);
@@ -3381,23 +3433,34 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
 
   /* If no resolver is provided, use the default behavior from the
    * InputSource object. */
-  if (handlers->resolve_entity) {
-    source = handlers->resolve_entity(handlers->arg,
-                                              python_publicId,
-                                              python_systemId);
-    Py_DECREF(python_publicId);
-    Py_DECREF(python_systemId);
-  } else {
-    source = PyObject_CallMethod(reader->context->source, "resolveEntity",
-                                 "NN", python_publicId, python_systemId);
+  source = Py_None;
+  if (ExpatReader_HasFlag(reader, ExpatReader_ENTITY_RESOLVER)) {
+    FilterState *state = reader->context->filters;
+    while (state) {
+      if (state->active) {
+        ExpatFilter *filter = state->filter;
+        ExpatHandlers handlers = filter->handlers;
+        if (handlers.resolve_entity) {
+          source = handlers.resolve_entity(filter->arg, 
+                                           python_publicId, python_systemId);
+          if (source == NULL) break;
+        }
+        if (ExpatFilter_HasFlag(filter, ExpatFilter_HANDLER_TYPE)) break;
+      }
+    }
   }
+  if (source == Py_None)
+    source = PyObject_CallMethod(reader->context->source, "resolveEntity",
+                                 "OO", python_publicId, python_systemId);
+  Py_DECREF(python_publicId);
+  Py_DECREF(python_systemId);
   if (source == NULL) {
     XML_ParserFree(new_parser);
     stop_parsing(reader);
     return result;
   }
 
-  if (begin_context(reader, new_parser, source) == NULL) {
+  if (begin_context(reader, new_parser, source) == EXPAT_STATUS_ERROR) {
     Py_DECREF(source);
     XML_ParserFree(new_parser);
     stop_parsing(reader);
@@ -3689,9 +3752,10 @@ process_xml_attributes(ExpatReader *reader, const XML_Char **atts,
 /** External Interface ************************************************/
 
 ExpatReader *
-ExpatReader_New(PyObject *filters)
+ExpatReader_New(ExpatFilter *filters[], size_t nfilters)
 {
   ExpatReader *reader;
+  size_t i;
 
   if (expat_library_error != NULL) {
     PyErr_SetObject(PyExc_RuntimeError, expat_library_error);
@@ -3704,6 +3768,25 @@ ExpatReader_New(PyObject *filters)
     return NULL;
   }
   memset(reader, 0, sizeof(struct ExpatReaderStruct));
+
+  if ((reader->filters = PyMem_New(ExpatFilter, nfilters)) == NULL)
+    goto memory_error;
+  for (i = 0; i < nfilters; i++) {
+    ExpatHandlers handlers;
+    memcpy(&reader->filters[i], filters[i], sizeof(ExpatFilter));
+    handlers = reader->filters[i].handlers;
+    if (handlers.resolve_entity) {
+      ExpatReader_SetFlag(reader, ExpatReader_ENTITY_RESOLVER);
+    }
+    if (handlers.warning || handlers.error || handlers.fatal_error) {
+      ExpatReader_SetFlag(reader, ExpatReader_ERROR_HANDLERS);
+    }
+    if (handlers.element_decl || handlers.attribute_decl ||
+        handlers.external_entity_decl || handlers.internal_entity_decl) {
+      ExpatReader_SetFlag(reader, ExpatReader_DTD_DECLARATIONS);
+    }
+  }
+  reader->filters_size = nfilters;
 
   /* caching of split-names */
   if ((reader->name_cache = HashTable_New()) == NULL)
@@ -3739,10 +3822,6 @@ ExpatReader_New(PyObject *filters)
   if ((reader->xml_space_stack = Stack_New()) == NULL)
     goto error;
   Stack_Push(reader->xml_space_stack, Py_False); /* xml:space='default' */
-
-  ((ExpatHandlers *)reader)->arg = filters;
-
-  reader->parameter_entity_parsing = 0;
 
   return reader;
 
@@ -3801,7 +3880,7 @@ ExpatReader_Del(ExpatReader *reader)
 int
 ExpatReader_GetValidation(ExpatReader *reader)
 {
-  return reader->dtd_validation;
+  return ExpatReader_HasFlag(reader, ExpatReader_DTD_VALIDATION) ? 1 : 0;
 }
 
 void
@@ -3809,15 +3888,17 @@ ExpatReader_SetValidation(ExpatReader *reader, int doValidation)
 {
   /* do not allowing changing after parsing has begun */
   if (reader->context == NULL) {
-    /* normalize value to 1 or 0 */
-    reader->dtd_validation = doValidation ? 1 : 0;
+    if (doValidation)
+      ExpatReader_SetFlag(reader, ExpatReader_DTD_VALIDATION);
+    else
+      ExpatReader_ClearFlag(reader, ExpatReader_DTD_VALIDATION);
   }
 }
 
 int
 ExpatReader_GetParamEntityParsing(ExpatReader *reader)
 {
-  return reader->parameter_entity_parsing;
+  return ExpatReader_HasFlag(reader, ExpatReader_PARAM_ENTITY_PARSING) ? 1 : 0;
 }
 
 void
@@ -3825,8 +3906,10 @@ ExpatReader_SetParamEntityParsing(ExpatReader *reader, int doParamEntityParsing)
 {
   /* do not allowing changing after parsing has begun */
   if (reader->context == NULL) {
-    /* normalize value to 1 or 0 */
-    reader->parameter_entity_parsing = doParamEntityParsing ? 1 : 0;
+    if (doParamEntityParsing)
+      ExpatReader_SetFlag(reader, ExpatReader_PARAM_ENTITY_PARSING);
+    else
+      ExpatReader_ClearFlag(reader, ExpatReader_PARAM_ENTITY_PARSING);
   }
 }
 
@@ -4104,45 +4187,6 @@ int ExpatReader_GetParsingStatus(ExpatReader *reader)
   return 0;
 }
 
-/** ExpatReader Handlers **********************************************/
-
-#undef ExpatReader_DEFINE_HANDLER
-#define ExpatReader_DEFINE_HANDLER(NAME, HANDLER, SLOT)            \
-void ExpatReader_Set##NAME##Handler(ExpatReader *reader, HANDLER handler) \
-{ ((ExpatHandlers *)reader)->SLOT = handler; }
-
-#undef ExpatReader_DEFINE_SETTER
-#define ExpatReader_DEFINE_SETTER(NAME, SLOT) \
-  ExpatReader_DEFINE_HANDLER(NAME, Expat##NAME##Handler, SLOT)
-
-ExpatReader_DEFINE_SETTER(StartDocument, start_document)
-ExpatReader_DEFINE_SETTER(EndDocument, end_document)
-ExpatReader_DEFINE_SETTER(StartElement, start_element)
-ExpatReader_DEFINE_SETTER(EndElement, end_element)
-ExpatReader_DEFINE_SETTER(StartNamespaceDecl, start_namespace_decl)
-ExpatReader_DEFINE_SETTER(EndNamespaceDecl, end_namespace_decl)
-ExpatReader_DEFINE_SETTER(CharacterData, characters)
-ExpatReader_DEFINE_SETTER(ProcessingInstruction, processing_instruction)
-ExpatReader_DEFINE_SETTER(Comment, comment)
-ExpatReader_DEFINE_SETTER(StartDoctypeDecl, start_doctype_decl)
-ExpatReader_DEFINE_SETTER(EndDoctypeDecl, end_doctype_decl)
-ExpatReader_DEFINE_SETTER(UnparsedEntityDecl, unparsed_entity_decl)
-ExpatReader_DEFINE_SETTER(SkippedEntity, skipped_entity)
-ExpatReader_DEFINE_SETTER(StartCdataSection, start_cdata_section)
-ExpatReader_DEFINE_SETTER(EndCdataSection, end_cdata_section)
-ExpatReader_DEFINE_SETTER(IgnorableWhitespace, ignorable_whitespace)
-
-ExpatReader_DEFINE_SETTER(NotationDecl, notation_decl)
-ExpatReader_DEFINE_SETTER(ElementDecl, element_decl)
-ExpatReader_DEFINE_SETTER(AttributeDecl, attribute_decl)
-ExpatReader_DEFINE_SETTER(InternalEntityDecl, internal_entity_decl)
-ExpatReader_DEFINE_SETTER(ExternalEntityDecl, external_entity_decl)
-ExpatReader_DEFINE_SETTER(ResolveEntity, resolve_entity)
-
-ExpatReader_DEFINE_HANDLER(Warning, ExpatNotificationHandler, warning)
-ExpatReader_DEFINE_HANDLER(Error, ExpatNotificationHandler, error)
-ExpatReader_DEFINE_HANDLER(FatalError, ExpatNotificationHandler, fatal_error)
-
 /** Module Interface **************************************************/
 
 static PyMethodDef module_methods[] = {
@@ -4157,40 +4201,10 @@ static Expat_APIObject Expat_API = {
   ExpatReader_Suspend,          //Expat_SuspendParser,
   ExpatReader_Resume,           //Expat_ResumeParser,
   /*
+  Expat_SetParamEntityParsing,
   Expat_GetBase,
   Expat_GetLineNumber,
   Expat_GetColumnNumber,
-  Expat_SetStartDocumentHandler,
-  Expat_SetEndDocumentHandler,
-  Expat_SetStartElementHandler,
-  Expat_SetEndElementHandler,
-  Expat_SetCharacterDataHandler,
-  Expat_SetProcessingInstructionHandler,
-  Expat_SetCommentHandler,
-  Expat_SetStartNamespaceDeclHandler,
-  Expat_SetEndNamespaceDeclHandler,
-  Expat_SetStartDoctypeDeclHandler,
-  Expat_SetEndDoctypeDeclHandler,
-  Expat_SetSkippedEntityHandler,
-  Expat_SetStartCdataSectionHandler,
-  Expat_SetEndCdataSectionHandler,
-  Expat_SetIgnorableWhitespaceHandler,
-
-  Expat_SetWarningHandler,
-  Expat_SetErrorHandler,
-  Expat_SetFatalErrorHandler,
-
-  Expat_SetNotationDeclHandler,
-  Expat_SetUnparsedEntityDeclHandler,
-
-  Expat_SetElementDeclHandler,
-  Expat_SetAttributeDeclHandler,
-  Expat_SetInternalEntityDeclHandler,
-  Expat_SetExternalEntityDeclHandler,
-
-  Expat_SetResolveEntityHandler,
-
-  Expat_SetParamEntityParsing,
   */
 };
 

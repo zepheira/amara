@@ -2,6 +2,23 @@
 #include "attributes.h"
 #include "../domlette/domlette_interface.h"
 
+#define DEBUG_SAX
+
+#if defined(DEBUG_SAX)
+#define Trace_Print \
+  PySys_WriteStderr
+#define Trace_PrintObject(ob) \
+  PyObject_Print((ob), PySys_GetFile("stderr", stderr), 0)
+#else
+#ifdef __STDC__ /* C99 conformance macro */
+#define Trace_Print(...)
+#else
+/* Decent compilers will optimize this out, hopefully */
+Py_LOCAL_INLINE(void) Trace_Print(const char *format, ...) { }
+#endif
+#define Trace_PrintObject(ob)
+#endif
+
 static PyObject *uri_resolver;
 static PyObject *xmlns_namespace_string;
 static PyObject *feature_external_ges;
@@ -140,65 +157,12 @@ static PyObject *SAXNotSupportedException(char *msg)
 
 /** Expat Callback Handlers *******************************************/
 
-/* The following few functions (getcode, trace_frame, trace_frame_exc and
- * call_with frame) are used for having proper tracebacks and
- * profiling information.  The are originally from the pyexpat module.
- */
 #define getcode(slot) _getcode(Handler_##slot, #slot, __LINE__)
-static PyCodeObject *_getcode(enum HandlerTypes slot, char *slot_name,
-                             int lineno)
+Py_LOCAL_INLINE(PyCodeObject *)
+_getcode(enum HandlerTypes slot, char *name, int lineno)
 {
-  PyObject *code, *name, *nulltuple, *filename;
-
-  if (tb_codes[slot] == NULL) {
-    code = PyString_FromString("");
-    if (code == NULL) {
-      return NULL;
-    }
-
-    name = PyString_FromString(slot_name);
-    if (name == NULL) {
-      Py_DECREF(code);
-      return NULL;
-    }
-
-    nulltuple = PyTuple_New((Py_ssize_t)0);
-    if (nulltuple == NULL) {
-      Py_DECREF(code);
-      Py_DECREF(name);
-      return NULL;
-    }
-
-    filename = PyString_FromString(__FILE__);
-    if (filename == NULL) {
-      Py_DECREF(code);
-      Py_DECREF(name);
-      Py_DECREF(nulltuple);
-      return NULL;
-    }
-
-    tb_codes[slot] = PyCode_New(0,		/* argcount */
-                                0,		/* nlocals */
-                                0,		/* stacksize */
-                                0,		/* flags */
-                                code,		/* code */
-                                nulltuple,	/* consts */
-                                nulltuple,	/* names */
-                                nulltuple,	/* varnames */
-#if PYTHON_API_VERSION >= 1010
-                                nulltuple,	/* freevars */
-                                nulltuple,	/* cellvars */
-#endif
-                                filename,	/* filename */
-                                name,		/* name */
-                                lineno,		/* firstlineno */
-                                code		/* lnotab */
-                                );
-    Py_DECREF(code);
-    Py_DECREF(name);
-    Py_DECREF(nulltuple);
-    Py_DECREF(filename);
-  }
+  if (tb_codes[slot] == NULL)
+    tb_codes[slot] = _PyCode_Here(name, __FILE__, lineno);
   return tb_codes[slot];
 }
 
@@ -208,9 +172,11 @@ static ExpatStatus sax_StartDocument(void *userData)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler, *args, *result;
 
+  Trace_Print("--- sax_StartDocument(%p)\n", self);
+
   if ((handler = self->handlers[Handler_SetLocator]) != NULL) {
     /* handler.setDocumentLocator(locator) */
-    if ((args = PyTuple_Pack(1, (PyObject *)self)) == NULL);
+    if ((args = PyTuple_Pack(1, (PyObject *)self)) == NULL)
       return EXPAT_STATUS_ERROR;
     result = PyTrace_CallObject(getcode(SetLocator), handler, args);
     Py_DECREF(args);
@@ -238,6 +204,8 @@ static ExpatStatus sax_EndDocument(void *userData)
   PyObject *handler = self->handlers[Handler_EndDocument];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_EndDocument(%p)\n", self);
+
   if (handler != NULL) {
     /* handler.endDocument() */
     if ((args = PyTuple_New(0)) == NULL)
@@ -259,6 +227,12 @@ static ExpatStatus sax_StartNamespaceDecl(void *userData, PyObject *prefix,
   PyObject *handler = self->handlers[Handler_StartNamespace];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_StartNamespaceDecl(%p, prefix=", self);
+  Trace_PrintObject(prefix);
+  Trace_Print(", uri=");
+  Trace_PrintObject(uri);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.startNamespace(prefix, uri) */
     if ((args = PyTuple_Pack(2, prefix, uri)) == NULL)
@@ -279,6 +253,10 @@ static ExpatStatus sax_EndNamespaceDecl(void *userData, PyObject *prefix)
   PyObject *handler = self->handlers[Handler_EndNamespace];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_EndNamespaceDecl(%p, prefix=", self);
+  Trace_PrintObject(prefix);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.endNamespace(prefix) */
     if ((args = PyTuple_Pack(1, prefix)) == NULL)
@@ -298,6 +276,21 @@ static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_StartElement];
   PyObject *args, *result;
+#if defined(DEBUG_SAX)
+  int i;
+  Trace_Print("--- sax_StartElement(%p, name=", self);
+  Trace_PrintObject(name->qualifiedName);
+  Trace_Print(", atts={");
+  for (i = 0; i < natts; i++) {
+    if (i > 0)
+      Trace_Print(", ");
+    Trace_PrintObject(atts[i].qualifiedName);
+    Trace_Print(": ");
+    Trace_PrintObject(atts[i].value);
+  }
+  Trace_Print("})\n");
+#endif
+
 
   if (handler != NULL) {
     /* handler.startElement((namespaceURI, localName), tagName, attributes) */
@@ -320,6 +313,10 @@ static ExpatStatus sax_EndElement(void *userData, ExpatName *name)
   PyObject *handler = self->handlers[Handler_EndElement];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_EndElement(%p, name=", self);
+  Trace_PrintObject(name->qualifiedName);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.endElement((namespaceURI, localName), tagName) */
     args = Py_BuildValue("(OO)O", name->namespaceURI, name->localName,
@@ -341,6 +338,10 @@ static ExpatStatus sax_CharacterData(void *userData, PyObject *data)
   PyObject *handler = self->handlers[Handler_Characters];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_Characters(%p, data=", self);
+  Trace_PrintObject(data);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.characters(content) */
     if ((args = PyTuple_Pack(1, data)) == NULL)
@@ -360,6 +361,10 @@ static ExpatStatus sax_IgnorableWhitespace(void *userData, PyObject *data)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_IgnorableWhitespace];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_IgnorableWhitespace(%p, data=", self);
+  Trace_PrintObject(data);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.ignoreableWhitespace(content) */
@@ -383,6 +388,12 @@ static ExpatStatus sax_ProcessingInstruction(void *userData,
   PyObject *handler = self->handlers[Handler_ProcessingInstruction];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_ProcessingInstruction(%p, target=", self);
+  Trace_PrintObject(target);
+  Trace_Print(", data=");
+  Trace_PrintObject(data);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.processingInstruction(target, data) */
     if ((args = PyTuple_Pack(2, target, data)) == NULL)
@@ -401,6 +412,10 @@ static ExpatStatus sax_SkippedEntity(void *userData, PyObject *name)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_SkippedEntity];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_SkippedEntity(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.skippedEntity(name) */
@@ -422,6 +437,14 @@ static ExpatStatus sax_StartDoctypeDecl(void *userData, PyObject *name,
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_StartDTD];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_StartDoctypeDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", systemId=");
+  Trace_PrintObject(systemId);
+  Trace_Print(", publicId=");
+  Trace_PrintObject(publicId);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.startDTD(name, publicId, systemId) */
@@ -448,6 +471,8 @@ static ExpatStatus sax_EndDoctypeDecl(void *userData)
   PyObject *handler = self->handlers[Handler_EndDTD];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_EndDoctypeDecl(%p)\n", self);
+
   if (handler != NULL) {
     /* handler.endDTD() */
     if ((args = PyTuple_New(0)) == NULL) return EXPAT_STATUS_ERROR;
@@ -466,6 +491,8 @@ static ExpatStatus sax_StartCdataSection(void *userData)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_StartCDATA];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_StartCdataSection(%p)\n", self);
 
   if (handler != NULL) {
     /* handler.startCDATA() */
@@ -486,6 +513,8 @@ static ExpatStatus sax_EndCdataSection(void *userData)
   PyObject *handler = self->handlers[Handler_EndCDATA];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_EndCdataSection(%p)\n", self);
+
   if (handler != NULL) {
     /* handler.endCDATA() */
     if ((args = PyTuple_New(0)) == NULL) return EXPAT_STATUS_ERROR;
@@ -503,6 +532,10 @@ static ExpatStatus sax_Comment(void *userData, PyObject *data)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_Comment];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_Comment(%p, data=", self);
+  Trace_PrintObject(data);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.comment(content) */
@@ -524,6 +557,14 @@ static ExpatStatus sax_NotationDecl(void *userData, PyObject *name,
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_NotationDecl];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_NotationDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", systemId=");
+  Trace_PrintObject(systemId);
+  Trace_Print(", publicId=");
+  Trace_PrintObject(publicId);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.notationDecl(name, publicId, systemId) */
@@ -553,6 +594,16 @@ static ExpatStatus sax_UnparsedEntityDecl(void *userData,
   PyObject *handler = self->handlers[Handler_UnparsedEntityDecl];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_UnparsedEntityDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", publicId=");
+  Trace_PrintObject(publicId);
+  Trace_Print(", systemId=");
+  Trace_PrintObject(systemId);
+  Trace_Print(", notationName=");
+  Trace_PrintObject(notationName);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.unparsedEntityDecl(name, publicId, systemId, notationName) */
     if ((args = PyTuple_New(4)) == NULL) return EXPAT_STATUS_ERROR;
@@ -578,6 +629,10 @@ static ExpatStatus sax_Warning(void *userData, PyObject *exception)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_Warning];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_Warning(%p, exception=", self);
+  Trace_PrintObject(exception);
+  Trace_Print(")\n");
 
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL) return EXPAT_STATUS_ERROR;
@@ -617,6 +672,10 @@ static ExpatStatus sax_Error(void *userData, PyObject *exception)
   PyObject *handler = self->handlers[Handler_Error];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_Error(%p, exception=", self);
+  Trace_PrintObject(exception);
+  Trace_Print(")\n");
+
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL) return EXPAT_STATUS_ERROR;
 
@@ -645,6 +704,10 @@ static ExpatStatus sax_FatalError(void *userData, PyObject *exception)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_FatalError];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_FatalError(%p, exception=", self);
+  Trace_PrintObject(exception);
+  Trace_Print(")\n");
 
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL)
@@ -676,6 +739,12 @@ static ExpatStatus sax_ElementDecl(void *userData, PyObject *name,
   PyObject *handler = self->handlers[Handler_ElementDecl];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_ElementDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", model=");
+  Trace_PrintObject(model);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.elementDecl(name, model) */
     if ((args = PyTuple_Pack(2, name, model)) == NULL)
@@ -697,6 +766,18 @@ static ExpatStatus sax_AttributeDecl(void *userData, PyObject *eName,
   PyObject *handler = self->handlers[Handler_AttributeDecl];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_AttributeDecl(%p, eName=", self);
+  Trace_PrintObject(eName);
+  Trace_Print(", aName=");
+  Trace_PrintObject(aName);
+  Trace_Print(", type=");
+  Trace_PrintObject(type);
+  Trace_Print(", decl=");
+  Trace_PrintObject(decl);
+  Trace_Print(", value=");
+  Trace_PrintObject(value);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.attributeDecl(eName, aName, type, decl, value) */
     if ((args = PyTuple_Pack(5, eName, aName, type, decl, value)) == NULL)
@@ -716,6 +797,12 @@ static ExpatStatus sax_InternalEntityDecl(void *userData, PyObject *name,
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_InternalEntityDecl];
   PyObject *args, *result;
+
+  Trace_Print("--- sax_InternalEntityDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", value=");
+  Trace_PrintObject(value);
+  Trace_Print(")\n");
 
   if (handler != NULL) {
     /* handler.internalEntityDecl(name, value) */
@@ -739,6 +826,14 @@ static ExpatStatus sax_ExternalEntityDecl(void *userData,
   PyObject *handler = self->handlers[Handler_ExternalEntityDecl];
   PyObject *args, *result;
 
+  Trace_Print("--- sax_ExternalEntityDecl(%p, name=", self);
+  Trace_PrintObject(name);
+  Trace_Print(", publicId=");
+  Trace_PrintObject(publicId);
+  Trace_Print(", systemId=");
+  Trace_PrintObject(systemId);
+  Trace_Print(")\n");
+
   if (handler != NULL) {
     /* handler.externalEntityDecl(name, publicId, systemId) */
     if ((args = PyTuple_Pack(3, name, publicId, systemId)) == NULL)
@@ -759,15 +854,54 @@ static PyObject *sax_ResolveEntity(void *userData, PyObject *publicId,
   PyObject *handler = self->handlers[Handler_ResolveEntity];
   PyObject *args, *result;
 
-  assert(handler != NULL);
+  Trace_Print("--- sax_ResolveEntity(%p, publicId=", self);
+  Trace_PrintObject(publicId);
+  Trace_Print(", systemId=");
+  Trace_PrintObject(systemId);
+  Trace_Print(")\n");
 
-  /* handler.resolveEntity(publicId, systemId) */
-  if ((args = PyTuple_Pack(2, publicId, systemId)) == NULL)
-    return NULL;
-  result = PyTrace_CallObject(getcode(ResolveEntity), handler, args);
-  Py_DECREF(args);
+  if (handler != NULL) {
+    /* handler.resolveEntity(publicId, systemId) */
+    if ((args = PyTuple_Pack(2, publicId, systemId)) == NULL)
+      return NULL;
+    result = PyTrace_CallObject(getcode(ResolveEntity), handler, args);
+    Py_DECREF(args);
+  } else {
+    Py_INCREF(Py_None);
+    result = Py_None;
+  }
   return result;
 }
+
+static ExpatHandlers sax_handlers = {
+  /* start_filter           */ NULL,
+  /* end_filter             */ NULL,
+  /* start_document         */ sax_StartDocument,
+  /* end_document           */ sax_EndDocument,
+  /* start_element          */ sax_StartElement,
+  /* end_element            */ sax_EndElement,
+  /* characters             */ sax_CharacterData,
+  /* ignorable_whitespace   */ sax_IgnorableWhitespace,
+  /* processing_instruction */ sax_ProcessingInstruction,
+  /* comment                */ sax_Comment,
+  /* start_namespace_decl   */ sax_StartNamespaceDecl,
+  /* end_namespace_decl     */ sax_EndNamespaceDecl,
+  /* start_doctype_decl     */ sax_StartDoctypeDecl,
+  /* end_doctype_decl       */ sax_EndDoctypeDecl,
+  /* element_decl           */ sax_ElementDecl,
+  /* attribute_decl         */ sax_AttributeDecl,
+  /* internal_entity_decl   */ sax_InternalEntityDecl,
+  /* external_entity_decl   */ sax_ExternalEntityDecl,
+  /* unparsed_entity_decl   */ sax_UnparsedEntityDecl,
+  /* notation_decl          */ sax_NotationDecl,
+  /* skipped_entity         */ sax_SkippedEntity,
+  /* start_cdata_section    */ sax_StartCdataSection,
+  /* end_cdata_section      */ sax_EndCdataSection,
+  /* warning                */ sax_Warning,
+  /* error                  */ sax_Error,
+  /* fatal_error            */ sax_FatalError,
+  /* resolve_entity         */ sax_ResolveEntity,
+};
 
 /** DOMWalker *********************************************************/
 
@@ -1331,7 +1465,6 @@ not available.";
 XMLPARSER_METHOD_DEF(setEntityResolver)
 {
   PyObject *resolver, *temp;
-  ExpatResolveEntityHandler handler;
 
   if (!PyArg_ParseTuple(args, "O:setEntityResolver", &resolver))
     return NULL;
@@ -1354,12 +1487,6 @@ XMLPARSER_METHOD_DEF(setEntityResolver)
 
   /* ignore any undefined event handler errors */
   PyErr_Clear();
-
-  if (self->handlers[Handler_ResolveEntity])
-    handler = sax_ResolveEntity;
-  else
-    handler = NULL;
-  ExpatReader_SetResolveEntityHandler(self->reader, handler);
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -1962,78 +2089,25 @@ static PyObject *
 parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { NULL };
+  ExpatFilter *filters[1];
   XMLParserObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, ":SaxFilter", kwlist))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, ":SaxReader", kwlist))
     return NULL;
 
   self = (XMLParserObject *)type->tp_alloc(type, 0);
   if (self != NULL) {
-    ExpatReader *reader = ExpatReader_New((PyObject *)self);
-    if (reader == NULL) {
+    filters[0] = ExpatFilter_New(self, &sax_handlers,
+                                 ExpatFilter_HANDLER_TYPE, NULL);
+    if (filters[0] == NULL) {
       Py_DECREF(self);
       return NULL;
     }
-    /** ContentHandler ******************************************/
-    /* startDocument() */
-    ExpatReader_SetStartDocumentHandler(reader, sax_StartDocument);
-    /* endDocument() */
-    ExpatReader_SetEndDocumentHandler(reader, sax_EndDocument);
-    /* startPrefixMapping(prefix, uri) */
-    ExpatReader_SetStartNamespaceDeclHandler(reader, sax_StartNamespaceDecl);
-    /* endPrefixMapping(prefix) */
-    ExpatReader_SetEndNamespaceDeclHandler(reader, sax_EndNamespaceDecl);
-    /* startElementNS((namespaceURI, localName), qualifiedName, attrs) */
-    ExpatReader_SetStartElementHandler(reader, sax_StartElement);
-    /* endElementNS((namespaceURI, localName), qualifiedName) */
-    ExpatReader_SetEndElementHandler(reader, sax_EndElement);
-    /* characters(data) */
-    ExpatReader_SetCharacterDataHandler(reader, sax_CharacterData);
-    /* ignorableWhitespace(data) */
-    ExpatReader_SetIgnorableWhitespaceHandler(reader, sax_IgnorableWhitespace);
-    /* processingInstruction(target, data) */
-    ExpatReader_SetProcessingInstructionHandler(reader,
-                                          sax_ProcessingInstruction);
-    /* skippedEntity(name) */
-    ExpatReader_SetSkippedEntityHandler(reader, sax_SkippedEntity);
-
-    /** ErrorHandler ********************************************/
-    /* warning(exception) */
-    ExpatReader_SetWarningHandler(reader, sax_Warning);
-    /* error(exception) */
-    ExpatReader_SetErrorHandler(reader, sax_Error);
-    /* fatalError(exception) */
-    ExpatReader_SetFatalErrorHandler(reader, sax_FatalError);
-
-    /** DTDHandler **********************************************/
-    /* notationDecl(name, publicId, systemId) */
-    ExpatReader_SetNotationDeclHandler(reader, sax_NotationDecl);
-    /* unparsedEntityDecl(name, publicId, systemId, notationName) */
-    ExpatReader_SetUnparsedEntityDeclHandler(reader, sax_UnparsedEntityDecl);
-
-    /** LexicalHandler ******************************************/
-    /* startDTD() */
-    ExpatReader_SetStartDoctypeDeclHandler(reader, sax_StartDoctypeDecl);
-    /* endDTD() */
-    ExpatReader_SetEndDoctypeDeclHandler(reader, sax_EndDoctypeDecl);
-    /* startCDATA() */
-    ExpatReader_SetStartCdataSectionHandler(reader, sax_StartCdataSection);
-    /* endCDATA() */
-    ExpatReader_SetEndCdataSectionHandler(reader, sax_EndCdataSection);
-    /* comment(data) */
-    ExpatReader_SetCommentHandler(reader, sax_Comment);
-
-    /** DeclHandler *********************************************/
-    /* elementDecl(name, model) */
-    ExpatReader_SetElementDeclHandler(reader, sax_ElementDecl);
-    /* attributeDecl(eName, aName, type, mode, value) */
-    ExpatReader_SetAttributeDeclHandler(reader, sax_AttributeDecl);
-    /* internalEntityDecl(name, value) */
-    ExpatReader_SetInternalEntityDeclHandler(reader, sax_InternalEntityDecl);
-    /* externalEntityDecl(name, publicId, systemId) */
-    ExpatReader_SetExternalEntityDeclHandler(reader, sax_ExternalEntityDecl);
-
-    self->reader = reader;
+    self->reader = ExpatReader_New(filters, 1);
+    if (self->reader == NULL) {
+      Py_DECREF(self);
+      return NULL;
+    }
   }
   return (PyObject *)self;
 }
@@ -2115,7 +2189,7 @@ the next event.";
 static PyTypeObject XMLParser_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ EXPAT_MODULE_NAME "." "SaxFilter",
+  /* tp_name           */ EXPAT_MODULE_NAME "." "SaxReader",
   /* tp_basicsize      */ sizeof(XMLParserObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) parser_dealloc,
@@ -2172,7 +2246,7 @@ int _Expat_SaxFilter_Init(PyObject *module)
   }
   Py_DECREF(import);
 
-  import = PyImport_ImportModule("Ft.Xml");
+  import = PyImport_ImportModule("amara.xml");
   if (import == NULL) return -1;
   xmlns_namespace_string = PyObject_GetAttrString(import, "XMLNS_NAMESPACE");
   xmlns_namespace_string = XmlString_FromObjectInPlace(xmlns_namespace_string);

@@ -27,7 +27,7 @@ reader_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
   newobj = (ReaderObject *)type->tp_alloc(type, 0);
   if (newobj != NULL) {
-    newobj->reader = ExpatReader_New(NULL);
+    newobj->reader = ExpatReader_New(NULL, 0);
     if (newobj->reader == NULL) {
       Py_DECREF(newobj);
       return NULL;

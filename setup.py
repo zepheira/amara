@@ -1,4 +1,26 @@
 #!/usr/bin/env python
+
+def customize_compiler(compiler):
+    """Customized to add debugging information to release builds"""
+    customize_compiler.__base__(compiler)
+    if compiler.compiler_type == 'unix':
+        for options in (compiler.compiler, compiler.compiler_so):
+            if '-g' not in options:
+                options.append('-g')
+    elif compiler.compiler_type == 'msvc':
+        if not compiler.initialized: compiler.initialize()
+        compiler.compile_options.append('/Z7')
+        ldflags_debug = ('/DEBUG', '/OPT:REF', '/OPT:ICF')
+        compiler.ldflags_shared.extend(ldflags_debug)
+        compiler.ldflags_static.extend(ldflags_debug)
+# Note that this import must be done separate as to prevent other modules
+# from grabbing the customize_compiler() function before our customized
+# function can be installed.
+from distutils import sysconfig
+customize_compiler.__base__ = sysconfig.customize_compiler
+sysconfig.customize_compiler = customize_compiler
+
+# Proceed to "regular" setup.py
 from distutils.core import setup, Extension
 
 # add'l setup keywords
@@ -67,6 +89,5 @@ setup(name='Amara',
                              ],
                     ),
                  ],
-      #'install_requires': ['python-dateutil'],
       **kw)
 
