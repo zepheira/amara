@@ -201,7 +201,7 @@ int _Expat_InputSource_Init(PyObject *module)
 {
   PyObject *import;
 
-  import = PyImport_ImportModule("Ft.Lib.Uri");
+  import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
   uri_resolver = PyObject_GetAttrString(import, "BASIC_RESOLVER");
   if (uri_resolver == NULL) {

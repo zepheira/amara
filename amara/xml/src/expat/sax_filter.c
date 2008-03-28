@@ -1240,7 +1240,7 @@ static char saxgen_doc[] =
 static PyTypeObject SaxGenerator_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "Ft.Xml.cDomlette.SaxGenerator",
+  /* tp_name           */ Expat_MODULE_NAME "." "SaxGenerator",
   /* tp_basicsize      */ sizeof(SaxGenObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) saxgen_dealloc,
@@ -2237,7 +2237,7 @@ int _Expat_SaxFilter_Init(PyObject *module)
 {
   PyObject *import;
 
-  import = PyImport_ImportModule("Ft.Lib.Uri");
+  import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
   uri_resolver = PyObject_GetAttrString(import, "BASIC_RESOLVER");
   if (uri_resolver == NULL) {

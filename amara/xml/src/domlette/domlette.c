@@ -557,7 +557,7 @@ DL_EXPORT(void) init_domlette(void)
   if ((XmlString_IMPORT) == NULL) return;
 
   /* get the namespace constants */
-  import = PyImport_ImportModule("Ft.Xml");
+  import = PyImport_ImportModule("amara.xml");
   if (import == NULL) return;
   g_xmlNamespace = PyObject_GetAttrString(import, "XML_NAMESPACE");
   g_xmlNamespace = XmlString_FromObjectInPlace(g_xmlNamespace);
