@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 def customize_compiler(compiler):
     """Customized to add debugging information to release builds"""
     customize_compiler.__base__(compiler)
@@ -20,7 +19,116 @@ from distutils import sysconfig
 customize_compiler.__base__ = sysconfig.customize_compiler
 sysconfig.customize_compiler = customize_compiler
 
-# Proceed to "regular" setup.py
+import os, re, sys
+from itertools import izip
+from distutils import log
+from distutils.ccompiler import CCompiler
+from distutils.dep_util import newer_group
+from distutils.util import convert_path
+_find_include = r'\s*#\s*include\s+(?:"([^"\n]+)"|<([^>\n]+)>)'
+_find_include = re.compile(_find_include).match
+class CCompilerEx(CCompiler):
+    def _find_depends(self, source, incdirs, depends):
+        source = convert_path(source)
+        system_dirs = incdirs
+        user_dirs = [os.path.dirname(source)] + system_dirs
+        depends = set(depends)
+
+        # do two passes to prevent having too many files open at once
+        todo = []
+        lines = open(source)
+        for line in lines:
+            match = _find_include(line)
+            if match:
+                user_include, system_include = map(convert_path, match.groups())
+                if user_include:
+                    todo.append((user_include, user_dirs))
+                else:
+                    todo.append((system_include, system_dirs))
+        lines.close()
+        # Now look for the included file on the search path
+        includes = set()
+        for include, search_path in todo:
+            for path in search_path:
+                filename = os.path.normpath(os.path.join(path, include))
+                if os.path.isfile(filename) and filename not in depends:
+                    depends.add(filename)
+                    depends |= self._find_depends(filename, incdirs, depends)
+                    break
+        return depends
+
+    def _setup_compile(self, outdir, macros, incdirs, sources, depends,
+                       extra_postargs):
+        macros, objects, extra_postargs, pp_opts, build = \
+            CCompiler._setup_compile(self, outdir, macros, incdirs, [],
+                                     depends, extra_postargs)
+        if incdirs is None:
+            incdirs = self.include_dirs
+        else:
+            incdirs = list(incdirs) + (self.include_dirs or [])
+        if depends is None:
+            depends = set()
+        else:
+            depends = set(depends)
+        # Get the list of expected output files
+        objects = self.object_filenames(sources,
+                                        strip_dir=0,
+                                        output_dir=outdir)
+
+        # Do dependency checking
+        skip_source = set()
+        if self.force:
+            # rebuild everything
+            pass
+        else:
+            for src, obj in izip(sources, objects):
+                deps = self._find_depends(src, incdirs, depends)
+                deps.add(src)
+                if not newer_group(deps, obj):
+                    skip_source.add(src)
+        build = {}
+        for src, obj in izip(sources, objects):
+            self.mkpath(os.path.dirname(obj))
+            if src in skip_source:
+                log.debug("skipping %s (%s up-to-date)", src, obj)
+            else:
+                build[obj] = src, os.path.splitext(src)[1]
+
+        return macros, objects, extra_postargs, pp_opts, build
+
+    def depends_pairwise(self, sources, incdirs, depends):
+        if incdirs is None:
+            incdirs = self.include_dirs
+        else:
+            incdirs = list(incdirs) + (self.include_dirs or [])
+        depends = set(depends)
+        pairs = []
+        for source in sources:
+            deps = self._find_depends(source, incdirs, depends)
+            pairs.append((source, deps))
+        return pairs
+from distutils import ccompiler
+ccompiler.CCompiler = CCompilerEx
+
+from distutils.command.build_ext import build_ext as cmdclass
+class build_ext(cmdclass):
+    def build_extension(self, ext):
+        try:
+            pairs = self.compiler.depends_pairwise(ext.sources,
+                                                   ext.include_dirs,
+                                                   ext.depends)
+        except:
+            pass
+        else:
+            for source, depends in pairs:
+                if newer_group(depends, source):
+                    os.utime(source, None)
+        cmdclass.build_extension(self, ext)
+from distutils.command import build_ext as cmdmodule
+cmdmodule.build_ext = build_ext
+
+# -- end of custimzation ----------------------------------------------
+
 from distutils.core import setup, Extension
 
 # add'l setup keywords
