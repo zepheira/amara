@@ -1,10 +1,12 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
 static PyObject *creation_counter, *counter_inc;
 
-static int document_init(DocumentObject *self, PyObject *documentURI)
+Py_LOCAL_INLINE(int)
+document_init(DocumentObject *self, PyObject *documentURI)
 {
   PyObject *creationIndex, *unparsedEntities;
 
@@ -52,7 +54,8 @@ static int document_init(DocumentObject *self, PyObject *documentURI)
 }
 
 /* returns borrowed reference */
-static PyObject *get_element_by_id(NodeObject *node, PyObject *elementId)
+Py_LOCAL(PyObject *) /* not inlined as its recursive */
+get_element_by_id(NodeObject *node, PyObject *elementId)
 {
   int i;
 
@@ -245,7 +248,7 @@ static PyObject *document_getElementById(PyObject *self, PyObject *args)
 #define Document_METHOD(name) \
   { #name, document_##name, METH_VARARGS, document_##name##_doc }
 
-static struct PyMethodDef document_methods[] = {
+static PyMethodDef document_methods[] = {
   Document_METHOD(createElementNS),
   Document_METHOD(createAttributeNS),
   Document_METHOD(createTextNode),
@@ -261,7 +264,7 @@ static struct PyMethodDef document_methods[] = {
 #define Document_MEMBER(name, member) \
   { name, T_OBJECT, offsetof(DocumentObject, member), RO }
 
-static struct PyMemberDef document_members[] = {
+static PyMemberDef document_members[] = {
   Document_MEMBER("unparsedEntities", unparsedEntities),
   { NULL }
 };
@@ -333,7 +336,7 @@ static int set_system_id(DocumentObject *self, PyObject *v, void *arg)
   return 0;
 }
 
-static struct PyGetSetDef document_getset[] = {
+static PyGetSetDef document_getset[] = {
   { "rootNode",        (getter)get_root_node },
   { "documentElement", (getter)get_document_element },
   { "documentURI",     (getter)get_document_uri, (setter)set_document_uri },
@@ -419,7 +422,7 @@ document's data.";
 PyTypeObject DomletteDocument_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Document",
+  /* tp_name           */ Domlette_MODULE_NAME "." "Document",
   /* tp_basicsize      */ sizeof(DocumentObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) document_dealloc,
@@ -461,7 +464,7 @@ PyTypeObject DomletteDocument_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteDocument_Init(PyObject *module)
 {

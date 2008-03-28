@@ -285,7 +285,7 @@ Contains a list of XML attributes, accessible by name.";
 static PyTypeObject Attributes_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ EXPAT_MODULE_NAME "." "Attributes",
+  /* tp_name           */ Expat_MODULE_NAME "." "Attributes",
   /* tp_basicsize      */ sizeof(AttributesObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attributes_dealloc,

@@ -18,7 +18,7 @@ extern "C" {
 
 */
 
-#define EXPAT_MODULE_NAME "Ft.Xml.Lib.ExpatReader"
+#define Expat_MODULE_NAME "amara.xml._expat"
 
 #include "Python.h"
 #include "structmember.h"
@@ -230,8 +230,15 @@ extern "C" {
   ((((ExpatFilter *)(filter))->flags & (flag)) == (flag))
 
   typedef struct {
-    ExpatReader *(*Reader_New)(ExpatFilter **filters, size_t nfilters);
+    ExpatFilter *(*Filter_New)(void *arg, ExpatHandlers *handlers,
+                               unsigned long flags, FilterCriterion *criteria);
+    void (*Filter_Del)(ExpatFilter *filter);
+
+    ExpatReader *(*Reader_New)(ExpatFilter *filters[], size_t nfilters);
     void (*Reader_Del)(ExpatReader *reader);
+
+    void (*Reader_SetValidation)(ExpatReader *reader, int doValidation);
+    void (*Reader_SetParamEntityParsing)(ExpatReader *reader, int doParsing);
 
     ExpatStatus (*Reader_Parse)(ExpatReader *reader, PyObject *source);
     ExpatStatus (*Reader_ParseEntity)(ExpatReader *reader, PyObject *source,
@@ -239,13 +246,9 @@ extern "C" {
     ExpatStatus (*Reader_Suspend)(ExpatReader *reader);
     ExpatStatus (*Reader_Resume)(ExpatReader *reader);
 
-    PyObject *(*GetBase)(ExpatReader *reader);
-    unsigned long (*GetLineNumber)(ExpatReader *reader);
-    unsigned long (*GetColumnNumber)(ExpatReader *reader);
-
-    void (*SetValidation)(ExpatReader *reader, int doValidation);
-
-    void (*SetParamEntityParsing)(ExpatReader *reader, int doParsing);
+    PyObject *(*Reader_GetBase)(ExpatReader *reader);
+    unsigned long (*Reader_GetLineNumber)(ExpatReader *reader);
+    unsigned long (*Reader_GetColumnNumber)(ExpatReader *reader);
 
   } Expat_APIObject;
 
@@ -258,6 +261,7 @@ extern "C" {
 
   ExpatFilter *ExpatFilter_New(void *arg, ExpatHandlers *handlers, 
                                unsigned long flags, FilterCriterion *criteria);
+  void ExpatFilter_Del(ExpatFilter *filter);
 
   ExpatReader *ExpatReader_New(ExpatFilter *filters[], size_t nfilters);
   void ExpatReader_Del(ExpatReader *reader);
@@ -287,30 +291,26 @@ extern "C" {
   static Expat_APIObject *Expat_API;
 
 #define Expat_IMPORT (Expat_API = (Expat_APIObject *)       \
-  PyCObject_Import(EXPAT_MODULE_NAME, "CAPI"))
+  PyCObject_Import(Expat_MODULE_NAME, "CAPI"))
 
 #define Expat_EXPORT(name) Expat_API->name
 
+#define ExpatFilter_New         Expat_EXPORT(Filter_New)
+#define ExpatFilter_Del         Expat_EXPORT(Filter_Del)
 #define ExpatReader_New         Expat_EXPORT(Reader_New)
 #define ExpatReader_Del         Expat_EXPORT(Reader_Del)
-#define ExpatReader_SetHandlers Expat_EXPORT(Reader_SetHandlers)
-#define ExpatReader_GetHandlers Expat_EXPORT(Reader_GetHandlers)
+
+#define Expat_SetValidation         Expat_EXPORT(Reader_SetValidation)
+#define Expat_SetParamEntityParsing Expat_EXPORT(Reader_SetParamEntityParsing)
+
 #define ExpatReader_Parse       Expat_EXPORT(Reader_Parse)
 #define ExpatReader_ParseEntity Expat_EXPORT(Reader_ParseEntity)
 #define ExpatReader_Suspend     Expat_EXPORT(Reader_Suspend)
 #define ExpatReader_Resume      Expat_EXPORT(Reader_Resume)
 
-#define Expat_GetBase \
-  Expat_API->GetBase
-#define Expat_GetLineNumber \
-  Expat_API->GetLineNumber
-#define Expat_GetColumnNumber \
-  Expat_API->GetColumnNumber
-
-#define Expat_SetValidation \
-  Expat_API->SetValidation
-#define Expat_SetParamEntityParsing \
-  Expat_API->SetParamEntityParsing
+#define ExpatReader_GetBase         Expat_EXPORT(Reader_GetBase)
+#define ExpatReader_GetLineNumber   Expat_EXPORT(Reader_GetLineNumber)
+#define ExpatReader_GetColumnNumber Expat_EXPORT(Reader_GetColumnNumber)
 
 #endif /* Expat_BUILDING_MODULE */
 

@@ -1,15 +1,15 @@
-#include "domlette.h"
-
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
-
 
 /* The maximum number of characters of the nodeValue to use when
    creating the repr string.
 */
 #define CHARACTERDATA_REPR_LIMIT 20
 
-static int characterdata_init(CharacterDataObject *self, PyObject *data)
+Py_LOCAL_INLINE(int)
+characterdata_init(CharacterDataObject *self, PyObject *data)
 {
   if ((self == NULL || !CharacterData_Check(self)) ||
       (data == NULL || !XmlString_Check(data))) {
@@ -23,9 +23,7 @@ static int characterdata_init(CharacterDataObject *self, PyObject *data)
   return 0;
 }
 
-
 /** Public C API ******************************************************/
-
 
 CharacterDataObject *_CharacterData_New(PyTypeObject *type, PyObject *data)
 {
@@ -44,7 +42,6 @@ CharacterDataObject *_CharacterData_New(PyTypeObject *type, PyObject *data)
   return self;
 }
 
-
 CharacterDataObject *_CharacterData_CloneNode(PyTypeObject *type,
                                               PyObject *node, int deep)
 {
@@ -61,7 +58,6 @@ CharacterDataObject *_CharacterData_CloneNode(PyTypeObject *type,
   return newNode;
 }
 
-
 PyObject *CharacterData_SubstringData(CharacterDataObject *self,
                                       Py_ssize_t index, Py_ssize_t count)
 {
@@ -75,7 +71,6 @@ PyObject *CharacterData_SubstringData(CharacterDataObject *self,
   }
   return newValue;
 }
-
 
 int CharacterData_AppendData(CharacterDataObject *self, PyObject *arg)
 {
@@ -103,7 +98,6 @@ int CharacterData_AppendData(CharacterDataObject *self, PyObject *arg)
   self->nodeValue = newValue;
   return 0;
 }
-
 
 int CharacterData_InsertData(CharacterDataObject *self, Py_ssize_t offset,
                              PyObject *arg)
@@ -136,7 +130,6 @@ int CharacterData_InsertData(CharacterDataObject *self, Py_ssize_t offset,
   return 0;
 }
 
-
 int CharacterData_DeleteData(CharacterDataObject *self, Py_ssize_t offset,
                              Py_ssize_t count)
 {
@@ -157,7 +150,6 @@ int CharacterData_DeleteData(CharacterDataObject *self, Py_ssize_t offset,
   self->nodeValue = newValue;
   return 0;
 }
-
 
 int CharacterData_ReplaceData(CharacterDataObject *self, Py_ssize_t offset,
                               Py_ssize_t count, PyObject *arg)
@@ -190,9 +182,7 @@ int CharacterData_ReplaceData(CharacterDataObject *self, Py_ssize_t offset,
   return 0;
 }
 
-
 /** Python Methods ****************************************************/
-
 
 static char substring_doc[] = "\
 Extracts a range of data from the node.";
@@ -201,13 +191,12 @@ static PyObject *characterdata_substring(PyObject *self, PyObject *args)
 {
   Py_ssize_t offset, count;
 
-  if (!PyArg_ParseTuple(args, PY_ARG_SSIZE_T PY_ARG_SSIZE_T ":substringData",
+  if (!PyArg_ParseTuple(args, "nn:substringData",
                         &offset, &count))
     return NULL;
 
   return CharacterData_SubstringData(CharacterData(self), offset, count);
 }
-
 
 static char append_doc[] = "\
 Append the string to the end of the character data of the node.";
@@ -232,7 +221,6 @@ static PyObject *characterdata_append(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-
 static char insert_doc[] = "\
 Insert a string at the specified unicode unit offset.";
 
@@ -241,7 +229,7 @@ static PyObject *characterdata_insert(PyObject *self, PyObject *args)
   Py_ssize_t offset;
   PyObject *data;
 
-  if (!PyArg_ParseTuple(args, PY_ARG_SSIZE_T "O:insertData", &offset, &data))
+  if (!PyArg_ParseTuple(args, "nO:insertData", &offset, &data))
     return NULL;
 
   if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
@@ -257,7 +245,6 @@ static PyObject *characterdata_insert(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-
 static char delete_doc[] = "\
 Remove a range of unicode units from the node.";
 
@@ -265,7 +252,7 @@ static PyObject *characterdata_delete(PyObject *self, PyObject *args)
 {
   Py_ssize_t offset, count;
 
-  if (!PyArg_ParseTuple(args, PY_ARG_SSIZE_T PY_ARG_SSIZE_T ":deleteData",
+  if (!PyArg_ParseTuple(args, "nn:deleteData",
                         &offset, &count))
     return NULL;
 
@@ -276,7 +263,6 @@ static PyObject *characterdata_delete(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-
 static char replace_doc[] = "\
 Replace the characters starting at the specified unicode unit offset with\n\
 the specified string.";
@@ -286,7 +272,7 @@ static PyObject *characterdata_replace(PyObject *self, PyObject *args)
   Py_ssize_t offset, count;
   PyObject *data;
 
-  if (!PyArg_ParseTuple(args, PY_ARG_SSIZE_T PY_ARG_SSIZE_T "O:replaceData",
+  if (!PyArg_ParseTuple(args, "nnO:replaceData",
                         &offset, &count, &data))
     return NULL;
 
@@ -303,8 +289,7 @@ static PyObject *characterdata_replace(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-
-static struct PyMethodDef characterdata_methods[] = {
+static PyMethodDef characterdata_methods[] = {
   {"substringData", characterdata_substring, METH_VARARGS, substring_doc },
   {"appendData",    characterdata_append,    METH_VARARGS, append_doc },
   {"insertData",    characterdata_insert,    METH_VARARGS, insert_doc },
@@ -313,22 +298,19 @@ static struct PyMethodDef characterdata_methods[] = {
   { NULL }
 };
 
-
 /** Python Members *****************************************************/
 
-
-/* No additional interface members defined */
-
+static PyMemberDef characterdata_members[] = {
+  { NULL }
+};
 
 /** Python Computed Members ********************************************/
-
 
 static PyObject *get_data(CharacterDataObject *self, void *arg)
 {
   Py_INCREF(self->nodeValue);
   return self->nodeValue;
 }
-
 
 static int set_data(CharacterDataObject *self, PyObject *v, void *arg)
 {
@@ -340,7 +322,6 @@ static int set_data(CharacterDataObject *self, PyObject *v, void *arg)
   return 0;
 }
 
-
 static PyObject *get_length(CharacterDataObject *self, void *arg)
 {
 #if PY_VERSION_HEX < 0x02050000
@@ -350,7 +331,6 @@ static PyObject *get_length(CharacterDataObject *self, void *arg)
 #endif
 }
 
-
 static PyGetSetDef characterdata_getset[] = {
   { "data",      (getter)get_data,   (setter)set_data, NULL, "data" },
   { "nodeValue", (getter)get_data,   (setter)set_data, NULL, "nodeValue" },
@@ -358,9 +338,7 @@ static PyGetSetDef characterdata_getset[] = {
   { NULL }
 };
 
-
 /** Type Object ********************************************************/
-
 
 static void characterdata_dealloc(CharacterDataObject *self)
 {
@@ -370,7 +348,6 @@ static void characterdata_dealloc(CharacterDataObject *self)
   self->nodeValue = NULL;
   Node_Del(self);
 }
-
 
 static PyObject *characterdata_repr(CharacterDataObject *self)
 {
@@ -425,7 +402,6 @@ static PyObject *characterdata_repr(CharacterDataObject *self)
   return obj;
 }
 
-
 static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
                                    PyObject *kwds)
 {
@@ -460,7 +436,6 @@ static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
   return (PyObject *) self;
 }
 
-
 static char characterdata_doc[] = "\
 CharacterData(data) -> CharacterData object\n\
 \n\
@@ -469,7 +444,7 @@ This interface represents a block of XML character data.";
 PyTypeObject DomletteCharacterData_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "CharacterData",
+  /* tp_name           */ Domlette_MODULE_NAME "." "CharacterData",
   /* tp_basicsize      */ sizeof(CharacterDataObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) characterdata_dealloc,
@@ -497,7 +472,7 @@ PyTypeObject DomletteCharacterData_Type = {
   /* tp_iter           */ (getiterfunc) 0,
   /* tp_iternext       */ (iternextfunc) 0,
   /* tp_methods        */ (PyMethodDef *) characterdata_methods,
-  /* tp_members        */ (PyMemberDef *) 0,
+  /* tp_members        */ (PyMemberDef *) characterdata_members,
   /* tp_getset         */ (PyGetSetDef *) characterdata_getset,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
@@ -510,9 +485,7 @@ PyTypeObject DomletteCharacterData_Type = {
   /* tp_free           */ 0,
 };
 
-
-/** Module Setup & Teardown *******************************************/
-
+/** Module Interface **************************************************/
 
 int DomletteCharacterData_Init(PyObject *module)
 {
@@ -524,7 +497,6 @@ int DomletteCharacterData_Init(PyObject *module)
   return PyModule_AddObject(module, "CharacterData",
                             (PyObject*) &DomletteCharacterData_Type);
 }
-
 
 void DomletteCharacterData_Fini(void)
 {

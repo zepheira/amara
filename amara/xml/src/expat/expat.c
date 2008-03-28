@@ -29,8 +29,6 @@ Project home, documentation, distributions: http://4suite.org/\n\
 
 /** Private Interface *************************************************/
 
-XmlString_APIObject *XmlString_API;
-
 /*
  * Alignment of addresses returned to the user. 8-bytes alignment works
  * on most current architectures (with 32-bit or 64-bit address busses).
@@ -309,6 +307,12 @@ ExpatFilter_New(void *arg, ExpatHandlers *handlers, unsigned long flags,
     PyErr_NoMemory();
   }
   return filter;
+}
+
+void
+ExpatFilter_Del(ExpatFilter *filter)
+{
+  PyMem_Del(filter);
 }
 
 Py_LOCAL(FilterState *)
@@ -4194,23 +4198,24 @@ static PyMethodDef module_methods[] = {
 };
 
 static Expat_APIObject Expat_API = {
+  ExpatFilter_New,
+  ExpatFilter_Del,
   ExpatReader_New,              //Expat_ParserCreate,
   ExpatReader_Del,              //Expat_ParserFree,
+  ExpatReader_SetValidation,
+  ExpatReader_SetParamEntityParsing,
   ExpatReader_Parse,            //Expat_ParseDocument,
   ExpatReader_ParseEntity,      //Expat_ParseEntity,
   ExpatReader_Suspend,          //Expat_SuspendParser,
   ExpatReader_Resume,           //Expat_ResumeParser,
-  /*
-  Expat_SetParamEntityParsing,
-  Expat_GetBase,
-  Expat_GetLineNumber,
-  Expat_GetColumnNumber,
-  */
+  ExpatReader_GetBase,
+  ExpatReader_GetLineNumber,
+  ExpatReader_GetColumnNumber,
+
 };
 
 static void fini_expat(void *capi)
 {
-  PySys_WriteStderr(EXPAT_MODULE_NAME " finalizing\n");
   _Expat_Util_Fini();
   _Expat_ContentModel_Fini();
   _Expat_InputSource_Fini();

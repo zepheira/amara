@@ -5,7 +5,10 @@
 extern "C" {
 #endif
 
+#define Domlette_MODULE_NAME  "amara.xml._domlette"
+
 #include "Python.h"
+#include "structmember.h"
 
 #include "node.h"
 #include "document.h"
@@ -85,14 +88,29 @@ extern "C" {
 
   } Domlette_APIObject;
 
-#ifndef Domlette_BUILDING_MODULE
+#ifdef Domlette_BUILDING_MODULE
+
+#define XmlString_SHARED
+#include "xmlstring.h"
+#include "debug.h"
+#include "nss.h"
+#include "exceptions.h"
+#include "domimplementation.h"
+#include "namednodemap.h"
+#include "xpathnamespace.h"
+
+  /* namespace constants */
+  extern PyObject *g_xmlNamespace;
+  extern PyObject *g_xmlnsNamespace;
+
+#else /* !defined(Domlette_BUILDING_MODULE) */
 
 /* --- C API ----------------------------------------------------*/
 
   static Domlette_APIObject *Domlette;
 
-#define Domlette_IMPORT Domlette =                                      \
-    (Domlette_APIObject *) PyCObject_Import("Ft.Xml.cDomlettec", "CAPI")
+#define Domlette_IMPORT Domlette = (Domlette_APIObject *) \
+     PyCObject_Import(Domlette_MODULE_NAME, "CAPI")
 
 #define DomletteDOMImplementation_Type Domlette->DOMImplementation_Type
 #define DomletteNode_Type Domlette->Node_Type

@@ -1,19 +1,16 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
-
 
 typedef struct {
   PyObject_HEAD
   PyObject *nodes;
 } NamedNodeMapObject;
 
-
 /** Public C API ******************************************************/
 
-
 /** Python Methods ****************************************************/
-
 
 static char namednodemap_getNamedItemNS_doc[] = "\
 getNamedItemNS(namespaceURI, localName) -> Node\n\
@@ -36,7 +33,6 @@ static PyObject *namednodemap_getNamedItemNS(NamedNodeMapObject *self,
   Py_INCREF(node);
   return node;
 }
-
 
 static char namednodemap_item_doc[] = "\
 item(index) -> Node\n\
@@ -65,7 +61,6 @@ static PyObject *namednodemap_item(NamedNodeMapObject *self, PyObject *arg)
   return node;
 }
 
-
 static char namednodemap_has_key_doc[] =
 "D.has_key(k) -> 1 if D has a key k, else 0";
 
@@ -83,7 +78,6 @@ static PyObject *namednodemap_has_key(NamedNodeMapObject *self,
   return result;
 }
 
-
 static char namednodemap_get_doc[] =
 "D.get(k[,d]) -> D[k] if D.has_key(k), else d.  d defaults to None.";
 
@@ -96,7 +90,6 @@ static PyObject *namednodemap_get(NamedNodeMapObject *self, PyObject *args)
   return PyObject_CallMethod(self->nodes, "get", "(OO)", key, def);
 }
 
-
 static char namednodemap_keys_doc[] =
 "D.keys() -> list of D's keys";
 
@@ -104,7 +97,6 @@ static PyObject *namednodemap_keys(NamedNodeMapObject *self)
 {
   return PyDict_Keys(self->nodes);
 }
-
 
 static char namednodemap_values_doc[] =
 "D.values() -> list of D's values";
@@ -114,7 +106,6 @@ static PyObject *namednodemap_values(NamedNodeMapObject *self)
   return PyDict_Values(self->nodes);
 }
 
-
 static char namednodemap_items_doc[] =
   "D.items() -> list of D's (key, value) pairs, as 2-tuples";
 
@@ -122,7 +113,6 @@ static PyObject *namednodemap_items(NamedNodeMapObject *self)
 {
   return PyDict_Items(self->nodes);
 }
-
 
 static char namednodemap_iterkeys_doc[] =
 "D.iterkeys() -> an iterator over the keys of D";
@@ -132,7 +122,6 @@ static PyObject *namednodemap_iterkeys(NamedNodeMapObject *self)
   return PyObject_CallMethod(self->nodes, "iterkeys", NULL);
 }
 
-
 static char namednodemap_itervalues_doc[] =
 "D.itervalues() -> an iterator over the values of D";
 
@@ -140,7 +129,6 @@ static PyObject *namednodemap_itervalues(NamedNodeMapObject *self)
 {
   return PyObject_CallMethod(self->nodes, "itervalues", NULL);
 }
-
 
 static char namednodemap_iteritems_doc[] =
 "D.iteritems() -> an iterator over the (key, value) items of D";
@@ -150,7 +138,6 @@ static PyObject *namednodemap_iteritems(NamedNodeMapObject *self)
   return PyObject_CallMethod(self->nodes, "iteritems", NULL);
 }
 
-
 static char namednodemap_copy_doc[] =
 "D.copy() -> a shallow copy of D";
 
@@ -159,12 +146,11 @@ static PyObject *namednodemap_copy(NamedNodeMapObject *self)
   return PyDict_Copy(self->nodes);
 }
 
-
 #define NamedNodeMap_METHOD(NAME, FLAGS)             \
   { #NAME, (PyCFunction) namednodemap_##NAME, FLAGS, \
       namednodemap_##NAME##_doc }
 
-static struct PyMethodDef namednodemap_methods[] = {
+static PyMethodDef namednodemap_methods[] = {
   NamedNodeMap_METHOD(getNamedItemNS, METH_VARARGS),
   NamedNodeMap_METHOD(item, METH_O),
   /* Python Mapping Interface */
@@ -180,12 +166,10 @@ static struct PyMethodDef namednodemap_methods[] = {
   { NULL }
 };
 
-
 static Py_ssize_t namednodemap_length(PyObject *self)
 {
   return PyDict_Size(((NamedNodeMapObject *)self)->nodes);
 }
-
 
 static PyObject *namednodemap_subscript(NamedNodeMapObject *self,
                                         PyObject *key)
@@ -199,19 +183,16 @@ static PyObject *namednodemap_subscript(NamedNodeMapObject *self,
   return value;
 }
 
-
 static PyMappingMethods namednodemap_as_mapping = {
   /* mp_length        */ namednodemap_length,
   /* mp_subscript     */ (binaryfunc) namednodemap_subscript,
   /* mp_ass_subscript */ (objobjargproc) 0,
 };
 
-
 static int namednodemap_contains(NamedNodeMapObject *self, PyObject *key)
 {
   return PyDict_GetItem(self->nodes, key) != NULL;
 }
-
 
 static PySequenceMethods namednodemap_as_sequence = {
   /* sq_length         */ 0,
@@ -226,12 +207,13 @@ static PySequenceMethods namednodemap_as_sequence = {
   /* sq_inplace_repeat */ 0,
 };
 
-
 /** Python Members ****************************************************/
 
+static PyMemberDef namednodemap_members[] = {
+  { NULL }
+};
 
 /** Python Computed Members *******************************************/
-
 
 static PyObject *get_length(NamedNodeMapObject *self, void *arg)
 {
@@ -243,15 +225,12 @@ static PyObject *get_length(NamedNodeMapObject *self, void *arg)
   return PyInt_FromLong(length);
 }
 
-
-static struct PyGetSetDef namednodemap_getset[] = {
+static PyGetSetDef namednodemap_getset[] = {
   { "length", (getter) get_length },
   { NULL }
 };
 
-
 /** Type Object ********************************************************/
-
 
 static void namednodemap_dealloc(NamedNodeMapObject *self)
 {
@@ -263,7 +242,6 @@ static void namednodemap_dealloc(NamedNodeMapObject *self)
   PyObject_GC_Del(self);
 }
 
-
 static PyObject *namednodemap_repr(NamedNodeMapObject *self)
 {
   return PyString_FromFormat("<NamedNodeMap at %p: %" PY_FORMAT_SIZE_T "d nodes>",
@@ -271,12 +249,10 @@ static PyObject *namednodemap_repr(NamedNodeMapObject *self)
                              PyObject_Size(self->nodes));
 }
 
-
 static PyObject *namednodemap_str(NamedNodeMapObject *self)
 {
   return PyObject_Str(self->nodes);
 }
-
 
 static int namednodemap_traverse(NamedNodeMapObject *self, visitproc visit,
                                  void *arg)
@@ -285,12 +261,10 @@ static int namednodemap_traverse(NamedNodeMapObject *self, visitproc visit,
   return 0;
 }
 
-
 static PyObject *namednodemap_iter(NamedNodeMapObject *self)
 {
   return PyObject_GetIter(self->nodes);
 }
-
 
 static char namednodemap_doc[] = "\
 Objects implementing the NamedNodeMap interface are used to \
@@ -304,7 +278,7 @@ and does not imply that the DOM specifies an order to these Nodes.";
 static PyTypeObject NamedNodeMap_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "NamedNodeMap",
+  /* tp_name           */ Domlette_MODULE_NAME "." "NamedNodeMap",
   /* tp_basicsize      */ sizeof(NamedNodeMapObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) namednodemap_dealloc,
@@ -331,7 +305,7 @@ static PyTypeObject NamedNodeMap_Type = {
   /* tp_iter           */ (getiterfunc) namednodemap_iter,
   /* tp_iternext       */ (iternextfunc) 0,
   /* tp_methods        */ (PyMethodDef *) namednodemap_methods,
-  /* tp_members        */ (PyMemberDef *) 0,
+  /* tp_members        */ (PyMemberDef *) namednodemap_members,
   /* tp_getset         */ (PyGetSetDef *) namednodemap_getset,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
@@ -343,7 +317,6 @@ static PyTypeObject NamedNodeMap_Type = {
   /* tp_new            */ (newfunc) 0,
   /* tp_free           */ 0,
 };
-
 
 PyObject *NamedNodeMap_New(PyObject *dict)
 {
@@ -360,9 +333,7 @@ PyObject *NamedNodeMap_New(PyObject *dict)
   return (PyObject *) self;
 }
 
-
-/** Module Setup & Teardown *******************************************/
-
+/** Module Interface **************************************************/
 
 int DomletteNamedNodeMap_Init(PyObject *module)
 {
@@ -373,7 +344,6 @@ int DomletteNamedNodeMap_Init(PyObject *module)
   return PyModule_AddObject(module, "NamedNodeMap",
                             (PyObject*) &NamedNodeMap_Type);
 }
-
 
 void DomletteNamedNodeMap_Fini(void)
 {

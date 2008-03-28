@@ -1,5 +1,5 @@
-#include "domlette.h"
-#include "parse_event_handler.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 #include "expat_interface.h"
 
 /*#define DEBUG_PARSER */
@@ -15,6 +15,15 @@ typedef struct _context {
 } Context;
 
 typedef struct {
+  PyObject *document_new;
+  PyObject *element_new;
+  PyObject *attr_new;
+  PyObject *text_new;
+  PyObject *processing_instruction_new;
+  PyObject *comment_new;
+} NodeFactories;
+
+typedef struct {
   ExpatReader *reader;
 
   Context *context;
@@ -27,6 +36,14 @@ typedef struct {
   DocumentObject *owner_document;
 } ParserState;
 
+typedef enum {
+  PARSE_TYPE_STANDALONE = 0,
+  PARSE_TYPE_NO_VALIDATE,
+  PARSE_TYPE_VALIDATE,
+} ParseType;
+
+ParseType read_external_dtd = PARSE_TYPE_NO_VALIDATE;
+
 static PyObject *xmlns_string;
 static PyObject *process_includes_string;
 static PyObject *strip_elements_string;
@@ -37,7 +54,8 @@ static PyObject *gc_isenabled_function;
 
 /** Context ************************************************************/
 
-static Context *Context_New(NodeObject *node)
+Py_LOCAL_INLINE(Context *)
+Context_New(NodeObject *node)
 {
   Context *self = PyMem_New(Context, 1);
   if (self == NULL) {
@@ -58,7 +76,8 @@ static Context *Context_New(NodeObject *node)
   return self;
 }
 
-static void Context_Del(Context *self)
+Py_LOCAL_INLINE(void)
+Context_Del(Context *self)
 {
   Py_ssize_t i;
 
@@ -79,31 +98,69 @@ static void Context_Del(Context *self)
   PyMem_Free(self);
 }
 
+/** NodeFactories *****************************************************/
+
+Py_LOCAL_INLINE(void)
+NodeFactories_Del(NodeFactories *factories)
+{
+  assert(factories != NULL);
+  Py_XDECREF(factories->document_new);
+  Py_XDECREF(factories->element_new);
+  Py_XDECREF(factories->attr_new);
+  Py_XDECREF(factories->text_new);
+  Py_XDECREF(factories->processing_instruction_new);
+  Py_XDECREF(factories->comment_new);
+  PyMem_Free(factories);
+}
+
+Py_LOCAL_INLINE(NodeFactories *)
+NodeFactories_New(PyObject *nodeFactories)
+{
+  NodeFactories *factories;
+  PyObject *item, *key;
+
+  factories = PyMem_Malloc(sizeof(NodeFactories));
+  if (factories == NULL)
+    return NULL;
+
+#define SET_FACTORY(NAME, TYPE) { \
+  if ((key = PyInt_FromLong(TYPE)) == NULL) { \
+    NodeFactories_Del(factories); \
+    return NULL; \
+  } \
+  item = PyObject_GetItem(nodeFactories, key); \
+  Py_DECREF(key); \
+  if (item == NULL && !PyErr_ExceptionMatches(PyExc_LookupError)) { \
+    NodeFactories_Del(factories); \
+    return NULL; \
+  } \
+  factories->NAME = item; \
+}
+
+  SET_FACTORY(document_new, DOCUMENT_NODE);
+  SET_FACTORY(element_new, ELEMENT_NODE);
+  SET_FACTORY(attr_new, ATTRIBUTE_NODE);
+  SET_FACTORY(text_new, TEXT_NODE);
+  SET_FACTORY(processing_instruction_new, PROCESSING_INSTRUCTION_NODE);
+  SET_FACTORY(comment_new, COMMENT_NODE);
+
+#undef SET_FACTORY
+
+  return factories;
+}
+
 /** ParserState ********************************************************/
 
-static ParserState *ParserState_New(DocumentObject *doc,
-                                    NodeFactories *factories)
+Py_LOCAL_INLINE(ParserState *)
+ParserState_New(NodeFactories *factories)
 {
   ParserState *self = PyMem_New(ParserState, 1);
   if (self == NULL) {
     PyErr_NoMemory();
-    return NULL;
+  } else {
+    memset(self, 0, sizeof(ParserState));
+    self->factories = factories;
   }
-
-  /* context */
-  if ((self->context = Context_New((NodeObject *)doc)) == NULL) {
-    PyMem_Free(self);
-    return NULL;
-  }
-  self->free_context = NULL;
-
-  self->factories = factories;
-
-  self->new_namespaces = NULL;
-
-  Py_INCREF(doc);
-  self->owner_document = doc;
-
   return self;
 }
 
@@ -120,7 +177,8 @@ static void ParserState_Del(ParserState *self)
   PyMem_Free(self);
 }
 
-static Context *ParserState_AddContext(ParserState *self, NodeObject *node)
+Py_LOCAL_INLINE(Context *)
+ParserState_AddContext(ParserState *self, NodeObject *node)
 {
   Context *context = self->free_context;
   if (context != NULL) {
@@ -139,7 +197,8 @@ static Context *ParserState_AddContext(ParserState *self, NodeObject *node)
   return context;
 }
 
-static void ParserState_FreeContext(ParserState *self)
+Py_LOCAL_INLINE(void)
+ParserState_FreeContext(ParserState *self)
 {
   Context *context = self->context;
   if (context != NULL) {
@@ -192,7 +251,47 @@ static int ParserState_AddNode(ParserState *self, NodeObject *node)
 
 /** handlers ***********************************************************/
 
-static ExpatStatus builder_EndDocument(void *userState)
+static ExpatStatus 
+builder_StartDocument(void *userState)
+{
+  ParserState *state = (ParserState *)userState;
+  NodeFactories *factories = state->factories;
+  PyObject *uri;
+  DocumentObject *document;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_StartDocument(%p)\n", state);
+#endif
+  uri = ExpatReader_GetBase(state->reader);
+  if (factories && factories->document_new) {
+    PyObject *obj = PyObject_CallFunction(factories->document_new, "O", uri);
+    if (obj && !Document_Check(obj)) {
+      PyErr_Format(PyExc_TypeError,
+                   "DOCUMENT_NODE factory returned non-Document"
+                   " (type %.200s)",
+                   obj->ob_type->tp_name);
+      Py_CLEAR(obj);
+    }
+    document = Document(obj);
+  } else {
+    document = Document_New(uri);
+  }
+  Py_DECREF(uri);
+  if (document == NULL)
+    return EXPAT_STATUS_ERROR;
+
+  if (ParserState_AddContext(state, (NodeObject *)document) == NULL) {
+    Py_DECREF(document);
+    return EXPAT_STATUS_ERROR;
+  }
+  Py_INCREF(document);
+  state->owner_document = document;
+
+  return EXPAT_STATUS_OK;
+}
+
+static ExpatStatus 
+builder_EndDocument(void *userState)
 {
   ParserState *state = (ParserState *)userState;
   Context *context = state->context;
@@ -254,12 +353,10 @@ builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
   return EXPAT_STATUS_OK;
 }
 
-static AttrObject *add_attribute(ParserState *state,
-                                 ElementObject *element,
-                                 PyObject *namespaceURI,
-                                 PyObject *qualifiedName,
-                                 PyObject *localName,
-                                 PyObject *value)
+Py_LOCAL_INLINE(AttrObject *)
+add_attribute(ParserState *state, ElementObject *element,
+              PyObject *namespaceURI, PyObject *qualifiedName,
+              PyObject *localName, PyObject *value)
 {
   NodeFactories *factories = state->factories;
   AttrObject *attr;
@@ -330,8 +427,9 @@ static AttrObject *add_attribute(ParserState *state,
   return attr;
 }
 
-static ExpatStatus builder_StartElement(void *userState, ExpatName *name,
-                                        ExpatAttribute atts[], int natts)
+static ExpatStatus 
+builder_StartElement(void *userState, ExpatName *name,
+                     ExpatAttribute atts[], int natts)
 {
   ParserState *state = (ParserState *)userState;
   NodeFactories *factories = state->factories;
@@ -438,7 +536,8 @@ static ExpatStatus builder_StartElement(void *userState, ExpatName *name,
 }
 
 
-static ExpatStatus builder_EndElement(void *userState, ExpatName *name)
+static ExpatStatus 
+builder_EndElement(void *userState, ExpatName *name)
 {
   ParserState *state = (ParserState *)userState;
   Context *context = state->context;
@@ -469,15 +568,15 @@ static ExpatStatus builder_EndElement(void *userState, ExpatName *name)
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus builder_CharacterData(void *userState, PyObject *data)
+static ExpatStatus 
+builder_Characters(void *userState, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
   NodeFactories *factories = state->factories;
   NodeObject *node;
 
 #ifdef DEBUG_PARSER
-  fprintf(stderr, "--- builder_CharacterData(data=");
+  fprintf(stderr, "--- builder_Characters(data=");
   PyObject_Print(data, stderr, 0);
   fprintf(stderr, ")\n");
 #endif
@@ -504,10 +603,8 @@ static ExpatStatus builder_CharacterData(void *userState, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus builder_ProcessingInstruction(void *userState,
-                                                 PyObject *target,
-                                                 PyObject *data)
+static ExpatStatus 
+builder_ProcessingInstruction(void *userState, PyObject *target, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
   NodeFactories *factories = state->factories;
@@ -545,8 +642,8 @@ static ExpatStatus builder_ProcessingInstruction(void *userState,
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus builder_Comment(void *userState, PyObject *data)
+static ExpatStatus 
+builder_Comment(void *userState, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
   NodeFactories *factories = state->factories;
@@ -580,9 +677,9 @@ static ExpatStatus builder_Comment(void *userState, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus builder_DoctypeDecl(void *userState, PyObject *name,
-                                       PyObject *systemId, PyObject *publicId)
+static ExpatStatus 
+builder_DoctypeDecl(void *userState, PyObject *name, PyObject *systemId,
+                    PyObject *publicId)
 {
   ParserState *state = (ParserState *)userState;
 
@@ -607,12 +704,9 @@ static ExpatStatus builder_DoctypeDecl(void *userState, PyObject *name,
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus builder_UnparsedEntityDecl(void *userState,
-                                              PyObject *name,
-                                              PyObject *publicId,
-                                              PyObject *systemId,
-                                              PyObject *notationName)
+static ExpatStatus 
+builder_UnparsedEntityDecl(void *userState, PyObject *name, PyObject *publicId,
+                           PyObject *systemId, PyObject *notationName)
 {
   ParserState *state = (ParserState *)userState;
 
@@ -634,16 +728,17 @@ static ExpatStatus builder_UnparsedEntityDecl(void *userState,
   return EXPAT_STATUS_OK;
 }
 
-
-/** External Routines *************************************************/
+/** Python Interface **************************************************/
 
 static ExpatHandlers builder_handlers = {
-  /* start_document         */ NULL,
+  /* start_element          */ NULL,
+  /* end_element            */ NULL,
+  /* start_document         */ builder_StartDocument,
   /* end_document           */ builder_EndDocument,
   /* start_element          */ builder_StartElement,
   /* end_element            */ builder_EndElement,
-  /* characters             */ builder_CharacterData,
-  /* ignorable_whitespace   */ builder_CharacterData,
+  /* characters             */ builder_Characters,
+  /* ignorable_whitespace   */ builder_Characters,
   /* processing_instruction */ builder_ProcessingInstruction,
   /* comment                */ builder_Comment,
   /* start_namespace_decl   */ builder_NamespaceDecl,
@@ -657,15 +752,21 @@ static ExpatHandlers builder_handlers = {
   /* unparsed_entity_decl   */ builder_UnparsedEntityDecl,
 };
 
-static ExpatReader *createParser(ParserState *state) {
+Py_LOCAL_INLINE(ExpatReader *)
+create_reader(ParserState *state)
+{
+  ExpatFilter *filters[1];
   ExpatReader *reader;
 
-  reader = ExpatReader_New(state);
+  filters[0] = ExpatFilter_New(state, &builder_handlers,
+                               ExpatFilter_HANDLER_TYPE, NULL);
+  if (filters[0] == NULL)
+    return NULL;
+  reader = ExpatReader_New(filters, 1);
   if (reader == NULL) {
+    ExpatFilter_Del(filters[0]);
     return NULL;
   }
-  ExpatReader_SetHandlers(reader, &builder_handlers);
-  ExpatReader_SetHandlerArg(reader, (void *)state);
   return reader;
 }
 
@@ -674,98 +775,36 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
                                PyObject *namespaces)
 {
   ParserState *state;
-  DocumentObject *document;
-  PyObject *uri, *strip_elements;
-  PyObject *temp;
+  PyObject *result;
+  int gc_enabled;
   ExpatStatus status;
-  int process_xincludes, gc_enabled;
-
-  uri = PyObject_GetAttrString(inputSource, "uri");
-  if (uri == NULL) {
-    return NULL;
-  } else if (!PyUnicode_Check(uri)) {
-    PyObject *temp = PyObject_Unicode(uri);
-    Py_DECREF(uri);
-    if (temp == NULL) return NULL;
-    uri = temp;
-  }
-
-  if (factories && factories->document_new) {
-    temp = PyObject_CallFunction(factories->document_new, "O", uri);
-    if (temp && !Document_Check(temp)) {
-      PyErr_Format(PyExc_TypeError,
-                   "DOCUMENT_NODE factory returned non-Document"
-                   " (type %.200s)",
-                   temp->ob_type->tp_name);
-      Py_CLEAR(temp);
-    }
-    document = Document(temp);
-  } else {
-    document = Document_New(uri);
-  }
-  Py_DECREF(uri);
-  if (document == NULL) {
-    return NULL;
-  }
 
   /* Takes ownership of `document` */
-  state = ParserState_New(document, factories);
-  if (state == NULL) {
-    Py_DECREF(document);
+  state = ParserState_New(factories);
+  if (state == NULL)
     return NULL;
-  }
 
-  state->reader = createParser(state);
+  state->reader = create_reader(state);
   if (state->reader == NULL) {
     ParserState_Del(state);
     return NULL;
   }
 
-//   /* XSLT whitespace stripping rules */
-//   strip_elements = PyObject_GetAttr(inputSource, strip_elements_string);
-//   if (strip_elements == NULL) {
-//     ParserState_Del(state);
-//     return NULL;
-//   }
-//   status = Expat_SetWhitespaceRules(state->reader, strip_elements);
-//   if (status == EXPAT_STATUS_ERROR) {
-//     Py_DECREF(strip_elements);
-//     ParserState_Del(state);
-//     return NULL;
-//   }
-//   Py_DECREF(strip_elements);
-//
-//   /* Determine whether XInclude processing is enabled */
-//   temp = PyObject_GetAttr(inputSource, process_includes_string);
-//   if (temp == NULL) {
-//     ParserState_Del(state);
-//     return NULL;
-//   }
-//   process_xincludes = PyObject_IsTrue(temp);
-//   Py_DECREF(temp);
-//   Expat_SetXIncludeProcessing(state->reader, process_xincludes);
-
   /* Disable GC (if enabled) while building the DOM tree */
-  temp = PyObject_Call(gc_isenabled_function, empty_args_tuple, NULL);
-  if (temp == NULL) {
-    ExpatReader_Del(state->reader);
-    ParserState_Del(state);
-    return NULL;
-  }
-  gc_enabled = PyObject_IsTrue(temp);
-  Py_DECREF(temp);
+  result = PyObject_Call(gc_isenabled_function, empty_args_tuple, NULL);
+  if (result == NULL)
+    goto finally;
+  gc_enabled = PyObject_IsTrue(result);
+  Py_DECREF(result);
   if (gc_enabled) {
-    temp = PyObject_Call(gc_disable_function, empty_args_tuple, NULL);
-    if (temp == NULL) {
-      ExpatReader_Del(state->reader);
-      ParserState_Del(state);
-      return NULL;
-    }
-    Py_DECREF(temp);
+    result = PyObject_Call(gc_disable_function, empty_args_tuple, NULL);
+    if (result == NULL)
+      goto finally;
+    Py_DECREF(result);
   }
 
-  Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
-  Expat_SetParamEntityParsing(state->reader, parseType);
+  //Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
+  //Expat_SetParamEntityParsing(state->reader, parseType);
 
   if (asEntity)
     status = ExpatReader_ParseEntity(state->reader, inputSource, namespaces);
@@ -773,38 +812,117 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
     status = ExpatReader_Parse(state->reader, inputSource);
 
   if (gc_enabled) {
-    temp = PyObject_Call(gc_enable_function, empty_args_tuple, NULL);
-    if (temp == NULL) {
-      ExpatReader_Del(state->reader);
-      ParserState_Del(state);
-      return NULL;
-    }
-    Py_DECREF(temp);
+    result = PyObject_Call(gc_enable_function, empty_args_tuple, NULL);
+    if (result == NULL)
+      goto finally;
+    Py_DECREF(result);
   }
 
+  /* save off the created document */
+  if (status == EXPAT_STATUS_OK)
+    result = (PyObject *)state->owner_document;
+  else
+    result = NULL;
+
+finally:
   ExpatReader_Del(state->reader);
   ParserState_Del(state);
+  return result;
+}
 
-  if (status == EXPAT_STATUS_OK)
-    return (PyObject *) document;
-  else
+Py_LOCAL_INLINE(PyObject *)
+parse_document(PyObject *isrc, int parse_type, PyObject *factory_mapping)
+{
+  NodeFactories *factories=NULL;
+  PyObject *result;
+
+  if (factory_mapping != NULL) {
+    factories = NodeFactories_New(factory_mapping);
+    if (factories == NULL)
+      return NULL;
+  }
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "Start parsing.\n");
+#endif
+  result = builder_parse(isrc, parse_type, factories, 0, NULL);
+#ifdef DEBUG_PARSER
+  fprintf(stderr,"Finished parsing\n");
+#endif
+  if (factories != NULL)
+    NodeFactories_Del(factories);
+
+  return result;
+}
+
+char NonvalParse_doc[] = "\
+NonvalParse(isrc[, readExtDtd[, nodeFactories]]) -> Document";
+
+PyObject *Domlette_NonvalParse(PyObject *self, PyObject *args, PyObject *kw)
+{
+  PyObject *isrc, *readExtDtd=NULL, *nodeFactories=NULL;
+  static char *kwlist[] = {"isrc", "readExtDtd", "nodeFactories", NULL};
+  int parse_type=read_external_dtd;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:NonvalParse", kwlist, 
+                                   &isrc, &readExtDtd, &nodeFactories))
     return NULL;
+
+  if (readExtDtd) {
+    parse_type = PyObject_IsTrue(readExtDtd);
+    if (parse_type == -1) return NULL;
+  }
+
+  return parse_document(isrc, parse_type, nodeFactories);
 }
 
-PyObject *ParseDocument(PyObject *source, ParseType parseType,
-                        NodeFactories *factories)
+char ValParse_doc[] = "\
+ValParse(isrc[, nodeFactories]) -> Document";
+
+PyObject *Domlette_ValParse(PyObject *self, PyObject *args, PyObject *kw)
 {
-  return builder_parse(source, parseType, factories, 0, NULL);
+  PyObject *isrc, *nodeFactories=NULL;
+  static char *kwlist[] = {"isrc", "nodeFactories", NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:ValParse", kwlist,
+                                   &isrc, &nodeFactories))
+    return NULL;
+
+  return parse_document(isrc, PARSE_TYPE_VALIDATE, nodeFactories);
 }
 
-PyObject *ParseFragment(PyObject *source, PyObject *namespaces,
-                        NodeFactories *factories)
+char ParseFragment_doc[] = "\
+ParseFragment(isrc[, namespaces[, nodeFactories]]) -> Document";
+
+PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args, PyObject *kw)
 {
-  return builder_parse(source, 0, factories, 1, namespaces);
+  PyObject *isrc, *namespaces=NULL, *nodeFactories=NULL;
+  static char *kwlist[] = {"isrc", "namespaces", "nodeFactories", NULL};
+  NodeFactories *node_factories=NULL;
+  PyObject *result;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:ParseFragment", kwlist, 
+                                   &isrc, &namespaces, &nodeFactories))
+    return NULL;
+
+  if (nodeFactories) {
+    node_factories = NodeFactories_New(nodeFactories);
+    if (node_factories == NULL)
+      return NULL;
+  }
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "Start parsing.\n");
+#endif
+  result = builder_parse(isrc, 0, node_factories, 1, namespaces);
+#ifdef DEBUG_PARSER
+  fprintf(stderr,"Finished parsing\n");
+#endif
+  if (node_factories != NULL)
+    NodeFactories_Del(node_factories);
+
+  return result;
 }
 
-/** Module Setup & Teardown *******************************************/
-
+/** Module Interface **************************************************/
 
 int DomletteBuilder_Init(PyObject *module)
 {
@@ -842,7 +960,6 @@ int DomletteBuilder_Init(PyObject *module)
 
   return 0;
 }
-
 
 void DomletteBuilder_Fini(void)
 {

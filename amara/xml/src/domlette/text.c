@@ -1,4 +1,5 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
@@ -48,7 +49,7 @@ This interface represents the contents of a text node.";
 PyTypeObject DomletteText_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Text",
+  /* tp_name           */ Domlette_MODULE_NAME "." "Text",
   /* tp_basicsize      */ sizeof(TextObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -89,7 +90,7 @@ PyTypeObject DomletteText_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteText_Init(PyObject *module)
 {

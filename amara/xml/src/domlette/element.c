@@ -1,5 +1,5 @@
-#include "domlette.h"
-#include "nss.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
@@ -15,10 +15,9 @@
 
 static PyObject *shared_empty_attributes;
 
-static int element_init(ElementObject *self,
-                        PyObject *namespaceURI,
-                        PyObject *qualifiedName,
-                        PyObject *localName)
+Py_LOCAL_INLINE(int)
+element_init(ElementObject *self, PyObject *namespaceURI, 
+             PyObject *qualifiedName, PyObject *localName)
 {
   if ((self == NULL || !Element_Check(self)) ||
       (namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
@@ -43,7 +42,8 @@ static int element_init(ElementObject *self,
   return 0;
 }
 
-static PyObject *buildAttrKey(AttrObject *attr)
+Py_LOCAL_INLINE(PyObject *)
+build_attr_key(AttrObject *attr)
 {
   PyObject *key;
   PyObject *local;
@@ -129,7 +129,7 @@ AttrObject *Element_SetAttributeNS(ElementObject *self,
   assert(Node_GET_PARENT(attr) == NULL);
   Node_SET_PARENT(attr, (NodeObject *) self);
 
-  key = buildAttrKey(attr);
+  key = build_attr_key(attr);
   if (key == NULL) {
     Py_DECREF(attr);
     return NULL;
@@ -182,7 +182,7 @@ PyObject *Element_SetAttributeNodeNS(ElementObject *self, AttrObject *attr)
   }
 
   /* Get the return value */
-  key = buildAttrKey(attr);
+  key = build_attr_key(attr);
   oldAttr = PyDict_GetItem(self->attributes, key);
   if (PyDict_SetItem(self->attributes, key, (PyObject *)attr) < 0) {
     Py_DECREF(key);
@@ -539,7 +539,7 @@ static PyObject *element_removeAttributeNode(ElementObject *self,
                         &attr))
     return NULL;
 
-  key = buildAttrKey(attr);
+  key = build_attr_key(attr);
   if (PyDict_DelItem(self->attributes, key) == -1) {
     if (PyErr_ExceptionMatches(PyExc_KeyError)) {
       DOMException_NotFoundErr("attribute not found");
@@ -622,7 +622,7 @@ static PyObject *element_removeAttributeNS(ElementObject *self, PyObject *args)
 #define Element_METHOD(NAME) \
   { #NAME, (PyCFunction) element_##NAME, METH_VARARGS, element_##NAME##_doc }
 
-static struct PyMethodDef element_methods[] = {
+static PyMethodDef element_methods[] = {
   Element_METHOD(getAttributeNS),
   Element_METHOD(getAttributeNodeNS),
   Element_METHOD(setAttributeNS),
@@ -638,7 +638,7 @@ static struct PyMethodDef element_methods[] = {
 #define Element_MEMBER(name, member) \
   { name, T_OBJECT, offsetof(ElementObject, member), RO }
 
-static struct PyMemberDef element_members[] = {
+static PyMemberDef element_members[] = {
   Element_MEMBER("tagName", nodeName),
   Element_MEMBER("nodeName", nodeName),
   Element_MEMBER("localName", localName),
@@ -767,7 +767,7 @@ static PyObject *get_xpath_namespaces(ElementObject *self, void *arg)
   return namespaces;
 }
 
-static struct PyGetSetDef element_getset[] = {
+static PyGetSetDef element_getset[] = {
   { "prefix", (getter)get_prefix, (setter)set_prefix, NULL, "prefix" },
   { "attributes", (getter) get_attributes },
   /* XPath-specific accessors */
@@ -879,7 +879,7 @@ The Element interface represents an element in an XML document.";
 PyTypeObject DomletteElement_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Element",
+  /* tp_name           */ Domlette_MODULE_NAME "." "Element",
   /* tp_basicsize      */ sizeof(ElementObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) element_dealloc,
@@ -921,7 +921,7 @@ PyTypeObject DomletteElement_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteElement_Init(PyObject *module)
 {

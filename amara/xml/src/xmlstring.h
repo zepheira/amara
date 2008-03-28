@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#define XmlString_MODULE_NAME "amara.xml._xmlstring"
+
 #include "Python.h"
 
   typedef struct {
@@ -34,15 +36,15 @@ extern "C" {
 /* --- C API ----------------------------------------------------*/
 #ifndef XmlString_EXPORT
 #ifdef XmlString_SHARED
-#define XmlString_EXPORT extern
+#define XmlString_EXPORT
 #else
 #define XmlString_EXPORT static
 #endif
 #endif
   XmlString_EXPORT XmlString_APIObject *XmlString_API;
 
-#define XmlString_IMPORT XmlString_API = \
-    (XmlString_APIObject *) PyCObject_Import("Ft.Xml.Lib.XmlString", "CAPI")
+#define XmlString_IMPORT XmlString_API = (XmlString_APIObject *) \
+  PyCObject_Import(XmlString_MODULE_NAME, "CAPI")
 
 #define XmlString_IsSpace XmlString_API->IsSpace
 #define XmlString_IsName XmlString_API->IsName

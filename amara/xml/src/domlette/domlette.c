@@ -10,17 +10,10 @@ Detailed license and copyright information: http://4suite.org/COPYRIGHT\n\
 Project home, documentation, distributions: http://4suite.org/\n\
 ";
 
-#include "domlette.h"
-#include "reader.h"
-#include "nss.h"
-#include "refcounts.h"
-//#include "expat_module.h"
-//#include "content_model.h"
-#include "parse_event_handler.h"
-//#include "xmlparser.h"
+#define PY_SSIZE_T_CLEAN
 #include "domlette_interface.h"
-
-XmlString_APIObject *XmlString_API;
+#include "builder.h"
+#include "refcounts.h"
 
 PyObject *g_xmlNamespace;
 PyObject *g_xmlnsNamespace;
@@ -483,15 +476,11 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
 #define Domlette_METHOD(name, flags)                            \
   { #name, (PyCFunction) Domlette_##name, flags, name##_doc }
 
-static PyMethodDef cDomlettecMethods[] = {
-  /* from reader.c */
+static PyMethodDef module_methods[] = {
+  /* from builder.c */
   Domlette_METHOD(NonvalParse, METH_KEYWORDS),
   Domlette_METHOD(ValParse, METH_KEYWORDS),
-  Domlette_METHOD(Parse, METH_KEYWORDS),
   Domlette_METHOD(ParseFragment, METH_KEYWORDS),
-
-//   /* from xmlparser.c */
-//   Domlette_METHOD(CreateParser, METH_KEYWORDS),
 
   /* from nss.c */
   Domlette_METHOD(GetAllNs, METH_VARARGS),
@@ -538,13 +527,9 @@ static Domlette_APIObject Domlette_API = {
   ProcessingInstruction_New,
 };
 
-static void domlette_fini(void *capi)
+static void fini_domlette(void *capi)
 {
   DomletteExceptions_Fini();
-  //DomletteExpat_Fini();
-  //DomletteValidation_Fini();
-  //DomletteParser_Fini();
-  DomletteReader_Fini();
   DomletteBuilder_Fini();
   DomletteDOMImplementation_Fini();
   DomletteNode_Fini();
@@ -561,12 +546,12 @@ static void domlette_fini(void *capi)
   Py_DECREF(g_xmlnsNamespace);
 }
 
-DL_EXPORT(void) initcDomlettec(void)
+DL_EXPORT(void) init_domlette(void)
 {
   PyObject *module, *import;
   PyObject *cobj;
 
-  module = Py_InitModule3("cDomlettec", cDomlettecMethods, module_doc);
+  module = Py_InitModule3(Domlette_MODULE_NAME, module_methods, module_doc);
   if (module == NULL) return;
 
   if ((XmlString_IMPORT) == NULL) return;
@@ -584,10 +569,6 @@ DL_EXPORT(void) initcDomlettec(void)
 
   /* initialize the sub-components */
   if (DomletteExceptions_Init(module) == -1) return;
-  //if (DomletteExpat_Init(module) == -1) return;
-  //if (DomletteValidation_Init(module) == -1) return;
-  //if (DomletteParser_Init(module) == -1) return;
-  if (DomletteReader_Init(module) == -1) return;
   if (DomletteBuilder_Init(module) == -1) return;
   if (DomletteDOMImplementation_Init(module) == -1) return;
   /* MUST be before subclasses (all node types) */
@@ -604,7 +585,7 @@ DL_EXPORT(void) initcDomlettec(void)
   if (DomletteXPathNamespace_Init(module) == -1) return;
 
   /* Export C API - done last to serve as a cleanup function as well */
-  cobj = PyCObject_FromVoidPtr((void *)&Domlette_API, domlette_fini);
+  cobj = PyCObject_FromVoidPtr((void *)&Domlette_API, fini_domlette);
   if (cobj) {
     PyModule_AddObject(module, "CAPI", cobj);
   }

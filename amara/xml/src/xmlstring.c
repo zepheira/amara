@@ -19,8 +19,6 @@ Project home, documentation, distributions: http://4suite.org/\n\
 /* header generated from gencharset.py */
 #include "charset.h"
 
-#include "common.h"
-
 /** Private Routines **************************************************/
 
 #define TEST_CHARSET(set, c) \
@@ -881,12 +879,12 @@ static XmlString_APIObject XmlString_API = {
   ConvertArgument,
 };
 
-DL_EXPORT(void) initXmlString(void)
+DL_EXPORT(void) init_xmlstring(void)
 {
   PyObject *module;
   PyObject *capi;
 
-  module = Py_InitModule3("XmlString", module_methods, module_doc);
+  module = Py_InitModule3(XmlString_MODULE_NAME, module_methods, module_doc);
   if (module == NULL) return;
 
   /* Export C API */

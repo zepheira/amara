@@ -1,4 +1,5 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
@@ -50,7 +51,7 @@ between the starting '<!--' and ending '-->'.";
 PyTypeObject DomletteComment_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Comment",
+  /* tp_name           */ Domlette_MODULE_NAME "." "Comment",
   /* tp_basicsize      */ sizeof(CommentObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -91,7 +92,7 @@ PyTypeObject DomletteComment_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteComment_Init(PyObject *module)
 {

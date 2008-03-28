@@ -1,5 +1,5 @@
-#ifndef DOMLETTE_READER_H
-#define DOMLETTE_READER_H
+#ifndef DOMLETTE_PARSE_EVENT_HANDLER_H
+#define DOMLETTE_PARSE_EVENT_HANDLER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -7,8 +7,7 @@ extern "C" {
 
 #include "Python.h"
 
-  extern char Parse_doc[];
-  PyObject *Domlette_Parse(PyObject *self, PyObject *args, PyObject *kw);
+#ifdef Domlette_BUILDING_MODULE
 
   extern char NonvalParse_doc[];
   PyObject *Domlette_NonvalParse(PyObject *self, PyObject *args, PyObject *kw);
@@ -20,11 +19,14 @@ extern "C" {
   PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args,
                                    PyObject *kw);
 
-  int DomletteReader_Init(PyObject *module);
-  void DomletteReader_Fini(void);
+  int DomletteBuilder_Init(PyObject *module);
+  void DomletteBuilder_Fini(void);
+
+#endif /* Domlette_BUILDING_MODULE */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DOMLETTE_READER_H */
+#endif /* DOMLETTE_PARSE_EVENT_HANDLER_H */
+

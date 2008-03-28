@@ -1,9 +1,11 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
-static int xns_init(XPathNamespaceObject *self, ElementObject *parentNode,
-                    PyObject *prefix, PyObject *namespaceURI)
+Py_LOCAL_INLINE(int)
+xns_init(XPathNamespaceObject *self, ElementObject *parentNode,
+         PyObject *prefix, PyObject *namespaceURI)
 {
   if ((self == NULL || !XPathNamespace_Check(self)) ||
       (parentNode == NULL || !Element_Check(parentNode)) ||
@@ -71,7 +73,7 @@ static PyMethodDef xns_methods[] = {
 #define XPathNamespace_MEMBER(name, member) \
   { #name, T_OBJECT, offsetof(XPathNamespaceObject, member), RO }
 
-static struct PyMemberDef xns_members[] = {
+static PyMemberDef xns_members[] = {
   XPathNamespace_MEMBER(nodeName, nodeName),
   XPathNamespace_MEMBER(localName, nodeName),
   XPathNamespace_MEMBER(nodeValue, nodeValue),
@@ -163,7 +165,7 @@ that DOM lacks.";
 PyTypeObject DomletteXPathNamespace_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "XPathNamespace",
+  /* tp_name           */ Domlette_MODULE_NAME "." "XPathNamespace",
   /* tp_basicsize      */ sizeof(XPathNamespaceObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) xns_dealloc,
@@ -203,7 +205,7 @@ PyTypeObject DomletteXPathNamespace_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteXPathNamespace_Init(PyObject *module)
 {

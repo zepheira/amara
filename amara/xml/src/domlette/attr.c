@@ -1,10 +1,11 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
-static int attr_init(AttrObject *self, PyObject *namespaceURI,
-                     PyObject *qualifiedName, PyObject *localName,
-                     PyObject *value)
+Py_LOCAL_INLINE(int)
+attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
+          PyObject *localName, PyObject *value)
 {
   if ((self == NULL || !Attr_Check(self)) ||
       (namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
@@ -92,11 +93,13 @@ AttrObject *Attr_CloneNode(PyObject *node, int deep)
 
 /** Python Methods ****************************************************/
 
-/* No additional interface methods defined */
+static PyMethodDef attr_methods[] = {
+  { NULL }
+};
 
 /** Python Members ****************************************************/
 
-static struct PyMemberDef attr_members[] = {
+static PyMemberDef attr_members[] = {
   { "name",         T_OBJECT, offsetof(AttrObject, nodeName),     RO },
   { "nodeName",     T_OBJECT, offsetof(AttrObject, nodeName),     RO },
   { "namespaceURI", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
@@ -180,7 +183,7 @@ static int set_value(AttrObject *self, PyObject *v, char *arg)
   return 0;
 }
 
-static struct PyGetSetDef attr_getset[] = {
+static PyGetSetDef attr_getset[] = {
   { "prefix",    (getter)get_prefix, (setter)set_prefix, NULL, "prefix" },
   { "value",     (getter)get_value,  (setter)set_value,  NULL, "value" },
   { "nodeValue", (getter)get_value,  (setter)set_value,  NULL, "nodeValue" },
@@ -279,7 +282,7 @@ The Attr interface represents an attribute in an Element object.";
 PyTypeObject DomletteAttr_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Attr",
+  /* tp_name           */ Domlette_MODULE_NAME "Attr",
   /* tp_basicsize      */ sizeof(AttrObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attr_dealloc,
@@ -306,7 +309,7 @@ PyTypeObject DomletteAttr_Type = {
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,
   /* tp_iternext       */ (iternextfunc) 0,
-  /* tp_methods        */ (PyMethodDef *) 0,
+  /* tp_methods        */ (PyMethodDef *) attr_methods,
   /* tp_members        */ (PyMemberDef *) attr_members,
   /* tp_getset         */ (PyGetSetDef *) attr_getset,
   /* tp_base           */ (PyTypeObject *) 0,
@@ -320,7 +323,7 @@ PyTypeObject DomletteAttr_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteAttr_Init(PyObject *module)
 {

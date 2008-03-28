@@ -1,4 +1,4 @@
-#include "domlette.h"
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
@@ -19,7 +19,8 @@ static PyObject *absolutize_function;
 #define ContainerNode_SET_CHILD(op, i, v)       \
   (ContainerNode_GET_CHILD((op), (i)) = (v))
 
-static int node_resize(ContainerNodeObject *self, Py_ssize_t newsize) {
+Py_LOCAL_INLINE(int)
+node_resize(ContainerNodeObject *self, Py_ssize_t newsize) {
   NodeObject **nodes;
   size_t new_allocated;
   Py_ssize_t allocated = self->allocated;
@@ -58,7 +59,8 @@ static int node_resize(ContainerNodeObject *self, Py_ssize_t newsize) {
   return 0;
 }
 
-static int node_validate_child(NodeObject *self, NodeObject *child)
+Py_LOCAL_INLINE(int)
+node_validate_child(NodeObject *self, NodeObject *child)
 {
   if (self == NULL || child == NULL || !Node_Check(self)) {
     PyErr_BadInternalCall();
@@ -734,7 +736,7 @@ static PyObject *node_xpath(NodeObject *self, PyObject *args, PyObject *kw)
 #define Node_METHOD(NAME, ARGSPEC) \
   { #NAME, (PyCFunction) node_##NAME, ARGSPEC, NAME##_doc }
 
-static struct PyMethodDef node_methods[] = {
+static PyMethodDef node_methods[] = {
   Node_METHOD(normalize,     METH_VARARGS),
   Node_METHOD(hasChildNodes, METH_VARARGS),
   Node_METHOD(removeChild,   METH_VARARGS),
@@ -752,7 +754,7 @@ static struct PyMethodDef node_methods[] = {
 #define Node_MEMBER(NAME) \
   { #NAME, T_OBJECT, offsetof(NodeObject, NAME), RO }
 
-static struct PyMemberDef node_members[] = {
+static PyMemberDef node_members[] = {
   Node_MEMBER(parentNode),
   { NULL }
 };
@@ -964,7 +966,7 @@ static PyObject *get_empty_list(NodeObject *self, void *arg)
   return PyList_New(0);
 }
 
-static struct PyGetSetDef node_getset[] = {
+static PyGetSetDef node_getset[] = {
   { "ownerDocument",   (getter)get_owner_document },
   { "rootNode",        (getter)get_owner_document },
   { "childNodes",      (getter)get_child_nodes },
@@ -1194,7 +1196,7 @@ The Node type is the primary datatype for the entire Document Object Model.";
 PyTypeObject DomletteNode_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "Node",
+  /* tp_name           */ Domlette_MODULE_NAME "." "Node",
   /* tp_basicsize      */ sizeof(NodeObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) _Node_Del,
@@ -1339,20 +1341,20 @@ static PyTypeObject NodeIter_Type = {
   /* tp_iternext       */ (iternextfunc) nodeiter_next,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteNode_Init(PyObject *module)
 {
   PyObject *node_class, *import, *bases, *dict;
 
-  import = PyImport_ImportModule("Ft.Lib.Uri");
+  import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
-  is_absolute_function = PyObject_GetAttrString(import, "IsAbsolute");
+  is_absolute_function = PyObject_GetAttrString(import, "is_absolute");
   if (is_absolute_function == NULL) {
     Py_DECREF(import);
     return -1;
   }
-  absolutize_function = PyObject_GetAttrString(import, "Absolutize");
+  absolutize_function = PyObject_GetAttrString(import, "absolutize");
   if (absolutize_function == NULL) {
     Py_DECREF(import);
     return -1;
@@ -1404,7 +1406,6 @@ int DomletteNode_Init(PyObject *module)
   Py_INCREF(&DomletteNode_Type);
   return PyModule_AddObject(module, "Node", (PyObject*) &DomletteNode_Type);
 }
-
 
 void DomletteNode_Fini(void)
 {

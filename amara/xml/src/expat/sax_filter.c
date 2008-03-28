@@ -2189,7 +2189,7 @@ the next event.";
 static PyTypeObject XMLParser_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ EXPAT_MODULE_NAME "." "SaxReader",
+  /* tp_name           */ Expat_MODULE_NAME "." "SaxReader",
   /* tp_basicsize      */ sizeof(XMLParserObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) parser_dealloc,

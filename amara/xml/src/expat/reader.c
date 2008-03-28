@@ -161,7 +161,7 @@ static PyGetSetDef reader_getset[] = {
 static PyTypeObject Reader_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ EXPAT_MODULE_NAME "." "Reader",
+  /* tp_name           */ Expat_MODULE_NAME "." "Reader",
   /* tp_basicsize      */ sizeof(ReaderObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) reader_dealloc,

@@ -121,7 +121,7 @@ class build_ext(cmdclass):
             pass
         else:
             for source, depends in pairs:
-                if newer_group(depends, source):
+                if newer_group(depends, source, 'newer'):
                     os.utime(source, None)
         cmdclass.build_extension(self, ext)
 from distutils.command import build_ext as cmdmodule
@@ -157,6 +157,9 @@ setup(name='Amara',
                 'amara.xml',
                 ],
       ext_modules=[
+          Extension('amara.xml._xmlstring',
+                    sources=['amara/xml/src/xmlstring.c'],
+                    ),
           Extension('amara.xml._expat',
                     define_macros=[('HAVE_EXPAT_CONFIG_H', None),
                                    ('Expat_BUILDING_MODULE', None),
@@ -166,7 +169,6 @@ setup(name='Amara',
                              'amara/xml/src/expat/lib/xmlparse.c',
                              'amara/xml/src/expat/lib/xmlrole.c',
                              'amara/xml/src/expat/lib/xmltok.c',
-
                              # Miscellaneous supporting routines
                              'amara/xml/src/expat/util.c',
                              # XML_Char <-> PyUnicode
@@ -181,19 +183,42 @@ setup(name='Amara',
                              'amara/xml/src/expat/validation.c',
                              # StateTable implementation
                              'amara/xml/src/expat/state_machine.c',
-
                              # basic InputSource object
                              'amara/xml/src/expat/input_source.c',
                              # Attributes object
                              'amara/xml/src/expat/attributes.c',
                              # ExpatReader object
                              'amara/xml/src/expat/reader.c',
-
                              # SaxFilter object
                              'amara/xml/src/expat/sax_filter.c',
-
                              # Module interface
                              'amara/xml/src/expat/expat.c',
+                             ],
+                    ),
+          Extension('amara.xml._domlette',
+                    define_macros=[('Domlette_BUILDING_MODULE', None)],
+                    include_dirs=['amara/xml/src', 'amara/xml/src/expat'],
+                    sources=['amara/xml/src/domlette/nss.c',
+                             # DOM interfaces
+                             'amara/xml/src/domlette/exceptions.c',
+                             'amara/xml/src/domlette/domimplementation.c',
+                             'amara/xml/src/domlette/node.c',
+                             #'amara/xml/src/domlette/nodelist.c',
+                             'amara/xml/src/domlette/namednodemap.c',
+                             'amara/xml/src/domlette/characterdata.c',
+                             'amara/xml/src/domlette/attr.c',
+                             'amara/xml/src/domlette/element.c',
+                             'amara/xml/src/domlette/text.c',
+                             'amara/xml/src/domlette/comment.c',
+                             'amara/xml/src/domlette/processinginstruction.c',
+                             'amara/xml/src/domlette/document.c',
+                             'amara/xml/src/domlette/xpathnamespace.c',
+                             # Document builder
+                             'amara/xml/src/domlette/builder.c',
+                             # Reference count testing
+                             'amara/xml/src/domlette/refcounts.c',
+                             # Module interface
+                             'amara/xml/src/domlette/domlette.c',
                              ],
                     ),
                  ],

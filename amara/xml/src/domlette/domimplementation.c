@@ -1,4 +1,5 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
@@ -122,7 +123,7 @@ static PyObject *domimp_createRootNode(PyObject *self, PyObject *args)
 #define DOMImplementation_METHOD(name) \
   { #name, (PyCFunction) domimp_##name, METH_VARARGS, domimp_##name##_doc }
 
-static struct PyMethodDef domimp_methods[] = {
+static PyMethodDef domimp_methods[] = {
   DOMImplementation_METHOD(hasFeature),
   DOMImplementation_METHOD(createDocument),
   DOMImplementation_METHOD(createRootNode),
@@ -164,7 +165,7 @@ object model.";
 PyTypeObject DomletteDOMImplementation_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "DOMImplementation",
+  /* tp_name           */ Domlette_MODULE_NAME "." "DOMImplementation",
   /* tp_basicsize      */ sizeof(DOMImplementationObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) domimp_dealloc,
@@ -204,7 +205,7 @@ PyTypeObject DomletteDOMImplementation_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteDOMImplementation_Init(PyObject *module)
 {

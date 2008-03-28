@@ -1,9 +1,10 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Private Routines **************************************************/
 
-static int pi_init(ProcessingInstructionObject *self,
-                   PyObject *target, PyObject *data)
+Py_LOCAL_INLINE(int)
+pi_init(ProcessingInstructionObject *self, PyObject *target, PyObject *data)
 {
   if ((self == NULL || !ProcessingInstruction_Check(self)) ||
       (target == NULL || !XmlString_Check(target)) ||
@@ -70,7 +71,7 @@ ProcessingInstructionObject *ProcessingInstruction_CloneNode(PyObject *node,
 #define ProcessingInstruction_METHOD(name) \
   { #name, (PyCFunction) pi_##name, METH_VARARGS, pi_##name##_doc }
 
-static struct PyMethodDef pi_methods[] = {
+static PyMethodDef pi_methods[] = {
   { NULL }
 };
 
@@ -79,7 +80,7 @@ static struct PyMethodDef pi_methods[] = {
 #define ProcessingInstruction_MEMBER(name, member) \
   { #name, T_OBJECT, offsetof(ProcessingInstructionObject, member), RO }
 
-static struct PyMemberDef pi_members[] = {
+static PyMemberDef pi_members[] = {
   ProcessingInstruction_MEMBER(target, nodeName),
   ProcessingInstruction_MEMBER(nodeName, nodeName),
   { NULL }
@@ -103,7 +104,7 @@ static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
   return 0;
 }
 
-static struct PyGetSetDef pi_getset[] = {
+static PyGetSetDef pi_getset[] = {
   { "data",      (getter)get_data, (setter)set_data, NULL, "data" },
   { "nodeValue", (getter)get_data, (setter)set_data, NULL, "nodeValue" },
   { NULL }
@@ -185,7 +186,7 @@ the document.";
 PyTypeObject DomletteProcessingInstruction_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ DOMLETTE_PACKAGE "ProcessingInstruction",
+  /* tp_name           */ Domlette_MODULE_NAME "." "ProcessingInstruction",
   /* tp_basicsize      */ sizeof(ProcessingInstructionObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) pi_dealloc,
@@ -226,7 +227,7 @@ PyTypeObject DomletteProcessingInstruction_Type = {
   /* tp_free           */ 0,
 };
 
-/** Module Setup & Teardown *******************************************/
+/** Module Interface **************************************************/
 
 int DomletteProcessingInstruction_Init(PyObject *module)
 {

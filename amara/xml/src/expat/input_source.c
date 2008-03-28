@@ -152,7 +152,7 @@ static PyMemberDef inputsource_members[] = {
 PyTypeObject InputSource_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ EXPAT_MODULE_NAME "." "InputSource",
+  /* tp_name           */ Expat_MODULE_NAME "." "InputSource",
   /* tp_basicsize      */ sizeof(InputSourceObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) inputsource_dealloc,

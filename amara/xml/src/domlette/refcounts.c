@@ -1,4 +1,5 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /* Reference counting scheme *****************************************
  *
@@ -17,8 +18,7 @@ static int do_test(PyObject *tester, char *title, Py_ssize_t expected,
     return 0;
   Py_DECREF(rv);
 
-  rv = PyObject_CallMethod(tester, "compare", PY_ARG_SSIZE_T PY_ARG_SSIZE_T,
-                           expected, actual);
+  rv = PyObject_CallMethod(tester, "compare", "nn", expected, actual);
   if (rv == NULL)
     return 0;
   Py_DECREF(rv);

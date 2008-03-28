@@ -1,8 +1,10 @@
-#include "domlette.h"
+#define PY_SSIZE_T_CLEAN
+#include "domlette_interface.h"
 
 /** Domlette only implementation **************************************/
 
-static PyObject *get_prefix(PyObject *nodeName)
+Py_LOCAL_INLINE(PyObject *)
+get_prefix(PyObject *nodeName)
 {
   Py_UNICODE *p;
   Py_ssize_t len, i;
@@ -18,7 +20,8 @@ static PyObject *get_prefix(PyObject *nodeName)
   return Py_None;
 }
 
-static int get_all_ns_domlette(NodeObject *node, PyObject *nss)
+Py_LOCAL(int)
+get_all_ns_domlette(NodeObject *node, PyObject *nss)
 {
   int res = 0;
 
@@ -94,8 +97,8 @@ static int get_all_ns_domlette(NodeObject *node, PyObject *nss)
   return res;
 }
 
-
-static PyObject *seek_nss_domlette(NodeObject *node, PyObject *nss)
+Py_LOCAL(PyObject *)
+seek_nss_domlette(NodeObject *node, PyObject *nss)
 {
   Py_ssize_t i;
   PyObject *key, *attr;
@@ -182,7 +185,8 @@ static PyObject *seek_nss_domlette(NodeObject *node, PyObject *nss)
 
 /** DOM API implementation ********************************************/
 
-static int get_all_ns_dom(PyObject *node, PyObject *nss)
+Py_LOCAL(int)
+get_all_ns_dom(PyObject *node, PyObject *nss)
 {
   int res = 0;
   PyObject *obj;
@@ -339,8 +343,8 @@ static int get_all_ns_dom(PyObject *node, PyObject *nss)
   return res;
 }
 
-
-static PyObject *seek_nss_dom(PyObject *node, PyObject *nss)
+Py_LOCAL(PyObject *)
+seek_nss_dom(PyObject *node, PyObject *nss)
 {
   PyObject *obj, *tuple;
   long nodeType;
