@@ -373,7 +373,7 @@ FUNCTION_TEMPLATE(EndDocument, end_document,
 FUNCTION_TEMPLATE(StartElement, start_element,
                   (PROTO0, ExpatName *name, ExpatAttribute atts[], int natts),
                   (ARGS0, name, atts, natts), state->depth++)
-FUNCTION_TEMPLATE(EndElement, end_element, 
+FUNCTION_TEMPLATE(EndElement, end_element,
                   (PROTO0, ExpatName *name), (ARGS0, name), state->depth--)
 FUNCTION_OBJ_ARGS(Characters, characters, 1)
 FUNCTION_OBJ_ARGS(IgnorableWhitespace, ignorable_whitespace, 1)
@@ -759,7 +759,7 @@ end_handlers(ExpatReader *reader)
 
 /** Error Handling ****************************************************/
 
-Py_LOCAL_INLINE(PyObject *) 
+Py_LOCAL_INLINE(PyObject *)
 create_exception(ExpatReader *reader, const char *errorCode,
                 const char *argspec, va_list va)
 {
@@ -1177,7 +1177,7 @@ charbuf_write(ExpatReader *reader, const XML_Char *data, int len)
 Py_LOCAL_INLINE(ExpatStatus)
 charbuf_putc(ExpatReader *reader, XML_Char c)
 {
-  register int pos = reader->buffer_used++;
+  register size_t pos = reader->buffer_used++;
   if (pos >= reader->buffer_size) {
     if (charbuf_resize(reader, reader->buffer_used) == EXPAT_STATUS_ERROR) {
       return EXPAT_STATUS_ERROR;
@@ -1541,7 +1541,7 @@ validate_entity_ref(ExpatReader *reader, PyObject *name)
     return report_error(reader, "INVALID_ENTITY", "{sO}", "entity", name);
   }
   if (PyDict_GetItem(dtd->notations, notation) == NULL) {
-    return report_error(reader, "UNDECLARED_NOTATION", "{sO}", 
+    return report_error(reader, "UNDECLARED_NOTATION", "{sO}",
                         "notation", notation);
   }
 
@@ -1566,7 +1566,7 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_ENTITY:
     switch (XmlString_IsName(value)) {
     case 0:
-      if (report_error(reader, "INVALID_NAME_VALUE", "{sO}", "attr", name) 
+      if (report_error(reader, "INVALID_NAME_VALUE", "{sO}", "attr", name)
           == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
     case 1:
@@ -1603,7 +1603,7 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   case ATTRIBUTE_TYPE_NMTOKENS:
     switch (XmlString_IsNmtokens(value)) {
     case 0:
-      if (report_error(reader, "INVALID_NMTOKEN_SEQ_VALUE", "{sO}", 
+      if (report_error(reader, "INVALID_NMTOKEN_SEQ_VALUE", "{sO}",
                        "attr", name) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
     case 1:
@@ -1632,7 +1632,7 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
   switch (AttributeType_GET_TYPE(attribute_type)) {
   case ATTRIBUTE_TYPE_ID:
     if (PyDict_GetItem(dtd->ids, value) != NULL) {
-      if (report_error(reader, "DUPLICATE_ID", "{sO}", "id", value) 
+      if (report_error(reader, "DUPLICATE_ID", "{sO}", "id", value)
           == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
     }
@@ -1696,7 +1696,7 @@ validate_attributes(ExpatReader *reader, PyObject *element_type,
     attribute_type = \
       ElementType_GET_ATTRIBUTE(element_type, attribute->qualifiedName);
     if (attribute_type == NULL) {
-      if (report_error(reader, "UNDECLARED_ATTRIBUTE", "{sO}", 
+      if (report_error(reader, "UNDECLARED_ATTRIBUTE", "{sO}",
                        "attr", attribute->qualifiedName) == EXPAT_STATUS_ERROR)
         return EXPAT_STATUS_ERROR;
       continue;
@@ -1849,8 +1849,8 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
   ExpatName *name;
   ExpatAttribute *attrs, *attr;
   PyObject *xml_base, *xml_lang, *xml_space, *xml_id;
-  int i, id_index, attrs_size;
-
+  int id_index;
+  size_t i, attrs_size;
   Debug_ParserFunctionCall(expat_StartElement, reader);
 #ifdef DEBUG_CALLBACKS
   fprintf(stderr, "=== StartElement(name=");
@@ -1988,7 +1988,7 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
 
   if (Expat_HasFlag(reader, EXPAT_FLAG_INFOSET_FIXUP)) {
     /* Ensure that there is enough room in the array to add the attributes */
-    int new_size = attrs_size + 2;
+    size_t new_size = attrs_size + 2;
     Expat_ClearFlag(reader, EXPAT_FLAG_INFOSET_FIXUP);
     if (new_size > reader->attrs_size) {
       if (resize_attribute_list(reader, new_size) == EXPAT_STATUS_ERROR) {
@@ -2960,7 +2960,7 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
       /* VC: ID Attribute Default */
       if (dflt) {
         if (report_error(reader, "ID_ATTRIBUTE_DEFAULT", NULL)
-            == EXPAT_STATUS_ERROR) 
+            == EXPAT_STATUS_ERROR)
           return;
       }
     } else if (att_type[5] == 0) {
@@ -3031,7 +3031,7 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
       }
       switch (cmp) {
       case 0: /* value other than "default" or "preserve" in enumeration */
-        if (report_error(reader, "XML_SPACE_VALUES", NULL) 
+        if (report_error(reader, "XML_SPACE_VALUES", NULL)
             == EXPAT_STATUS_ERROR)
           return;
         /* fall through */
@@ -3441,7 +3441,7 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
         ExpatFilter *filter = state->filter;
         ExpatHandlers handlers = filter->handlers;
         if (handlers.resolve_entity) {
-          source = handlers.resolve_entity(filter->arg, 
+          source = handlers.resolve_entity(filter->arg,
                                            python_publicId, python_systemId);
           if (source == NULL) break;
         }
