@@ -287,6 +287,15 @@ Py_LOCAL(void) DTD_Del(DTD *dtd)
   PyObject_FREE(dtd);
 }
 
+/** FilterState *******************************************************/
+
+FilterState *FilterState_New(size_t size) {
+  return NULL;
+}
+
+void FilterState_Del(FilterState *state) {
+}
+
 /** ExpatFilter *******************************************************/
 
 ExpatFilter *
@@ -468,19 +477,14 @@ Context_Del(Context *context)
 {
   if (context->parser)
     XML_ParserFree(context->parser);
-
   Py_DECREF(context->source);
   Py_DECREF(context->uri);
   Py_DECREF(context->stream);
   Py_DECREF(context->encoding);
-
-  if (context->dtd) {
+  if (context->dtd)
     DTD_Del(context->dtd);
-  }
-
-//   if (context->filters) {
-//     FilterContext_Del(context->filters);
-//   }
+  if (context->filters)
+    FilterState_Del(context->filters);
 
   PyObject_FREE(context);
 }
@@ -1351,7 +1355,6 @@ process_error(ExpatReader *reader)
     break;
   default:
     /* terminate parsing and setup ReaderException */
-    //XML_StopParser(reader->context->parser, 0);
     stop_parsing(reader);
     Debug_Print("-- Parsing error ------------ \n"
                 "Expat error: %s\n"
@@ -4200,14 +4203,14 @@ static PyMethodDef module_methods[] = {
 static Expat_APIObject Expat_API = {
   ExpatFilter_New,
   ExpatFilter_Del,
-  ExpatReader_New,              //Expat_ParserCreate,
-  ExpatReader_Del,              //Expat_ParserFree,
+  ExpatReader_New,
+  ExpatReader_Del,
   ExpatReader_SetValidation,
   ExpatReader_SetParamEntityParsing,
-  ExpatReader_Parse,            //Expat_ParseDocument,
-  ExpatReader_ParseEntity,      //Expat_ParseEntity,
-  ExpatReader_Suspend,          //Expat_SuspendParser,
-  ExpatReader_Resume,           //Expat_ResumeParser,
+  ExpatReader_Parse,
+  ExpatReader_ParseEntity,
+  ExpatReader_Suspend,
+  ExpatReader_Resume,
   ExpatReader_GetBase,
   ExpatReader_GetLineNumber,
   ExpatReader_GetColumnNumber,

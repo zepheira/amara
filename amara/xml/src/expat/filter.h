@@ -29,7 +29,7 @@ extern "C" {
      iterable object producing iterable objects. */
   FilterCriterion *FilterCriterion_FromSeq(PyObject *seq);
 
-  FilterState *FilterState_New(int size);
+  FilterState *FilterState_New(size_t size);
   void FilterState_Del(FilterState *state);
 
   FilterState *FilterState_FromSeq(PyObject *seq);

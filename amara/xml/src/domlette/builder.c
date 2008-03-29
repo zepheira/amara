@@ -803,8 +803,8 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
     Py_DECREF(result);
   }
 
-  //Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
-  //Expat_SetParamEntityParsing(state->reader, parseType);
+  Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
+  Expat_SetParamEntityParsing(state->reader, parseType);
 
   if (asEntity)
     status = ExpatReader_ParseEntity(state->reader, inputSource, namespaces);
