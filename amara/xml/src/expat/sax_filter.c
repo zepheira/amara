@@ -880,6 +880,7 @@ static ExpatHandlers sax_handlers = {
   /* end_document           */ sax_EndDocument,
   /* start_element          */ sax_StartElement,
   /* end_element            */ sax_EndElement,
+  /* attribute              */ NULL, /* FIXME: add attribute buffering */
   /* characters             */ sax_CharacterData,
   /* ignorable_whitespace   */ sax_IgnorableWhitespace,
   /* processing_instruction */ sax_ProcessingInstruction,

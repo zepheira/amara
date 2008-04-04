@@ -52,6 +52,16 @@ extern "C" {
     EXPAT_STATUS_SUSPENDED,
   } ExpatStatus;
 
+  /* name is a PyUnicodeObject, atts is a PyDictObject */
+  typedef ExpatStatus (*ExpatStartFilterHandler)(
+                                    void *arg,
+                                    ExpatName *name);
+
+  /* name is a PyUnicodeObject */
+  typedef ExpatStatus (*ExpatEndFilterHandler)(
+                                    void *arg,
+                                    ExpatName *name);
+
   typedef ExpatStatus (*ExpatStartDocumentHandler)(void *arg);
 
   typedef ExpatStatus (*ExpatEndDocumentHandler)(void *arg);
@@ -67,6 +77,12 @@ extern "C" {
   typedef ExpatStatus (*ExpatEndElementHandler)(
                                     void *arg,
                                     ExpatName *name);
+
+  typedef ExpatStatus (*ExpatAttributeHandler)(
+                                    void *arg,
+                                    ExpatName *name,
+                                    PyObject *value,
+                                    AttributeType type);
 
   /* data is a PyUnicodeObject */
   typedef ExpatStatus (*ExpatCharacterDataHandler)(
@@ -193,12 +209,13 @@ extern "C" {
                                                  PyObject *systemId);
 
   typedef struct {
-    ExpatStartElementHandler start_filter;
-    ExpatEndElementHandler end_filter;
+    ExpatStartFilterHandler start_filter;
+    ExpatEndFilterHandler end_filter;
     ExpatStartDocumentHandler start_document;
     ExpatEndDocumentHandler end_document;
     ExpatStartElementHandler start_element;
     ExpatEndElementHandler end_element;
+    ExpatAttributeHandler attribute;
     ExpatCharacterDataHandler characters;
     ExpatCharacterDataHandler ignorable_whitespace;
     ExpatProcessingInstructionHandler processing_instruction;
@@ -259,7 +276,7 @@ extern "C" {
 #include "util.h"
 #include "debug.h"
 
-  ExpatFilter *ExpatFilter_New(void *arg, ExpatHandlers *handlers, 
+  ExpatFilter *ExpatFilter_New(void *arg, ExpatHandlers *handlers,
                                unsigned long flags, FilterCriterion *criteria);
   void ExpatFilter_Del(ExpatFilter *filter);
 

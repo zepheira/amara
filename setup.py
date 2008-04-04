@@ -189,7 +189,9 @@ setup(name='Amara',
                              'amara/xml/src/expat/attributes.c',
                              # ExpatReader object
                              'amara/xml/src/expat/reader.c',
-                             # SaxFilter object
+                             # Filter and Handler classes
+                             'amara/xml/src/expat/filter.c',
+                             # SaxReader object
                              'amara/xml/src/expat/sax_filter.c',
                              # Module interface
                              'amara/xml/src/expat/expat.c',

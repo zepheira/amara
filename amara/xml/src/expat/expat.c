@@ -70,8 +70,8 @@ static PyObject *attribute_decl_fixed;
 static PyObject *absolutize_function;
 
 static PyObject *ReaderException;
-static PyObject *UriException;
-static PyObject *UriException_RESOURCE_ERROR;
+static PyObject *IriError;
+static PyObject *IriError_RESOURCE_ERROR;
 
 static PyObject *expat_library_error;
 
@@ -311,16 +311,17 @@ ExpatFilter_New(void *arg, ExpatHandlers *handlers, unsigned long flags,
     }
     filter->flags = flags;
     filter->criteria = criteria;
-    fprintf(stderr, "ExpatFilter_New() -> %p\n", filter);
   } else {
     PyErr_NoMemory();
   }
+  Debug_Return(ExpatFilter_New, filter);
   return filter;
 }
 
 void
 ExpatFilter_Del(ExpatFilter *filter)
 {
+  Debug_FunctionCall(ExpatFilter_Del, filter);
   PyMem_Del(filter);
 }
 
@@ -328,6 +329,9 @@ Py_LOCAL(FilterState *)
 ExpatFilter_NewState(ExpatFilter *filter)
 {
   FilterState *state;
+
+  Debug_FunctionCall(ExpatFilter_NewState, filter);
+
   state = PyMem_New(FilterState, 1);
   if (state != NULL) {
     memset(state, 0, sizeof(FilterState));
@@ -336,7 +340,7 @@ ExpatFilter_NewState(ExpatFilter *filter)
   } else {
     PyErr_NoMemory();
   }
-  fprintf(stderr, "ExpatFilter_NewState(%p) -> %p\n", filter, state);
+  Debug_Return(ExpatFilter_NewState, state);
   return state;
 }
 
@@ -499,7 +503,7 @@ begin_context(ExpatReader *reader, XML_Parser parser, PyObject *source)
 
   context = Context_New(parser, source);
 
-  Debug_Return(begin_context, "%p", context);
+  Debug_Return(begin_context, context);
 
   if (context == NULL) return EXPAT_STATUS_ERROR;
 
@@ -1225,9 +1229,8 @@ static XML_Char expat_default_string[] = {
     (s1)[XMLChar_STATIC_LEN(s2)] == '\0'))
 
 /* callback functions cannot be declared Py_LOCAL */
-static int expat_UnknownEncodingHandler(void *encodingHandlerData,
-                                        const XML_Char *name,
-                                        XML_Encoding *info);
+static int expat_UnknownEncoding(void *arg, const XML_Char *name,
+                                 XML_Encoding *info);
 
 Py_LOCAL_INLINE(XML_Parser)
 create_parser(ExpatReader *reader)
@@ -1254,8 +1257,7 @@ create_parser(ExpatReader *reader)
   XML_SetReturnNSTriplet(parser, 1);
 
   /* enable use of all encodings available with Python */
-  XML_SetUnknownEncodingHandler(parser, expat_UnknownEncodingHandler,
-                                NULL);
+  XML_SetUnknownEncodingHandler(parser, expat_UnknownEncoding, (void *)reader);
 
   XML_SetUserData(parser, (void *)reader);
 
@@ -1858,20 +1860,14 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
   PyObject *xml_base, *xml_lang, *xml_space, *xml_id;
   int id_index;
   size_t i, attrs_size;
-  Debug_ParserFunctionCall(expat_StartElement, reader);
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== StartElement(name=");
-  XMLChar_Print(stderr, expat_name);
-  fprintf(stderr, ", atts={");
-  if (*(ppattr = expat_atts)) {
-    XMLChar_Print(stderr, *ppattr++);
-    while (*ppattr) {
-      fprintf(stderr, ", ");
-      XMLChar_Print(stderr, *ppattr++);
-    }
-  }
-  fprintf(stderr, "})\n");
-#endif
+
+  Debug_Print("=== StartElement(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", name=");
+  Debug_PrintXMLChar(expat_name);
+  Debug_Print(", atts=");
+  Debug_PrintArray(expat_atts, Debug_PrintXMLChar);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2086,12 +2082,11 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
   ExpatName *name;
   PyObject *temp;
 
-  Debug_ParserFunctionCall(expat_EndElement, reader);
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== EndElement(name=");
-  XMLChar_Print(stderr, expat_name);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== EndElement(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", name=");
+  Debug_PrintXMLChar(expat_name);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2139,12 +2134,11 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
 static void expat_CharacterData(ExpatReader *reader, const XML_Char *data,
                                 int len)
 {
-  Debug_ParserFunctionCall(expat_CharacterData, reader);
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== CharacterData(data=");
-  XMLChar_NPrint(stderr, data, len);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== CharacterData(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", data=");
+  Debug_PrintXMLCharN(data, len);
+  Debug_Print(")\n");
 
   if (charbuf_write(reader, data, len) == EXPAT_STATUS_ERROR)
     stop_parsing(reader);
@@ -2160,14 +2154,13 @@ static void expat_ProcessingInstruction(ExpatReader *reader,
   PyObject *python_target, *python_data;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_ProcessingInstruction, reader);
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== ProcessingInstruction(target=");
-  XMLChar_Print(stderr, target);
-  fprintf(stderr, ", data=");
-  XMLChar_Print(stderr, data);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== ProcessingInstruction(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", target=");
+  Debug_PrintXMLChar(target);
+  Debug_Print(", data=");
+  Debug_PrintXMLChar(data);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2198,12 +2191,11 @@ static void expat_Comment(ExpatReader *reader, const XML_Char *data)
   PyObject *python_data;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_Comment, reader);
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== Comment(data=");
-  XMLChar_Print(stderr, data);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== Comment(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", data=");
+  Debug_PrintXMLChar(data);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2232,15 +2224,13 @@ static void expat_StartNamespaceDecl(ExpatReader *reader,
   PyObject *python_prefix, *python_uri;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_StartNamespaceDecl, reader);
-
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== StartNamespaceDecl(prefix=");
-  XMLChar_Print(stderr, prefix);
-  fprintf(stderr, ", uri=");
-  XMLChar_Print(stderr, uri);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== StartNamespaceDecl(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", prefix=");
+  Debug_PrintXMLChar(prefix);
+  Debug_Print(", uri=");
+  Debug_PrintXMLChar(uri);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2279,13 +2269,11 @@ static void expat_EndNamespaceDecl(ExpatReader *reader, const XML_Char *prefix)
   PyObject *python_prefix;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_EndNamespaceDecl, reader);
-
-#ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== EndNamespaceDecl(prefix=");
-  XMLChar_Print(stderr, prefix);
-  fprintf(stderr, ")\n");
-#endif
+  Debug_Print("=== EndNamespaceDecl(context=");
+  Debug_PrintVoidPtr(reader->context);
+  Debug_Print(", prefix=");
+  Debug_PrintXMLChar(prefix);
+  Debug_Print(")\n");
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
     return;
@@ -2317,10 +2305,8 @@ static void expat_StartDoctypeDecl(ExpatReader *reader, const XML_Char *name,
   ExpatStatus status;
   XML_Handlers *subset_handlers;
 
-  Debug_ParserFunctionCall(expat_StartDoctypeDecl, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== StartDoctypeDecl(name=");
+  fprintf(stderr, "=== StartDoctypeDecl(%p, name=", reader->context);
   XMLChar_Print(stderr, name);
   fprintf(stderr, ", sysid=");
   XMLChar_Print(stderr, sysid);
@@ -2398,10 +2384,8 @@ static void expat_EndDoctypeDecl(ExpatReader *reader)
   Py_ssize_t pos;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_EndDoctypeDecl, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== EndDoctypeDecl()\n");
+  fprintf(stderr, "=== EndDoctypeDecl(%p)\n", reader->context);
 #endif
 
   if (charbuf_reset(reader) == EXPAT_STATUS_ERROR)
@@ -2444,6 +2428,10 @@ static void expat_StartCdataSection(ExpatReader *reader)
 {
   ExpatStatus status;
 
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== StartCdataSection(%p)\n", reader->context);
+#endif
+
   status = ExpatFilter_StartCdataSection(reader->context->filters);
   if (status == EXPAT_STATUS_ERROR)
     stop_parsing(reader);
@@ -2453,6 +2441,10 @@ static void expat_StartCdataSection(ExpatReader *reader)
 static void expat_EndCdataSection(ExpatReader *reader)
 {
   ExpatStatus status;
+
+#ifdef DEBUG_CALLBACKS
+  fprintf(stderr, "=== EndCdataSection(%p)\n", reader->context);
+#endif
 
   status = ExpatFilter_EndCdataSection(reader->context->filters);
   if (status == EXPAT_STATUS_ERROR)
@@ -2469,10 +2461,8 @@ static void expat_SkippedEntity(ExpatReader *reader,
   PyObject *python_entityName;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_SkippedEntity, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== SkippedEntity(entityName=");
+  fprintf(stderr, "=== SkippedEntity(%p, entityName=", reader->context);
   XMLChar_Print(stderr, entityName);
   fprintf(stderr, ", is_parameter_entity=%d)\n", is_parameter_entity);
 #endif
@@ -2754,10 +2744,8 @@ static void expat_ElementDecl(ExpatReader *reader, const XML_Char *name,
   PyObject *model = NULL;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_ElementDecl, reader);
-
 #if defined(DEBUG_CALLBACKS)
-  fprintf(stderr, "=== ElementDecl(name=");
+  fprintf(stderr, "=== ElementDecl(%p, name=", reader->context);
   XMLChar_Print(stderr, name);
   fprintf(stderr, ", content=");
   model_string = stringify_model(reader, content);
@@ -2917,10 +2905,8 @@ static void expat_AttlistDecl(ExpatReader *reader, const XML_Char *elname,
   Py_ssize_t i;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_AttlistDecl, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== AttlistDecl(elname=");
+  fprintf(stderr, "=== AttlistDecl(%p, elname=", reader->context);
   XMLChar_Print(stderr, elname);
   fprintf(stderr, ", attname=");
   XMLChar_Print(stderr, attname);
@@ -3159,10 +3145,8 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
   int len;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_EntityDecl, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== EntityDecl(entityName=");
+  fprintf(stderr, "=== EntityDecl(%p, entityName=", reader->context);
   XMLChar_Print(stderr, entityName);
   fprintf(stderr, ", is_parameter_entity=%d, value=", is_parameter_entity);
   XMLChar_NPrint(stderr, value, value_length);
@@ -3310,10 +3294,8 @@ static void expat_NotationDecl(ExpatReader *reader, const XML_Char *notationName
   PyObject *python_notationName;
   ExpatStatus status;
 
-  Debug_ParserFunctionCall(expat_NotationDecl, reader);
-
 #ifdef DEBUG_CALLBACKS
-  fprintf(stderr, "=== NotationDecl(notationName=");
+  fprintf(stderr, "=== NotationDecl(%p, notationName=", reader->context);
   XMLChar_Print(stderr, notationName);
   fprintf(stderr, ", base=");
   XMLChar_Print(stderr, base);
@@ -3391,10 +3373,8 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
   ExpatStatus status;
   enum XML_Status result = XML_STATUS_OK;
 
-  Debug_ParserFunctionCall(expat_ExternalEntityRef, reader);
-
 #if defined(DEBUG_CALLBACKS)
-  fprintf(stderr, "=== ExternalEntityRef(context=");
+  fprintf(stderr, "=== ExternalEntityRef(%p, context=", reader->context);
   XMLChar_Print(stderr, context);
   fprintf(stderr, ", base=");
   XMLChar_Print(stderr, base);
@@ -3583,16 +3563,22 @@ static const unsigned char template[] = {
 };
 
 /* callback functions cannot be declared Py_LOCAL */
-static int expat_UnknownEncodingHandler(void *encodingHandlerData,
-                                        const XML_Char *name,
-                                        XML_Encoding *info)
+static int expat_UnknownEncoding(void *arg, const XML_Char *name,
+                                 XML_Encoding *info)
 {
+  ExpatReader *reader = (ExpatReader *)arg;
   PyObject *_u_name, *_s_name;
   PyObject *encoder, *decoder;
   PyObject *result;
   Py_UNICODE unichr;
   int i;
   UnknownEncoding *encoding;
+
+#if defined(DEBUG_CALLBACKS)
+  fprintf(stderr, "=== UnknownEncoding(%p, name=", reader->context);
+  XMLChar_Print(stderr, name);
+  fprintf(stderr, ", info=%p)\n", info);
+#endif
 
   _u_name = XMLChar_Decode(name);
   if (_u_name == NULL)
@@ -4217,14 +4203,29 @@ static Expat_APIObject Expat_API = {
 
 };
 
+struct submodule_t {
+  int (*init)(PyObject *);
+  void (*fini)(void);
+};
+
+#define SUBMODULE(name) { _Expat_##name##_Init, _Expat_##name##_Fini }
+struct submodule_t submodules[] = {
+  SUBMODULE(Util),
+  SUBMODULE(ContentModel),
+  SUBMODULE(InputSource),
+  SUBMODULE(Attributes),
+  SUBMODULE(Reader),
+  SUBMODULE(Filter),
+  SUBMODULE(SaxFilter),
+  { NULL, NULL }
+};
+
 static void fini_expat(void *capi)
 {
-  _Expat_Util_Fini();
-  _Expat_ContentModel_Fini();
-  _Expat_InputSource_Fini();
-  _Expat_Attributes_Fini();
-  _Expat_Reader_Fini();
-  _Expat_SaxFilter_Fini();
+  struct submodule_t *submodule;
+  for (submodule = submodules; submodule->fini; submodule++) {
+    submodule->fini();
+  }
 
   Py_DECREF(read_string);
 
@@ -4259,6 +4260,7 @@ static void fini_expat(void *capi)
 PyMODINIT_FUNC init_expat(void)
 {
   PyObject *module, *import;
+  struct submodule_t *submodule;
 
   XML_Expat_Version version = XML_ExpatVersionInfo();
   const XML_Feature *features = XML_GetFeatureList();
@@ -4270,18 +4272,9 @@ PyMODINIT_FUNC init_expat(void)
   module = Py_InitModule3("_expat", module_methods, module_doc);
   if (module == NULL) return;
 
-  if (_Expat_Util_Init(module) < 0)
-    return;
-  if (_Expat_ContentModel_Init(module) < 0)
-    return;
-  if (_Expat_InputSource_Init(module) < 0)
-    return;
-  if (_Expat_Attributes_Init(module) < 0)
-    return;
-  if (_Expat_Reader_Init(module) < 0)
-    return;
-  if (_Expat_SaxFilter_Init(module) < 0)
-    return;
+  for (submodule = submodules; submodule->init; submodule++) {
+    if (submodule->init(module) < 0) return;
+  }
 
 #define DEFINE_OBJECT(name, ob) \
   (name) = (ob);                \
@@ -4315,16 +4308,15 @@ PyMODINIT_FUNC init_expat(void)
 
   import = PyImport_ImportModule("amara.lib");
   if (import == NULL) return;
-  UriException = PyObject_GetAttrString(import, "UriException");
-  if (UriException == NULL) {
+  IriError = PyObject_GetAttrString(import, "IriError");
+  if (IriError == NULL) {
     Py_DECREF(import);
     return;
   }
   Py_DECREF(import);
 
-  UriException_RESOURCE_ERROR = PyObject_GetAttrString(UriException,
-                                                       "RESOURCE_ERROR");
-  if (UriException_RESOURCE_ERROR == NULL) return;
+  IriError_RESOURCE_ERROR = PyObject_GetAttrString(IriError, "RESOURCE_ERROR");
+  if (IriError_RESOURCE_ERROR == NULL) return;
 
   import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return;

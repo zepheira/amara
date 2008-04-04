@@ -45,8 +45,6 @@ typedef enum {
 ParseType read_external_dtd = PARSE_TYPE_NO_VALIDATE;
 
 static PyObject *xmlns_string;
-static PyObject *process_includes_string;
-static PyObject *strip_elements_string;
 static PyObject *empty_args_tuple;
 static PyObject *gc_enable_function;
 static PyObject *gc_disable_function;
@@ -251,7 +249,7 @@ static int ParserState_AddNode(ParserState *self, NodeObject *node)
 
 /** handlers ***********************************************************/
 
-static ExpatStatus 
+static ExpatStatus
 builder_StartDocument(void *userState)
 {
   ParserState *state = (ParserState *)userState;
@@ -290,7 +288,7 @@ builder_StartDocument(void *userState)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_EndDocument(void *userState)
 {
   ParserState *state = (ParserState *)userState;
@@ -311,7 +309,7 @@ builder_EndDocument(void *userState)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
 {
   ParserState *state = (ParserState *)arg;
@@ -427,7 +425,7 @@ add_attribute(ParserState *state, ElementObject *element,
   return attr;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_StartElement(void *userState, ExpatName *name,
                      ExpatAttribute atts[], int natts)
 {
@@ -535,8 +533,7 @@ builder_StartElement(void *userState, ExpatName *name,
   return EXPAT_STATUS_OK;
 }
 
-
-static ExpatStatus 
+static ExpatStatus
 builder_EndElement(void *userState, ExpatName *name)
 {
   ParserState *state = (ParserState *)userState;
@@ -568,7 +565,35 @@ builder_EndElement(void *userState, ExpatName *name)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
+builder_Attribute(void *userState, ExpatName *name, PyObject *value,
+                  AttributeType type)
+{
+  ParserState *state = (ParserState *)userState;
+  AttrObject *attr;
+
+#ifdef DEBUG_PARSER
+  fprintf(stderr, "--- builder_Attribute(name=");
+  PyObject_Print(name->qualifiedName, stderr, 0);
+  fprintf(stderr, ", value=");
+  PyObject_Print(value, stderr, 0);
+  fprintf(stderr, ")\n");
+#endif
+
+  attr = add_attribute(state, (ElementObject *)state->context->node,
+                       name->namespaceURI, name->qualifiedName,
+                       name->localName, value);
+  if (attr == NULL)
+    return EXPAT_STATUS_ERROR;
+
+  /* save the attribute type as well (for getElementById) */
+  attr->type = type;
+
+  Py_DECREF(attr);
+  return EXPAT_STATUS_OK;
+}
+
+static ExpatStatus
 builder_Characters(void *userState, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
@@ -603,7 +628,7 @@ builder_Characters(void *userState, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_ProcessingInstruction(void *userState, PyObject *target, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
@@ -642,7 +667,7 @@ builder_ProcessingInstruction(void *userState, PyObject *target, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_Comment(void *userState, PyObject *data)
 {
   ParserState *state = (ParserState *)userState;
@@ -677,7 +702,7 @@ builder_Comment(void *userState, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_DoctypeDecl(void *userState, PyObject *name, PyObject *systemId,
                     PyObject *publicId)
 {
@@ -704,7 +729,7 @@ builder_DoctypeDecl(void *userState, PyObject *name, PyObject *systemId,
   return EXPAT_STATUS_OK;
 }
 
-static ExpatStatus 
+static ExpatStatus
 builder_UnparsedEntityDecl(void *userState, PyObject *name, PyObject *publicId,
                            PyObject *systemId, PyObject *notationName)
 {
@@ -737,6 +762,7 @@ static ExpatHandlers builder_handlers = {
   /* end_document           */ builder_EndDocument,
   /* start_element          */ builder_StartElement,
   /* end_element            */ builder_EndElement,
+  /* attribute              */ builder_Attribute,
   /* characters             */ builder_Characters,
   /* ignorable_whitespace   */ builder_Characters,
   /* processing_instruction */ builder_ProcessingInstruction,
@@ -863,7 +889,7 @@ PyObject *Domlette_NonvalParse(PyObject *self, PyObject *args, PyObject *kw)
   static char *kwlist[] = {"isrc", "readExtDtd", "nodeFactories", NULL};
   int parse_type=read_external_dtd;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:NonvalParse", kwlist, 
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:NonvalParse", kwlist,
                                    &isrc, &readExtDtd, &nodeFactories))
     return NULL;
 
@@ -900,7 +926,7 @@ PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args, PyObject *kw)
   NodeFactories *node_factories=NULL;
   PyObject *result;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:ParseFragment", kwlist, 
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:ParseFragment", kwlist,
                                    &isrc, &namespaces, &nodeFactories))
     return NULL;
 
@@ -933,30 +959,22 @@ int DomletteBuilder_Init(PyObject *module)
   xmlns_string = XmlString_FromASCII("xmlns");
   if (xmlns_string == NULL) return -1;
 
-  process_includes_string = PyString_FromString("processIncludes");
-  if (process_includes_string == NULL) return -1;
-
-  strip_elements_string = PyString_FromString("stripElements");
-  if (strip_elements_string == NULL) return -1;
-
   empty_args_tuple = PyTuple_New((Py_ssize_t)0);
   if (empty_args_tuple == NULL) return -1;
 
   import = PyImport_ImportModule("gc");
   if (import == NULL) return -1;
-
 #define GET_GC_FUNC(NAME)                                       \
   gc_##NAME##_function = PyObject_GetAttrString(import, #NAME); \
   if (gc_##NAME##_function == NULL) {                           \
     Py_DECREF(import);                                          \
     return -1;                                                  \
   }
-
   GET_GC_FUNC(enable);
   GET_GC_FUNC(disable);
   GET_GC_FUNC(isenabled);
-
   Py_DECREF(import);
+#undef GET_GC_FUNC
 
   return 0;
 }
@@ -964,8 +982,6 @@ int DomletteBuilder_Init(PyObject *module)
 void DomletteBuilder_Fini(void)
 {
   Py_DECREF(xmlns_string);
-  Py_DECREF(process_includes_string);
-  Py_DECREF(strip_elements_string);
   Py_DECREF(empty_args_tuple);
   Py_DECREF(gc_enable_function);
   Py_DECREF(gc_disable_function);

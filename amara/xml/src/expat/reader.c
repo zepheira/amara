@@ -18,21 +18,35 @@ static PyObject *
 reader_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { "filters", NULL };
-  PyObject *filters = NULL;
+  PyObject *seq = NULL;
+  ExpatFilter **filters;
+  Py_ssize_t nfilters;
   ReaderObject *newobj;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:Reader", kwlist,
-                                   &filters))
+                                   &seq))
     return NULL;
 
+  if (seq == NULL)
+    nfilters = 0;
+  else {
+    nfilters = PySequence_Length(seq);
+    if (nfilters < 0)
+      return NULL;
+  }
+  filters = PyMem_New(ExpatFilter *, nfilters);
+  if (filters == NULL)
+    return NULL;
   newobj = (ReaderObject *)type->tp_alloc(type, 0);
   if (newobj != NULL) {
     newobj->reader = ExpatReader_New(NULL, 0);
     if (newobj->reader == NULL) {
-      Py_DECREF(newobj);
-      return NULL;
+      Py_CLEAR(newobj);
+      goto finally;
     }
   }
+finally:
+  PyMem_Del(filters);
   return (PyObject *)newobj;
 }
 

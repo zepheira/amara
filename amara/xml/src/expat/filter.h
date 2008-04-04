@@ -34,6 +34,11 @@ extern "C" {
 
   FilterState *FilterState_FromSeq(PyObject *seq);
 
+#ifdef Expat_BUILDING_MODULE
+  int _Expat_Filter_Init(PyObject *module);
+  void _Expat_Filter_Fini(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

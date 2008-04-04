@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "Python.h"
+
 /* Use these defines to control different aspects of debugging */
 
 /* Debug/trace the ExpatReader calls */
@@ -52,28 +54,60 @@ extern "C" {
 #define PyType_CLEAR(op)
 #endif
 
-#ifdef DEBUG_READER
+#if defined(DEBUG_READER) || defined(DEBUG_CALLBACKS)
 #ifdef __STDC__
 #define Debug_Print(...) PySys_WriteStderr(__VA_ARGS__)
 #else
 #define Debug_Print PySys_WriteStderr
 #endif
 
-#define Debug_FunctionCall(name, ptr)           \
-  Debug_Print("### %s(%p)\n", #name, ptr)
+#ifdef MS_WINDOWS
+#define PTR_FORMAT "0x%p"
+#else
+#define PTR_FORMAT "%p"
+#endif
 
-#define Debug_Return(name, fmt, arg)                    \
-  Debug_Print("### %s() => " fmt "\n", #name, arg)
+#define Debug_PrintVoidPtr(p) \
+  Debug_Print(PTR_FORMAT, (void *)(p))
+
+#define Debug_PrintArray(ARRAY, PRINT) \
+do { \
+  size_t i; \
+  Debug_Print("{"); \
+  for (i = 0; ARRAY[i];) { \
+    PRINT(ARRAY[i++]); \
+    while (ARRAY[i]) { \
+      Debug_Print(", "); \
+      PRINT(ARRAY[i++]); \
+    } \
+  } \
+  Debug_Print("}"); \
+} while(0)
+
+#define Debug_PrintXMLChar(str) \
+  XMLChar_Print(PySys_GetFile("stderr", stderr), (str))
+
+#define Debug_PrintXMLCharN(str, len) \
+  XMLChar_NPrint(PySys_GetFile("stderr", stderr), (str), (len))
+
+#define Debug_PrintObject(p) \
+  PyObject_Print((p), PySys_GetFile("stderr", stderr), 0)
+
+#define Debug_FunctionCall(name, ptr)           \
+  Debug_Print("### %s(%s=" PTR_FORMAT ")\n", #name, #ptr, ptr)
+
+#define Debug_Return(name, arg)                 \
+  Debug_Print("### %s() => " PTR_FORMAT "\n", #name, arg)
 
 #define Debug_ParserFunctionCall(name, parser)  \
-  Debug_FunctionCall(name, parser->context)
+  Debug_Print("### %s(context=" PTR_FORMAT ")\n", #name, parser->context)
 
-#define Debug_ReturnStatus(name, status)                                \
-  Debug_Return(name, "%s",                                              \
-               (status == EXPAT_STATUS_ERROR ? "ERROR" :                \
-                status == EXPAT_STATUS_OK ? "OK" :                      \
-                status == EXPAT_STATUS_SUSPENDED ? "SUSPENDED" :        \
-                "UNKNOWN"))
+#define Debug_ReturnStatus(name, status)                               \
+  Debug_Print("### %s() => %s\n", #name,                               \
+              (status == EXPAT_STATUS_ERROR ? "ERROR" :                \
+               status == EXPAT_STATUS_OK ? "OK" :                      \
+               status == EXPAT_STATUS_SUSPENDED ? "SUSPENDED" :        \
+               "UNKNOWN"))
 #else
 #ifdef __STDC__ /* C99 conformance macro */
 #define Debug_Print(...)
@@ -81,6 +115,10 @@ extern "C" {
 /* Decent compilers will optimize this out, hopefully */
 Py_LOCAL_INLINE(void) Debug_Print(const char *format, ...) { }
 #endif
+#define Debug_PrintVoidPtr(ptr)
+#define Debug_PrintArray(ptr, printfunc)
+#define Debug_PrintXMLChar(str)
+#define Debug_PrintObject(obj)
 #define Debug_FunctionCall(name, ptr)
 #define Debug_Return(name, fmt, arg)
 #define Debug_ParserFunctionCall(name, parser)

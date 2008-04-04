@@ -1,6 +1,10 @@
 #define PY_SSIZE_T_CLEAN
 #include "domlette_interface.h"
 
+#if defined(_WIN32) || defined(__WIN32__)
+#  define strcasecmp stricmp
+#endif
+
 /** Private Routines **************************************************/
 
 PyObject *g_implementation;

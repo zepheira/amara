@@ -50,7 +50,7 @@ class simple_string_element(HandlerType):
         # Its possible that the parentNode may already have an attribute of the
         # same name (via a child element).
         value = u''.join(self.value)
-        self.next_filter.attribute(expandedName, tagName, value)
+        self.chain_next.attribute(expandedName, tagName, value)
 
     def start_element(self, expandedName, tagName, attributes):
         warn()
@@ -67,20 +67,20 @@ class element_skeleton(FilterType):
     """Drops all character data for the matching element and descendants"""
     def characters(self, data):
         pass
-    def ignorableWhitespace(self, data):
+    def whitespace(self, data):
         pass
 
 
 class ws_strip_element(FilterType):
     """Drops all ignorable whitespace for the matching element and descendants"""
-    def ignorableWhitespace(self, data):
+    def whitespace(self, data):
         pass
 
 
 class ws_preserve_element(FilterType):
     """Converts ignorable whitespace into regular character data"""
-    def ignorableWhitespace(self, data):
-        self.next_filter.characters(data)
+    def whitespace(self, data):
+        self.chain_next.characters(data)
 
 
 class type_inference(FilterType):
@@ -90,10 +90,10 @@ class type_inference(FilterType):
             value = infer_data_from_string(value)
             if value is not None:
                 attributes[key] = value
-        self.next_filter.start_element(expandedName, tagName, attributes)
+        self.chain_next.start_element(expandedName, tagName, attributes)
 
     def attribute(self, expandedName, name, value):
         typed_value = infer_data_from_string(value)
         if typed_value is not None:
             value = typed_value
-        self.next_filter.attribute(expandedName, name, value)
+        self.chain_next.attribute(expandedName, name, value)

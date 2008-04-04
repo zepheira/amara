@@ -9,7 +9,7 @@ extern "C" {
 
 #ifdef Expat_BUILDING_MODULE
 
-  PyObject *ContentModel_FinalEvent;
+  extern PyObject *ContentModel_FinalEvent;
 
   PyObject *ContentModel_New(void);
 
