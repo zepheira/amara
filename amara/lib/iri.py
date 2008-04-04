@@ -1,5 +1,5 @@
 ########################################################################
-# $Header: /var/local/cvsroot/4Suite/Ft/Lib/Iri.py,v 1.5 2006-08-23 02:46:24 mbrown Exp $
+# $Header$
 """
 Classes and functions related to IRI/URI processing, validation, resolution, etc.
 
@@ -49,7 +49,7 @@ import mimetools
 from string import ascii_letters
 from email.Utils import formatdate as _formatdate
 
-from amara.lib import UriError, import_util
+from amara.lib import IriError#, import_util
 
 # whether os_path_to_uri should treat "/" same as "\" in a Windows path
 WINDOWS_SLASH_COMPAT = True
@@ -652,7 +652,7 @@ def absolutize(uriRef, baseUri):
     Unexpected results may occur otherwise.
 
     This function only conducts a minimal sanity check in order to determine
-    if relative resolution is possible: it raises a UriException if the base
+    if relative resolution is possible: it raises a IriError if the base
     URI does not have a scheme component. While it is true that the base URI
     is irrelevant if the URI reference has a scheme, an exception is raised
     in order to signal that the given string does not even come close to
@@ -697,7 +697,7 @@ def absolutize(uriRef, baseUri):
     #
     # ensure base URI is absolute
     if not baseUri or not is_absolute(baseUri):
-        raise UriException(UriException.RELATIVE_BASE_URI,
+        raise IriError(IriError.RELATIVE_BASE_URI,
                            base=baseUri, ref=uriRef)
     # shortcut for the simplest same-document reference cases
     if uriRef == '' or uriRef[0] == '#':
@@ -1035,7 +1035,7 @@ class uri_resolver_base:
         the given base URI.
 
         Also verifies that the resulting URI reference has a scheme that
-        resolve() supports, raising a UriException if it doesn't.
+        resolve() supports, raising a IriError if it doesn't.
 
         The default implementation does not perform any validation on the base
         URI beyond that performed by absolutize().
@@ -1050,7 +1050,7 @@ class uri_resolver_base:
                 raise ValueError('When the URI to resolve is a relative '
                     'reference, it must be accompanied by a base URI.')
             else:
-                raise UriException(UriException.UNSUPPORTED_SCHEME,
+                raise IriError(IriError.UNSUPPORTED_SCHEME,
                                    scheme=scheme,
                                    resolver=self.__class__.__name__)
 
@@ -1062,7 +1062,7 @@ class uri_resolver_base:
         identified by the resulting URI, returning the entity as a stream (a
         Python file-like object).
 
-        Raises a UriException if the URI scheme is unsupported or if a stream
+        Raises a IriError if the URI scheme is unsupported or if a stream
         could not be obtained for any reason.
         """
         if baseUri is not None:
@@ -1076,7 +1076,7 @@ class uri_resolver_base:
                     raise ValueError('When the URI to resolve is a relative '
                         'reference, it must be accompanied by a base URI.')
                 else:
-                    raise UriException(UriException.UNSUPPORTED_SCHEME,
+                    raise IriError(IriError.UNSUPPORTED_SCHEME,
                                        scheme=scheme,
                                        resolver=self.__class__.__name__)
 
@@ -1086,7 +1086,7 @@ class uri_resolver_base:
             try:
                 stream = open(path, 'rb')
             except IOError, e:
-                raise UriException(UriException.RESOURCE_ERROR,
+                raise IriError(IriError.RESOURCE_ERROR,
                                    loc='%s (%s)' % (uri, path),
                                    uri=uri, msg=str(e))
             # Add the extra metadata that urllib normally provides (sans
@@ -1103,7 +1103,7 @@ class uri_resolver_base:
             try:
                 stream = urlopen(uri)
             except IOError, e:
-                raise UriException(UriException.RESOURCE_ERROR,
+                raise IriError(IriError.RESOURCE_ERROR,
                                    uri=uri, loc=uri, msg=str(e))
         return stream
 
@@ -1252,7 +1252,7 @@ def urn_to_public_id(urn):
     will be converted to the public identifier
     "+//IDN example.org//DTD XML Bookmarks 1.0//EN//XML"
 
-    Raises a UriException if the given URN cannot be converted.
+    Raises a IriError if the given URN cannot be converted.
     Query and fragment components, if present, are ignored.
     """
     if urn is not None and urn:
@@ -1268,7 +1268,7 @@ def urn_to_public_id(urn):
                     publicid = percent_decode(publicid)
                     return publicid
 
-    raise UriException(UriException.INVALID_PUBLIC_ID_URN, urn=urn)
+    raise IriError(IriError.INVALID_PUBLIC_ID_URN, urn=urn)
 
 
 def public_id_to_urn(publicid):
@@ -1565,7 +1565,7 @@ def os_path_to_uri(path, attemptAbsolute=True, osname=None):
                 module = '%surl2path' % osname
                 exec 'from %s import pathname2url' % module
             except ImportError:
-                raise UriException(UriException.UNSUPPORTED_PLATFORM,
+                raise IriError(IriError.UNSUPPORTED_PLATFORM,
                                    osname, os_path_to_uri)
         uri = 'file:' + pathname2url(path)
 
@@ -1650,7 +1650,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
     """
     (scheme, authority, path) = split_uri_ref(uri)[0:3]
     if scheme and scheme != 'file':
-        raise UriException(UriException.NON_FILE_URI, uri)
+        raise IriError(IriError.NON_FILE_URI, uri)
     # enforce 'localhost' URI equivalence mandated by RFCs 1630, 1738, 3986
     if authority == 'localhost':
         authority = None
@@ -1724,7 +1724,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
     elif osname == 'posix':
         # a non-empty, non-'localhost' authority component is ambiguous on Unix
         if authority:
-            raise UriException(UriException.UNIX_REMOTE_HOST_FILE_URI, uri)
+            raise IriError(IriError.UNIX_REMOTE_HOST_FILE_URI, uri)
         # %2F in a path segment would indicate a literal '/' in a
         # filename, which is possible on posix, but there is no
         # way to consistently represent it. We'll backslash-escape
@@ -1747,7 +1747,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
                 module = '%surl2path' % osname
                 exec 'from %s import url2pathname' % module
             except ImportError:
-                raise UriException(UriException.UNSUPPORTED_PLATFORM,
+                raise IriError(IriError.UNSUPPORTED_PLATFORM,
                                    osname, uri_to_os_path)
         # drop the scheme before passing to url2pathname
         if scheme:
@@ -1826,7 +1826,7 @@ def make_urllib_safe(uriRef):
             # should work if IDNA encoding was applied (Py 2.3+)
             uri = uri.encode('us-ascii')
         except UnicodeError:
-            raise UriException(Error.IDNA_UNSUPPORTED, uri=uriRef)
+            raise IriError(IriError.IDNA_UNSUPPORTED, uri=uriRef)
     return uri
 
 
