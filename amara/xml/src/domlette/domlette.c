@@ -11,6 +11,8 @@ Project home, documentation, distributions: http://4suite.org/\n\
 ";
 
 #define PY_SSIZE_T_CLEAN
+#define XmlString_SHARED
+#include "xmlstring.h"
 #include "domlette_interface.h"
 #include "builder.h"
 #include "refcounts.h"

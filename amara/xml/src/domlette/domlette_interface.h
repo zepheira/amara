@@ -90,8 +90,10 @@ extern "C" {
 
 #ifdef Domlette_BUILDING_MODULE
 
-#define XmlString_SHARED
+#ifndef XmlString_EXPORT
+#define XmlString_EXPORT extern
 #include "xmlstring.h"
+#endif
 #include "debug.h"
 #include "nss.h"
 #include "exceptions.h"
