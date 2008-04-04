@@ -1,5 +1,3 @@
-#include "Python.h"
-#include "structmember.h"
 #include "expat_interface.h"
 
 /** Private Interface *************************************************/

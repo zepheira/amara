@@ -12,6 +12,8 @@ Project home, documentation, distributions: http://4suite.org/\n\
 
 #include "Python.h"
 #include "structmember.h"
+#define XmlString_SHARED
+#include "xmlstring.h"
 #include "cStringIO.h"
 #include "lib/expat.h"          /* Expat library */
 #include "xmlchar.h"            /* XML_Char to PyUnicode support */

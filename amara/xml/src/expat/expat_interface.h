@@ -271,8 +271,10 @@ extern "C" {
 
 #ifdef Expat_BUILDING_MODULE
 
-#define XmlString_SHARED
+#ifndef XmlString_EXPORT
+#define XmlString_EXPORT extern
 #include "xmlstring.h"
+#endif
 #include "util.h"
 #include "debug.h"
 
