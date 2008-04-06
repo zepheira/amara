@@ -1,6 +1,8 @@
 #amara.lib
 
-class IriError(Exception):
+from amara import Error
+
+class IriError(Error):
     """
     Exception related to URI/IRI processing
     """

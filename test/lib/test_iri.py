@@ -1,4 +1,5 @@
-import os, sys, string, codecs
+import os, unittest, sys, string, codecs
+import warnings
 from amara.lib import iri
 
 # Test cases for BaseJoin() ==================================================
@@ -534,7 +535,7 @@ pct_enc_normalization_tests = [
 # Test cases for NormalizePathSegments =======================================
 #
 # Each tuple is (path, expected)
-pathSegmentNormalizationTests = [
+path_segment_normalization_tests = [
     ('/a/b/../../c', '/c'),
     ('a/b/../../c', 'a/b/../../c'),
     ('/a/b/././c', '/a/b/c'),
@@ -546,87 +547,81 @@ pathSegmentNormalizationTests = [
 
 # Test cases for MakeUrllibSafe ==============================================
 #
-if sys.version_info[0:2] < (2,3):
-    # IDNA unsupported on 2.2, so there aren't many tests we can do
-    makeUrllibSafeTests = [
-        ('http://www.w%33.org', 'http://www.w3.org'),
+# Each tuple is (URI, expected)
+make_urllib_safe_tests = [
+    # Martin Duerst's IDN tests in http://www.w3.org/2004/04/uri-rel-test.html
+    ('http://www.w%33.org', 'http://www.w3.org'), # 101
+    ('http://r%C3%A4ksm%C3%B6rg%C3%A5s.josefsson.org', 'http://xn--rksmrgs-5wao1o.josefsson.org'), # 111
+    ('http://%E7%B4%8D%E8%B1%86.w3.mag.keio.ac.jp', 'http://xn--99zt52a.w3.mag.keio.ac.jp'), # 112
+    ('http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81'
+     '%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81'
+     '%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81'
+     '%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81'
+     '%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81'
+     '%84.w3.mag.keio.ac.jp/',
+     'http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lr'
+     'a.w3.mag.keio.ac.jp/'), # 121
+    ('http://%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C'
+     '%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA'
+     '%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE'
+     '%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F'
+     '%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84'
+     '.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81'
+     '%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81'
+     '%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82'
+     '%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81'
+     '%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.%E3'
+     '%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81%84%E3'
+     '%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81%84%E3'
+     '%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82%89%E3'
+     '%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3'
+     '%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio'
+     '.ac.jp/',
+     'http://xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn'
+     '--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn--n8jaaaa'
+     'ai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/'), #122
+    # Unicode versions of above
+    (u'http://www.w%33.org', u'http://www.w3.org'), # 101
+    (u'http://r%C3%A4ksm%C3%B6rg%C3%A5s.josefsson.org', u'http://xn--rksmrgs-5wao1o.josefsson.org'), # 111
+    (u'http://%E7%B4%8D%E8%B1%86.w3.mag.keio.ac.jp', u'http://xn--99zt52a.w3.mag.keio.ac.jp'), # 112
+    (u'http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81'
+     u'%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81'
+     u'%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81'
+     u'%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81'
+     u'%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81'
+     u'%84.w3.mag.keio.ac.jp/',
+     u'http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lr'
+     u'a.w3.mag.keio.ac.jp/'), # 121
+    (u'http://%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C'
+     u'%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA'
+     u'%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE'
+     u'%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F'
+     u'%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84'
+     u'.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81'
+     u'%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81'
+     u'%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82'
+     u'%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81'
+     u'%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.%E3'
+     u'%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81%84%E3'
+     u'%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81%84%E3'
+     u'%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82%89%E3'
+     u'%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3'
+     u'%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio'
+     u'.ac.jp/',
+     u'http://xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn'
+     u'--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn--n8jaaaa'
+     u'ai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/'), #122
     ]
-else:
-    # Each tuple is (URI, expected)
-    makeUrllibSafeTests = [
-        # Martin Duerst's IDN tests in http://www.w3.org/2004/04/uri-rel-test.html
-        ('http://www.w%33.org', 'http://www.w3.org'), # 101
-        ('http://r%C3%A4ksm%C3%B6rg%C3%A5s.josefsson.org', 'http://xn--rksmrgs-5wao1o.josefsson.org'), # 111
-        ('http://%E7%B4%8D%E8%B1%86.w3.mag.keio.ac.jp', 'http://xn--99zt52a.w3.mag.keio.ac.jp'), # 112
-        ('http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81'
-         '%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81'
-         '%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81'
-         '%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81'
-         '%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81'
-         '%84.w3.mag.keio.ac.jp/',
-         'http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lr'
-         'a.w3.mag.keio.ac.jp/'), # 121
-        ('http://%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C'
-         '%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA'
-         '%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE'
-         '%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F'
-         '%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84'
-         '.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81'
-         '%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81'
-         '%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82'
-         '%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81'
-         '%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.%E3'
-         '%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81%84%E3'
-         '%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81%84%E3'
-         '%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82%89%E3'
-         '%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3'
-         '%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio'
-         '.ac.jp/',
-         'http://xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn'
-         '--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn--n8jaaaa'
-         'ai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/'), #122
-        # Unicode versions of above
-        (u'http://www.w%33.org', u'http://www.w3.org'), # 101
-        (u'http://r%C3%A4ksm%C3%B6rg%C3%A5s.josefsson.org', u'http://xn--rksmrgs-5wao1o.josefsson.org'), # 111
-        (u'http://%E7%B4%8D%E8%B1%86.w3.mag.keio.ac.jp', u'http://xn--99zt52a.w3.mag.keio.ac.jp'), # 112
-        (u'http://www.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81'
-         u'%8C%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81'
-         u'%AA%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81'
-         u'%AE%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81'
-         u'%8F%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81'
-         u'%84.w3.mag.keio.ac.jp/',
-         u'http://www.xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lr'
-         u'a.w3.mag.keio.ac.jp/'), # 121
-        (u'http://%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C'
-         u'%E3%81%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA'
-         u'%E3%81%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE'
-         u'%E3%82%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F'
-         u'%E3%81%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84'
-         u'.%E3%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81'
-         u'%84%E3%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81'
-         u'%84%E3%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82'
-         u'%89%E3%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81'
-         u'%97%E3%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.%E3'
-         u'%81%BB%E3%82%93%E3%81%A8%E3%81%86%E3%81%AB%E3%81%AA%E3%81%8C%E3%81%84%E3'
-         u'%82%8F%E3%81%91%E3%81%AE%E3%82%8F%E3%81%8B%E3%82%89%E3%81%AA%E3%81%84%E3'
-         u'%81%A9%E3%82%81%E3%81%84%E3%82%93%E3%82%81%E3%81%84%E3%81%AE%E3%82%89%E3'
-         u'%81%B9%E3%82%8B%E3%81%BE%E3%81%A0%E3%81%AA%E3%81%8C%E3%81%8F%E3%81%97%E3'
-         u'%81%AA%E3%81%84%E3%81%A8%E3%81%9F%E3%82%8A%E3%81%AA%E3%81%84.w3.mag.keio'
-         u'.ac.jp/',
-         u'http://xn--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn'
-         u'--n8jaaaaai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.xn--n8jaaaa'
-         u'ai5bhf7as8fsfk3jnknefdde3fg11amb5gzdb4wi9bya3kc6lra.w3.mag.keio.ac.jp/'), #122
-        ]
 
-winMakeUrllibSafeTests = [
+win_make_urllib_safe_tests = [
     ('file:///C:/path/to/file', 'file:///C|/path/to/file'),
     ('http://foo/bar:baz/', 'http://foo/bar:baz/'),
     ]
 
 
-# Test cases for PublicIdToUrn and UrnToPublicId =============================
+# Test cases for public_id_to_urn and urn_to_public_id =============================
 #
-publicIdTests = [
+public_id_tests = [
     # examples from RFC 3151
     ("ISO/IEC 10179:1996//DTD DSSSL Architecture//EN",
      "urn:publicid:ISO%2FIEC+10179%3A1996:DTD+DSSSL+Architecture:EN"),
@@ -648,9 +643,9 @@ publicIdTests = [
      "urn:publicid:-:Acme%2C+Inc.:DTD+Book+Version+1.0"), # RFC 2396bis
 ]
 
-# Test cases for PercentEncode and PercentDecode =============================
+# Test cases for percent_encode and percent_decode =============================
 #
-percentEncodeTests = [
+percent_encode_tests = [
     # Empty string
     ('', ''),
     (u'', u''),
@@ -736,49 +731,57 @@ percentEncodeTests = [
     #  6. non-BMP tests moved to body of test, below
 ]
 
-def Test(tester):
-    tester.startGroup('UriDict')
-    tester.startGroup('file:/// and file://localhost/ equivalence')
-    tester.startTest('equivalent key in UriDict')
-    uris = Uri.UriDict()
-    uris['file:///path/to/resource'] = 0
-    tester.compare(True, 'file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
-    tester.testDone()
-    tester.startTest('value of 2 equivalent keys')
-    uris = Uri.UriDict()
-    uris['file:///path/to/resource'] = 1
-    uris['file://localhost/path/to/resource'] = 2
-    tester.compare(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
-    tester.testDone()
-    tester.groupDone()
-    tester.startGroup('case equivalence')
-    for uri, expected, junk in caseNormalizationTests:
-        tester.startTest('%s and %s equivalence' % (uri, expected))
-        uris[uri] = 1
-        uris[expected] = 2
-        tester.compare(2, uris[uri])
-        tester.testDone()
-    tester.groupDone()
-    tester.startGroup('percent-encoding equivalence')
-    for uri, expected in pctEncNormalizationTests:
-        tester.startTest('%s and %s equivalence' % (uri, expected))
-        uris[uri] = 1
-        uris[expected] = 2
-        tester.compare(2, uris[uri])
-        tester.testDone()
-    tester.groupDone()
-    tester.groupDone()
 
-    tester.startGroup("PercentEncode and PercentDecode")
-    for unencoded, encoded in percentEncodeTests:
-        if len(unencoded) > 10:
-            test_title = unencoded[:11] + '...'
-        else:
-            test_title = unencoded
-        tester.startTest(repr(test_title))
-        tester.compare(encoded, Uri.PercentEncode(unencoded))
-        tester.compare(unencoded, Uri.PercentDecode(encoded))
-        tester.testDone()
+class Test_uridict(unittest.TestSuite):
+    '''uridict implementation'''
+    class Test_file_uri_localhost_equiv(unittest.TestCase):
+        '''file:/// and file://localhost/ equivalence'''
+        def test_uri_dict(self):
+            '''equivalent key in UriDict'''
+            uris = iri.uridict()
+            uris['file:///path/to/resource'] = 0
+            self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
+            return
+
+        def test_equiv_keys(self):
+            '''value of 2 equivalent keys'''
+            uris = iri.uridict()
+            uris['file:///path/to/resource'] = 1
+            uris['file://localhost/path/to/resource'] = 2
+            self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
+
+    class Test_case_equiv(unittest.TestCase):
+        '''case equivalence'''
+        def test_case_normalization(self):
+            '''case normalization'''
+            uris = iri.uridict()
+            for uri, expected, junk in case_normalization_tests:
+                uris[uri] = 1
+                uris[expected] = 2
+                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
+            return
+
+        def test_percent_encoding_equivalence(self):
+            '''percent-encoding equivalence'''
+            uris = iri.uridict()
+            for uri, expected in pct_enc_normalization_tests:
+                uris[uri] = 1
+                uris[expected] = 2
+                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
+            return
+
+class Test_percent_encode_decode(unittest.TestCase):
+    '''PercentEncode and PercentDecode'''
+    def test_percent_encode(self):
+        '''Percent encode'''
+        for unencoded, encoded in percent_encode_tests:
+            if len(unencoded) > 10:
+                test_title = unencoded[:11] + '...'
+            else:
+                test_title = unencoded
+            self.assertEqual(encoded, iri.percent_encode(unencoded))
+            self.assertEqual(unencoded, iri.percent_decode(encoded))
+        return
 
     # non-BMP tests:
     #     a couple of random chars from U+10000 to U+10FFFD.
@@ -787,333 +790,293 @@ def Test(tester):
     # was built. Either way, it should result in the same percent-
     # encoded sequence, which should decode back to the original
     # representation.
-    unencoded = u'\U00010000\U0010FFFD'
-    encoded = u'%F0%90%80%80%F4%8F%BF%BD'
-    tester.startTest("u'\U00010000\U0010FFFD'")
-    tester.compare(encoded, Uri.PercentEncode(unencoded))
-    tester.compare(unencoded, Uri.PercentDecode(encoded))
-    tester.testDone()
-    #
+    def test_non_bmp1(self):
+        '''non-BMP characters: u""\U00010000\U0010FFFD""'''
+        unencoded = u'\U00010000\U0010FFFD'
+        encoded = u'%F0%90%80%80%F4%8F%BF%BD'
+        self.assertEqual(encoded, iri.percent_encode(unencoded), "u'\U00010000\U0010FFFD'")
+        self.assertEqual(unencoded, iri.percent_decode(encoded), "u'\U00010000\U0010FFFD'")
+
     # This string will be length 4, regardless of how Python was
     # built. However, if Python was built with wide (UCS-4) chars,
     # PercentDecode will generate an optimal string (length: 2).
-    unencoded_in = u'\ud800\udc00\udbff\udffd'
-    encoded = u'%F0%90%80%80%F4%8F%BF%BD'
-    unencoded_out = u'\U00010000\U0010FFFD'
-    tester.startTest("u'\ud800\udc00\udbff\udffd'")
-    tester.compare(encoded, Uri.PercentEncode(unencoded_in))
-    tester.compare(unencoded_out, Uri.PercentDecode(encoded))
-    tester.testDone()
+    def test_non_bmp2(self):
+        '''non-BMP characters: u"\ud800\udc00\udbff\udffd"'''
+        unencoded_in = u'\ud800\udc00\udbff\udffd'
+        encoded = u'%F0%90%80%80%F4%8F%BF%BD'
+        unencoded_out = u'\U00010000\U0010FFFD'
+        self.assertEqual(encoded, iri.percent_encode(unencoded_in), "u'\ud800\udc00\udbff\udffd'")
+        self.assertEqual(unencoded_out, iri.percent_decode(encoded), "u'\ud800\udc00\udbff\udffd'")
 
     # test a few iso-8859-n variations just to make sure
     # iso-8859-1 isn't special
-    unencoded = ''.join(map(chr, range(256)))
-    encoded = '%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F' \
-              '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F' \
-              '%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F' \
-              '0123456789%3A%3B%3C%3D%3E%3F%40' \
-              'ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60' \
-              'abcdefghijklmnopqrstuvwxyz%7B%7C%7D~' \
-              '%7F%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F' \
-              '%90%91%92%93%94%95%96%97%98%99%9A%9B%9C%9D%9E%9F' \
-              '%A0%A1%A2%A3%A4%A5%A6%A7%A8%A9%AA%AB%AC%AD%AE%AF' \
-              '%B0%B1%B2%B3%B4%B5%B6%B7%B8%B9%BA%BB%BC%BD%BE%BF' \
-              '%C0%C1%C2%C3%C4%C5%C6%C7%C8%C9%CA%CB%CC%CD%CE%CF' \
-              '%D0%D1%D2%D3%D4%D5%D6%D7%D8%D9%DA%DB%DC%DD%DE%DF' \
-              '%E0%E1%E2%E3%E4%E5%E6%E7%E8%E9%EA%EB%EC%ED%EE%EF' \
-              '%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF'
-    for part in (1,2,3,15):
-        enc_name = 'iso-8859-%d' % part
-        tester.startTest(enc_name)
-        try:
-            codecs.lookup(enc_name)
-        except LookupError:
-            tester.warning('Not supported on this platform')
-            tester.testDone()
-            continue
-        tester.compare(encoded, Uri.PercentEncode(unencoded, encoding=enc_name))
-        tester.compare(unencoded, Uri.PercentDecode(encoded, encoding=enc_name))
-        tester.testDone()
+    def test_non_bmp3(self):
+        '''non-BMP characters 3'''
+        unencoded = ''.join(map(chr, range(256)))
+        encoded = '%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F' \
+                  '%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F' \
+                  '%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F' \
+                  '0123456789%3A%3B%3C%3D%3E%3F%40' \
+                  'ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60' \
+                  'abcdefghijklmnopqrstuvwxyz%7B%7C%7D~' \
+                  '%7F%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F' \
+                  '%90%91%92%93%94%95%96%97%98%99%9A%9B%9C%9D%9E%9F' \
+                  '%A0%A1%A2%A3%A4%A5%A6%A7%A8%A9%AA%AB%AC%AD%AE%AF' \
+                  '%B0%B1%B2%B3%B4%B5%B6%B7%B8%B9%BA%BB%BC%BD%BE%BF' \
+                  '%C0%C1%C2%C3%C4%C5%C6%C7%C8%C9%CA%CB%CC%CD%CE%CF' \
+                  '%D0%D1%D2%D3%D4%D5%D6%D7%D8%D9%DA%DB%DC%DD%DE%DF' \
+                  '%E0%E1%E2%E3%E4%E5%E6%E7%E8%E9%EA%EB%EC%ED%EE%EF' \
+                  '%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF'
+        for part in (1,2,3,15):
+            enc_name = 'iso-8859-%d' % part
+            try:
+                codecs.lookup(enc_name)
+            except LookupError:
+                warnings.warn('Not supported on this platform')
+                continue
+            self.assertEqual(encoded, iri.percent_encode(unencoded, encoding=enc_name), enc_name)
+            self.assertEqual(unencoded, iri.percent_decode(encoded, encoding=enc_name), enc_name)
+        return
 
     # utf-16be: why not?
-    unencoded = u'a test string...\x00\xe9...\x20\x22...\xd8\x00\xdc\x00'
-    encoded = u'a%20test%20string...\u00e9...%20%22...%D8%00%DC%00'
+    #unencoded = u'a test string...\x00\xe9...\x20\x22...\xd8\x00\xdc\x00'
+    #encoded = u'a%20test%20string...\u00e9...%20%22...%D8%00%DC%00'
 
-    tester.groupDone()
+class Test_urns_pubids(unittest.TestCase):
+    '''URNs & PubIDs'''
+    def test_urns_pubids(self):
+        for publicid, urn in public_id_tests:
+            self.assertEqual(urn, iri.public_id_to_urn(publicid), "public_id_to_urn: %s"%publicid)
 
-    tester.startGroup("PublicIdToUrn")
-    for publicid, urn in publicIdTests:
-        tester.startTest(publicid)
-        tester.compare(urn, Uri.PublicIdToUrn(publicid))
-        tester.testDone()
-    tester.groupDone()
+        for publicid, urn in public_id_tests:
+            self.assertEqual(publicid, iri.urn_to_public_id(urn), "urn_to_public_id: %s"%urn)
 
-    tester.startGroup("UrnToPublicId")
-    for publicid, urn in publicIdTests:
-        tester.startTest(urn)
-        tester.compare(publicid, Uri.UrnToPublicId(urn))
-        tester.testDone()
-    tester.groupDone()
+class Test_uriref_syntax(unittest.TestCase):
+    '''URI reference syntax'''
+    def test_uriref_syntax(self):
+        for testuri in good_uri_references:
+            self.assertEqual(1, iri.matches_uri_ref_syntax(testuri), "Good URI ref: '%s' Mistakenly tests as invalid" % repr(testuri))
 
-    tester.startGroup("URI reference syntax")
-    for testuri in good_URI_references:
-        tester.startTest("Good URI ref: %s" % repr(testuri))
-        tester.compare(1, Uri.MatchesUriRefSyntax(testuri), "Mistakenly tests as invalid")
-        tester.testDone()
-    for testuri in bad_URI_references:
-        tester.startTest("Bad URI ref: %s" % repr(testuri))
-        tester.compare(0, Uri.MatchesUriRefSyntax(testuri), "Mistakenly tests as valid")
-        tester.testDone()
-    tester.groupDone()
+        for testuri in bad_uri_references:
+            self.assertEqual(0, iri.matches_uri_ref_syntax(testuri), "Bad URI ref: '%s' Mistakenly tests as valid" % repr(testuri))
 
-    tester.startGroup('Absolutize')
-    for uriRef, baseUri, expectedUri in absolutize_test_cases:
-        tester.startTest('base=%r ref=%r' % (baseUri, uriRef))
-        res = Uri.Absolutize(uriRef, baseUri)
-        # in a couple cases, there's more than one correct result
-        if isinstance(expectedUri, tuple):
-            tester.compare(1, res in expectedUri, 'Invalid result')
-        else:
-            tester.compare(expectedUri, res, 'Invalid result')
-        tester.testDone()
-    tester.groupDone()
+class Test_absolutize(unittest.TestCase):
+    '''Absolutize'''
+    def test_absolutize(self):
+        for uriRef, baseUri, expectedUri in absolutize_test_cases:
+            res = iri.absolutize(uriRef, baseUri)
+            # in a couple cases, there's more than one correct result
+            if isinstance(expectedUri, tuple):
+                self.assertEqual(1, res in expectedUri, 'base=%r ref=%r' % (baseUri, uriRef))
+            else:
+                self.assertEqual(expectedUri, res, 'base=%r ref=%r' % (baseUri, uriRef))
 
-    tester.startGroup('Relativize')
-    for targetUri, againstUri, relativeUri, subPathUri in relativize_test_cases:
-        tester.startTest('target=%r against=%r (subPathOnly=False)' %
-          (targetUri, againstUri))
-        res = Uri.Relativize(targetUri, againstUri)
-        tester.compare(relativeUri, res, 'Invalid result')
-        tester.testDone()
-        if res is not None:
-            tester.startTest(
-                'target=%r against=%r (subPathOnly=False, Absolutize)' %
+
+class Test_relativize(unittest.TestCase):
+    '''Relativize'''
+    def test_relativize(self):
+        for targetUri, againstUri, relativeUri, subPathUri in relativize_test_cases:
+            res = iri.relativize(targetUri, againstUri)
+            self.assertEqual(relativeUri, res, 'target=%r against=%r (subPathOnly=False)' %
+              (targetUri, againstUri))
+            if res is not None:
+                res = iri.absolutize(res, againstUri)
+                self.assertEqual(res, targetUri, 'target=%r against=%r (subPathOnly=False, Absolutize)' %
                 (targetUri, againstUri))
-            res = Uri.Absolutize(res, againstUri)
-            tester.compare(res, targetUri, 'Invalid result')
-            tester.testDone()
-        tester.startTest('target=%r against=%r (subPathOnly=True)' %
-          (targetUri, againstUri))
-        res = Uri.Relativize(targetUri, againstUri, True)
-        tester.compare(subPathUri, res, 'Invalid result')
-        tester.testDone()
-        if res is not None:
-            tester.startTest(
-                'target=%r against=%r (subPathOnly=True, Absolutize)' %
+            res = iri.relativize(targetUri, againstUri, True)
+            self.assertEqual(subPathUri, res, 'target=%r against=%r (subPathOnly=True)' %
+              (targetUri, againstUri))
+            if res is not None:
+                res = iri.absolutize(res, againstUri)
+                self.assertEqual(res, targetUri, 'target=%r against=%r (subPathOnly=True, Absolutize)' %
                 (targetUri, againstUri))
-            res = Uri.Absolutize(res, againstUri)
-            tester.compare(res, targetUri, 'Invalid result')
-            tester.testDone()
-    tester.groupDone()
 
-    tester.startGroup('BaseJoin')
-    for base, relative, expectedUri in basejoin_test_cases:
-        tester.startTest('base=%r rel=%r' % (base,relative))
-        res = Uri.BaseJoin(base, relative)
-        tester.compare(expectedUri, res, 'Invalid result')
-        tester.testDone()
-    tester.groupDone()
 
-    tester.startGroup('UriToOsPath')
-    for osname in ('posix', 'nt'):
-        tester.startGroup(osname)
-        for subgroupname in ('absolute', 'relative'):
-            tester.startGroup(subgroupname)
-            for uri, nt_path, posix_path in fileUris:
-                if subgroupname == 'relative':
-                    if uri[:5] == 'file:':
-                        uri = uri[5:]
+class Test_base_join(unittest.TestCase):
+    '''base_join'''
+    def test_base_join(self):
+        for base, relative, expectedUri in basejoin_test_cases:
+            res = iri.BaseJoin(base, relative)
+            self.assertEqual(expectedUri, res, 'base=%r rel=%r' % (base,relative))
+
+
+class Test_uri_to_os_path(unittest.TestCase):
+    '''uri_to_os_path'''
+    def test_uri_to_os_path(self):
+        for osname in ('posix', 'nt'):
+            for subgroupname in ('absolute', 'relative'):
+                for uri, nt_path, posix_path in file_uris:
+                    if subgroupname == 'relative':
+                        if uri[:5] == 'file:':
+                            uri = uri[5:]
+                        else:
+                            break
+                    if isinstance(uri, unicode):
+                        testname = repr(uri)
+                    else:
+                        testname = uri
+                    if osname == 'nt':
+                        path = nt_path
+                    elif osname == 'posix':
+                        path = posix_path
                     else:
                         break
-                if isinstance(uri, unicode):
-                    testname = repr(uri)
+                    if path is None:
+                        self.assertRaises(iri.IriError,
+                                              lambda uri=uri, osname=osname: iri.uri_to_os_path(
+                                                  uri, attemptAbsolute=False, osname=osname),
+                                              osname+': '+subgroupname+': '+testname+': '+path)
+                    else:
+                        self.assertEqual(path, iri.uri_to_os_path(uri, attemptAbsolute=False, osname=osname),
+                                         osname+': '+subgroupname+': '+testname+': '+path)
+
+class Test_os_path_to_uri(unittest.TestCase):
+    '''os_path_to_uri'''
+    def test_os_path_to_uri(self):
+        for osname in ('posix', 'nt'):
+            for path, nt_uri, posix_uri in filePaths:
+                if isinstance(path, unicode):
+                    testname = repr(path)
                 else:
-                    testname = uri
-                tester.startTest(testname)
+                    testname = path
                 if osname == 'nt':
-                    path = nt_path
+                    uri = nt_uri
                 elif osname == 'posix':
-                    path = posix_path
+                    uri = posix_uri
                 else:
                     break
-                if path is None:
-                     tester.testException(Uri.UriToOsPath, (uri,),
-                                          Uri.UriException, kwargs={'attemptAbsolute':False, 'osname': osname})
+                if uri is None:
+                    self.assertRaises(iri.IriError,
+                                      lambda uri=uri, osname=osname: iri.os_path_to_uri(
+                                          path, attemptAbsolute=False, osname=osname),
+                                      osname+': '+subgroupname+': '+testname+': '+path)
                 else:
-                    tester.compare(path, Uri.UriToOsPath(uri, attemptAbsolute=False, osname=osname))
-                tester.testDone()
-            tester.groupDone()
-        tester.groupDone()
-    tester.groupDone()
+                    self.assertEqual(uri, iri.os_path_to_uri(path, attemptAbsolute=False, osname=osname),
+                                     osname+': '+subgroupname+': '+testname+': '+path)
 
-    tester.startGroup('OsPathToUri')
-    for osname in ('posix', 'nt'):
-        tester.startGroup(osname)
-        for path, nt_uri, posix_uri in filePaths:
-            if isinstance(path, unicode):
-                testname = repr(path)
-            else:
-                testname = path
-            tester.startTest(testname)
-            if osname == 'nt':
-                uri = nt_uri
-            elif osname == 'posix':
-                uri = posix_uri
-            else:
-                break
-            if uri is None:
-                 tester.testException(Uri.OsPathToUri, (path,),
-                                      Uri.UriException, kwargs={'attemptAbsolute': False, 'osname': osname})
-            else:
-                tester.compare(uri, Uri.OsPathToUri(path, attemptAbsolute=False, osname=osname))
-            tester.testDone()
-        tester.groupDone()
-    tester.groupDone()
 
-    tester.startGroup('NormalizeCase')
-    for uri, expected0, expected1 in caseNormalizationTests:
-        testname = uri
-        uri = Uri.SplitUriRef(uri)
-        tester.startTest(testname)
-        tester.compare(expected0, Uri.UnsplitUriRef(Uri.NormalizeCase(uri)))
-        tester.testDone()
-        tester.startTest(testname + ' (host too)')
-        tester.compare(expected1, Uri.UnsplitUriRef(Uri.NormalizeCase(uri, doHost=1)))
-        tester.testDone()
-    tester.groupDone()
-
-    tester.startGroup('NormalizePercentEncoding')
-    for uri, expected in pctEncNormalizationTests:
-        testname = uri
-        tester.startTest(testname)
-        tester.compare(expected, Uri.NormalizePercentEncoding(uri))
-        tester.testDone()
-    tester.groupDone()
-
-    tester.startGroup('NormalizePathSegments')
-    for path, expected in pathSegmentNormalizationTests:
-        testname = path
-        tester.startTest(testname)
-        tester.compare(expected, Uri.NormalizePathSegments(path))
-        tester.testDone()
-    tester.groupDone()
-
-    tester.startGroup('NormalizePathSegmentsInUri')
-    for path, expectedpath in pathSegmentNormalizationTests:
-        # for non-hierarchical scheme, no change expected in every case
-        uri = 'urn:bogus:%s?a=1&b=2#frag' % path
-        expected = 'urn:bogus:%s?a=1&b=2#frag' % path
-        testname = uri
-        tester.startTest(testname)
-        tester.compare(expected, Uri.NormalizePathSegmentsInUri(uri))
-        tester.testDone()
-    for path, expectedpath in pathSegmentNormalizationTests:
-        if path[:1] == '/':
-            # hierarchical scheme
-            uri = 'file://root:changeme@host%s?a=1&b=2#frag' % path
-            expected = 'file://root:changeme@host%s?a=1&b=2#frag' % expectedpath
+class Test_normalize_case(unittest.TestCase):
+    '''normalize_case'''
+    def test_normalize_case(self):
+        for uri, expected0, expected1 in case_normalization_tests:
             testname = uri
-            tester.startTest(testname)
-            tester.compare(expected, Uri.NormalizePathSegmentsInUri(uri))
-            tester.testDone()
-    tester.groupDone()
+            uri = iri.split_uri_ref(uri)
+            self.assertEqual(expected0, iri.UnsplitUriRef(iri.normalize_case(uri)), testname)
+            self.assertEqual(expected1, iri.UnsplitUriRef(iri.normalize_case(uri, doHost=1)), testname + ' (host too)')
 
-    tester.startGroup("MakeUrllibSafe")
-    tests = makeUrllibSafeTests
-    if os.name == 'nt':
-        tests += winMakeUrllibSafeTests
-    for uri, expected in makeUrllibSafeTests:
-        if isinstance(uri, unicode):
-            test_title = repr(uri)
-        else:
-            test_title = uri
-        tester.startTest(test_title)
-        res = Uri.MakeUrllibSafe(uri)
-        tester.compare(expected, res)
-        tester.testDone()
-    tester.groupDone()
 
-    tester.startGroup("Basic Uri Resolver")
-    data = [('http://foo.com/root/', 'path', 'http://foo.com/root/path'),
-            ('http://foo.com/root',  'path', 'http://foo.com/path'),
-            ]
-    for base,uri,exp in data:
-        tester.startTest("normalize: %s %s" % (base, uri))
-        res = Uri.BASIC_RESOLVER.normalize(uri, base)
-        tester.compare(exp, res)
-        tester.testDone()
+class Test_normalize_percent_encoding(unittest.TestCase):
+    '''NormalizePercentEncoding'''
+    def test_normalize_percent_encoding(self):
+        for uri, expected in pct_enc_normalization_tests:
+            testname = uri
+            self.assertEqual(expected, iri.normalize_percent_encoding(uri), testname)
 
-    base = 'foo:foo.com'
-    uri = 'path'
-    tester.startTest("normalize: %s %s" % (base, uri))
-    tester.testException(Uri.BASIC_RESOLVER.normalize, (uri, base), Uri.UriException)
-    tester.testDone()
 
-    tester.startTest('resolve')
-    base = os.getcwd()
-    if base[-1] != os.sep:
-        base += os.sep
-    stream = Uri.BASIC_RESOLVER.resolve('test.py', Uri.OsPathToUri(base))
-    tester.compare(TEST_DOT_PY_BANGPATH, string.rstrip(stream.readline()))
-    stream.close()
-    tester.testDone()
+class Test_normalize_path_segments(unittest.TestCase):
+    '''NormalizePathSegments'''
+    def test_normalize_path_segments(self):
+        for path, expected in path_segment_normalization_tests:
+            testname = path
+            self.assertEqual(expected, iri.normalize_path_segments(path), testname)
 
-    tester.startTest('generate')
-    uuid = Uri.BASIC_RESOLVER.generate()
-    tester.compare('urn:uuid:', uuid[:9])
 
-    tester.testDone()
+class Test_normalize_path_segments_in_uri(unittest.TestCase):
+    '''NormalizePathSegmentsInUri'''
+    def test_normalize_path_segments_in_uri(self):
+        for path, expectedpath in path_segment_normalization_tests:
+            # for non-hierarchical scheme, no change expected in every case
+            uri = 'urn:bogus:%s?a=1&b=2#frag' % path
+            expected = 'urn:bogus:%s?a=1&b=2#frag' % path
+            testname = uri
+            self.assertEqual(expected, iri.normalize_path_segments_in_uri(uri), testname)
 
-    tester.groupDone()
+        for path, expectedpath in path_segment_normalization_tests:
+            if path[:1] == '/':
+                # hierarchical scheme
+                uri = 'file://root:changeme@host%s?a=1&b=2#frag' % path
+                expected = 'file://root:changeme@host%s?a=1&b=2#frag' % expectedpath
+                testname = uri
+                self.assertEqual(expected, iri.normalize_path_segments_in_uri(uri), testname)
 
-    tester.startGroup("SchemeRegistryResolver")
 
-    def evalSchemeHandler(uri, base=None):
+class Test_make_urllib_safe(unittest.TestCase):
+    '''MakeUrllibSafe'''
+    def test_make_urllib_safe(self):
+        tests = make_urllib_safe_tests
+        if os.name == 'nt':
+            tests += win_make_urllib_safe_tests
+        for uri, expected in make_urllib_safe_tests:
+            if isinstance(uri, unicode):
+                test_title = repr(uri)
+            else:
+                test_title = uri
+            res = iri.make_urllib_safe(uri)
+            self.assertEqual(expected, res, test_title)
+
+
+class Test_basic_uri_resolver(unittest.TestCase):
+    '''Basic Uri Resolver'''
+    def test_basic_uri_resolver(self):
+        data = [('http://foo.com/root/', 'path', 'http://foo.com/root/path'),
+                ('http://foo.com/root',  'path', 'http://foo.com/path'),
+                ]
+        for base,uri,exp in data:
+            res = iri.BASIC_RESOLVER.normalize(uri, base)
+            self.assertEqual(exp, res, "normalize: %s %s" % (base, uri))
+
+        base = 'foo:foo.com'
+        uri = 'path'
+        self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.BASIC_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
+
+        base = os.getcwd()
+        if base[-1] != os.sep:
+            base += os.sep
+        stream = iri.BASIC_RESOLVER.resolve('test.py', iri.os_path_to_uri(base))
+        self.assertEqual(TEST_DOT_PY_BANGPATH, string.rstrip(stream.readline()), 'resolve')
+        stream.close()
+
+        uuid = iri.BASIC_RESOLVER.generate()
+        self.assertEqual('urn:uuid:', uuid[:9], 'generate')
+
+
+class Test_scheme_registry_resolver(unittest.TestCase):
+    '''SchemeRegistryResolver'''
+    def eval_scheme_handler(uri, base=None):
         if base: uri = base+uri
         uri = uri[5:]
         return str(eval(uri))
 
-    def shiftSchemeHandler(uri, base=None):
+    def shift_scheme_handler(uri, base=None):
         if base: uri = base+uri
         uri = uri[6:]
         return ''.join([ chr(ord(c)+1) for c in uri])
 
-    resolver = SchemeRegistryResolver({'eval': evalSchemeHandler,
-                                       'shift': shiftSchemeHandler,
-                                      })
+    def test_scheme_registry_resolver(self):
+        resolver = scheme_registry_resolver({'eval': eval_scheme_handler,
+                                           'shift': shift_scheme_handler,
+                                          })
 
-    scheme_cases = [(None, 'eval:150-50', '100'),
-            (None, 'shift:abcde', 'bcdef'),
-            ('eval:150-', '50', '100'),
-            ('shift:ab', 'cde', 'bcdef'),
-        ]
+        scheme_cases = [(None, 'eval:150-50', '100'),
+                (None, 'shift:abcde', 'bcdef'),
+                ('eval:150-', '50', '100'),
+                ('shift:ab', 'cde', 'bcdef'),
+            ]
 
-    for base, relative, expected in scheme_cases:
-        tester.startTest("URI: base=%s uri=%s" % (base, relative))
+        for base, relative, expected in scheme_cases:
+            res = resolver.resolve(relative, base)
+            self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
-        res = resolver.resolve(relative, base)
-        tester.compare(expected, res)
+        resolver.handlers[None] = shift_scheme_handler
+        del resolver.handlers['shift']
 
-        tester.testDone()
+        for base, relative, expected in scheme_cases:
+            res = resolver.resolve(relative, base)
+            self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
-    resolver.handlers[None] = shiftSchemeHandler
-    del resolver.handlers['shift']
-
-    for base, relative, expected in scheme_cases:
-        tester.startTest("URI: base=%s uri=%s" % (base, relative))
-
-        res = resolver.resolve(relative, base)
-        tester.compare(expected, res)
-
-        tester.testDone()
-
-    tester.groupDone()
-
-    return
+        return
 
 
 if __name__ == '__main__':
-    from Ft.Lib.TestSuite import Tester
-    tester = Tester.Tester()
-    Test(tester)
+    unittest.main()
 

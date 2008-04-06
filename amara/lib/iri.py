@@ -49,7 +49,7 @@ import mimetools
 from string import ascii_letters
 from email.Utils import formatdate as _formatdate
 
-from amara.lib import IriError#, import_util
+from amara.lib import IriError, importutil
 
 # whether os_path_to_uri should treat "/" same as "\" in a Windows path
 WINDOWS_SLASH_COMPAT = True
@@ -1160,7 +1160,7 @@ def resource_to_uri(package, resource):
     'package' is a Python module name (dot-separated module names) and
     'resource' is a '/'-separated pathname.
     """
-    provider, resource_name = import_util.NormalizeResource(package, resource)
+    provider, resource_name = importutil.normalize_resource(package, resource)
     if provider.loader:
         # Use a 'pep302' pseudo-URL
         segments = resource_name.split('/')
@@ -1171,7 +1171,7 @@ def resource_to_uri(package, resource):
         uri = 'pep302://%s/%s' % (package, path)
     else:
         # Use a 'file' URL
-        filename = import_util.GetResourceFilename(package, resource)
+        filename = importutil.get_resource_filename(package, resource)
         uri = os_path_to_uri(filename)
     return uri
 
@@ -1198,7 +1198,7 @@ class _pep302_handler(urllib2.FileHandler):
 
         # get the stream associated with the resource
         try:
-            stream = import_util.GetResourceStream(package, resource)
+            stream = importutil.get_resource_stream(package, resource)
         except EnvironmentError, error:
             raise urllib2.URLError(str(error))
 
@@ -1212,7 +1212,7 @@ class _pep302_handler(urllib2.FileHandler):
         else:
             length = stream.tell()
             stream.seek(0, 0) # go to the start of the stream
-        mtime = import_util.GetResourceLastModified(package, resource)
+        mtime = importutil.get_resource_last_modified(package, resource)
         mtime = _formatdate(mtime)
         mtype = mimetypes.guess_type(resource) or 'text/plain'
         headers = ("Content-Type: %s\n"
