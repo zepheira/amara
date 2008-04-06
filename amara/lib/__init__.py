@@ -1,6 +1,7 @@
 #amara.lib
 
 from amara import Error
+from gettext import gettext as _
 
 class IriError(Error):
     """
@@ -28,11 +29,11 @@ class IriError(Error):
     UNSUPPORTED_PLATFORM = 1000
 
     def __init__(self, code, *args, **kwargs):
-        if not error_messages: load_messages
+        if not error_messages: load_messages()
         self.params = args or (kwargs,)
         self.code = code
         msgargs = args or kwargs
-        self.message = error_messages[errorCode] % msgargs
+        self.message = error_messages[code] % msgargs
         Exception.__init__(self, self.message, args)
         return
 
@@ -45,29 +46,29 @@ def load_messages():
         # %r preferred for reporting URIs because the URI refs can be empty
         # strings or, if invalid, could contain characters unsafe for the error
         # message stream.
-        UriException.INVALID_BASE_URI:
+        IriError.INVALID_BASE_URI:
             _("Invalid base URI: %(base)r cannot be used to resolve reference %(ref)r"),
-        UriException.RELATIVE_BASE_URI:
+        IriError.RELATIVE_BASE_URI:
             _("Invalid base URI: %(base)r cannot be used to resolve reference %(ref)r;"
               " the base URI must be absolute, not relative."),
-        UriException.NON_FILE_URI:
+        IriError.NON_FILE_URI:
             _("Only a 'file' URI can be converted to an OS-specific path; URI given was %r"),
-        UriException.UNIX_REMOTE_HOST_FILE_URI:
+        IriError.UNIX_REMOTE_HOST_FILE_URI:
             _("A URI containing a remote host name cannot be converted to a path on posix;"
               " URI given was %r"),
-        UriException.RESOURCE_ERROR:
+        IriError.RESOURCE_ERROR:
             _("Error retrieving resource %(loc)r: %(msg)s"),
-        UriException.UNSUPPORTED_PLATFORM:
+        IriError.UNSUPPORTED_PLATFORM:
             _("Platform %r not supported by URI function %s"),
-        UriException.SCHEME_REQUIRED:
+        IriError.SCHEME_REQUIRED:
             _("Scheme-based resolution requires a URI with a scheme; "
               "neither the base URI %(base)r nor the reference %(ref)r have one."),
-        UriException.INVALID_PUBLIC_ID_URN:
+        IriError.INVALID_PUBLIC_ID_URN:
             _("A public ID cannot be derived from URN %(urn)r"
               " because it does not conform to RFC 3151."),
-        UriException.UNSUPPORTED_SCHEME:
+        IriError.UNSUPPORTED_SCHEME:
             _("The URI scheme %(scheme)s is not supported by resolver %(resolver)s"),
-        UriException.IDNA_UNSUPPORTED:
+        IriError.IDNA_UNSUPPORTED:
             _("The URI ref %(uri)r cannot be made urllib-safe on this version of Python (IDNA encoding unsupported)."),
         }
 

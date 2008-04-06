@@ -24,8 +24,8 @@ __all__ = [
   'normalize_path_segments', 'normalize_path_segments_in_uri',
 
   # URI resolution
-  'uri_resolver_base', 'uri_resolver',
-  'BASIC_RESOLVER',
+  'default_resolver',
+  'DEFAULT_RESOLVER',
   'DEFAULT_URI_SCHEMES',
   'urlopen',
 
@@ -54,7 +54,7 @@ from amara.lib import IriError, importutil
 # whether os_path_to_uri should treat "/" same as "\" in a Windows path
 WINDOWS_SLASH_COMPAT = True
 
-# URI schemes supported by uri_resolver_base
+# URI schemes supported by resolver_base
 DEFAULT_URI_SCHEMES = ['http', 'https', 'file', 'ftp', 'data', 'pep302']
 if not hasattr(urllib2, 'HTTPSHandler'):
     DEFAULT_URI_SCHEMES.remove('https')
@@ -1012,9 +1012,9 @@ def normalize_path_segments_in_uri(uri):
 
 
 #=============================================================================
-# Extendable normalization and resolution functions for URI references
+# Resolvers provide normalization and resolution functions for URI references
 #
-class uri_resolver_base:
+class default_resolver:
     """
     This is class provides a set of functions related to the resolution of
     URIs, including the resolution to absolute form of URI references, and
@@ -1025,7 +1025,8 @@ class uri_resolver_base:
     for dereferencing (representation retrieval). Schemes supported by
     default are: %s.
     """ % ', '.join(DEFAULT_URI_SCHEMES)
-    def __init__(self):
+    def __init__(self, lenient=True):
+        self.lenient = lenient
         self.supportedSchemes = list(DEFAULT_URI_SCHEMES)
 
     def normalize(self, uriRef, baseUri):
@@ -1039,9 +1040,17 @@ class uri_resolver_base:
 
         The default implementation does not perform any validation on the base
         URI beyond that performed by absolutize().
+
+        If leniency has been turned on (self.lenient=True), accepts a base URI
+        beginning with '/', in which case the argument is assumed to be an absolute
+        path component of 'file' URI with no authority component.
         """
         # since we know how absolutize works, we can anticipate the scheme of
         # its return value and verify that it's supported first
+        if self.lenient:
+            # assume file: if leading "/"
+            if baseUri[:1] == '/':
+                baseUri = 'file://' + baseUri
         scheme = get_scheme(uriRef) or get_scheme(baseUri)
         if scheme in self.supportedSchemes:
             return absolutize(uriRef, baseUri)
@@ -1117,29 +1126,8 @@ class uri_resolver_base:
         return 'urn:uuid:'+Uuid.UuidAsString(Uuid.GenerateUuid())
 
 
-class uri_resolver(uri_resolver_base):
-    """
-    The URI resolver class used by most of 4Suite, outside of the repository.
-
-    Adds support for lenient processing of base URIs.
-    """
-    def normalize(self, uriRef, baseUri):
-        """
-        This function differs from uri_resolver_base.normalize() in the
-        following manner:
-
-        This function allows for the possibility of the base URI beginning
-        with a '/', in which case the argument is assumed to be an absolute
-        path component of 'file' URI that has no authority component.
-        """
-        # assume file: if leading "/"
-        if baseUri[:1] == '/':
-            baseUri = 'file://' + baseUri
-
-        return uri_resolver_base.normalize(self, uriRef, baseUri)
-
-
-BASIC_RESOLVER = uri_resolver()
+#Reusable resolver instance
+DEFAULT_RESOLVER = default_resolver()
 
 _urlopener = None
 class _data_handler(urllib2.BaseHandler):

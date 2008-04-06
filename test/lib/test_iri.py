@@ -1,6 +1,6 @@
 import os, unittest, sys, string, codecs
 import warnings
-from amara.lib import iri
+from amara.lib import iri, iriresolvers
 
 # Test cases for BaseJoin() ==================================================
 # (base, relative, expected)
@@ -896,8 +896,8 @@ class Test_base_join(unittest.TestCase):
     '''base_join'''
     def test_base_join(self):
         for base, relative, expectedUri in basejoin_test_cases:
-            res = iri.BaseJoin(base, relative)
-            self.assertEqual(expectedUri, res, 'base=%r rel=%r' % (base,relative))
+            res = iri.basejoin(base, relative)
+            self.assertEqual(expectedUri, res, 'base=%r rel=%r' % (base, relative))
 
 
 class Test_uri_to_os_path(unittest.TestCase):
@@ -925,7 +925,7 @@ class Test_uri_to_os_path(unittest.TestCase):
                         self.assertRaises(iri.IriError,
                                               lambda uri=uri, osname=osname: iri.uri_to_os_path(
                                                   uri, attemptAbsolute=False, osname=osname),
-                                              osname+': '+subgroupname+': '+testname+': '+path)
+                                              osname+': '+subgroupname+': '+testname)
                     else:
                         self.assertEqual(path, iri.uri_to_os_path(uri, attemptAbsolute=False, osname=osname),
                                          osname+': '+subgroupname+': '+testname+': '+path)
@@ -934,7 +934,7 @@ class Test_os_path_to_uri(unittest.TestCase):
     '''os_path_to_uri'''
     def test_os_path_to_uri(self):
         for osname in ('posix', 'nt'):
-            for path, nt_uri, posix_uri in filePaths:
+            for path, nt_uri, posix_uri in file_paths:
                 if isinstance(path, unicode):
                     testname = repr(path)
                 else:
@@ -947,12 +947,12 @@ class Test_os_path_to_uri(unittest.TestCase):
                     break
                 if uri is None:
                     self.assertRaises(iri.IriError,
-                                      lambda uri=uri, osname=osname: iri.os_path_to_uri(
+                                      lambda path=path, osname=osname: iri.os_path_to_uri(
                                           path, attemptAbsolute=False, osname=osname),
-                                      osname+': '+subgroupname+': '+testname+': '+path)
+                                      osname+': '+testname)
                 else:
                     self.assertEqual(uri, iri.os_path_to_uri(path, attemptAbsolute=False, osname=osname),
-                                     osname+': '+subgroupname+': '+testname+': '+path)
+                                     osname+': '+testname+': '+uri)
 
 
 class Test_normalize_case(unittest.TestCase):
@@ -961,8 +961,8 @@ class Test_normalize_case(unittest.TestCase):
         for uri, expected0, expected1 in case_normalization_tests:
             testname = uri
             uri = iri.split_uri_ref(uri)
-            self.assertEqual(expected0, iri.UnsplitUriRef(iri.normalize_case(uri)), testname)
-            self.assertEqual(expected1, iri.UnsplitUriRef(iri.normalize_case(uri, doHost=1)), testname + ' (host too)')
+            self.assertEqual(expected0, iri.unsplit_uri_ref(iri.normalize_case(uri)), testname)
+            self.assertEqual(expected1, iri.unsplit_uri_ref(iri.normalize_case(uri, doHost=1)), testname + ' (host too)')
 
 
 class Test_normalize_percent_encoding(unittest.TestCase):
@@ -1022,38 +1022,38 @@ class Test_basic_uri_resolver(unittest.TestCase):
                 ('http://foo.com/root',  'path', 'http://foo.com/path'),
                 ]
         for base,uri,exp in data:
-            res = iri.BASIC_RESOLVER.normalize(uri, base)
+            res = iri.DEFAULT_RESOLVER.normalize(uri, base)
             self.assertEqual(exp, res, "normalize: %s %s" % (base, uri))
 
         base = 'foo:foo.com'
         uri = 'path'
-        self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.BASIC_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
+        self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.DEFAULT_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
 
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
-        stream = iri.BASIC_RESOLVER.resolve('test.py', iri.os_path_to_uri(base))
-        self.assertEqual(TEST_DOT_PY_BANGPATH, string.rstrip(stream.readline()), 'resolve')
+        stream = iri.DEFAULT_RESOLVER.resolve('sampleresource.txt', iri.os_path_to_uri(base))
+        self.assertEqual('Spam', string.rstrip(stream.readline()), 'resolve')
         stream.close()
 
-        uuid = iri.BASIC_RESOLVER.generate()
+        uuid = iri.DEFAULT_RESOLVER.generate()
         self.assertEqual('urn:uuid:', uuid[:9], 'generate')
 
 
 class Test_scheme_registry_resolver(unittest.TestCase):
-    '''SchemeRegistryResolver'''
-    def eval_scheme_handler(uri, base=None):
-        if base: uri = base+uri
-        uri = uri[5:]
-        return str(eval(uri))
-
-    def shift_scheme_handler(uri, base=None):
-        if base: uri = base+uri
-        uri = uri[6:]
-        return ''.join([ chr(ord(c)+1) for c in uri])
-
+    '''scheme_registry_resolver'''
     def test_scheme_registry_resolver(self):
-        resolver = scheme_registry_resolver({'eval': eval_scheme_handler,
+        def eval_scheme_handler(uri, base=None):
+            if base: uri = base+uri
+            uri = uri[5:]
+            return str(eval(uri))
+
+        def shift_scheme_handler(uri, base=None):
+            if base: uri = base+uri
+            uri = uri[6:]
+            return ''.join([ chr(ord(c)+1) for c in uri])
+
+        resolver = iriresolvers.scheme_registry_resolver({'eval': eval_scheme_handler,
                                            'shift': shift_scheme_handler,
                                           })
 
