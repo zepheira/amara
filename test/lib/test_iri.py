@@ -1,6 +1,7 @@
 import os, unittest, sys, string, codecs
 import warnings
 from amara.lib import iri, iriresolvers
+from amara.lib import testsupport
 
 # Test cases for BaseJoin() ==================================================
 # (base, relative, expected)
@@ -1076,7 +1077,6 @@ class Test_scheme_registry_resolver(unittest.TestCase):
 
         return
 
-
 if __name__ == '__main__':
-    unittest.main()
+    testsupport.run_unittest()
 

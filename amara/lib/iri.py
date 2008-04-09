@@ -55,7 +55,7 @@ from amara.lib import IriError, importutil
 WINDOWS_SLASH_COMPAT = True
 
 # URI schemes supported by resolver_base
-DEFAULT_URI_SCHEMES = ['http', 'https', 'file', 'ftp', 'data', 'pep302']
+DEFAULT_URI_SCHEMES = ['http', 'https', 'file', 'ftp', 'data', 'pkgdata']
 if not hasattr(urllib2, 'HTTPSHandler'):
     DEFAULT_URI_SCHEMES.remove('https')
 DEFAULT_URI_SCHEMES = tuple(DEFAULT_URI_SCHEMES)
@@ -1150,13 +1150,13 @@ def resource_to_uri(package, resource):
     """
     provider, resource_name = importutil.normalize_resource(package, resource)
     if provider.loader:
-        # Use a 'pep302' pseudo-URL
+        # Use a 'pkgdata' (PEP 302) pseudo-URL
         segments = resource_name.split('/')
         if not resource.startswith('/'):
             dirname = provider.module_path[len(provider.zip_pre):]
             segments[0:0] = dirname.split(os.sep)
         path = '/'.join(map(percent_encode, segments))
-        uri = 'pep302://%s/%s' % (package, path)
+        uri = 'pkgdata://%s/%s' % (package, path)
     else:
         # Use a 'file' URL
         filename = importutil.get_resource_filename(package, resource)
@@ -1168,7 +1168,7 @@ class _pep302_handler(urllib2.FileHandler):
     A class to handler opening of PEP 302 pseudo-URLs.
 
     The syntax for this pseudo-URL is:
-        url    := "pep302://" module "/" path
+        url    := "pkgdata://" module "/" path
         module := <Python module name>
         path   := <'/'-separated pathname>
 
