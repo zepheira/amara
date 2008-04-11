@@ -1,12 +1,12 @@
 #######################################################################
-# amara/xml/xpath/functions/__init__.py
+# amara/xpath/functions/__init__.py
 """
 XPath expression nodes that evaluate function calls.
 """
 
-from amara.xml.xpath import XPathError
-from amara.xml.xpath.functioncalls import function_call
-from amara.xml.xpath._datatypes import *
+from amara.xpath import XPathError
+from amara.xpath.functioncalls import function_call
+from amara.xpath._datatypes import *
 
 __all__ = ['builtin_function', 'extension_function']
 
@@ -172,8 +172,8 @@ class function_callN(function_call):
 # Load the built-in functions
 def __bootstrap__(namespace):
     global __bootstrap__
-    from amara.xml.xpath.functions import nodeset, string, boolean, number
-    for module in (nodeset, string, boolean, number):
+    from amara.xpath.functions import nodesets, strings, booleans, numbers
+    for module in (nodesets, strings, booleans, numbers):
         for name in getattr(module, '__all__', ()):
             namespace[name] = getattr(module, name)
         # Add the functions to this module's exported objects

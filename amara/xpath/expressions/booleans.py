@@ -1,18 +1,18 @@
 ########################################################################
-# amara/xml/xpath/expressions/boolean.py
+# amara/xpath/expressions/booleans.py
 """
 XPath expression nodes that evaluate as booleans.
 """
 
-from amara.xml.xpath._datatypes import boolean
-from amara.xml.xpath.expressions import expression
+from amara.xpath import datatypes
+from amara.xpath.expressions import expression
 
 __all__ = ('boolean_expression', 
            'or_expr', 'and_expr', 'equality_expr', 'relational_expr')
 
 class boolean_expression(expression):
 
-    return_type = boolean
+    return_type = datatypes.boolean
 
     def compile_as_boolean(self, compiler):
         raise NotImplementedError

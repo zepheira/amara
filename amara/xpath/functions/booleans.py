@@ -1,12 +1,12 @@
 #######################################################################
-# amara/xml/xpath/functions/booleans.py
+# amara/xpath/functions/booleans.py
 """
 The implementation of the core boolean functions from XPath 1.0.
 """
 
-from amara.xml import XML_NAMESPACE
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.functions import builtin_function
+from amara import XML_NAMESPACE
+from amara.xpath import datatypes
+from amara.xpath.functions import builtin_function
 
 __all__ = ('boolean_function', 'not_function', 'true_function',
            'false_function', 'lang_function')

@@ -71,7 +71,7 @@ static PyObject *attribute_decl_fixed;
 
 static PyObject *absolutize_function;
 
-static PyObject *ReaderException;
+static PyObject *ReaderError;
 static PyObject *IriError;
 static PyObject *IriError_RESOURCE_ERROR;
 
@@ -779,7 +779,7 @@ create_exception(ExpatReader *reader, const char *errorCode,
 {
   PyObject *code, *args, *kwords, *exc;
 
-  code = PyObject_GetAttrString(ReaderException, (char *)errorCode);
+  code = PyObject_GetAttrString(ReaderError, (char *)errorCode);
   if (code == NULL)
     return NULL;
   args = Py_BuildValue("NOii", code, reader->context->uri,
@@ -797,7 +797,7 @@ create_exception(ExpatReader *reader, const char *errorCode,
   } else {
     kwords = NULL;
   }
-  exc = PyObject_Call(ReaderException, args, kwords);
+  exc = PyObject_Call(ReaderError, args, kwords);
   Py_DECREF(args);
   Py_XDECREF(kwords);
   return exc;
@@ -885,7 +885,7 @@ report_error(ExpatReader *reader, const char *error, char *argspec, ...)
   if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
     status = ExpatFilter_Error(reader->context->filters, exception);
   } else {
-    PyErr_SetObject(ReaderException, exception);
+    PyErr_SetObject(ReaderError, exception);
     status = stop_parsing(reader);
   }
   Py_DECREF(exception);
@@ -1358,7 +1358,7 @@ process_error(ExpatReader *reader)
     }
     break;
   default:
-    /* terminate parsing and setup ReaderException */
+    /* terminate parsing and setup ReaderError */
     stop_parsing(reader);
     Debug_Print("-- Parsing error ------------ \n"
                 "Expat error: %s\n"
@@ -1369,14 +1369,14 @@ process_error(ExpatReader *reader)
                          XML_GetErrorColumnNumber(reader->context->parser));
     if (args == NULL)
       break;
-    exception = PyObject_Call(ReaderException, args, NULL);
+    exception = PyObject_Call(ReaderError, args, NULL);
     Py_DECREF(args);
     if (exception == NULL)
       break;
     if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
       (void) ExpatFilter_FatalError(reader->context->filters, exception);
     } else {
-      PyErr_SetObject(ReaderException, exception);
+      PyErr_SetObject(ReaderError, exception);
     }
     Py_DECREF(exception);
   }
@@ -4329,7 +4329,7 @@ PyMODINIT_FUNC init_expat(void)
   }
   Py_DECREF(import);
 
-  import = PyImport_ImportModule("amara.xml");
+  import = PyImport_ImportModule("amara");
   if (import == NULL) return;
   xml_namespace_string = PyObject_GetAttrString(import, "XML_NAMESPACE");
   xml_namespace_string = XmlString_FromObjectInPlace(xml_namespace_string);
@@ -4337,8 +4337,8 @@ PyMODINIT_FUNC init_expat(void)
     Py_DECREF(import);
     return;
   }
-  ReaderException = PyObject_GetAttrString(import, "ReaderException");
-  if (ReaderException == NULL) {
+  ReaderError = PyObject_GetAttrString(import, "ReaderError");
+  if (ReaderError == NULL) {
     Py_DECREF(import);
     return;
   }

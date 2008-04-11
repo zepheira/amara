@@ -1,10 +1,10 @@
 ########################################################################
-# amara/xml/xpath/__init__.py
+# amara/xpath/__init__.py
 """
 Implementation of the standard XPath object types
 """
 
-from amara.xml.xpath._datatypes import *
+from amara.xpath._datatypes import *
 
 __all__ = ('xpathobject', 'string', 'number', 'boolean', 'nodeset',
            'EMPTY_STRING',

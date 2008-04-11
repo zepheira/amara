@@ -6,7 +6,7 @@ A parsed token that represents an axis specifier.
 
 from xml.dom import Node
 
-from amara.xml._domlette import XPathNamespace
+from amara._domlette import XPathNamespace
 
 # Bind the class name in the global scope so that the metaclass can be
 # safely called for the construction of the initial class.

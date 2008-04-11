@@ -1,12 +1,12 @@
 ########################################################################
-# amara/xml/xpath/functions/numbers.py
+# amara/xpath/functions/numbers.py
 """
 The implementation of the core numeric functions from XPath 1.0.
 """
 import math
 
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.functions import builtin_function
+from amara.xpath import datatypes
+from amara.xpath.functions import builtin_function
 
 __all__ = ('number_function', 'sum_function', 'floor_function', 
            'ceiling_function', 'round_function')

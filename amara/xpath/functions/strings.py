@@ -1,12 +1,12 @@
 ########################################################################
-# amara/xml/xpath/functions/strings.py
+# amara/xpath/functions/strings.py
 """
 The implementation of the core sting functions from XPath 1.0.
 """
 import itertools
 
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.functions import builtin_function
+from amara.xpath import datatypes
+from amara.xpath.functions import builtin_function
 
 __all__ = (
     'string_function', 'concat_function', 'starts_with_function',

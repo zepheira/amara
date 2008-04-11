@@ -2247,7 +2247,7 @@ int _Expat_SaxFilter_Init(PyObject *module)
   }
   Py_DECREF(import);
 
-  import = PyImport_ImportModule("amara.xml");
+  import = PyImport_ImportModule("amara");
   if (import == NULL) return -1;
   xmlns_namespace_string = PyObject_GetAttrString(import, "XMLNS_NAMESPACE");
   xmlns_namespace_string = XmlString_FromObjectInPlace(xmlns_namespace_string);

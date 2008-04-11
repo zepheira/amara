@@ -1,13 +1,13 @@
 ########################################################################
-# amara/xml/xpath/functions/nodesets.py
+# amara/xpath/functions/nodesets.py
 """
 The implementation of the core node-set functions from XPath 1.0.
 """
 
-from amara.xml.domlette import XPathNamespace
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.functions import builtin_function
-from amara.xml.xpath.locationpaths import relative_location_path
+from amara.domlette import XPathNamespace
+from amara.xpath import datatypes
+from amara.xpath.functions import builtin_function
+from amara.xpath.locationpaths import relative_location_path
 
 __all__ = ('last_function', 'position_function', 'count_function',
            'id_function', 'local_name_function', 'namespace_uri_function',

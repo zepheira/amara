@@ -1,10 +1,10 @@
 ########################################################################
-# amara/xml/xpath/expressions/nodesets.py
+# amara/xpath/expressions/nodesets.py
 """
 XPath expression nodes that evaluate as nodesets.
 """
 
-from amara.xml.xpath import datatypes, expressions
+from amara.xpath import datatypes, expressions
 
 __all__ = ('nodeset_expression', 
            'union_expr', 'path_expr', 'filter_expr')
@@ -176,12 +176,13 @@ class path_expr(nodeset_expression):
     """
     def __init__(self, expression, sep, path):
         if sep == '//':
-            from amara.xml.xpath.locationpaths import RelativeLocationPath, Step
-            from amara.xml.xpath.axisspecifiers import axis_specifier
-            from Ft.Xml.XPath.NodeTests import NodeType
-            assert isinstance(path, RelativeLocationPath), repr(path)
-            step = step(axis_specifier('descendant-or-self'), 
-                        node_type('node'))
+            from amara.xpath.locationpaths import \
+                relative_location_path, location_step
+            from amara.xpath.locationpaths.axisspecifiers import axis_specifier
+            from amara.xpath.locationpaths.nodetests import node_type
+            assert isinstance(path, relative_location_path), repr(path)
+            step = location_step(axis_specifier('descendant-or-self'), 
+                                 node_type('node'))
             path._steps.insert(0, step)
         self._expression = expression
         self._path = path

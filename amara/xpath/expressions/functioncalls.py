@@ -1,14 +1,14 @@
 #######################################################################
-# amara/xml/xpath/functioncalls.py
+# amara/xpath/functioncalls.py
 """
 XPath expression nodes that evaluate function calls.
 """
 
 import inspect
 
-from amara.xml.xpath import XPathError
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.expressions import expression
+from amara.xpath import XPathError
+from amara.xpath import datatypes
+from amara.xpath.expressions import expression
 
 class function_call(expression):
     """

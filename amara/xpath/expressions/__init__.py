@@ -1,11 +1,11 @@
 ########################################################################
-# amara/xml/xpath/expressions/__init__.py
+# amara/xpath/expressions/__init__.py
 """
 The implementation of parsed XPath expression tokens.
 """
 
-from amara.xml.xpath import datatypes
-from amara.xml.xpath.compiler import function_compiler
+from amara.xpath import datatypes
+from amara.xpath.compiler import function_compiler
 
 __all__ = ['expression']
 

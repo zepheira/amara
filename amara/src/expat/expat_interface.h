@@ -18,7 +18,7 @@ extern "C" {
 
 */
 
-#define Expat_MODULE_NAME "amara.xml._expat"
+#define Expat_MODULE_NAME "amara._expat"
 
 #include "Python.h"
 #include "structmember.h"

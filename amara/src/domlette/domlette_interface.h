@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define Domlette_MODULE_NAME  "amara.xml._domlette"
+#define Domlette_MODULE_NAME  "amara._domlette"
 
 #include "Python.h"
 #include "structmember.h"

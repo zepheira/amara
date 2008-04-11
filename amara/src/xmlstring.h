@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define XmlString_MODULE_NAME "amara.xml._xmlstring"
+#define XmlString_MODULE_NAME "amara._xmlstring"
 
 #include "Python.h"
 

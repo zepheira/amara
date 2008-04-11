@@ -1,11 +1,8 @@
 ########################################################################
-# amara/xml/xpath/__init__.py
+# amara/xpath/__init__.py
 """
 XPath initialization and principal functions
 """
-
-# From DOM Level 3 XPath
-#XPATH_NAMESPACE_NODE = NAMESPACE_NODE = 13
 
 EXTENSION_NAMESPACE = 'http://xmlns.4suite.org/ext'
 

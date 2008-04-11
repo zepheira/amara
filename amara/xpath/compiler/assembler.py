@@ -1,5 +1,5 @@
 ########################################################################
-# amara/xml/xpath/compiler/__init__.py
+# amara/xpath/compiler/__init__.py
 """
 A flow graph representation for Python bytecode.
 """

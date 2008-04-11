@@ -1,7 +1,7 @@
 #include "Python.h"
 #include "exceptions.h"
 
-/** amara.xml.ReaderException *****************************************/
+/** amara.ReaderError *************************************************/
 
 PyObject *ReaderException_Class;
 
@@ -50,7 +50,7 @@ PyObject *ReaderException_FromInt(int errorCode, PyObject *systemId,
 }
 
 
-/** amara.xml.XInclude Exception **************************************/
+/** amara.XInlcudeError ***********************************************/
 
 static PyObject *XIncludeException;
 
@@ -261,14 +261,14 @@ int DomletteExceptions_Init(PyObject *module)
   PyObject *import;
 
   /* Load the ReaderException and XIncludeException */
-  import = PyImport_ImportModule("amara.xml");
+  import = PyImport_ImportModule("amara");
   if (import == NULL) return -1;
-  ReaderException_Class = PyObject_GetAttrString(import, "ReaderException");
+  ReaderException_Class = PyObject_GetAttrString(import, "ReaderError");
   if (ReaderException_Class == NULL) {
     Py_DECREF(import);
     return -1;
   }
-  XIncludeException = PyObject_GetAttrString(import, "XIncludeException");
+  XIncludeException = PyObject_GetAttrString(import, "XIncludeError");
   if (XIncludeException == NULL) {
     Py_DECREF(import);
     return -1;

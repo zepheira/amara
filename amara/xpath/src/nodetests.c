@@ -2,7 +2,7 @@
 #include "structmember.h"
 #include "domlette_interface.h"
 
-#define MODULE_NAME "amara.xml.xpath._nodetests"
+#define MODULE_NAME "amara.xpath._nodetests"
 #define MODULE_INITFUNC init_nodetests
 
 /** Filter object ****************************************************/

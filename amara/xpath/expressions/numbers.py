@@ -1,10 +1,10 @@
 ########################################################################
-# amara/xml/xpath/expressions/numbers.py
+# amara/xpath/expressions/numbers.py
 """
 XPath expression nodes that evaluate as numbers.
 """
 
-from amara.xml.xpath import expressions, datatypes
+from amara.xpath import expressions, datatypes
 
 __all__ = ('number_expression', 
            'additive_expr', 'multiplicative_expr', 'unary_expr')

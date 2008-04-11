@@ -1,12 +1,12 @@
 /***********************************************************************
- * amara/xml/xpath/src/datatypes.c
+ * amara/xpath/src/datatypes.c
  ***********************************************************************/
 
 static char module_doc[] = "\
 Implementation of XPath data types\n\
 ";
 
-#define MODULE_NAME "amara.xml.xpath._datatypes"
+#define MODULE_NAME "amara.xpath._datatypes"
 #define MODULE_INITFUNC init_datatypes
 
 #include "Python.h"
