@@ -222,6 +222,8 @@ int DomletteXPathNamespace_Init(PyObject *module)
     return -1;
   if (PyDict_SetItemString(dict, "nodeType", value))
     return -1;
+  if (PyDict_SetItemString(dict, "XPATH_NAMESPACE_NODE", value))
+    return -1;
   Py_DECREF(value);
 
   Py_INCREF(&DomletteXPathNamespace_Type);

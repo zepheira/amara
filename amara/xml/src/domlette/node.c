@@ -976,8 +976,8 @@ static PyGetSetDef node_getset[] = {
   { "lastChild",       (getter)get_last_child },
   { "nextSibling",     (getter)get_next_sibling },
   { "previousSibling", (getter)get_previous_sibling },
-  { "xpathAttributes", (getter)get_empty_list },
-  { "xpathNamespaces", (getter)get_empty_list },
+  { "xml_attributes",  (getter)get_empty_list },
+  { "xml_namespaces",  (getter)get_empty_list },
   { NULL }
 };
 

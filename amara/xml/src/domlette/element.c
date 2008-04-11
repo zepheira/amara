@@ -771,8 +771,8 @@ static PyGetSetDef element_getset[] = {
   { "prefix", (getter)get_prefix, (setter)set_prefix, NULL, "prefix" },
   { "attributes", (getter) get_attributes },
   /* XPath-specific accessors */
-  { "xpathAttributes", (getter) get_xpath_attributes },
-  { "xpathNamespaces", (getter) get_xpath_namespaces },
+  { "xml_attributes", (getter) get_xpath_attributes },
+  { "xml_namespaces", (getter) get_xpath_namespaces },
   { NULL }
 };
 
