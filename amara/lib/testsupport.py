@@ -367,12 +367,12 @@ class test_loader(unittest.TestLoader):
         cases = []
         for name in dir(testSuiteClass):
             obj = getattr(testSuiteClass, name)
-            if (isinstance(obj, (types, types.ClassType)) and
+            if (isinstance(obj, (type, types.ClassType)) and
                 issubclass(obj, unittest.TestCase)):
                 cases.append(obj)
         tests = []
         for case in sorted(cases, key=operator.attrgetter('__name__')):
-            tests.append(self.loadTestsFromTestCase(obj))
+            tests.append(self.loadTestsFromTestCase(case))
         return testSuiteClass(tests)
 
     def loadTestsFromModule(self, module):

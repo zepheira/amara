@@ -1033,7 +1033,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
-        stream = iri.DEFAULT_RESOLVER.resolve('sampleresource.txt', iri.os_path_to_uri(base))
+        stream = iri.DEFAULT_RESOLVER.resolve('lib/sampleresource.txt', iri.os_path_to_uri(base))
         self.assertEqual('Spam', string.rstrip(stream.readline()), 'resolve')
         stream.close()
 
@@ -1078,5 +1078,5 @@ class Test_scheme_registry_resolver(unittest.TestCase):
         return
 
 if __name__ == '__main__':
-    testsupport.run_unittest()
+    testsupport.test_main()
 

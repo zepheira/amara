@@ -48,6 +48,7 @@ import re, cStringIO
 import mimetools
 from string import ascii_letters
 from email.Utils import formatdate as _formatdate
+from uuid import UUID, uuid1, uuid4
 
 from amara.lib import IriError, importutil
 
@@ -1122,8 +1123,7 @@ class default_resolver:
         The hint is an object that helps decide what to generate.
         The default action is to generate a random UUID URN.
         """
-        import Uuid
-        return 'urn:uuid:'+Uuid.UuidAsString(Uuid.GenerateUuid())
+        return uuid4().urn
 
 
 #Reusable resolver instance
