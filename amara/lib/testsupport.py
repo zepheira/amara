@@ -10,10 +10,11 @@ import errno
 import socket
 import sys
 import os
-import os.path
 import shutil
 import warnings
 import unittest
+import types
+import operator
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -360,3 +361,36 @@ def run_unittest(*classes):
     _run_suite(suite)
 
 
+class test_loader(unittest.TestLoader):
+    def loadTestsFromTestSuite(self, testSuiteClass):
+        """Return a suite of all tests cases contained in `testSuiteClass`."""
+        cases = []
+        for name in dir(testSuiteClass):
+            obj = getattr(testSuiteClass, name)
+            if (isinstance(obj, (types, types.ClassType)) and
+                issubclass(obj, unittest.TestCase)):
+                cases.append(obj)
+        tests = []
+        for case in sorted(cases, key=operator.attrgetter('__name__')):
+            tests.append(self.loadTestsFromTestCase(obj))
+        return testSuiteClass(tests)
+
+    def loadTestsFromModule(self, module):
+        suites, cases = [], []
+        for name, obj in vars(module).iteritems():
+            if isinstance(obj, (type, types.ClassType)):
+                if issubclass(obj, unittest.TestSuite):
+                    suites.append(obj)
+                elif issubclass(obj, unittest.TestCase):
+                    cases.append(obj)
+        tests = []
+        for suite in sorted(suites, key=operator.attrgetter('__name__')):
+            tests.append(self.loadTestsFromTestSuite(suite))
+        for case in sorted(cases, key=operator.attrgetter('__name__')):
+            tests.append(self.loadTestsFromTestCase(case))
+        return self.suiteClass(tests)
+
+
+class test_main(unittest.TestProgram):
+    def __init__(self):
+        unittest.TestProgram.__init__(self, testLoader=test_loader())
