@@ -4,11 +4,9 @@
 The implementation of parsed XPath expression tokens.
 """
 
-from amara._xmlstring import split_qname
+from amara._xmlstring import SplitQName
 from amara.xpath import XPathError
-from amara.xpath._datatypes import *
-from amara.xpath import expressions
-from amara.xpath.compiler import function_compiler
+from amara.xpath import datatypes, expressions
 
 class literal(expressions.expression):
     """
@@ -83,7 +81,7 @@ class number_literal(literal):
         return str(self._literal)
 
 
-class variable_reference(expression):
+class variable_reference(expressions.expression):
     """
     An object representing a variable reference expression
     (XPath 1.0 grammar production 36: VariableReference)
@@ -104,7 +102,7 @@ class variable_reference(expression):
         qualified name for the variable reference.
         """
         # Construct the expanded-name tuple
-        prefix, local = split_qname(self._name)
+        prefix, local = SplitQName(self._name)
         if prefix:
             try:
                 namespace = compiler.namespaces[prefix]

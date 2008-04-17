@@ -121,6 +121,9 @@ class name_function(builtin_function):
 class local_name_function(name_function):
     """Function: <string> local-name(<node-set>?)"""
     name = 'local-name'
+    arguments = (datatypes.nodeset,)
+    defaults = (None,)
+    return_type = datatypes.string
 
     def evaluate_as_string(self, context):
         arg0, = self._args
@@ -149,6 +152,9 @@ class local_name_function(name_function):
 class namespace_uri_function(name_function):
     """Function: <string> namespace-uri(<node-set>?)"""
     name = 'namespace-uri'
+    arguments = (datatypes.nodeset,)
+    defaults = (None,)
+    return_type = datatypes.string
 
     def evaluate_as_string(self, context):
         arg0, = self._args

@@ -19,14 +19,11 @@ Implementation of XPath data types\n\
 #  if defined(_WIN32) || defined(__WIN32__)
 #    ifdef __MINGW32__
 #      include <math.h>
-#      ifndef finite
-#        define finite(x) isfinite(x)
-#      endif
 #    else
 #      include <float.h>
 #      define isnan(x) _isnan(x)
 #      define isfinite(x) _finite(x)
-#      define isinf(x) (!isfinite(x) && !isnan(x)
+#      define isinf(x) (!isfinite(x) && !isnan(x))
 #    endif
 #  elif (defined(__sun) || defined(__sgi) || defined(__svr4__) || \
          defined(__osf__))
@@ -989,7 +986,7 @@ static PyObject *number_richcompare(PyObject *v, PyObject *w, int op)
 
 static PyObject *number_isfinite(PyObject *self, PyObject *noarg)
 {
-  PyObject *result = finite(PyFloat_AS_DOUBLE(self)) ? Py_True : Py_False;
+  PyObject *result = isfinite(PyFloat_AS_DOUBLE(self)) ? Py_True : Py_False;
   Py_INCREF(result);
   return result;
 }
@@ -997,7 +994,7 @@ static PyObject *number_isfinite(PyObject *self, PyObject *noarg)
 static PyObject *number_isnormal(PyObject *self, PyObject *noarg)
 {
   double dval = PyFloat_AS_DOUBLE(self);
-  PyObject *result = (finite(dval) && dval != 0.0) ? Py_True : Py_False;
+  PyObject *result = (isfinite(dval) && dval != 0.0) ? Py_True : Py_False;
   Py_INCREF(result);
   return result;
 }

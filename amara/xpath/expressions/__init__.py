@@ -5,7 +5,7 @@ The implementation of parsed XPath expression tokens.
 """
 
 from amara.xpath import datatypes
-from amara.xpath.compiler import function_compiler
+from amara.xpath.compiler import xpathcompiler
 
 __all__ = ['expression']
 
@@ -55,7 +55,7 @@ class expression(object):
 
     def evaluate(self, context):
         # Lazily generate the Python function for the expression.
-        compiler = function_compiler(context)
+        compiler = xpathcompiler(context)
         self.compile(compiler)
         self.evaluate = compiler.compile('evaluate',
                                          docstring=str(self))
@@ -63,7 +63,7 @@ class expression(object):
 
     def evaluate_as_boolean(self, context):
         # Lazily generate the Python function for the expression.
-        compiler = function_compiler(context)
+        compiler = xpathcompiler(context)
         self.compile_as_boolean(compiler)
         self.evaluate_as_boolean = compiler.compile('evaluate_as_boolean',
                                                     docstring=str(self))
@@ -71,7 +71,7 @@ class expression(object):
 
     def evaluate_as_number(self, context):
         # Lazily generate the Python function for the expression.
-        compiler = function_compiler(context)
+        compiler = xpathcompiler(context)
         self.compile_as_number(compiler)
         self.evaluate_as_number = compiler.compile('evaluate_as_number',
                                                    docstring=str(self))
@@ -79,7 +79,7 @@ class expression(object):
 
     def evaluate_as_string(self, context):
         # Lazily generate the Python function for the expression.
-        compiler = function_compiler(context)
+        compiler = xpathcompiler(context)
         self.compile_as_string(compiler)
         self.evaluate_as_string = compiler.compile('evaluate_as_string',
                                                    docstring=str(self))
@@ -87,7 +87,7 @@ class expression(object):
 
     def evaluate_as_nodeset(self, context):
         # Lazily generate the Python function for the expression.
-        compiler = function_compiler(context)
+        compiler = xpathcompiler(context)
         self.compile_as_nodeset(compiler)
         self.evaluate_as_nodeset = compiler.compile('evaluate_as_nodeset',
                                                     docstring=str(self))

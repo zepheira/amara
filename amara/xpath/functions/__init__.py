@@ -5,8 +5,8 @@ XPath expression nodes that evaluate function calls.
 """
 
 from amara.xpath import XPathError
-from amara.xpath.functioncalls import function_call
-from amara.xpath._datatypes import *
+from amara.xpath import datatypes
+from amara.xpath.expressions.functioncalls import function_call
 
 __all__ = ['builtin_function', 'extension_function']
 
@@ -18,7 +18,7 @@ class builtin_function(function_call):
     """
 
     name = None
-    return_type = xpathobject
+    return_type = datatypes.xpathobject
     arguments = (Ellipsis,)
     defaults = ()
 
@@ -176,7 +176,7 @@ def __bootstrap__(namespace):
     for module in (nodesets, strings, booleans, numbers):
         for name in getattr(module, '__all__', ()):
             namespace[name] = getattr(module, name)
-        # Add the functions to this module's exported objects
-        __all__.extend(exports)
+            # Add the functions to this module's exported objects
+            __all__.append(name)
     del __bootstrap__
 __bootstrap__(locals())

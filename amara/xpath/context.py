@@ -4,51 +4,39 @@
 The context of an XPath expression
 """
 
-from amara import XML_NAMESPACE
-from types import ModuleType
+import types
 
-import CoreFunctions, BuiltInExtFunctions
+from amara import XML_NAMESPACE
+from amara.xpath import extensions
 
 __all__ = ['xpathcontext']
 
 class xpathcontext:
-    functions = functions.builtin_functions.copy()
-    functions.update(extensions.ext_functions)
+    functions = extensions.extension_functions
     currentInstruction = None
 
-    def __init__(self,
-                 node,
-                 position=1,
-                 size=1,
-                 variables=None,
-                 namespaces=None,
-                 extModuleList=None,
-                 extFunctionMap=None):
-        self.node = node
-        self.position = position
-        self.size = size
+    def __init__(self, node, position=1, size=1,
+                 variables=None, namespaces=None,
+                 extmodules=(), extfunctions=None):
+        self.node, self.position, self.size = node, position, size
         self.variables = variables or {}
         self.namespaces = {'xml': XML_NAMESPACE}
         if namespaces:
             self.namespaces.update(namespaces)
 
         # This may get mutated during processing
-        functions = dict(self.functions)
-
+        self.functions = self.functions.copy()
         # Search the extension modules for defined functions
-        if extModuleList:
-            for module in extModuleList:
-                if module:
-                    if not isinstance(module, ModuleType):
-                        module = __import__(module, {}, {}, ['ExtFunctions'])
-
-                    if hasattr(module, 'ExtFunctions'):
-                        functions.update(module.ExtFunctions)
-
+        for module in extmodules:
+            if module:
+                if not isinstance(module, types.ModuleType):
+                    module = __import__(module, {}, {}, ['ExtFunctions'])
+                funcs = getattr(module, 'extension_functions', None)
+                if funcs:
+                    self.functions.update(funcs)
         # Add functions given directly
-        if extFunctionMap:
-            functions.update(extFunctionMap)
-        self.functions = functions
+        if extfunctions:
+            self.functions.update(extfunctions)
         return
 
     def __repr__(self):

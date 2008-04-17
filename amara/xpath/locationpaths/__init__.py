@@ -5,10 +5,10 @@ XPath location path expressions.
 """
 
 from amara.xpath import XPathError
-from amara.xpath.expressions import nodeset_expression
+from amara.xpath.expressions import nodesets
 from amara.xpath.locationpaths import axisspecifiers, nodetests, _paths
 
-class location_path(nodeset_expression):
+class location_path(nodesets.nodeset_expression):
     """
     An object representing a location path
     (XPath 1.0 grammar production 1: LocationPath)

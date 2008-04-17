@@ -11,7 +11,8 @@
 #include "element.h"
 #include "attr.h"
 
-#define MODULE_NAME "Ft.Xml.XPath.cAxes"
+#define MODULE_NAME "amara.xpath.locationpaths._axes"
+#define MODULE_INITFUNC init_axes
 
 static PyObject *xmlns_namespace;
 
@@ -28,7 +29,7 @@ static PyObject *ancestor_axis_new(PyTypeObject *type, PyObject *args,
   PyObject *node;
   ancestor_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:AncestorAxis",
+  if (!PyArg_ParseTuple(args, "O!:ancestor_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -65,7 +66,7 @@ static PyObject *ancestor_axis_next(ancestor_axis *self)
 static PyTypeObject ancestor_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".AncestorAxis",
+  /* tp_name           */ MODULE_NAME "." "ancestor_axis",
   /* tp_basicsize      */ sizeof(ancestor_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) ancestor_axis_dealloc,
@@ -113,7 +114,7 @@ static PyObject *ancestor_self_axis_new(PyTypeObject *type, PyObject *args,
   PyObject *node;
   ancestor_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:AncestorOrSelfAxis",
+  if (!PyArg_ParseTuple(args, "O!:ancestor_or_self_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -130,7 +131,7 @@ static PyObject *ancestor_self_axis_new(PyTypeObject *type, PyObject *args,
 static PyTypeObject ancestor_self_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".AncestorOrSelfAxis",
+  /* tp_name           */ MODULE_NAME "." "ancestor_or_self_axis",
   /* tp_basicsize      */ sizeof(ancestor_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -184,7 +185,7 @@ static PyObject *attribute_axis_new(PyTypeObject *type, PyObject *args,
   PyObject *node;
   attribute_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:AttributeAxis",
+  if (!PyArg_ParseTuple(args, "O!:attribute_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -235,7 +236,7 @@ static PyObject *attribute_axis_next(attribute_axis *self)
 static PyTypeObject attribute_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".AttributeAxis",
+  /* tp_name           */ MODULE_NAME "." "attribute_axis",
   /* tp_basicsize      */ sizeof(attribute_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attribute_axis_dealloc,
@@ -289,7 +290,7 @@ static PyObject *child_axis_new(PyTypeObject *type, PyObject *args,
   NodeObject *node;
   child_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:ChildAxis",
+  if (!PyArg_ParseTuple(args, "O!:child_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -333,7 +334,7 @@ static PyObject *child_axis_next(child_axis *self)
 static PyTypeObject child_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".ChildAxis",
+  /* tp_name           */ MODULE_NAME "." "child_axis",
   /* tp_basicsize      */ sizeof(attribute_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) child_axis_dealloc,
@@ -387,7 +388,7 @@ static PyObject *descendant_axis_new(PyTypeObject *type, PyObject *args,
   PyObject *node, *stack;
   descendant_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:DescendantAxis",
+  if (!PyArg_ParseTuple(args, "O!:descendant_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -458,7 +459,7 @@ static PyObject *descendant_axis_next(descendant_axis *self)
 static PyTypeObject descendant_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".DescendantAxis",
+  /* tp_name           */ MODULE_NAME "." "descendant_axis",
   /* tp_basicsize      */ sizeof(descendant_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) descendant_axis_dealloc,
@@ -506,7 +507,7 @@ static PyObject *descendant_self_axis_new(PyTypeObject *type, PyObject *args,
   PyObject *node;
   descendant_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:DescendantOrSelfAxis",
+  if (!PyArg_ParseTuple(args, "O!:descendant_or_self_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -543,7 +544,7 @@ static PyObject *descendant_self_axis_next(descendant_axis *self)
 static PyTypeObject descendant_self_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".DescendantOrSelfAxis",
+  /* tp_name           */ MODULE_NAME "." "descendant_or_self_axis",
   /* tp_basicsize      */ sizeof(descendant_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -598,7 +599,7 @@ static PyObject *followingsibling_axis_new(PyTypeObject *type, PyObject *args,
   NodeObject *node;
   followingsibling_axis *axis;
 
-  if (!PyArg_ParseTuple(args, "O!:FollowingSiblingAxis",
+  if (!PyArg_ParseTuple(args, "O!:following_sibling_axis",
                         Domlette->Node_Type, &node)) {
     return NULL;
   }
@@ -645,7 +646,7 @@ static PyObject *followingsibling_axis_next(followingsibling_axis *self)
 static PyTypeObject followingsibling_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".FollowingSiblingAxis",
+  /* tp_name           */ MODULE_NAME "." "following_sibling_axis",
   /* tp_basicsize      */ sizeof(followingsibling_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) followingsibling_axis_dealloc,
@@ -691,7 +692,8 @@ static PyMethodDef module_methods[] = {
   { NULL }
 };
 
-DL_EXPORT(void) initcAxes(void) {
+PyMODINIT_FUNC MODULE_INITFUNC(void)
+{
   PyObject *module;
   PyTypeObject *typelist[] = {
     &ancestor_axis_type,

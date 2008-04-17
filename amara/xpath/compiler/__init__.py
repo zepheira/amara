@@ -4,12 +4,13 @@
 XPath expression compiler.
 """
 from __future__ import absolute_import
+import new
 
-from .assembler import FlowGraph
+from .assembler import assembler
 
-__all__ = ['function_compiler']
+__all__ = ['xpathcompiler']
 
-class function_compiler(object):
+class xpathcompiler(object):
 
     _nasts = 0
     _nlocals = 0
@@ -20,15 +21,15 @@ class function_compiler(object):
 
     def __init__(self, context=None):
         if context is not None:
-            self.namespaces = context.processorNss
-            self.variables = context.varBindings
+            self.namespaces = context.namespaces
+            self.variables = context.variables
             self.functions = context.functions
         else:
             self.namespaces = {}
             self.variables = {}
             self.functions = {}
 
-        self._graph = FlowGraph()
+        self._graph = assembler()
         self.emit = self._graph.emit
         self.new_block = self._graph.new_block
         self.next_block = self._graph.next_block
@@ -40,8 +41,8 @@ class function_compiler(object):
         if args is None:
             args = ('context',)
         if filename is None:
-            filename = '<ast-%d>' % function_generator._nasts
-            function_generator._nasts += 1
+            filename = '<ast-%d>' % xpathcompiler._nasts
+            xpathcompiler._nasts += 1
         code = self._graph.assemble(name, args, docstring, filename,
                                     firstlineno)
         # Make the function

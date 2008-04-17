@@ -4,6 +4,7 @@
 A flow graph representation for Python bytecode.
 """
 import dis
+import new
 import array
 import itertools
 from compiler.consts import CO_OPTIMIZED, CO_NEWLOCALS
@@ -14,7 +15,7 @@ class assembler:
     postorder = None
 
     def __init__(self):
-        self.entry = self.current = block(0)
+        self.entry = self.current = basicblock(0)
         self.blocks = [self.entry]
 
     def new_block(self):
