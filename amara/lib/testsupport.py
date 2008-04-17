@@ -15,6 +15,7 @@ import warnings
 import unittest
 import types
 import operator
+import time
 
 class Error(Exception):
     """Base class for regression test exceptions."""
@@ -362,6 +363,10 @@ def run_unittest(*classes):
 
 
 class test_loader(unittest.TestLoader):
+    """
+    Extends `unittest.TestLoader` to support defining TestCases as members
+    of a TestSuite.
+    """
     def loadTestsFromTestSuite(self, testSuiteClass):
         """Return a suite of all tests cases contained in `testSuiteClass`."""
         cases = []
@@ -391,6 +396,202 @@ class test_loader(unittest.TestLoader):
         return self.suiteClass(tests)
 
 
+# On Windows, the best timer is time.clock().
+# On most other platforms the best timer is time.time().
+if sys.platform == 'win32':
+    default_timer = time.clock
+else:
+    default_timer = time.time
+
+class _test_result(unittest.TestResult):
+    def __init__(self, stream, verbosity, timer=default_timer):
+        unittest.TestResult.__init__(self)
+        self.stream = stream
+        self.show_all = verbosity > 1
+        self.dots = verbosity == 1
+        self.verbose = verbosity > 0
+        self.timer = timer
+        self.total_time = 0
+        return
+
+    def start_run(self):
+        self.total_time = self.timer()
+        return
+
+    def stop_run(self):
+        stop_time = self.timer()
+        self.total_time = stop_time - self.total_time
+        if self.verbose:
+            self.stream.write('\n')
+        return
+
+    def startTest(self, test):
+        unittest.TestResult.startTest(self, test)
+        if self.show_all:
+            self.stream.write('%s ... ' % (test.shortDescription() or test))
+
+    def addSuccess(self, test):
+        unittest.TestResult.addSuccess(self, test)
+        if self.verbose:
+            self.stream.setcolor('GREEN')
+            self.stream.write('.' if self.dots else 'OK\n')
+            self.stream.setcolor('NORMAL')
+
+    def addError(self, test, err):
+        unittest.TestResult.addError(self, test, err)
+        if self.verbose:
+            self.stream.setcolor('RED')
+            self.stream.write('E' if self.dots else 'ERROR\n')
+            self.stream.setcolor('NORMAL')
+
+    def addFailure(self, test, err):
+        unittest.TestResult.addFailure(self, test, err)
+        if self.verbose:
+            self.stream.setcolor('WHITE')
+            self.stream.write('F' if self.dots else 'FAIL\n')
+            self.stream.setcolor('NORMAL')
+
+
+_ansi_terms = frozenset([
+    'linux', 'console', 'con132x25', 'con132x30', 'con132x43',
+    'con132x60', 'con80x25', 'con80x28', 'con80x30', 'con80x43',
+    'con80x50', 'con80x60', 'xterm', 'xterm-color', 'color-xterm',
+    'vt100', 'vt100-color', 'rxvt', 'ansi', 'Eterm', 'putty',
+    'vt220-color', 'cygwin',
+    ])
+
+class _test_stream(object):
+    def __init__(self, stream):
+        self._stream = stream
+        if stream.isatty():
+            if sys.platform == 'win32':
+                # assume Windows console (cmd.exe or the like)
+                self._init_win32()
+            elif os.name == 'posix' and os.environ.get('TERM') in _ansi_terms:
+                self._colors = {
+                    'NORMAL': '\033[0m',
+                    'RED': '\033[1;31m',
+                    'GREEN': '\033[1;32m',
+                    'YELLOW': '\033[1;33m',
+                    'WHITE': '\033[1;37m',
+                }
+                self.setcolor = self._setcolor_ansi
+
+    def _init_win32(self):
+        import ctypes
+        import msvcrt
+        class COORD(ctypes.Structure):
+            _fields_ = [('x', ctypes.c_short), ('y', ctypes.c_short)]
+        class SMALL_RECT(ctypes.Structure):
+            _fields_ = [('left', ctypes.c_short), ('top', ctypes.c_short),
+                        ('right', ctypes.c_short), ('bottom', ctypes.c_short),
+                        ]
+        class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+            _fields_ = [('dwSize', COORD),
+                        ('dwCursorPosition', COORD),
+                        ('wAttributes', ctypes.c_short),
+                        ('srWindow', SMALL_RECT),
+                        ('dwMaximumSize', COORD),
+                        ]
+        # Apparently there exists an IDE where isatty() is True, but
+        # the stream doesn't have a backing file descriptor.
+        try:
+            fileno = self._stream.fileno()
+        except AttributeError:
+            return
+        try:
+            self._handle = msvcrt.get_osfhandle(fileno)
+        except:
+            return
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        pinfo = ctypes.byref(info)
+        ctypes.windll.kernel32.GetConsoleScreenBufferInfo(self._handle, pinfo)
+        self._colors = {
+            'NORMAL': info.wAttributes,
+            'RED': 12, # INTENSITY (8) | RED (4)
+            'GREEN': 10, # INTENSITY (8) | GREEN (2)
+            'YELLOW': 14, # INTENSITY (8) | GREEN (2) | RED (1)
+            'WHITE': 15, # INTENSITY (8) | BLUE (1) | GREEN (2) | RED (4)
+        }
+        self.setcolor = self._setcolor_win32
+
+    def _setcolor_ansi(self, color):
+        self._stream.write(self._colors[color])
+
+    def _setcolor_win32(self, color):
+        import ctypes
+        attr = self._colors[color]
+        ctypes.windll.kernel32.SetConsoleTextAttribute(self._handle, attr)
+
+    def __getattr__(self, name):
+        return getattr(self.stream, attr)
+        
+    def write(self, data):
+        self._stream.write(data)
+
+    def setcolor(self, color):
+        return
+
+
+class test_runner(object):
+    """
+    A test runner the display results in colorized textual form.
+    """
+    
+    separator1 = '=' * 70
+    separator2 = '-' * 70
+
+    def __init__(self, stream=None, verbosity=1):
+        self.stream = _test_stream(stream or sys.stderr)
+        self.verbosity = verbosity
+
+    def run(self, test):
+        # Run the tests
+        result = _test_result(self.stream, self.verbosity)
+        result.start_run()
+        test(result)
+        result.stop_run()
+        # Display the results
+        self._write_errors('ERROR', result.errors, 'RED')
+        self._write_errors('FAIL', result.failures, 'WHITE')
+        self.stream.write('%s\n' % self.separator2)
+        self.stream.write('Ran %d tests in %0.3fs\n' % (result.testsRun,
+                                                        result.total_time))
+        self.stream.write('\n')
+        if result.wasSuccessful():
+            status = 'OK'
+            color = 'GREEN'
+        else:
+            details = []
+            if result.failures:
+                details.append('failures=%d' % len(result.failures))
+            if result.errors:
+                details.append('errors=%d' % len(result.errors))
+            status = 'FAILED (%s)' % ', '.join(details)
+            color = 'RED'
+        self.stream.setcolor(color)
+        self.stream.write('%s\n' % status)
+        self.stream.setcolor('NORMAL')
+        return result
+
+    def _write_errors(self, what, errors, color):
+        for test, err in errors:
+            self.stream.write('%s\n' % self.separator1)
+            self.stream.setcolor(color)
+            description = test.shortDescription() or str(test)
+            self.stream.write('%s: %s\n' % (what, description))
+            self.stream.setcolor('NORMAL')
+            self.stream.write('%s\n' % self.separator2)
+            self.stream.write('%s\n' % err)
+        return
+
+
 class test_main(unittest.TestProgram):
+    """
+    """
     def __init__(self):
         unittest.TestProgram.__init__(self, testLoader=test_loader())
+
+    def parseArgs(self, argv):
+        unittest.TestProgram.parseArgs(self, argv)
+        self.testRunner = test_runner(verbosity=self.verbosity)
