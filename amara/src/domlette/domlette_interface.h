@@ -16,6 +16,7 @@ extern "C" {
 #include "text.h"
 #include "comment.h"
 #include "processinginstruction.h"
+#include "xpathnamespace.h"
 
 /*
 
@@ -99,7 +100,6 @@ extern "C" {
 #include "exceptions.h"
 #include "domimplementation.h"
 #include "namednodemap.h"
-#include "xpathnamespace.h"
 
   /* namespace constants */
   extern PyObject *g_xmlNamespace;
