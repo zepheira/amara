@@ -773,15 +773,20 @@ class Test_uridict(unittest.TestSuite):
 
 class Test_percent_encode_decode(unittest.TestCase):
     '''PercentEncode and PercentDecode'''
-    def test_percent_encode(self):
+    #def test_percent_encode(self):
+    @classmethod
+    def create_test_percent_encodes(cls):
         '''Percent encode'''
-        for unencoded, encoded in percent_encode_tests:
-            if len(unencoded) > 10:
-                test_title = unencoded[:11] + '...'
-            else:
-                test_title = unencoded
-            self.assertEqual(encoded, iri.percent_encode(unencoded))
-            self.assertEqual(unencoded, iri.percent_decode(encoded))
+        for count, (unencoded, encoded) in enumerate(percent_encode_tests):
+            #print "Creating test", "test_percent_encode_%i"%count
+            def test_percent_encode_template(self):
+                if len(unencoded) > 10:
+                    test_title = unencoded[:11] + '...'
+                else:
+                    test_title = unencoded
+                self.assertEqual(encoded, iri.percent_encode(unencoded))
+                self.assertEqual(unencoded, iri.percent_decode(encoded))
+            setattr(cls, "test_percent_encode_%i"%count, test_percent_encode_template)
         return
 
     # non-BMP tests:
@@ -842,6 +847,8 @@ class Test_percent_encode_decode(unittest.TestCase):
     # utf-16be: why not?
     #unencoded = u'a test string...\x00\xe9...\x20\x22...\xd8\x00\xdc\x00'
     #encoded = u'a%20test%20string...\u00e9...%20%22...%D8%00%DC%00'
+
+Test_percent_encode_decode.create_test_percent_encodes()
 
 class Test_urns_pubids(unittest.TestCase):
     '''URNs & PubIDs'''

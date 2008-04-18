@@ -8,6 +8,7 @@ import os
 import cStringIO
 import traceback
 
+from amara import domlette
 from amara._domlette import getallns
 from amara.xpath import XPathError
 from amara.xpath.parser import xpathparser
@@ -15,7 +16,7 @@ from amara.xpath.parser import xpathparser
 # NOTE: XPathParser and Context are imported last to avoid import errors
 
 __all__ = [# XPath expression processing:
-           'Compile', 'Evaluate', 'SimpleEvaluate',
+           'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize'
            ]
 
 
@@ -121,3 +122,66 @@ def Compile(expr):
         stream = cStringIO.StringIO()
         traceback.print_exc(None, stream)
         raise XPathException(XPathException.INTERNAL, stream.getvalue())
+
+
+def paramvalue(obj):
+    """
+    Try to convert a Python object into an XPath data model value
+    
+    returns the value if successful, else None
+    """
+    if isinstance(obj, unicode):
+        return obj
+    elif isinstance(obj, str):
+        try:
+            return obj.decode('utf-8')
+        except UnicodeError:
+            return None
+    elif (isinstance(obj, int) or isinstance(obj, long)
+          or isinstance(obj, float)):
+        return obj
+    elif isinstance(obj, bool):
+        return [ obj ]
+    elif isinstance(obj, domlette.Node):
+        return obj
+    #NOTE: At one time (WSGI.xml days) this attemped to be smart and handle all iterables
+    #But this would mean blindly dealing with dangerous creatures, such as sockets
+    #So now it's more conservative and sticks to list & tuple
+    elif isinstance(obj, list) or isinstance(obj, tuple):
+        #We can only use the list if all its members are domlette nodes
+        if any( not isinstance(o, domlette.Node) for o in obj ):
+            return None
+        else:
+            return list(obj)
+    else:
+        return None
+
+
+def parameterize(inputdict, defaultns=None):
+    """
+    Convert a dictionary of name to object mappings into a dict of parameters suitable for
+    passing into XPath context, or an XSLT transform
+    
+    inputdict - input mapping of name (string or tuple) to values
+    
+    defaultns - the namespace to use for parameter names given as string/unicode rather than tuple
+    
+    return the resulting param dict if successful.  If inputdict cannot completely be converted, return None
+    """
+    resultdict = {}
+    for key in inputdict:
+        value = paramvalue(inputdict[key])
+        if value is None: return None
+        if isinstance(key, basestring):
+            if isinstance(key, str): key = key.decode('utf-8')
+            if defaultns:
+                resultdict[(defaultns, key)] = value
+            else:
+                resultdict[key] = value
+        elif isinstance(key, list) or isinstance(key, tuple):
+            resultdict[key] = value
+        else:
+            return None
+
+    return resultdict
+

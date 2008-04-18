@@ -1,5 +1,5 @@
 from amara.xpath import XPathError
-from amara.xparh.parser import _xpathparser
+from amara.xpath.parser import _xpathparser
 
 __all__ = ['xpathparser', 'parse']
 

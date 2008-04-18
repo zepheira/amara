@@ -64,3 +64,11 @@ class xpathcontext:
         newobj.namespaces = self.namespaces.copy()
         return newobj
 
+    def evaluate(self, expr):
+        """
+        The main entry point for evaluating an XPath expression, using self as context
+        expr - a unicode object with the XPath expression
+        """
+        parsed = amara.xpath.parser.parse(expr)
+        return parsed.evaluate(self)
+
