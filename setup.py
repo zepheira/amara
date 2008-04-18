@@ -244,6 +244,9 @@ setup(name='Amara',
           Extension('amara.xpath.locationpaths._paths',
                     sources=['amara/xpath/src/paths.c'],
                     ),
+          Extension('amara.xpath.parser._xpathparser',
+                    sources=['amara/xpath/parser/xpathparser.c'],
+                    ),
                  ],
       **kw)
 

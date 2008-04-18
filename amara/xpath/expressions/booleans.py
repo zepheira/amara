@@ -19,7 +19,7 @@ class boolean_expression(expression):
 
 class _logical_expr(boolean_expression):
 
-    def __init__(self, left, right):
+    def __init__(self, left, op, right):
         self._left = left
         self._right = right
 
@@ -63,9 +63,9 @@ class and_expr(_logical_expr):
     
 class _comparison_expr(boolean_expression):
 
-    def __init__(self, op, left, right):
-        self._op = op
+    def __init__(self, left, op, right):
         self._left = left
+        self._op = op
         self._right = right
 
     def compile_as_boolean(self, compiler):

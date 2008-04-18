@@ -119,13 +119,13 @@ class name_test(node_test):
     def __new__(cls, name):
         if name[-1:] == '*':
             if ':' in name:
-                cls = NamespaceTest
+                cls = namespace_test
             else:
-                cls = PrincipalTypeTest
+                cls = principal_type_test
         elif ':' in name:
-            cls = QualifiedNameTest
+            cls = qualified_name_test
         else:
-            cls = LocalNameTest
+            cls = local_name_test
         return object.__new__(cls)
 
 

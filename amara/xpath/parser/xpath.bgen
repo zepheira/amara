@@ -1,0 +1,29 @@
+<?xml version='1.0'?>
+<bisongen version='1.0' name='xpathparser' project='amara.xpath.parser'>
+
+  <options mode='c'/>
+
+  <!-- Python modules to import -->
+  <modules>
+    <?include xpath_modules.bgen.frag?>
+  </modules>
+
+  <!-- Token declarations -->
+  <tokens>
+    <?include xpath_tokens.bgen.frag?>
+  </tokens>
+
+  <!-- Parser grammer definition -->
+  <grammar start="Expr">
+    <?include xpath_grammar.bgen.frag?>
+  </grammar>
+
+  <!-- Lexical scanner definition -->
+  <lexer>
+    <defines>
+      <?include xpath_lexer_defines.bgen.frag?>
+    </defines>
+    <?include xpath_lexer_patterns.bgen.frag?>
+  </lexer>
+
+</bisongen>

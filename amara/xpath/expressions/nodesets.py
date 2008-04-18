@@ -221,15 +221,16 @@ class filter_expr(nodeset_expression):
         # discard context node from the stack
         compiler.emit('POP_TOP')
         self._expression.compile_as_nodeset(compiler)
-        compiler.emit('LOAD_CONST', self._predicates.select,
-                      'LOAD_FAST', 'context',
-                      # stack is now [context, select, nodes]
-                      'ROT_THREE',
-                      # stack is now [select, nodes, context]
-                      'ROT_THREE',
-                      # stack is now [nodes, context, select]
-                      'CALL_FUNCTION', 2,
-                      )
+        if self._predicates:
+            compiler.emit('LOAD_CONST', self._predicates.select,
+                          'LOAD_FAST', 'context',
+                          # stack is now [context, select, nodes]
+                          'ROT_THREE',
+                          # stack is now [select, nodes, context]
+                          'ROT_THREE',
+                          # stack is now [nodes, context, select]
+                          'CALL_FUNCTION', 2,
+                          )
         return
 
     def pprint(self, indent='', stream=None):

@@ -26,9 +26,9 @@ class _binary_expr(number_expression):
         'mod' : 'BINARY_MODULO',
         }
 
-    def __init__(self, op, left, right):
-        self._op = op
+    def __init__(self, left, op, right):
         self._left = left
+        self._op = op
         self._right = right
 
     def compile_as_number(self, compiler):

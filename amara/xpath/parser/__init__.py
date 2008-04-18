@@ -5,7 +5,7 @@ __all__ = ['xpathparser', 'parse']
 
 class xpathparser(_xpathparser.parser):
 
-    _parse = _xpathparser.parser
+    _parse = _xpathparser.parser.parse
 
     def parse(self, expr):
         """Parses the string `expr` into an AST"""
@@ -15,8 +15,8 @@ class xpathparser(_xpathparser.parser):
             raise XPathError(XPathError.SYNTAX, line=error.lineno, 
                              column=error.offset, message=error.msg)
 
-
 parse = xpathparser().parse
 
 if __name__ == '__main__':
-    _xpathparser.console()
+    import sys
+    sys.exit(_xpathparser.console().cmdloop())
