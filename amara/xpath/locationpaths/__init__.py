@@ -106,10 +106,14 @@ class abbreviated_absolute_location_path(absolute_location_path):
         # `a//b` is the same as `a/descendant::b` if `b` uses the `child`
         # axis and has no (positional) predicates
         step = path._steps[0]
-        if isinstance(step.axis, child_axis) and not step.predicates:
-            path._steps[0] = Step(AxisSpecifier('descendant'), step.nodeTest)
+        if not step.predicates and isinstance(step.axis, 
+                                              axisspecifiers.child_axis):
+            axis = axisspecifiers.axis_specifier('descendant')
+            path._steps[0] = location_step(axis, step.node_test)
         else:
-            abbrev = Step(AxisSpecifier('descendant-or-self'), NodeType('node'))
+            axis = axisspecifiers.axis_specifier('descendant-or-self')
+            node_test = nodetests.node_type('node')
+            abbrev = location_step(axis, node_test)
             self._steps.insert(0, abbrev)
 
 
@@ -124,11 +128,14 @@ class abbreviated_relative_location_path(relative_location_path):
         self._steps = path._steps
         # `a//b` is the same as `a/descendant::b` if `b` uses the `child`
         # axis and has no (positional) predicates
-        if isinstance(step.axis, child_axis) and not step.predicates:
-            step = location_step(axis_specifier('descendant'), step.node_test)
+        if not step.predicates and isinstance(step.axis, 
+                                              axisspecifiers.child_axis):
+            axis = axisspecifiers.axis_specifier('descendant')
+            step = location_step(axis, step.node_test)
         else:
-            abbrev = location_step(axis_specifier('descendant-or-self'), 
-                                   node_type('node'))
+            axis = axisspecifiers.axis_specifier('descendant-or-self')
+            node_test = nodetests.node_type('node')
+            abbrev = location_step(axis, node_test)
             self._steps.append(abbrev)
         self._steps.append(step)
 
