@@ -69,7 +69,7 @@ class comment_test(node_type):
     node_type = Node.COMMENT_NODE
 
     def get_filter(self, compiler, principal_type):
-        return _nodetests.type_filter(Node.COMMENT_NODE)
+        return _nodetests.typefilter(Node.COMMENT_NODE)
 
 
 class text_test(node_type):
@@ -77,7 +77,7 @@ class text_test(node_type):
     node_type = Node.TEXT_NODE
 
     def get_filter(self, compiler, principal_type):
-        return _nodetests.type_filter(Node.TEXT_NODE)
+        return _nodetests.typefilter(Node.TEXT_NODE)
 
 
 class processing_instruction_test(node_type):
@@ -96,9 +96,9 @@ class processing_instruction_test(node_type):
 
     def get_filter(self, compiler, principal_type):
         if self._target:
-            return _nodetests.name_filter(Node.PROCESSING_INSTRUCTION_NODE,
-                                          None, self._target)
-        return _nodetests.type_filter(Node.PROCESSING_INSTRUCTION_NODE)
+            return _nodetests.namefilter(Node.PROCESSING_INSTRUCTION_NODE,
+                                         None, self._target)
+        return _nodetests.typefilter(Node.PROCESSING_INSTRUCTION_NODE)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         if node.nodeType != self.node_type:
@@ -135,7 +135,7 @@ class principal_type_test(name_test):
         return (Node.ELEMENT_NODE, None)
 
     def get_filter(self, compiler, principal_type):
-        return _nodetests.type_filter(principal_type)
+        return _nodetests.typefilter(principal_type)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         return node.nodeType == principalType
@@ -155,7 +155,7 @@ class local_name_test(name_test):
         return (Node.ELEMENT_NODE, (None, self._name))
 
     def get_filter(self, compiler, principal_type):
-        return _nodetests.name_filter(principal_type, None, self._name)
+        return _nodetests.namefilter(principal_type, None, self._name)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         # NameTests do not use the default namespace, just as attributes
@@ -184,7 +184,7 @@ class namespace_test(name_test):
             namespace = compiler.namespaces[self._prefix]
         except KeyError:
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
-        return _nodetests.name_filter(principal_type, namespace, None)
+        return _nodetests.namefilter(principal_type, namespace, None)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         if node.nodeType != principalType:
@@ -218,7 +218,7 @@ class qualified_name_test(name_test):
             namespace = compiler.namespaces[self._prefix]
         except KeyError:
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
-        return _nodetests.name_filter(principal_type, namespace, self._local_name)
+        return _nodetests.namefilter(principal_type, namespace, self._local_name)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         if node.nodeType == principalType:
