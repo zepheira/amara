@@ -1,5 +1,7 @@
 #amara.lib
 
+__all__ = ['IriError', 'inputsource']
+
 from amara import Error
 from gettext import gettext as _
 
@@ -72,4 +74,5 @@ def load_messages():
             _("The URI ref %(uri)r cannot be made urllib-safe on this version of Python (IDNA encoding unsupported)."),
         }
 
+from amara.lib._inputsource import _inputsource as inputsource
 
