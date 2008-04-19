@@ -7,17 +7,17 @@
     <scope state='OPERATOR'>
       <pattern expression='or'>
         <begin>INITIAL</begin>
-        <token>OR</token>
+        <token>OR_OP</token>
       </pattern>
 
       <pattern expression='and'>
         <begin>INITIAL</begin>
-        <token>AND</token>
+        <token>AND_OP</token>
       </pattern>
 
       <pattern expression='\*|mod|div'>
         <begin>INITIAL</begin>
-        <token>MULTIPLY_OPERATOR</token>
+        <token>MULTIPLICATIVE_OP</token>
       </pattern>
 
       <!-- ignore whitespace, defined here for speed -->
@@ -51,37 +51,37 @@
 
     <!-- node types -->
     <pattern expression='{NodeType}/{S}*\('>
-      <token>NODE_TYPE</token>
+      <token>NodeType</token>
     </pattern>
 
     <!-- axis specifiers -->
     <pattern expression='{NCName}/{S}*::'>
-      <token>AXIS_NAME</token>
+      <token>AxisName</token>
     </pattern>
 
     <!-- primary expressions -->
     <pattern expression='{Literal}'>
       <begin>OPERATOR</begin>
-      <token>LITERAL</token>
+      <token>Literal</token>
     </pattern>
 
     <pattern expression='({Digits}(\.({Digits})?)?)|(\.{Digits})'>
       <begin>OPERATOR</begin>
-      <token>NLITERAL</token>
+      <token>Number</token>
     </pattern>
 
     <pattern expression='\${QName}'>
       <begin>OPERATOR</begin>
-      <token>VARIABLE_REFERENCE</token>
+      <token>VariableReference</token>
     </pattern>
 
     <pattern expression='{QName}/{S}*\('>
-      <token>FUNCTION_NAME</token>
+      <token>FunctionName</token>
     </pattern>
 
     <pattern expression='({NCName}:\*)|({QName})|\*'>
       <begin>OPERATOR</begin>
-      <token>WILDCARD_NAME</token>
+      <token>NameTest</token>
     </pattern>
 
     <pattern expression='".."'>

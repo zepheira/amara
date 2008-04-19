@@ -130,7 +130,7 @@
 <production name="5">
   <non-terminal>AxisSpecifier</non-terminal>
   <rule>
-    <symbol>AXIS_NAME</symbol>
+    <symbol>AxisName</symbol>
     <symbol>DOUBLE_COLON</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(axis_specifier, "O", $1);
@@ -148,7 +148,7 @@
 <production name="6">
   <non-terminal>AxisName</non-terminal>
   <rule>
-    <symbol>AXIS_NAME</symbol>
+    <symbol>AxisName</symbol>
   </rule>
   <code language="python">
   </code>
@@ -158,7 +158,7 @@
 <production name="7">
   <non-terminal>NodeTest</non-terminal>
   <rule>
-    <symbol>WILDCARD_NAME</symbol>
+    <symbol>NameTest</symbol>
     <code language="C">
       $$ = PyObject_CallFunction(name_test, "O", $1);
     </code>
@@ -167,7 +167,7 @@
     </code>
   </rule>
   <rule>
-    <symbol>NODE_TYPE</symbol>
+    <symbol>NodeType</symbol>
     <symbol>'('</symbol>
     <symbol>')'</symbol>
     <code language="c">
@@ -178,9 +178,9 @@
     </code>
   </rule>
   <rule>
-    <symbol>NODE_TYPE</symbol>
+    <symbol>NodeType</symbol>
     <symbol>'('</symbol>
-    <symbol>LITERAL</symbol>
+    <symbol>Literal</symbol>
     <symbol>')'</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(node_type, "OO", $1, $3);
@@ -284,7 +284,7 @@
 <production name="15">
   <non-terminal>PrimaryExpr</non-terminal>
   <rule>
-    <symbol>VARIABLE_REFERENCE</symbol>
+    <symbol>VariableReference</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(variable_reference, "O", $1);
     </code>
@@ -305,7 +305,7 @@
     </code>
   </rule>
   <rule>
-    <symbol>LITERAL</symbol>
+    <symbol>Literal</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(string_literal, "O", $1);
     </code>
@@ -314,7 +314,7 @@
     </code>
   </rule>
   <rule>
-    <symbol>NLITERAL</symbol>
+    <symbol>Number</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(number_literal, "O", $1);
     </code>
@@ -331,7 +331,7 @@
 <production name="16">
   <non-terminal>FunctionCall</non-terminal>
   <rule>
-    <symbol>FUNCTION_NAME</symbol>
+    <symbol>FunctionName</symbol>
     <symbol>'('</symbol>
     <symbol>')'</symbol>
     <code language="c">
@@ -342,7 +342,7 @@
     </code>
   </rule>
   <rule>
-    <symbol>FUNCTION_NAME</symbol>
+    <symbol>FunctionName</symbol>
     <symbol>'('</symbol>
     <symbol>Argument.list</symbol>
     <symbol>')'</symbol>
@@ -468,7 +468,7 @@
   </rule>
   <rule>
     <symbol>OrExpr</symbol>
-    <symbol>OR</symbol>
+    <symbol>OR_OP</symbol>
     <symbol>AndExpr</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(or_expr, "OOO", $1, $2, $3);
@@ -486,7 +486,7 @@
   </rule>
   <rule>
     <symbol>AndExpr</symbol>
-    <symbol>AND</symbol>
+    <symbol>AND_OP</symbol>
     <symbol>EqualityExpr</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(and_expr, "OOO", $1, $2, $3);
@@ -569,7 +569,7 @@
   </rule>
   <rule>
     <symbol>MultiplicativeExpr</symbol>
-    <symbol>MULTIPLY_OPERATOR</symbol>
+    <symbol>MULTIPLICATIVE_OP</symbol>
     <symbol>UnaryExpr</symbol>
     <code language="c">
       $$ = PyObject_CallFunction(multiplicative_expr, "OOO", $1, $2, $3);
