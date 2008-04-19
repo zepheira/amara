@@ -199,6 +199,7 @@ int _Expat_InputSource_Init(PyObject *module)
 {
   PyObject *import;
 
+  if (PyModule_AddType(module, &InputSource_Type) < 0) return -1;
   import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
   uri_resolver = PyObject_GetAttrString(import, "DEFAULT_RESOLVER");
@@ -208,7 +209,7 @@ int _Expat_InputSource_Init(PyObject *module)
   }
   Py_DECREF(import);
 
-  return PyModule_AddType(module, &InputSource_Type);
+  return 0;
 }
 
 void _Expat_InputSource_Fini(void)
