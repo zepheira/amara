@@ -513,7 +513,7 @@ PyTypeObject PathIter_Type = {
   /* tp_free           */ 0,
 };
 
-/** UnionIter ********************************************************/
+/** unioniter ********************************************************/
 
 static PyObject *UnionIter(PyObject *module, PyObject *args)
 {
@@ -563,7 +563,7 @@ static PyObject *UnionIter(PyObject *module, PyObject *args)
 /** Module Initialization ********************************************/
 
 static PyMethodDef module_methods[] = {
-  { "UnionIter", UnionIter, METH_VARARGS },
+  { "unioniter", UnionIter, METH_VARARGS },
   { NULL }
 };
 

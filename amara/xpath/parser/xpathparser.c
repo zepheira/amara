@@ -4512,12 +4512,12 @@ static PyObject *YY_Error_str(PyObject *yyerror)
   if (yyresult == NULL || !PyString_Check(yyresult))
     return yyresult;
 
-  if ((yylineno = PyObject_GetAttrString(yyerror, "lineno")) == NULL)
+  if ((yylineno = PyObject_GetAttrString(yyerror, "lineno")) != NULL)
     yy_have_lineno = PyInt_Check(yylineno);
   else
     PyErr_Clear();
 
-  if ((yyoffset = PyObject_GetAttrString(yyerror, "offset")) == NULL)
+  if ((yyoffset = PyObject_GetAttrString(yyerror, "offset")) != NULL)
     yy_have_offset = PyInt_Check(yyoffset);
   else
     PyErr_Clear();

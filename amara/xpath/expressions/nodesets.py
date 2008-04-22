@@ -130,13 +130,13 @@ class union_expr(nodeset_expression):
         return
 
     def compile_iterable(self, compiler):
+        from amara.xpath.locationpaths import _paths
         emit = compiler.emit
-        from Ft.Xml.XPath.cPaths import UnionIter
         tmpname = compiler.tmpname()
         emit(# store the current context node
              'STORE_FAST', tmpname,
              # begin the UnionIter function call construction
-             'LOAD_CONST', UnionIter,
+             'LOAD_CONST', _paths.unioniter,
              )
         # build the arguments for the function call
         for path in self._paths:

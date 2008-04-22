@@ -53,7 +53,7 @@ class xpathcompiler(object):
             return new.function(code, {'__lltrace__': 1})
         return new.function(code, {})
 
-    def create_name(self):
+    def tmpname(self):
         self._nlocals += 1
         return '$%d' % self._nlocals
 
