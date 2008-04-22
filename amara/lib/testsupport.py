@@ -586,12 +586,42 @@ class test_runner(object):
         return
 
 
-class test_main(unittest.TestProgram):
-    """
-    """
-    def __init__(self):
-        unittest.TestProgram.__init__(self, testLoader=test_loader())
+def test_main(*modules):
+    if not modules:
+        modules = ('__main__',)
 
-    def parseArgs(self, argv):
-        unittest.TestProgram.parseArgs(self, argv)
-        self.testRunner = test_runner(verbosity=self.verbosity)
+    def usage_exit(msg=None):
+        progName = os.path.basename(sys.argv[0] or __file__)
+        if msg: print msg
+        print unittest.TestProgram.USAGE % locals()
+        raise SystemExit(2)
+
+    # parse args
+    import getopt
+    verbosity = 1
+    try:
+        options, args = getopt.getopt(sys.argv[1:], 'hvq', 
+                                      ['help', 'verbose', 'quiet'])
+        for option, value in options:
+            if option in ('-h', '--help'):
+                usage_exit()
+            if option in ('-q', '--quiet'):
+                verbosity -= 1
+            if option in ('-v', '--verbose'):
+                verbosity += 1
+    except getopt.error, msg:
+        usage_exit(msg)
+    
+    # create the tests
+    loader = test_loader()
+    suites = []
+    if args:
+        test = loader.suiteClass(loader.loadTestsFromNames(args, module)
+                                 for module in modules)
+    else:
+        test = loader.loadTestsFromNames(modules)
+
+    # run the tests
+    runner = test_runner(sys.stderr, verbosity)
+    result = runner.run(test)
+    raise SystemExit(0 if result.wasSuccessful() else 1)
