@@ -28,7 +28,7 @@ extern "C" {
 /*#define DEBUG_MEMORY */
 
 /* Enable all debugging flags */
-#define DEBUG_ALL */
+/*#define DEBUG_ALL */
 
 #ifdef DEBUG_ALL
 #define DEBUG_READER
@@ -118,9 +118,10 @@ Py_LOCAL_INLINE(void) Debug_Print(const char *format, ...) { }
 #define Debug_PrintVoidPtr(ptr)
 #define Debug_PrintArray(ptr, printfunc)
 #define Debug_PrintXMLChar(str)
+#define Debug_PrintXMLCharN(str, len)
 #define Debug_PrintObject(obj)
 #define Debug_FunctionCall(name, ptr)
-#define Debug_Return(name, fmt, arg)
+#define Debug_Return(name, arg)
 #define Debug_ParserFunctionCall(name, parser)
 #define Debug_ReturnStatus(name, status)
 #endif

@@ -529,20 +529,36 @@ static Domlette_APIObject Domlette_API = {
   ProcessingInstruction_New,
 };
 
+struct submodule_t {
+  int (*init)(PyObject *);
+  void (*fini)(void);
+};
+
+#define SUBMODULE(name) { Domlette##name##_Init, Domlette##name##_Fini }
+struct submodule_t submodules[] = {
+  SUBMODULE(Exceptions),
+  SUBMODULE(Builder),
+  SUBMODULE(DOMImplementation),
+  SUBMODULE(Node),
+  SUBMODULE(NamedNodeMap),
+  SUBMODULE(Element),
+  SUBMODULE(Attr),
+  SUBMODULE(CharacterData),
+  SUBMODULE(Text),
+  SUBMODULE(ProcessingInstruction),
+  SUBMODULE(Comment),
+  SUBMODULE(Document),
+  SUBMODULE(XPathNamespace),
+  { NULL, NULL }
+};
+
+
 static void fini_domlette(void *capi)
 {
-  DomletteExceptions_Fini();
-  DomletteBuilder_Fini();
-  DomletteDOMImplementation_Fini();
-  DomletteNode_Fini();
-  DomletteElement_Fini();
-  DomletteAttr_Fini();
-  DomletteCharacterData_Fini();
-  DomletteText_Fini();
-  DomletteProcessingInstruction_Fini();
-  DomletteComment_Fini();
-  DomletteDocument_Fini();
-  DomletteXPathNamespace_Fini();
+  struct submodule_t *submodule;
+  for (submodule = submodules; submodule->fini; submodule++) {
+    submodule->fini();
+  }
 
   Py_DECREF(g_xmlNamespace);
   Py_DECREF(g_xmlnsNamespace);
@@ -551,6 +567,7 @@ static void fini_domlette(void *capi)
 DL_EXPORT(void) init_domlette(void)
 {
   PyObject *module, *import;
+  struct submodule_t *submodule;
   PyObject *cobj;
 
   module = Py_InitModule3(Domlette_MODULE_NAME, module_methods, module_doc);
@@ -570,21 +587,9 @@ DL_EXPORT(void) init_domlette(void)
   Py_DECREF(import);
 
   /* initialize the sub-components */
-  if (DomletteExceptions_Init(module) == -1) return;
-  if (DomletteBuilder_Init(module) == -1) return;
-  if (DomletteDOMImplementation_Init(module) == -1) return;
-  /* MUST be before subclasses (all node types) */
-  if (DomletteNode_Init(module) == -1) return;
-  if (DomletteNamedNodeMap_Init(module) == -1) return;
-  if (DomletteElement_Init(module) == -1) return;
-  if (DomletteAttr_Init(module) == -1) return;
-  /* MUST be before subclasses (Text and Comment) */
-  if (DomletteCharacterData_Init(module) == -1) return;
-  if (DomletteText_Init(module) == -1) return;
-  if (DomletteProcessingInstruction_Init(module) == -1) return;
-  if (DomletteComment_Init(module) == -1) return;
-  if (DomletteDocument_Init(module) == -1) return;
-  if (DomletteXPathNamespace_Init(module) == -1) return;
+  for (submodule = submodules; submodule->init; submodule++) {
+    if (submodule->init(module) < 0) return;
+  }
 
   /* Export C API - done last to serve as a cleanup function as well */
   cobj = PyCObject_FromVoidPtr((void *)&Domlette_API, fini_domlette);

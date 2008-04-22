@@ -276,7 +276,7 @@ int DomletteExceptions_Init(PyObject *module)
   Py_DECREF(import);
 
   /* Load the DOMExceptions */
-  import  = PyImport_ImportModule("xml.dom");
+  import = PyImport_ImportModule("xml.dom");
   if (import == NULL) return -1;
 
 #define GET_DOM_EXC(NAME) \
