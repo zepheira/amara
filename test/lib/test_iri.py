@@ -779,7 +779,7 @@ class Test_percent_encode_decode(unittest.TestCase):
         '''Percent encode'''
         for count, (unencoded, encoded) in enumerate(percent_encode_tests):
             #print "Creating test", "test_percent_encode_%i"%count
-            def test_percent_encode_template(self):
+            def test_percent_encode_template(self, count=count, unencoded=unencoded, encoded=encoded):
                 if len(unencoded) > 10:
                     test_title = unencoded[:11] + '...'
                 else:

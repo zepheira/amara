@@ -34,7 +34,7 @@ __all__ = [
 
   # Miscellaneous
   'is_absolute', 'get_scheme', 'strip_fragment',
-  'os_path_to_uri', 'uri_to_os_path', 'basejoin',
+  'os_path_to_uri', 'uri_to_os_path', 'basejoin', 'join',
   'make_urllib_safe',
   'WINDOWS_SLASH_COMPAT',
 
@@ -1029,6 +1029,7 @@ class default_resolver:
     def __init__(self, lenient=True):
         self.lenient = lenient
         self.supportedSchemes = list(DEFAULT_URI_SCHEMES)
+        self.sep = '/' #Bad value for data URIs
 
     def normalize(self, uriRef, baseUri):
         """
@@ -1050,7 +1051,7 @@ class default_resolver:
         # its return value and verify that it's supported first
         if self.lenient:
             # assume file: if leading "/"
-            if baseUri[:1] == '/':
+            if baseUri.startswith('/'):
                 baseUri = 'file://' + baseUri
         scheme = get_scheme(uriRef) or get_scheme(baseUri)
         if scheme in self.supportedSchemes:
@@ -1124,6 +1125,24 @@ class default_resolver:
         The default action is to generate a random UUID URN.
         """
         return uuid4().urn
+
+    def join(self, *uriparts):
+        """
+        Merges a series of URI reference parts, returning a new URI reference.
+    
+        Much like iri.basejoin, but takes multiple arguments
+    
+        self.sep is a separator to place between path segments
+        """
+        if len(uriparts) == 0:
+            raise TypeError("FIXME...")
+        elif len(uriparts) == 1:
+            return uriparts[0]
+        else:
+            base = uriparts[0]
+            for part in uriparts[1:]:
+                base = basejoin(base.rstrip(self.sep)+self.sep, part)
+            return base
 
 
 #Reusable resolver instance
