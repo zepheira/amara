@@ -172,7 +172,7 @@ class string_length_function(builtin_function):
         if arg0 is None:
             string = datatypes.string(context.node)
         else:
-            string = arg.evaluate_as_string(context)
+            string = arg0.evaluate_as_string(context)
         return datatypes.number(len(string))
     evaluate = evaluate_as_number
 
@@ -189,7 +189,7 @@ class normalize_space_function(builtin_function):
         if arg0 is None:
             string = datatypes.string(context.node)
         else:
-            string = arg.evaluate_as_string(context)
+            string = arg0.evaluate_as_string(context)
         return datatypes.string(u' '.join(string.split()))
     evaluate = evaluate_as_string
 
@@ -205,14 +205,15 @@ class translate_function(builtin_function):
         source = arg0.evaluate_as_string(context)
         fromchars = arg1.evaluate_as_string(context)
         tochars = arg2.evaluate_as_string(context)
-
+        tochars = itertools.chain(tochars, itertools.repeat(u''))
+ 
         transmap = {}
         for src, dst in itertools.izip(fromchars, tochars):
             if src not in transmap:
-                transmap[src] = dst or u''
+                transmap[src] = dst
         chars = list(source)
         for idx, ch in enumerate(chars):
-            if ch in translate:
-                chars[idx] = translate[ch]
+            if ch in transmap:
+                chars[idx] = transmap[ch]
         return datatypes.string(u''.join(chars))
     evaluate = evaluate_as_string

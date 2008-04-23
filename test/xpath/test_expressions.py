@@ -83,7 +83,7 @@ class nodeset_literal(test_literal):
             if isinstance(node, domlette.Attr):
                 return '@%s' % node.name
         nodes = ', '.join(map(nodestr, self._literal))
-        return '<node-set: {%s}>' % (nodes,)
+        return '{%s}' % (nodes,)
 EMPTY_NODESET = nodeset_literal([])
 
 
@@ -193,7 +193,7 @@ class test_expr(unittest.TestCase, object):
                     msg = "expected '%s', not '%s'" % (type(expected),
                                                        type(result))
                     self.assertTrue(isinstance(result, type(expected)), msg)
-                    msg = '%s == %s' % (expected, result)
+                    msg = '%r == %r' % (expected, result)
                     self.assertEquals(expected, result, msg)
 
             argstr = ', '.join(arg.encode('unicode_escape') 

@@ -118,7 +118,7 @@ class test_string_function(test_function_call):
     return_type = datatypes.string
     test_cases = [
         (['string', [nodeset_literal([CHILD1])]],
-         datatypes.string('\n    \n    \n    Text1\n  '), 
+         datatypes.string('\n    Text1\n  '), 
          CONTEXT1),
         ]
 
@@ -128,12 +128,12 @@ class test_concat_function(test_function_call):
     return_type = datatypes.string
     test_cases = [
         (['concat', [nodeset_literal([CHILD1]), string_literal('"3.14"'), string_literal('"Hi"')]],
-         datatypes.string('\n    \n    \n    Text1\n  3.14Hi'), 
+         datatypes.string('\n    Text1\n  3.14Hi'), 
          CONTEXT1),
         ]
 
 
-class test_startswith_function(test_function_call):
+class test_starts_with_function(test_function_call):
     evaluate_method = 'evaluate_as_boolean'
     return_type = datatypes.boolean
     test_cases = [
@@ -151,7 +151,7 @@ class test_contains_function(test_function_call):
     return_type = datatypes.boolean
     test_cases = [
         (['contains', [nodeset_literal([CHILD1]), string_literal('"3.14"')]], 
-         datatypes.TRUE, CONTEXT1),
+         datatypes.FALSE, CONTEXT1),
         (['contains', [nodeset_literal([CHILD1]), nodeset_literal([CHILD1])]], 
          datatypes.TRUE, CONTEXT1),
         (['contains', [nodeset_literal([CHILD1]), string_literal('""')]], 
