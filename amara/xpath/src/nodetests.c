@@ -354,7 +354,6 @@ static PyObject *typefilter_new(PyTypeObject *type, PyObject *args,
     PyErr_Format(PyExc_ValueError, "invalid node type: %d", typeCode);
     return NULL;
   }
-
   filter = (TypeFilterObject *)type->tp_alloc(type, 0);
   if (filter == NULL) {
     return NULL;
@@ -391,7 +390,7 @@ static PyObject *typefilter_next(TypeFilterObject *self)
   assert(PyIter_Check(nodes));
   iternext = *nodes->ob_type->tp_iternext;
   while ((node = iternext(nodes))) {
-    if (PyObject_TypeCheck(node, nodeType)) {
+    if (PyObject_IsInstance(node, nodeType)) {
       return node;
     }
     Py_DECREF(node);

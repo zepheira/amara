@@ -726,7 +726,7 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
   }
 
   /* get the namespace constants */
-  module = PyImport_ImportModule("Ft.Xml");
+  module = PyImport_ImportModule("amara");
   if (module == NULL) return;
   xmlns_namespace = PyObject_GetAttrString(module, "XMLNS_NAMESPACE");
   if (xmlns_namespace == NULL) return;

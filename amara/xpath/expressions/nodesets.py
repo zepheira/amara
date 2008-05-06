@@ -219,10 +219,12 @@ class filter_expr(nodeset_expression):
 
     def compile_iterable(self, compiler):
         # discard context node from the stack
+        from amara.xpath.locationpaths import _paths
         compiler.emit('POP_TOP')
         self._expression.compile_as_nodeset(compiler)
         if self._predicates:
-            compiler.emit('LOAD_CONST', self._predicates.select,
+            predicates = _paths.pathiter(p.select for p in self._predicates)
+            compiler.emit('LOAD_CONST', predicates.select,
                           'LOAD_FAST', 'context',
                           # stack is now [context, select, nodes]
                           'ROT_THREE',

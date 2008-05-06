@@ -1,11 +1,12 @@
+#!/usr/bin/env python
 from amara.lib import testsupport
 from amara.xpath import datatypes
 
-from test_expressions import test_expr
+from test_expressions import test_expression
 
-class test_basic_expr(test_expr):
+class test_basic_expr(test_expression):
     module_name = 'amara.xpath.expressions.basics'
-    
+
 
 class test_string_literal(test_basic_expr):
     class_name = 'string_literal'

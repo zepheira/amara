@@ -59,7 +59,7 @@ class node_type(node_test):
 
 class any_node_test(node_type):
     name = 'node'
-    
+
     def get_filter(self, compiler, principal_type):
         return None
 

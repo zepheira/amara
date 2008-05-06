@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 from amara import domlette
 from amara.lib import testsupport
 from amara.xpath import datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
 
 from test_expressions import (
-    test_expr,
+    test_expression,
     # boolean literals
     TRUE, FALSE,
     # number literals (for special values)
@@ -25,7 +26,7 @@ NUM4 = NUM.setAttributeNS(None, 'num4', '4')
 NUM31 = NUM.setAttributeNS(None, 'num31', '31')
 
 
-class test_boolean_expr(test_expr):
+class test_boolean_expr(test_expression):
     module_name = 'amara.xpath.expressions.booleans'
     evaluate_method = 'evaluate_as_boolean'
     return_type = datatypes.boolean
@@ -205,3 +206,4 @@ class test_relational_expr(test_boolean_expr):
 
 if __name__ == '__main__':
     testsupport.test_main()
+

@@ -1,11 +1,7 @@
 ########################################################################
-# $Header: /var/local/cvsroot/4Suite/Ft/Xml/XPath/Predicates.py,v 1.5.2.5 2007-11-17 00:13:35 jkloth Exp $
+# amara/xpath/locationpaths/predicates.py
 """
 A parsed token that represents a predicate list.
-
-Copyright 2005 Fourthought, Inc. (USA).
-Detailed license and copyright information: http://4suite.org/COPYRIGHT
-Project home, documentation, distributions: http://4suite.org/
 """
 from __future__ import absolute_import
 from itertools import count, izip
@@ -112,9 +108,9 @@ class predicate:
                 self.select = self._slice
                 return
 
-        if issubclass(expression.return_value, datatypes.number):
+        if issubclass(expression.return_type, datatypes.number):
             self.select = self._number
-        elif not issubclass(expression.return_value, datatypes.xpathobject):
+        elif not issubclass(expression.return_type, datatypes.xpathobject):
             self.select = self._boolean
         return
 

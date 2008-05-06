@@ -4,7 +4,7 @@ from amara.xpath import context, datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
 
 from test_expressions import (
-    test_expr,
+    test_expression,
     # boolean literals
     TRUE, FALSE,
     # number literals (for special values)
@@ -33,7 +33,7 @@ EGG5 = DOC.appendChild(domlette.Element(None, 'egg0'))
 EGG5.appendChild(domlette.Text('0'))
 
 
-class test_function_call(test_expr):
+class test_function_call(test_expression):
     module_name = 'amara.xpath.expressions.functioncalls'
     class_name = 'function_call'
 
@@ -374,3 +374,4 @@ class test_round_function(test_function_call):
     
 if __name__ == '__main__':
     testsupport.test_main()
+

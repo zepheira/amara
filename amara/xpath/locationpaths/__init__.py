@@ -58,7 +58,7 @@ class location_path(nodesets.nodeset_expression):
             step.pprint(indent + '  ', stream)
 
     def __str__(self):
-        path = '/'.join(map(str, self._steps))
+        path = '/'.join(map(unicode, self._steps))
         if self.absolute:
             path = '/' + path
         return path
@@ -139,7 +139,7 @@ class abbreviated_relative_location_path(relative_location_path):
             self._steps.append(abbrev)
         self._steps.append(step)
 
-        
+
 class location_step(object):
     """
     An object representing a location step
@@ -190,4 +190,4 @@ class abbreviated_step(location_step):
         else:
             assert abbrev == '..'
             axis = 'parent'
-        self.axis = axis_specifier(axis)
+        self.axis = axisspecifiers.axis_specifier(axis)

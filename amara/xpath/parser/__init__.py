@@ -13,7 +13,7 @@ class xpathparser(_xpathparser.parser):
             return self._parse(expr)
         except _xpathparser.error, error:
             raise XPathError(XPathError.SYNTAX, line=error.lineno, 
-                             column=error.offset, message=error.msg)
+                             column=error.offset, text=error.msg)
 
 parse = xpathparser().parse
 

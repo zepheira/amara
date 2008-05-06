@@ -453,6 +453,7 @@
     <symbol>PrimaryExpr</symbol>
     <symbol>Predicate.list</symbol>
     <code language="c">
+      $2 = PyObject_CallFunction(predicates, "N", $2);
       $$ = PyObject_CallFunction(filter_expr, "OO", $1, $2);
     </code>
     <code language="python">

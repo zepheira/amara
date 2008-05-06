@@ -63,8 +63,7 @@ class string_literal(literal):
     compile = literal.compile_as_string
 
     def __str__(self):
-        literal = self._literal.encode('unicode_escape')
-        return '"%s"' % literal.replace('"', '\\"')
+        return '"%s"' % self._literal.replace('"', '\\"')
 
 
 class number_literal(literal):
@@ -96,7 +95,7 @@ class variable_reference(expressions.expression):
         """
         Generates opcodes for the expression:
 
-            context.varBindings[namespaceUri, localName]
+            context.variables[namespaceUri, localName]
 
         where `namespaceUri` is the URI bound to the prefix of the
         qualified name for the variable reference.
@@ -115,7 +114,7 @@ class variable_reference(expressions.expression):
                              variable=self._name, key=(namespace, local))
         # Add the actual opcodes
         compiler.emit('LOAD_FAST', 'context')
-        compiler.emit('LOAD_ATTR', 'varBindings')
+        compiler.emit('LOAD_ATTR', 'variables')
         compiler.emit('LOAD_CONST', namespace)
         compiler.emit('LOAD_CONST', local)
         compiler.emit('BUILD_TUPLE', 2)
@@ -124,7 +123,7 @@ class variable_reference(expressions.expression):
 
     def compile_as_nodeset(self, compiler):
         # Load the callable object
-        compiler.emit('LOAD_CONST', nodeset)
+        compiler.emit('LOAD_CONST', datatypes.nodeset)
         # Build the argument(s)
         self.compile(compiler)
         compiler.emit('CALL_FUNCTION', 1)
@@ -139,4 +138,4 @@ class variable_reference(expressions.expression):
         print >> stream, indent + repr(self)
 
     def __str__(self):
-        return '$' + self._name.encode('unicode_escape')
+        return '$' + self._name

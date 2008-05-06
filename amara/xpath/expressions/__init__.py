@@ -12,7 +12,7 @@ __all__ = ['expression']
 class expression(object):
 
     return_type = datatypes.xpathobject
-    
+
     def compile(self, compiler):
         raise NotImplementedError(self.__class__.__name__)
 
@@ -58,7 +58,7 @@ class expression(object):
         compiler = xpathcompiler(context)
         self.compile(compiler)
         self.evaluate = compiler.compile('evaluate',
-                                         docstring=str(self))
+                                         docstring=unicode(self))
         return self.evaluate(context)
 
     def evaluate_as_boolean(self, context):
@@ -66,7 +66,7 @@ class expression(object):
         compiler = xpathcompiler(context)
         self.compile_as_boolean(compiler)
         self.evaluate_as_boolean = compiler.compile('evaluate_as_boolean',
-                                                    docstring=str(self))
+                                                    docstring=unicode(self))
         return self.evaluate_as_boolean(context)
 
     def evaluate_as_number(self, context):
@@ -74,7 +74,7 @@ class expression(object):
         compiler = xpathcompiler(context)
         self.compile_as_number(compiler)
         self.evaluate_as_number = compiler.compile('evaluate_as_number',
-                                                   docstring=str(self))
+                                                   docstring=unicode(self))
         return self.evaluate_as_number(context)
 
     def evaluate_as_string(self, context):
@@ -82,7 +82,7 @@ class expression(object):
         compiler = xpathcompiler(context)
         self.compile_as_string(compiler)
         self.evaluate_as_string = compiler.compile('evaluate_as_string',
-                                                   docstring=str(self))
+                                                   docstring=unicode(self))
         return self.evaluate_as_string(context)
 
     def evaluate_as_nodeset(self, context):
@@ -90,7 +90,7 @@ class expression(object):
         compiler = xpathcompiler(context)
         self.compile_as_nodeset(compiler)
         self.evaluate_as_nodeset = compiler.compile('evaluate_as_nodeset',
-                                                    docstring=str(self))
+                                                    docstring=unicode(self))
         return self.evaluate_as_nodeset(context)
 
     def __repr__(self):

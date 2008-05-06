@@ -1,16 +1,17 @@
+#!/usr/bin/env python
 from amara.lib import testsupport
 from amara.xpath import datatypes
 from amara.xpath.expressions.basics import number_literal, string_literal
 
 from test_expressions import (
     # expression TestCase
-    test_expr,
+    test_expression,
     # IEEE 754 "special" numbers as expressions
     NOT_A_NUMBER, POSITIVE_INFINITY, NEGATIVE_INFINITY
     )
 
 
-class test_number_expr(test_expr):
+class test_number_expr(test_expression):
     module_name = 'amara.xpath.expressions.numbers'
     evaluate_method = 'evaluate_as_number'
     return_type = datatypes.number
@@ -110,3 +111,4 @@ class test_unary_expr(test_number_expr):
 
 if __name__ == '__main__':
     testsupport.test_main()
+
