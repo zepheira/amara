@@ -30,13 +30,9 @@ class IriError(Error):
 
     UNSUPPORTED_PLATFORM = 1000
 
-    def __init__(self, code, *args, **kwargs):
+    def __init__(self, code, **kwds):
         if not error_messages: load_messages()
-        self.params = args or (kwargs,)
-        self.code = code
-        msgargs = args or kwargs
-        self.message = error_messages[code] % msgargs
-        Exception.__init__(self, self.message, args)
+        Error.__init__(self, code, error_messages % kwds, kwds)
         return
 
 error_messages = {}
@@ -54,14 +50,14 @@ def load_messages():
             _("Invalid base URI: %(base)r cannot be used to resolve reference %(ref)r;"
               " the base URI must be absolute, not relative."),
         IriError.NON_FILE_URI:
-            _("Only a 'file' URI can be converted to an OS-specific path; URI given was %r"),
+            _("Only a 'file' URI can be converted to an OS-specific path; URI given was %(uri)r"),
         IriError.UNIX_REMOTE_HOST_FILE_URI:
             _("A URI containing a remote host name cannot be converted to a path on posix;"
-              " URI given was %r"),
+              " URI given was %(uri)r"),
         IriError.RESOURCE_ERROR:
             _("Error retrieving resource %(loc)r: %(msg)s"),
         IriError.UNSUPPORTED_PLATFORM:
-            _("Platform %r not supported by URI function %s"),
+            _("Platform %(platform)r not supported by URI function %(function)s"),
         IriError.SCHEME_REQUIRED:
             _("Scheme-based resolution requires a URI with a scheme; "
               "neither the base URI %(base)r nor the reference %(ref)r have one."),

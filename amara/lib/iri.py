@@ -1657,7 +1657,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
     """
     (scheme, authority, path) = split_uri_ref(uri)[0:3]
     if scheme and scheme != 'file':
-        raise IriError(IriError.NON_FILE_URI, uri)
+        raise IriError(IriError.NON_FILE_URI, uri=uri)
     # enforce 'localhost' URI equivalence mandated by RFCs 1630, 1738, 3986
     if authority == 'localhost':
         authority = None
@@ -1731,7 +1731,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
     elif osname == 'posix':
         # a non-empty, non-'localhost' authority component is ambiguous on Unix
         if authority:
-            raise IriError(IriError.UNIX_REMOTE_HOST_FILE_URI, uri)
+            raise IriError(IriError.UNIX_REMOTE_HOST_FILE_URI, uri=uri)
         # %2F in a path segment would indicate a literal '/' in a
         # filename, which is possible on posix, but there is no
         # way to consistently represent it. We'll backslash-escape
@@ -1755,7 +1755,7 @@ def uri_to_os_path(uri, attemptAbsolute=True, encoding='utf-8', osname=None):
                 exec 'from %s import url2pathname' % module
             except ImportError:
                 raise IriError(IriError.UNSUPPORTED_PLATFORM,
-                                   osname, uri_to_os_path)
+                               platform=osname, function=uri_to_os_path)
         # drop the scheme before passing to url2pathname
         if scheme:
             uri = uri[len(scheme)+1:]
