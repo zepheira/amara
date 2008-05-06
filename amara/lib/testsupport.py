@@ -404,52 +404,81 @@ else:
     default_timer = time.time
 
 class _test_result(unittest.TestResult):
+
+    separator1 = '=' * 70
+    separator2 = '-' * 70
+
     def __init__(self, stream, verbosity, timer=default_timer):
         unittest.TestResult.__init__(self)
         self.stream = stream
-        self.show_all = verbosity > 1
         self.dots = verbosity == 1
-        self.verbose = verbosity > 0
+        self.verbose = verbosity > 1
         self.timer = timer
         self.total_time = 0
         return
 
-    def start_run(self):
+    def startSuite(self):
         self.total_time = self.timer()
         return
 
-    def stop_run(self):
+    def stopSuite(self):
         stop_time = self.timer()
         self.total_time = stop_time - self.total_time
-        if self.verbose:
+        if self.dots:
             self.stream.write('\n')
         return
 
+    def _write_errors(self, what, errors, color):
+        for test, err in errors:
+            self.stream.write(self.separator1 + '\n')
+            self.stream.setcolor(color)
+            description = test.shortDescription() or str(test)
+            self.stream.write('%s: %s\n' % (what, description))
+            self.stream.setcolor('NORMAL')
+            self.stream.write(self.separator2 + '\n')
+            self.stream.write(err + '\n')
+        return len(errors)
+
     def startTest(self, test):
         unittest.TestResult.startTest(self, test)
-        if self.show_all:
+        if self.verbose:
             self.stream.write('%s ... ' % (test.shortDescription() or test))
 
     def addSuccess(self, test):
         unittest.TestResult.addSuccess(self, test)
-        if self.verbose:
+        if self.dots:
             self.stream.setcolor('GREEN')
-            self.stream.write('.' if self.dots else 'OK\n')
+            self.stream.write('.')
             self.stream.setcolor('NORMAL')
+        elif self.verbose:
+            self.stream.setcolor('GREEN')
+            self.stream.write('OK')
+            self.stream.setcolor('NORMAL')
+            self.stream.write('\n')
 
     def addError(self, test, err):
         unittest.TestResult.addError(self, test, err)
-        if self.verbose:
-            self.stream.setcolor('RED')
-            self.stream.write('E' if self.dots else 'ERROR\n')
+        if self.dots:
+            self.stream.setcolor('WHITE')
+            self.stream.write('E')
             self.stream.setcolor('NORMAL')
+        elif self.verbose:
+            self.stream.setcolor('WHITE')
+            self.stream.write('ERROR')
+            self.stream.setcolor('NORMAL')
+            self.stream.write('\n')
 
     def addFailure(self, test, err):
         unittest.TestResult.addFailure(self, test, err)
-        if self.verbose:
-            self.stream.setcolor('WHITE')
-            self.stream.write('F' if self.dots else 'FAIL\n')
+        if self.dots:
+            self.stream.setcolor('RED')
+            self.stream.write('F')
             self.stream.setcolor('NORMAL')
+        elif self.verbose:
+            self.stream.setcolor('RED')
+            self.stream.write('FAIL')
+            self.stream.setcolor('NORMAL')
+            self.stream.write('\n')
 
 
 _ansi_terms = frozenset([
@@ -463,6 +492,7 @@ _ansi_terms = frozenset([
 class _test_stream(object):
     def __init__(self, stream):
         self._stream = stream
+        self._encoding = getattr(stream, 'encoding', None)
         if stream.isatty():
             if sys.platform == 'win32':
                 # assume Windows console (cmd.exe or the like)
@@ -524,9 +554,11 @@ class _test_stream(object):
         ctypes.windll.kernel32.SetConsoleTextAttribute(self._handle, attr)
 
     def __getattr__(self, name):
-        return getattr(self.stream, attr)
-        
+        return getattr(self._stream, attr)
+
     def write(self, data):
+        if isinstance(data, unicode) and self._encoding is not None:
+            data = data.encode(self._encoding)
         self._stream.write(data)
 
     def setcolor(self, color):
@@ -537,7 +569,7 @@ class test_runner(object):
     """
     A test runner the display results in colorized textual form.
     """
-    
+
     separator1 = '=' * 70
     separator2 = '-' * 70
 
@@ -548,42 +580,47 @@ class test_runner(object):
     def run(self, test):
         # Run the tests
         result = _test_result(self.stream, self.verbosity)
-        result.start_run()
+        result.startSuite()
         test(result)
-        result.stop_run()
-        # Display the results
-        self._write_errors('ERROR', result.errors, 'RED')
-        self._write_errors('FAIL', result.failures, 'WHITE')
-        self.stream.write('%s\n' % self.separator2)
-        self.stream.write('Ran %d tests in %0.3fs\n' % (result.testsRun,
-                                                        result.total_time))
-        self.stream.write('\n')
-        if result.wasSuccessful():
+        result.stopSuite()
+
+        # Display details for unsuccessful tests
+        for items, what, color in [(result.failures, 'FAIL', 'RED'),
+                                   (result.errors, 'ERROR', 'WHITE')]:
+            for test, traceback in items:
+                self.stream.write(self.separator1 + '\n')
+                self.stream.setcolor(color)
+                description = test.shortDescription() or str(test)
+                self.stream.write('%s: %s\n' % (what, description))
+                self.stream.setcolor('NORMAL')
+                self.stream.write(self.separator2 + '\n')
+                self.stream.write(traceback + '\n')
+
+        # Display the summary
+        failed = []
+        if result.failures:
+            failed.append('failures=%d' % len(result.failures))
+        if result.errors:
+            failed.append('errors=%d' % len(result.errors))
+        if failed:
+            status = 'FAILED (%s)' % ', '.join(failed)
+            color = 'RED'
+            self.stream.write(self.separator1 + '\n')
+        else:
             status = 'OK'
             color = 'GREEN'
-        else:
-            details = []
-            if result.failures:
-                details.append('failures=%d' % len(result.failures))
-            if result.errors:
-                details.append('errors=%d' % len(result.errors))
-            status = 'FAILED (%s)' % ', '.join(details)
-            color = 'RED'
-        self.stream.setcolor(color)
-        self.stream.write('%s\n' % status)
-        self.stream.setcolor('NORMAL')
-        return result
+            if self.verbosity > 0:
+                self.stream.write(self.separator1 + '\n')
 
-    def _write_errors(self, what, errors, color):
-        for test, err in errors:
-            self.stream.write('%s\n' % self.separator1)
-            self.stream.setcolor(color)
-            description = test.shortDescription() or str(test)
-            self.stream.write('%s: %s\n' % (what, description))
-            self.stream.setcolor('NORMAL')
-            self.stream.write('%s\n' % self.separator2)
-            self.stream.write('%s\n' % err)
-        return
+        summary = 'Ran %d tests in %0.3fs' % (result.testsRun,
+                                              result.total_time)
+
+        self.stream.write('%s ... ' % summary)
+        self.stream.setcolor(color)
+        self.stream.write(status)
+        self.stream.setcolor('NORMAL')
+        self.stream.write('\n')
+        return result
 
 
 def test_main(*modules):
@@ -611,7 +648,7 @@ def test_main(*modules):
                 verbosity += 1
     except getopt.error, msg:
         usage_exit(msg)
-    
+
     # create the tests
     loader = test_loader()
     suites = []
