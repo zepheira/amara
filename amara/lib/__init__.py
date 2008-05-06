@@ -32,7 +32,7 @@ class IriError(Error):
 
     def __init__(self, code, **kwds):
         if not error_messages: load_messages()
-        Error.__init__(self, code, error_messages % kwds, kwds)
+        Error.__init__(self, code, error_messages[code] % kwds, kwds)
         return
 
 error_messages = {}
