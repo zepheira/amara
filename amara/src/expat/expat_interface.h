@@ -24,10 +24,11 @@ extern "C" {
 #include "structmember.h"
 #include "validation.h"
 #include "input_source.h"
-#include "filter.h"
 
   struct ExpatFilterStruct;
   typedef struct ExpatFilterStruct ExpatFilter;
+
+#include "filter.h"
 
   struct ExpatReaderStruct;
   typedef struct ExpatReaderStruct ExpatReader;

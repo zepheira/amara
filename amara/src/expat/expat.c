@@ -1,14 +1,9 @@
 /***********************************************************************/
-/* $Header$ */
+/* amara/src/expat/expat.c                                             */
 /***********************************************************************/
 
 static char module_doc[] = "\
-Expat wrapper library\n\
-\n\
-Copyright 2008 Fourthought, Inc. (USA).\n\
-Detailed license and copyright information: http://4suite.org/COPYRIGHT\n\
-Project home, documentation, distributions: http://4suite.org/\n\
-";
+Expat wrapper library";
 
 #include "Python.h"
 #include "structmember.h"
@@ -388,7 +383,7 @@ ExpatFilter_##NAME PROTO \
 FUNCTION_TEMPLATE(StartDocument, start_document,
                   (PROTO0), (ARGS0), state->depth++)
 FUNCTION_TEMPLATE(EndDocument, end_document,
-                  (PROTO0), (ARGS0), state->depth++)
+                  (PROTO0), (ARGS0), state->depth--)
 FUNCTION_TEMPLATE(StartElement, start_element,
                   (PROTO0, ExpatName *name, ExpatAttribute atts[], int natts),
                   (ARGS0, name, atts, natts), state->depth++)
@@ -534,9 +529,9 @@ begin_context(ExpatReader *reader, XML_Parser parser, PyObject *source)
     }
   }
 
-  /* Only perform infoset fixup for included entities */
-  /* context->next == NULL when starting with a document */
-  /* context->next->uri == Py_None when starting with a entity */
+  /* Only perform infoset fixup for included entities. */
+  /* context->next == NULL when starting with a document, */
+  /* context->next->uri == Py_None when starting with a entity. */
   if (context->next != NULL && context->next->uri != Py_None) {
 #if defined(DEBUG_XINCLUDE)
     fprintf(stderr, "      Setting EXPAT_FLAG_INFOSET_FIXUP\n");
@@ -3568,7 +3563,6 @@ static const unsigned char template[] = {
 static int expat_UnknownEncoding(void *arg, const XML_Char *name,
                                  XML_Encoding *info)
 {
-  ExpatReader *reader = (ExpatReader *)arg;
   PyObject *_u_name, *_s_name;
   PyObject *encoder, *decoder;
   PyObject *result;
@@ -3577,7 +3571,8 @@ static int expat_UnknownEncoding(void *arg, const XML_Char *name,
   UnknownEncoding *encoding;
 
 #if defined(DEBUG_CALLBACKS)
-  fprintf(stderr, "=== UnknownEncoding(%p, name=", reader->context);
+  fprintf(stderr, "=== UnknownEncoding(%p, name=",
+          ((ExpatReader *)arg)->context);
   XMLChar_Print(stderr, name);
   fprintf(stderr, ", info=%p)\n", info);
 #endif

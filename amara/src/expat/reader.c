@@ -5,6 +5,7 @@
 typedef struct {
   PyObject_HEAD
   ExpatReader *reader;
+  PyObject *filters;
 } ReaderObject;
 
 /** Python Interface **************************************************/
@@ -20,33 +21,51 @@ reader_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   static char *kwlist[] = { "filters", NULL };
   PyObject *seq = NULL;
   ExpatFilter **filters;
-  Py_ssize_t nfilters;
+  Py_ssize_t nfilters, i;
   ReaderObject *newobj;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:Reader", kwlist,
                                    &seq))
     return NULL;
 
-  if (seq == NULL)
+  if (seq == NULL) {
+    filters = NULL;
     nfilters = 0;
-  else {
-    nfilters = PySequence_Length(seq);
-    if (nfilters < 0)
-      return NULL;
   }
-  filters = PyMem_New(ExpatFilter *, nfilters);
-  if (filters == NULL)
-    return NULL;
+  else {
+    seq = PySequence_Tuple(seq);
+    if (seq == NULL)
+      return NULL;
+    nfilters = PyTuple_GET_SIZE(seq);
+    filters = PyMem_New(ExpatFilter *, nfilters);
+    if (filters == NULL) {
+      Py_DECREF(seq);
+      return NULL;
+    }
+    for (i = 0; i < nfilters; i++) {
+      PyObject *filter = PyTuple_GET_ITEM(seq, i);
+      if (!Filter_Check(filter)) {
+        PyErr_SetString(PyExc_TypeError, "expected sequence of Filters");
+        Py_DECREF(seq);
+        PyMem_Del(filters);
+        return NULL;
+      }
+      filters[i] = Filter_GET_FILTER(filter);
+    }
+  }
   newobj = (ReaderObject *)type->tp_alloc(type, 0);
   if (newobj != NULL) {
-    newobj->reader = ExpatReader_New(NULL, 0);
+    newobj->filters = seq;
+    newobj->reader = ExpatReader_New(filters, nfilters);
     if (newobj->reader == NULL) {
       Py_CLEAR(newobj);
       goto finally;
     }
+  } else {
+    Py_DECREF(seq);
   }
 finally:
-  PyMem_Del(filters);
+  if (filters) PyMem_Del(filters);
   return (PyObject *)newobj;
 }
 
@@ -59,6 +78,8 @@ reader_dealloc(ReaderObject *self)
     ExpatReader_Del(self->reader);
     self->reader = NULL;
   }
+  Py_CLEAR(self->filters);
+
   ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }
 

@@ -3,12 +3,6 @@
 
 /** Private Interface *************************************************/
 
-typedef struct {
-  PyObject_HEAD
-  ExpatFilter *filter;
-  PyObject *patterns;
-} FilterObject;
-
 enum HandlerTypes {
   /* ContentHandler */
   Handler_StartFilter,
@@ -458,7 +452,7 @@ static PyGetSetDef filter_getset[] = {
   { NULL }
 };
 
-static PyTypeObject Filter_Type = {
+PyTypeObject Filter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
   /* tp_name           */ Expat_MODULE_NAME "." "Filter",

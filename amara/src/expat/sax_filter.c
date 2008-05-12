@@ -4,21 +4,6 @@
 
 #define DEBUG_SAX
 
-#if defined(DEBUG_SAX)
-#define Trace_Print \
-  PySys_WriteStderr
-#define Trace_PrintObject(ob) \
-  PyObject_Print((ob), PySys_GetFile("stderr", stderr), 0)
-#else
-#ifdef __STDC__ /* C99 conformance macro */
-#define Trace_Print(...)
-#else
-/* Decent compilers will optimize this out, hopefully */
-Py_LOCAL_INLINE(void) Trace_Print(const char *format, ...) { }
-#endif
-#define Trace_PrintObject(ob)
-#endif
-
 static PyObject *uri_resolver;
 static PyObject *xmlns_namespace_string;
 static PyObject *feature_external_ges;
@@ -172,7 +157,7 @@ static ExpatStatus sax_StartDocument(void *userData)
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler, *args, *result;
 
-  Trace_Print("--- sax_StartDocument(%p)\n", self);
+  Debug_Print("--- sax_StartDocument(%p)\n", self);
 
   if ((handler = self->handlers[Handler_SetLocator]) != NULL) {
     /* handler.setDocumentLocator(locator) */
@@ -204,7 +189,7 @@ static ExpatStatus sax_EndDocument(void *userData)
   PyObject *handler = self->handlers[Handler_EndDocument];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_EndDocument(%p)\n", self);
+  Debug_Print("--- sax_EndDocument(%p)\n", self);
 
   if (handler != NULL) {
     /* handler.endDocument() */
@@ -227,11 +212,11 @@ static ExpatStatus sax_StartNamespaceDecl(void *userData, PyObject *prefix,
   PyObject *handler = self->handlers[Handler_StartNamespace];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_StartNamespaceDecl(%p, prefix=", self);
-  Trace_PrintObject(prefix);
-  Trace_Print(", uri=");
-  Trace_PrintObject(uri);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_StartNamespaceDecl(%p, prefix=", self);
+  Debug_PrintObject(prefix);
+  Debug_Print(", uri=");
+  Debug_PrintObject(uri);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.startNamespace(prefix, uri) */
@@ -253,9 +238,9 @@ static ExpatStatus sax_EndNamespaceDecl(void *userData, PyObject *prefix)
   PyObject *handler = self->handlers[Handler_EndNamespace];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_EndNamespaceDecl(%p, prefix=", self);
-  Trace_PrintObject(prefix);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_EndNamespaceDecl(%p, prefix=", self);
+  Debug_PrintObject(prefix);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.endNamespace(prefix) */
@@ -278,17 +263,17 @@ static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
   PyObject *args, *result;
 #if defined(DEBUG_SAX)
   int i;
-  Trace_Print("--- sax_StartElement(%p, name=", self);
-  Trace_PrintObject(name->qualifiedName);
-  Trace_Print(", atts={");
+  Debug_Print("--- sax_StartElement(%p, name=", self);
+  Debug_PrintObject(name->qualifiedName);
+  Debug_Print(", atts={");
   for (i = 0; i < natts; i++) {
     if (i > 0)
-      Trace_Print(", ");
-    Trace_PrintObject(atts[i].qualifiedName);
-    Trace_Print(": ");
-    Trace_PrintObject(atts[i].value);
+      Debug_Print(", ");
+    Debug_PrintObject(atts[i].qualifiedName);
+    Debug_Print(": ");
+    Debug_PrintObject(atts[i].value);
   }
-  Trace_Print("})\n");
+  Debug_Print("})\n");
 #endif
 
 
@@ -313,9 +298,9 @@ static ExpatStatus sax_EndElement(void *userData, ExpatName *name)
   PyObject *handler = self->handlers[Handler_EndElement];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_EndElement(%p, name=", self);
-  Trace_PrintObject(name->qualifiedName);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_EndElement(%p, name=", self);
+  Debug_PrintObject(name->qualifiedName);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.endElement((namespaceURI, localName), tagName) */
@@ -338,9 +323,9 @@ static ExpatStatus sax_CharacterData(void *userData, PyObject *data)
   PyObject *handler = self->handlers[Handler_Characters];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_Characters(%p, data=", self);
-  Trace_PrintObject(data);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_Characters(%p, data=", self);
+  Debug_PrintObject(data);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.characters(content) */
@@ -362,9 +347,9 @@ static ExpatStatus sax_IgnorableWhitespace(void *userData, PyObject *data)
   PyObject *handler = self->handlers[Handler_IgnorableWhitespace];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_IgnorableWhitespace(%p, data=", self);
-  Trace_PrintObject(data);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_IgnorableWhitespace(%p, data=", self);
+  Debug_PrintObject(data);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.ignoreableWhitespace(content) */
@@ -388,11 +373,11 @@ static ExpatStatus sax_ProcessingInstruction(void *userData,
   PyObject *handler = self->handlers[Handler_ProcessingInstruction];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_ProcessingInstruction(%p, target=", self);
-  Trace_PrintObject(target);
-  Trace_Print(", data=");
-  Trace_PrintObject(data);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_ProcessingInstruction(%p, target=", self);
+  Debug_PrintObject(target);
+  Debug_Print(", data=");
+  Debug_PrintObject(data);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.processingInstruction(target, data) */
@@ -413,9 +398,9 @@ static ExpatStatus sax_SkippedEntity(void *userData, PyObject *name)
   PyObject *handler = self->handlers[Handler_SkippedEntity];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_SkippedEntity(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_SkippedEntity(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.skippedEntity(name) */
@@ -438,13 +423,13 @@ static ExpatStatus sax_StartDoctypeDecl(void *userData, PyObject *name,
   PyObject *handler = self->handlers[Handler_StartDTD];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_StartDoctypeDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", systemId=");
-  Trace_PrintObject(systemId);
-  Trace_Print(", publicId=");
-  Trace_PrintObject(publicId);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_StartDoctypeDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", systemId=");
+  Debug_PrintObject(systemId);
+  Debug_Print(", publicId=");
+  Debug_PrintObject(publicId);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.startDTD(name, publicId, systemId) */
@@ -471,7 +456,7 @@ static ExpatStatus sax_EndDoctypeDecl(void *userData)
   PyObject *handler = self->handlers[Handler_EndDTD];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_EndDoctypeDecl(%p)\n", self);
+  Debug_Print("--- sax_EndDoctypeDecl(%p)\n", self);
 
   if (handler != NULL) {
     /* handler.endDTD() */
@@ -492,7 +477,7 @@ static ExpatStatus sax_StartCdataSection(void *userData)
   PyObject *handler = self->handlers[Handler_StartCDATA];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_StartCdataSection(%p)\n", self);
+  Debug_Print("--- sax_StartCdataSection(%p)\n", self);
 
   if (handler != NULL) {
     /* handler.startCDATA() */
@@ -513,7 +498,7 @@ static ExpatStatus sax_EndCdataSection(void *userData)
   PyObject *handler = self->handlers[Handler_EndCDATA];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_EndCdataSection(%p)\n", self);
+  Debug_Print("--- sax_EndCdataSection(%p)\n", self);
 
   if (handler != NULL) {
     /* handler.endCDATA() */
@@ -533,9 +518,9 @@ static ExpatStatus sax_Comment(void *userData, PyObject *data)
   PyObject *handler = self->handlers[Handler_Comment];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_Comment(%p, data=", self);
-  Trace_PrintObject(data);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_Comment(%p, data=", self);
+  Debug_PrintObject(data);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.comment(content) */
@@ -558,13 +543,13 @@ static ExpatStatus sax_NotationDecl(void *userData, PyObject *name,
   PyObject *handler = self->handlers[Handler_NotationDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_NotationDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", systemId=");
-  Trace_PrintObject(systemId);
-  Trace_Print(", publicId=");
-  Trace_PrintObject(publicId);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_NotationDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", systemId=");
+  Debug_PrintObject(systemId);
+  Debug_Print(", publicId=");
+  Debug_PrintObject(publicId);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.notationDecl(name, publicId, systemId) */
@@ -594,15 +579,15 @@ static ExpatStatus sax_UnparsedEntityDecl(void *userData,
   PyObject *handler = self->handlers[Handler_UnparsedEntityDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_UnparsedEntityDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", publicId=");
-  Trace_PrintObject(publicId);
-  Trace_Print(", systemId=");
-  Trace_PrintObject(systemId);
-  Trace_Print(", notationName=");
-  Trace_PrintObject(notationName);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_UnparsedEntityDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", publicId=");
+  Debug_PrintObject(publicId);
+  Debug_Print(", systemId=");
+  Debug_PrintObject(systemId);
+  Debug_Print(", notationName=");
+  Debug_PrintObject(notationName);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.unparsedEntityDecl(name, publicId, systemId, notationName) */
@@ -630,9 +615,9 @@ static ExpatStatus sax_Warning(void *userData, PyObject *exception)
   PyObject *handler = self->handlers[Handler_Warning];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_Warning(%p, exception=", self);
-  Trace_PrintObject(exception);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_Warning(%p, exception=", self);
+  Debug_PrintObject(exception);
+  Debug_Print(")\n");
 
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL) return EXPAT_STATUS_ERROR;
@@ -672,9 +657,9 @@ static ExpatStatus sax_Error(void *userData, PyObject *exception)
   PyObject *handler = self->handlers[Handler_Error];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_Error(%p, exception=", self);
-  Trace_PrintObject(exception);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_Error(%p, exception=", self);
+  Debug_PrintObject(exception);
+  Debug_Print(")\n");
 
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL) return EXPAT_STATUS_ERROR;
@@ -705,9 +690,9 @@ static ExpatStatus sax_FatalError(void *userData, PyObject *exception)
   PyObject *handler = self->handlers[Handler_FatalError];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_FatalError(%p, exception=", self);
-  Trace_PrintObject(exception);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_FatalError(%p, exception=", self);
+  Debug_PrintObject(exception);
+  Debug_Print(")\n");
 
   exception = SAXParseException(exception, (PyObject *) self);
   if (exception == NULL)
@@ -739,11 +724,11 @@ static ExpatStatus sax_ElementDecl(void *userData, PyObject *name,
   PyObject *handler = self->handlers[Handler_ElementDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_ElementDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", model=");
-  Trace_PrintObject(model);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_ElementDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", model=");
+  Debug_PrintObject(model);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.elementDecl(name, model) */
@@ -766,17 +751,17 @@ static ExpatStatus sax_AttributeDecl(void *userData, PyObject *eName,
   PyObject *handler = self->handlers[Handler_AttributeDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_AttributeDecl(%p, eName=", self);
-  Trace_PrintObject(eName);
-  Trace_Print(", aName=");
-  Trace_PrintObject(aName);
-  Trace_Print(", type=");
-  Trace_PrintObject(type);
-  Trace_Print(", decl=");
-  Trace_PrintObject(decl);
-  Trace_Print(", value=");
-  Trace_PrintObject(value);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_AttributeDecl(%p, eName=", self);
+  Debug_PrintObject(eName);
+  Debug_Print(", aName=");
+  Debug_PrintObject(aName);
+  Debug_Print(", type=");
+  Debug_PrintObject(type);
+  Debug_Print(", decl=");
+  Debug_PrintObject(decl);
+  Debug_Print(", value=");
+  Debug_PrintObject(value);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.attributeDecl(eName, aName, type, decl, value) */
@@ -798,11 +783,11 @@ static ExpatStatus sax_InternalEntityDecl(void *userData, PyObject *name,
   PyObject *handler = self->handlers[Handler_InternalEntityDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_InternalEntityDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", value=");
-  Trace_PrintObject(value);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_InternalEntityDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", value=");
+  Debug_PrintObject(value);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.internalEntityDecl(name, value) */
@@ -826,13 +811,13 @@ static ExpatStatus sax_ExternalEntityDecl(void *userData,
   PyObject *handler = self->handlers[Handler_ExternalEntityDecl];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_ExternalEntityDecl(%p, name=", self);
-  Trace_PrintObject(name);
-  Trace_Print(", publicId=");
-  Trace_PrintObject(publicId);
-  Trace_Print(", systemId=");
-  Trace_PrintObject(systemId);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_ExternalEntityDecl(%p, name=", self);
+  Debug_PrintObject(name);
+  Debug_Print(", publicId=");
+  Debug_PrintObject(publicId);
+  Debug_Print(", systemId=");
+  Debug_PrintObject(systemId);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.externalEntityDecl(name, publicId, systemId) */
@@ -854,11 +839,11 @@ static PyObject *sax_ResolveEntity(void *userData, PyObject *publicId,
   PyObject *handler = self->handlers[Handler_ResolveEntity];
   PyObject *args, *result;
 
-  Trace_Print("--- sax_ResolveEntity(%p, publicId=", self);
-  Trace_PrintObject(publicId);
-  Trace_Print(", systemId=");
-  Trace_PrintObject(systemId);
-  Trace_Print(")\n");
+  Debug_Print("--- sax_ResolveEntity(%p, publicId=", self);
+  Debug_PrintObject(publicId);
+  Debug_Print(", systemId=");
+  Debug_PrintObject(systemId);
+  Debug_Print(")\n");
 
   if (handler != NULL) {
     /* handler.resolveEntity(publicId, systemId) */
@@ -2090,7 +2075,7 @@ static PyObject *
 parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { NULL };
-  ExpatFilter *filters[1];
+  ExpatFilter *filters[2];
   XMLParserObject *self;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, ":SaxReader", kwlist))

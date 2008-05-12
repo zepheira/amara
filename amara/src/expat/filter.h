@@ -35,6 +35,18 @@ extern "C" {
   FilterState *FilterState_FromSeq(PyObject *seq);
 
 #ifdef Expat_BUILDING_MODULE
+#include "expat_interface.h"
+  typedef struct {
+    PyObject_HEAD
+    ExpatFilter *filter;
+    PyObject *patterns;
+  } FilterObject;
+
+  extern PyTypeObject Filter_Type;
+#define Filter_Check(op) PyObject_TypeCheck((PyObject *)(op), &Filter_Type)
+
+#define Filter_GET_FILTER(op) (((FilterObject *)(op))->filter)
+
   int _Expat_Filter_Init(PyObject *module);
   void _Expat_Filter_Fini(void);
 #endif
