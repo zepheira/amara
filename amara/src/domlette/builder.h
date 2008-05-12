@@ -9,13 +9,8 @@ extern "C" {
 
 #ifdef Domlette_BUILDING_MODULE
 
-  extern char NonvalParse_doc[];
-  PyObject *Domlette_NonvalParse(PyObject *self, PyObject *args, PyObject *kw);
+  PyObject *Domlette_Parse(PyObject *self, PyObject *args, PyObject *kw);
 
-  extern char ValParse_doc[];
-  PyObject *Domlette_ValParse(PyObject *self, PyObject *args, PyObject *kw);
-
-  extern char ParseFragment_doc[];
   PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args,
                                    PyObject *kw);
 

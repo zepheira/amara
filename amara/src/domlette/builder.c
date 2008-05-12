@@ -37,12 +37,12 @@ typedef struct {
 } ParserState;
 
 typedef enum {
-  PARSE_TYPE_STANDALONE = 0,
-  PARSE_TYPE_NO_VALIDATE,
-  PARSE_TYPE_VALIDATE,
-} ParseType;
+  PARSE_FLAGS_STANDALONE = 0,
+  PARSE_FLAGS_EXTERNAL_ENTITIES,
+  PARSE_FLAGS_VALIDATE,
+} ParseFlags;
 
-ParseType read_external_dtd = PARSE_TYPE_NO_VALIDATE;
+ParseFlags default_parse_flags = PARSE_FLAGS_EXTERNAL_ENTITIES;
 
 static PyObject *xmlns_string;
 static PyObject *empty_args_tuple;
@@ -796,7 +796,7 @@ create_reader(ParserState *state)
   return reader;
 }
 
-static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
+static PyObject *builder_parse(PyObject *inputSource, ParseFlags flags,
                                NodeFactories *factories, int asEntity,
                                PyObject *namespaces)
 {
@@ -805,6 +805,15 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
   int gc_enabled;
   ExpatStatus status;
 
+#ifdef DEBUG_PARSER
+  FILE *stream = PySys_GetFile("stderr", stderr);
+  PySys_WriteStderr("builder_parse(source=");
+  PyObject_Print(inputSource, stream, 0);
+  PySys_WriteStderr(", flags=%d, factories=%p, asEntity=%d, namespaces=",
+                    flags, factories, asEntity);
+  PyObject_Print(namespaces, stream, 0);
+  PySys_WriteStderr("\n");
+#endif
   /* Takes ownership of `document` */
   state = ParserState_New(factories);
   if (state == NULL)
@@ -829,8 +838,8 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
     Py_DECREF(result);
   }
 
-  Expat_SetValidation(state->reader, parseType == PARSE_TYPE_VALIDATE);
-  Expat_SetParamEntityParsing(state->reader, parseType);
+  Expat_SetValidation(state->reader, flags == PARSE_FLAGS_VALIDATE);
+  Expat_SetParamEntityParsing(state->reader, flags != PARSE_FLAGS_STANDALONE);
 
   if (asEntity)
     status = ExpatReader_ParseEntity(state->reader, inputSource, namespaces);
@@ -853,97 +862,62 @@ static PyObject *builder_parse(PyObject *inputSource, ParseType parseType,
 finally:
   ExpatReader_Del(state->reader);
   ParserState_Del(state);
+#ifdef DEBUG_PARSER
+  PySys_WriteStderr("builder_parse() => ");
+  PyObject_Print(result, PySys_GetFile("stderr", stderr), 0);
+  PySys_WriteStderr("\n");
+#endif
   return result;
 }
 
-Py_LOCAL_INLINE(PyObject *)
-parse_document(PyObject *isrc, int parse_type, PyObject *factory_mapping)
+PyObject *Domlette_Parse(PyObject *self, PyObject *args, PyObject *kw)
 {
+  static char *kwlist[] = {"source", "flags", "node_factories", NULL};
+  PyObject *source, *node_factories=NULL;
+  int flags=default_parse_flags;
   NodeFactories *factories=NULL;
   PyObject *result;
 
-  if (factory_mapping != NULL) {
-    factories = NodeFactories_New(factory_mapping);
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|iO:parse", kwlist,
+                                   &source, &flags, &node_factories))
+    return NULL;
+
+  if (node_factories && node_factories != Py_None) {
+    factories = NodeFactories_New(node_factories);
     if (factories == NULL)
       return NULL;
   }
-#ifdef DEBUG_PARSER
-  fprintf(stderr, "Start parsing.\n");
-#endif
-  result = builder_parse(isrc, parse_type, factories, 0, NULL);
-#ifdef DEBUG_PARSER
-  fprintf(stderr,"Finished parsing\n");
-#endif
+
+  result = builder_parse(source, flags, factories, 0, NULL);
+
   if (factories != NULL)
     NodeFactories_Del(factories);
 
   return result;
 }
 
-char NonvalParse_doc[] = "\
-NonvalParse(isrc[, readExtDtd[, nodeFactories]]) -> Document";
-
-PyObject *Domlette_NonvalParse(PyObject *self, PyObject *args, PyObject *kw)
-{
-  PyObject *isrc, *readExtDtd=NULL, *nodeFactories=NULL;
-  static char *kwlist[] = {"isrc", "readExtDtd", "nodeFactories", NULL};
-  int parse_type=read_external_dtd;
-
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:NonvalParse", kwlist,
-                                   &isrc, &readExtDtd, &nodeFactories))
-    return NULL;
-
-  if (readExtDtd) {
-    parse_type = PyObject_IsTrue(readExtDtd);
-    if (parse_type == -1) return NULL;
-  }
-
-  return parse_document(isrc, parse_type, nodeFactories);
-}
-
-char ValParse_doc[] = "\
-ValParse(isrc[, nodeFactories]) -> Document";
-
-PyObject *Domlette_ValParse(PyObject *self, PyObject *args, PyObject *kw)
-{
-  PyObject *isrc, *nodeFactories=NULL;
-  static char *kwlist[] = {"isrc", "nodeFactories", NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:ValParse", kwlist,
-                                   &isrc, &nodeFactories))
-    return NULL;
-
-  return parse_document(isrc, PARSE_TYPE_VALIDATE, nodeFactories);
-}
-
-char ParseFragment_doc[] = "\
-ParseFragment(isrc[, namespaces[, nodeFactories]]) -> Document";
-
 PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args, PyObject *kw)
 {
-  PyObject *isrc, *namespaces=NULL, *nodeFactories=NULL;
-  static char *kwlist[] = {"isrc", "namespaces", "nodeFactories", NULL};
-  NodeFactories *node_factories=NULL;
+  static char *kwlist[] = {"source", "namespaces", "node_factories", NULL};
+  PyObject *source, *namespaces=NULL, *node_factories=NULL;
+  NodeFactories *factories=NULL;
   PyObject *result;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:ParseFragment", kwlist,
-                                   &isrc, &namespaces, &nodeFactories))
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:parse_fragment", kwlist,
+                                   &source, &namespaces, &node_factories))
     return NULL;
 
-  if (nodeFactories) {
-    node_factories = NodeFactories_New(nodeFactories);
-    if (node_factories == NULL)
+  if (node_factories && node_factories != Py_None) {
+    factories = NodeFactories_New(node_factories);
+    if (factories == NULL)
       return NULL;
   }
-#ifdef DEBUG_PARSER
-  fprintf(stderr, "Start parsing.\n");
-#endif
-  result = builder_parse(isrc, 0, node_factories, 1, namespaces);
-#ifdef DEBUG_PARSER
-  fprintf(stderr,"Finished parsing\n");
-#endif
-  if (node_factories != NULL)
-    NodeFactories_Del(node_factories);
+
+  result = builder_parse(source, PARSE_FLAGS_STANDALONE, factories, 1,
+                         namespaces);
+
+  if (factories != NULL)
+    NodeFactories_Del(factories);
 
   return result;
 }
@@ -975,6 +949,12 @@ int DomletteBuilder_Init(PyObject *module)
   GET_GC_FUNC(isenabled);
   Py_DECREF(import);
 #undef GET_GC_FUNC
+
+#define ADD_CONSTANT(name) \
+  if (PyModule_AddIntConstant(module, #name, name) < 0) return -1
+  ADD_CONSTANT(PARSE_FLAGS_STANDALONE);
+  ADD_CONSTANT(PARSE_FLAGS_EXTERNAL_ENTITIES);
+  ADD_CONSTANT(PARSE_FLAGS_VALIDATE);
 
   return 0;
 }

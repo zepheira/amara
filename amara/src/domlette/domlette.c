@@ -480,9 +480,10 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
 
 static PyMethodDef module_methods[] = {
   /* from builder.c */
-  Domlette_METHOD(NonvalParse, METH_KEYWORDS),
-  Domlette_METHOD(ValParse, METH_KEYWORDS),
-  Domlette_METHOD(ParseFragment, METH_KEYWORDS),
+  { "parse", (PyCFunction) Domlette_Parse, METH_KEYWORDS,
+    "parse(source[, flags[, node_factories]]) -> Document" },
+  { "parse_fragment", (PyCFunction) Domlette_ParseFragment, METH_KEYWORDS,
+    "parse_fragment(source[, namespaces[, node_factories]]) -> Document" },
 
   /* from nss.c */
   Domlette_METHOD(GetAllNs, METH_VARARGS),
