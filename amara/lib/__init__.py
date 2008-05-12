@@ -3,7 +3,6 @@
 __all__ = ['IriError', 'inputsource']
 
 from amara import Error
-from gettext import gettext as _
 
 class IriError(Error):
     """
@@ -30,45 +29,44 @@ class IriError(Error):
 
     UNSUPPORTED_PLATFORM = 1000
 
-    def __init__(self, code, **kwds):
-        if not error_messages: load_messages()
-        Error.__init__(self, code, error_messages[code] % kwds, kwds)
-        return
-
-error_messages = {}
-
-def load_messages():
-    """Lazy loading of error messages"""
-    global error_messages
-    error_messages = {
+    @classmethod
+    def _load_messages(cls):
+        from gettext import gettext as _
         # %r preferred for reporting URIs because the URI refs can be empty
-        # strings or, if invalid, could contain characters unsafe for the error
-        # message stream.
-        IriError.INVALID_BASE_URI:
-            _("Invalid base URI: %(base)r cannot be used to resolve reference %(ref)r"),
-        IriError.RELATIVE_BASE_URI:
-            _("Invalid base URI: %(base)r cannot be used to resolve reference %(ref)r;"
-              " the base URI must be absolute, not relative."),
-        IriError.NON_FILE_URI:
-            _("Only a 'file' URI can be converted to an OS-specific path; URI given was %(uri)r"),
-        IriError.UNIX_REMOTE_HOST_FILE_URI:
-            _("A URI containing a remote host name cannot be converted to a path on posix;"
-              " URI given was %(uri)r"),
-        IriError.RESOURCE_ERROR:
-            _("Error retrieving resource %(loc)r: %(msg)s"),
-        IriError.UNSUPPORTED_PLATFORM:
-            _("Platform %(platform)r not supported by URI function %(function)s"),
-        IriError.SCHEME_REQUIRED:
-            _("Scheme-based resolution requires a URI with a scheme; "
-              "neither the base URI %(base)r nor the reference %(ref)r have one."),
-        IriError.INVALID_PUBLIC_ID_URN:
-            _("A public ID cannot be derived from URN %(urn)r"
-              " because it does not conform to RFC 3151."),
-        IriError.UNSUPPORTED_SCHEME:
-            _("The URI scheme %(scheme)s is not supported by resolver %(resolver)s"),
-        IriError.IDNA_UNSUPPORTED:
-            _("The URI ref %(uri)r cannot be made urllib-safe on this version of Python (IDNA encoding unsupported)."),
-        }
+        # strings or, if invalid, could contain characters unsafe for the
+        # error # message stream.
+        return {
+            IriError.INVALID_BASE_URI: _(
+                "Invalid base URI: %(base)r cannot be used to resolve "
+                " reference %(ref)r"),
+            IriError.RELATIVE_BASE_URI: _(
+                "Invalid base URI: %(base)r cannot be used to resolve "
+                "reference %(ref)r; the base URI must be absolute, not "
+                "relative."),
+            IriError.NON_FILE_URI: _(
+                "Only a 'file' URI can be converted to an OS-specific path; "
+                "URI given was %(uri)r"),
+            IriError.UNIX_REMOTE_HOST_FILE_URI: _(
+                "A URI containing a remote host name cannot be converted to a "
+                " path on posix; URI given was %(uri)r"),
+            IriError.RESOURCE_ERROR: _(
+                "Error retrieving resource %(loc)r: %(msg)s"),
+            IriError.UNSUPPORTED_PLATFORM: _(
+                "Platform %(platform)r not supported by URI function "
+                "%(function)s"),
+            IriError.SCHEME_REQUIRED: _(
+                "Scheme-based resolution requires a URI with a scheme; "
+                "neither the base URI %(base)r nor the reference %(ref)r "
+                "have one."),
+            IriError.INVALID_PUBLIC_ID_URN: _(
+                "A public ID cannot be derived from URN %(urn)r "
+                "because it does not conform to RFC 3151."),
+            IriError.UNSUPPORTED_SCHEME: _(
+                "The URI scheme %(scheme)s is not supported by resolver "
+                " %(resolver)s"),
+            IriError.IDNA_UNSUPPORTED: _(
+                "The URI ref %(uri)r cannot be made urllib-safe on this "
+                "version of Python (IDNA encoding unsupported)."),
+            }
 
 from amara.lib._inputsource import _inputsource as inputsource
-

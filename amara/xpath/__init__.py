@@ -44,55 +44,48 @@ class XPathError(Error):
 
     NO_CONTEXT         = 30
 
-    def __init__(self, code, **kwds):
-        # defer error message localization until needed
-        if not error_messages: _init_messages()
-        Error.__init__(self, code, error_messages[code] % kwds, kwds)
+    @classmethod
+    def _load_messages(cls):
+        from gettext import gettext as _
+        return {
+            # -- internal/unexpected errors --------------------------------
+            XPathError.INTERNAL: _(
+                'There is an internal bug in 4XPath.  Please make a post to '
+                'the 4Suite mailing list to report this error message to the '
+                'developers. Include platform details and info about how to '
+                'reproduce the error. Info about the mailing list is at '
+                'http://lists.4suite.org/mailman/listinfo/4suite.\n'
+                'The error code to report is: %s'),
 
+            # -- expression syntax errors ----------------------------------
+            XPathError.SYNTAX: _(
+                'XPath expression syntax error at line %(line)d, '
+                'column %(column)d: %(text)s'),
+            XPathError.UNDEFINED_VARIABLE: _(
+                "Variable '%(variable)s' not declared"),
+            XPathError.UNDEFINED_PREFIX: _(
+                'Undefined namespace prefix: "%(prefix)s".'),
+            XPathError.UNDEFINED_FUNCTION: _(
+                'Undefined function: "%(function)s".'),
+            XPathError.ARGCOUNT_NONE: _(
+                '%(function)s() takes no arguments (%(total)d given)'),
+            XPathError.ARGCOUNT_ATLEAST: _(
+                '%(function)s() takes at least %(count)d arguments '
+                '(%(total)d given)'),
+            XPathError.ARGCOUNT_EXACT: _(
+                '%(function)s() takes exactly %(count)d arguments '
+                '(%(total)d given)'),
+            XPathError.ARGCOUNT_ATMOST: _(
+                '%(function)s() takes at most %(count)d arguments '
+                '(%(total)d given)'),
+            XPathError.TYPE_ERROR: _(
+                "%(what)s must be '%(expected)s', not '%(actual)s'"),
 
-error_messages = {}
-def _init_messages():
-    from gettext import gettext as _
-    global error_messages
-    error_messages = {
-        # -- internal/unexpected errors --------------------------------
-        XPathError.INTERNAL: _(
-            'There is an internal bug in 4XPath.  Please make a post to the '
-            '4Suite mailing list to report this error message to the '
-            'developers. Include platform details and info about how to '
-            'reproduce the error. Info about the mailing list is at '
-            'http://lists.4suite.org/mailman/listinfo/4suite.\n'
-            'The error code to report is: %s'),
-
-        # -- expression syntax errors ----------------------------------
-        XPathError.SYNTAX: _(
-            'XPath expression syntax error at line %(line)d, '
-            'column %(column)d: %(text)s'),
-        XPathError.UNDEFINED_VARIABLE: _(
-            "Variable '%(variable)s' not declared"),
-        XPathError.UNDEFINED_PREFIX: _(
-            'Undefined namespace prefix: "%(prefix)s".'),
-        XPathError.UNDEFINED_FUNCTION: _(
-            'Undefined function: "%(function)s".'),
-        XPathError.ARGCOUNT_NONE: _(
-            '%(function)s() takes no arguments (%(total)d given)'),
-        XPathError.ARGCOUNT_ATLEAST: _(
-            '%(function)s() takes at least %(count)d arguments '
-            '(%(total)d given)'),
-        XPathError.ARGCOUNT_EXACT: _(
-            '%(function)s() takes exactly %(count)d arguments '
-            '(%(total)d given)'),
-        XPathError.ARGCOUNT_ATMOST: _(
-            '%(function)s() takes at most %(count)d arguments '
-            '(%(total)d given)'),
-        XPathError.TYPE_ERROR: _(
-            "%(what)s must be '%(expected)s', not '%(actual)s'"),
-
-        # -- evaluation errors -----------------------------------------
-        XPathError.NO_CONTEXT: _(
-            'An XPath Context object is required in order to evaluate an '
-            'expression.'),
-        }
+            # -- evaluation errors -----------------------------------------
+            XPathError.NO_CONTEXT: _(
+                'An XPath Context object is required in order to evaluate an '
+                'expression.'),
+            }
 
 # -- Additional setup --------------------------------------------------------
 
