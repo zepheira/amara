@@ -246,6 +246,7 @@ setup(name='Amara',
                     ),
           Extension('amara.xpath.parser._xpathparser',
                     sources=['amara/xpath/parser/xpathparser.c'],
+                    define_macros=[('BisonGen_FORWARDS_COMPATIBLE', None)],
                     ),
                  ],
       **kw)
