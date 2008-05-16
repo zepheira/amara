@@ -46,5 +46,5 @@ class test_filter_exr(test_nodeset_expr):
 
 
 if __name__ == '__main__':
+    from amara.lib import testsupport
     testsupport.test_main()
-

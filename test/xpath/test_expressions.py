@@ -130,7 +130,7 @@ src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 </ROOT>
 <?no-data ?>
 """, 'urn:domlette-test-tree')
-DOC = domlette.NonvalParse(src)
+DOC = domlette.parse(src)
 
 def children(node, type=Node.ELEMENT_NODE):
     return [ child for child in node if child.nodeType == type ]

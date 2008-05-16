@@ -371,7 +371,7 @@ class test_round_function(test_function_call):
          datatypes.number(12345), CONTEXT1),
         ]
 
-    
-if __name__ == '__main__':
-    testsupport.test_main()
 
+if __name__ == '__main__':
+    from amara.lib import testsupport
+    testsupport.test_main()
