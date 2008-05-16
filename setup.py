@@ -161,6 +161,7 @@ setup(name='Amara',
                 'amara.xpath.functions',
                 'amara.xpath.locationpaths',
                 'amara.xpath.parser',
+                'amara.xupdate',
                 ],
       ext_modules=[
           Extension('amara._xmlstring',
