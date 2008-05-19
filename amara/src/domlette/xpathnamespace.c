@@ -33,7 +33,7 @@ xns_init(XPathNamespaceObject *self, ElementObject *parentNode,
   return 0;
 }
 
-/** C API **************************************************************/
+/** C API *************************************************************/
 
 XPathNamespaceObject *XPathNamespace_New(ElementObject *parentNode,
                                          PyObject *prefix,
@@ -87,7 +87,7 @@ static PyGetSetDef xns_getset[] = {
   { NULL }
 };
 
-/** Type Object ********************************************************/
+/** Type Object *******************************************************/
 
 static void xns_dealloc(XPathNamespaceObject *self)
 {
