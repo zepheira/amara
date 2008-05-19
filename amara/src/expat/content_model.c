@@ -625,7 +625,7 @@ static int model_init(ContentModelObject *self, PyObject *args, PyObject *kwds)
 
 static void model_dealloc(ContentModelObject *self)
 {
-  Py_DECREF(self->content);
+  Py_XDECREF(self->content);
   Py_XDECREF(self->label);
   Py_XDECREF(self->doc);
   self->ob_type->tp_free((PyObject *) self);
