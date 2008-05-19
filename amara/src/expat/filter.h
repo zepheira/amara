@@ -40,6 +40,8 @@ extern "C" {
     PyObject_HEAD
     ExpatFilter *filter;
     PyObject *patterns;
+    /* parsing state */
+    PyObject *new_namespaces;
   } FilterObject;
 
   extern PyTypeObject Filter_Type;

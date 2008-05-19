@@ -55,6 +55,14 @@ static PyObject *filter_noop(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+#ifndef PyDict_GET_SIZE
+#define PyDict_GET_SIZE(ma) (((PyDictObject *)(ma))->ma_used)
+#endif
+
+#ifndef PyDict_CLEAR
+#define PyDict_CLEAR(ma) if (PyDict_GET_SIZE(ma) > 0) PyDict_Clear(ma)
+#endif
+
 /** Reader Callbacks **************************************************/
 
 #define getcode(slot) _getcode(Handler_##slot, #slot, __LINE__)
@@ -201,12 +209,13 @@ filter_EndDocument(void *arg)
 }
 
 static ExpatStatus
-filter_StartElement(void *arg, ExpatName *name, ExpatAttribute atts[], int natts)
+filter_StartElement(void *arg, ExpatName *name, ExpatAttribute atts[],
+                    int natts)
 {
-  PyObject *self = (PyObject *)arg;
+  FilterObject *self = (FilterObject *)arg;
   PyObject *handler, *args, *result;
 
-  handler = PyObject_GetAttrString(self, "start_element");
+  handler = PyObject_GetAttrString((PyObject *)self, "start_element");
   if (handler == NULL)
     return EXPAT_STATUS_ERROR;
 
@@ -217,20 +226,21 @@ filter_StartElement(void *arg, ExpatName *name, ExpatAttribute atts[], int natts
     return EXPAT_STATUS_OK;
   }
 
-  args = Py_BuildValue("(OO)ON", name->namespaceURI, name->localName,
-                       name->qualifiedName, Attributes_New(atts, natts));
+  args = Py_BuildValue("(OO)OON", name->namespaceURI, name->localName,
+                       name->qualifiedName, self->new_namespaces,
+                       Attributes_New(atts, natts));
   if (args == NULL) {
+    PyDict_CLEAR(self->new_namespaces);
     Py_DECREF(handler);
     return EXPAT_STATUS_ERROR;
   }
   result = PyTrace_CallObject(getcode(StartElement), handler, args);
+  PyDict_CLEAR(self->new_namespaces);
   Py_DECREF(args);
-  if (result == NULL) {
-    Py_DECREF(handler);
-    return EXPAT_STATUS_ERROR;
-  }
-  Py_DECREF(result);
   Py_DECREF(handler);
+  if (result == NULL)
+    return EXPAT_STATUS_ERROR;
+  Py_DECREF(result);
   return EXPAT_STATUS_OK;
 }
 
@@ -340,6 +350,18 @@ filter_Whitespace(void *arg, PyObject *data)
   return EXPAT_STATUS_OK;
 }
 
+static ExpatStatus
+filter_StartNamespace(void *arg, PyObject *prefix, PyObject *uri)
+{
+  FilterObject *self = (FilterObject *)arg;
+
+  if (PyDict_SetItem(self->new_namespaces, prefix, uri) < 0) {
+    return EXPAT_STATUS_ERROR;
+  }
+  return EXPAT_STATUS_OK;
+}
+
+
 static ExpatHandlers filter_handlers = {
   /* start_filter           */ filter_StartFilter,
   /* end_filter             */ filter_EndFilter,
@@ -352,7 +374,7 @@ static ExpatHandlers filter_handlers = {
   /* ignorable_whitespace   */ filter_Whitespace,
   /* processing_instruction */ NULL,
   /* comment                */ NULL,
-  /* start_namespace_decl   */ NULL,
+  /* start_namespace_decl   */ filter_StartNamespace,
   /* end_namespace_decl     */ NULL,
   /* start_doctype_decl     */ NULL,
   /* end_doctype_decl       */ NULL,
@@ -391,8 +413,17 @@ filter_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   filter = (FilterObject *)type->tp_alloc(type, 0);
   if (filter != NULL) {
     filter->filter = ExpatFilter_New(filter, &filter_handlers, 0, NULL);
+    if (filter->filter == NULL) {
+      Py_DECREF(filter);
+      return NULL;
+    }
     Py_INCREF(args);
     filter->patterns = args;
+    filter->new_namespaces = PyDict_New();
+    if (filter->new_namespaces == NULL) {
+      Py_DECREF(filter);
+      return NULL;
+    }
   }
   return (PyObject *)filter;
 }
@@ -401,6 +432,7 @@ static void filter_dealloc(FilterObject *self)
 {
   PyObject_GC_UnTrack(self);
 
+  Py_CLEAR(self->new_namespaces);
   Py_CLEAR(self->patterns);
   if (self->filter) {
     ExpatFilter_Del(self->filter);
@@ -431,7 +463,7 @@ static PyMethodDef filter_methods[] = {
   { "end_document", filter_noop, METH_VARARGS,
     "F.end_document()" },
   { "start_element", filter_noop, METH_VARARGS,
-    "F.start_element(expandedName, qualifiedName, attributes)" },
+    "F.start_element(expandedName, qualifiedName, namespaces, attributes)" },
   { "attribute", filter_noop, METH_VARARGS,
     "F.attribute(expandedName, qualifiedName, value)" },
   { "end_element", filter_noop, METH_VARARGS,
@@ -514,6 +546,11 @@ handler_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                                      ExpatFilter_HANDLER_TYPE, NULL);
     Py_INCREF(args);
     filter->patterns = args;
+    filter->new_namespaces = PyDict_New();
+    if (filter->new_namespaces == NULL) {
+      Py_DECREF(filter);
+      return NULL;
+    }
   }
   return (PyObject *)filter;
 }
