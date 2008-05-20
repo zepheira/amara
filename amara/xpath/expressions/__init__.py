@@ -93,6 +93,10 @@ class expression(object):
                                                     docstring=unicode(self))
         return self.evaluate_as_nodeset(context)
 
+    def __str__(self):
+        raise NotImplementedError('subclass %r must override' %
+                                  self.__class__.__name__)
+
     def __repr__(self):
         ptr = id(self)
         if ptr < 0: ptr += 0x100000000L
