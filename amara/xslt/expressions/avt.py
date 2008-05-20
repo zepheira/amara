@@ -37,6 +37,10 @@ class avt_expression(expression):
             # use empty format args to force '%%' replacement
             return self._format % ()
 
+    def __str__(self):
+        return '{' + self._format % tuple(self._args) + '}'
+
+
 class attribute_value_template:
 
     def __init__(self, source, validator=None, element=None):
