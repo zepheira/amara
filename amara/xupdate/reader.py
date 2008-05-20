@@ -100,7 +100,7 @@ def modifications_element(tagname, namespaces, attributes):
         if version != '1.0':
             raise XUpdateError(XUpdateError.UNSUPPORTED_VERSION,
                                version=version)
-    return
+    return commands.modifications_list()
 
 @autodispatch('insert-before', _template_model)
 def insert_before_element(tagname, namespaces, attributes):
@@ -256,7 +256,7 @@ def if_element(tagname, namespaces, attributes):
         except XPathError, error:
             raise XUpdateError(XUpdateError.SYNTAX_ERROR,
                                expression=test, text=str(error))
-    return
+    return commands.if_command(namespaces, test)
 
 @autodispatch('element', _template_model)
 def element_element(tagname, namespaces, attributes):
@@ -318,12 +318,15 @@ def value_of_element(tagname, namespaces, attributes):
 
 
 def literal_element(tagname, namespaces, attributes):
-    return
+    attributes = [ (name[0], attributes.getQNameByName(name), attributes[name])
+                   for name in attributes ]
+    return instructions.literal_element_instruction()
 
 
 class parsestate(object):
-    __slots__ = ('name', 'namespaces', 'validation')
-    def __init__(self, name, namespaces, validation):
+    __slots__ = ('item', 'name', 'namespaces', 'validation')
+    def __init__(self, item, name, namespaces, validation):
+        self.item = item
         self.name = name
         self.namespaces = namespaces
         self.validation = validation
@@ -332,11 +335,11 @@ class parsestate(object):
 class handler(Handler):
 
     def __init__(self, updates):
-        self._updates = updates
         self._dispatch = _elements
-        namespaces = {'xml': XML_NAMESPACE}
-        document_state = parsestate('#document', namespaces, _document_model)
-        self._state_stack = [document_state]
+        self._state_stack = [
+            parsestate(updates, '#document', {'xml': XML_NAMESPACE},
+                       _document_model)
+            ]
         self._push_state = self._state_stack.append
 
     def start_element(self, expandedName, tagName, namespaces, attributes):
@@ -357,9 +360,15 @@ class handler(Handler):
             except KeyError:
                 raise XUpdateError(XUpdateError.ILLEGAL_ELEMENT,
                                    element=tagName)
+            else:
+                item = factory(tagName, inscope_namespaces, attributes)
             validation_event = expandedName
         else:
-            factory, validation = literal_element, _template_model
+            qname = attributes.getQNameByName
+            attrs = [ (name[0], qname(name), attributes[name])
+                      for name in attributes ]
+            item = instructions.literal_element(tagName, namespace, attrs)
+            validation = _template_model
             validation_event = _literal_event
         # verify that this element can be declared here
         try:
@@ -370,9 +379,8 @@ class handler(Handler):
         else:
             # save the new state for the next event check
             parent_state.validation = next
-        # create the instance defining this element
-        node = factory(tagName, inscope_namespaces, attributes)
-        self._push_state(parsestate(tagName, inscope_namespaces, validation))
+        new_state = parsestate(item, tagName, inscope_namespaces, validation)
+        self._push_state(new_state)
         return
 
     def end_element(self, expandedName, tagName):
@@ -387,7 +395,7 @@ class handler(Handler):
             raise XUpdateError(XUpdateError.INCOMPLETE_ELEMENT,
                                element=tagName)
         # update parent state
-        #parent_state.node.append_child(current_node)
+        parent_state.item.append(current_state.item)
         return
 
     def characters(self, data):
@@ -400,7 +408,7 @@ class handler(Handler):
                                element=current_state.name)
         else:
             current_state.validation = next
-        #current_state.node.append_child(literal_text(data))
+        current_state.item.append(data)
         return
 
 
@@ -408,3 +416,10 @@ class reader(Reader):
     def __new__(self):
         self._updates = []
         return Reader.__new__(self, (handler(self._updates),))
+
+    _parse = Reader.parse
+    def parse(self, source):
+        self._parse(source)
+        updates = self._updates[0]
+        del self._updates[:]
+        return updates
