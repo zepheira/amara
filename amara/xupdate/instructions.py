@@ -1,82 +1,61 @@
 ########################################################################
-# amara/xupdate/instructions.py
+# amara/xupdate/elements.py
 """
 XUpdate instructions
 """
 
-from amara.xupdate import XUpdateError, xupdate_element
+from amara.xupdate import XUpdateError
+
+__all__ = [
+    'element_instruction', 'attribute_instruction', 'text_instruction',
+    'processing_instruction_instruction', 'comment_instruction',
+    ]
 
 # TODO:
-xupdate_instruction = xupdate_element
+class xupdate_instruction(object):
+    __slots__ = ('namespaces',)
+
 
 class element_instruction(xupdate_instruction):
-    element_name = 'element'
     __slots__ = ('name', 'namespace')
 
-    def __init__(self, tagname, namespaces, attributes):
+    def __init__(self, namespaces, name, namespace=None):
         # save in-scope namespaces for XPath
         self.namespaces = namespaces
         # required `name` attribute
-        try:
-            name = attributes[None, 'name']
-        except KeyError:
-            raise XUpdateError(XUpdateError.MISSING_REQUIRED_ATTRIBUTE,
-                               element=tagname, attribute='name')
-        else:
-            self.name = qname_avt('name', name)
+        self.name = name
         # optional `namespace` attribute
-        if (None, 'namespace') in attributes:
-            self.namespace = namespace_avt(attributes[None, 'namespace'])
-        else:
-            self.namespace = None
+        self.namespace = namespace
         return
 
 
 class attribute_instruction(xupdate_instruction):
-    element_name = 'attribute'
     __slots__ = ('name', 'namespace')
 
-    def __init__(self, tagname, namespaces, attributes):
+    def __init__(self, namespaces, name, namespace=None):
         # save in-scope namespaces for XPath
         self.namespaces = namespaces
         # required `name` attribute
-        try:
-            name = attributes[None, 'name']
-        except KeyError:
-            raise XUpdateError(XUpdateError.MISSING_REQUIRED_ATTRIBUTE,
-                               element=tagname, attribute='name')
-        else:
-            self.name = qname_avt('name', name)
+        self.name = name
         # optional `namespace` attribute
-        if (None, 'namespace') in attributes:
-            self.namespace = namespace_avt(attributes[None, 'namespace'])
-        else:
-            self.namespace = None
+        self.namespace = namespace
         return
 
 
 class text_instruction(xupdate_instruction):
-    element_name = 'text'
+    pass
 
 
 class processing_instruction_instruction(xupdate_instruction):
-    element_name = 'processing-instruction'
     __slots__ = ('name')
 
-    def __init__(self, tagname, namespaces, attributes):
+    def __init__(self, namespaces, name):
         # save in-scope namespaces for XPath
         self.namespaces = namespaces
         # required `name` attribute
-        try:
-            name = attributes[None, 'name']
-        except KeyError:
-            raise XUpdateError(XUpdateError.MISSING_REQUIRED_ATTRIBUTE,
-                               element=tagname, attribute='name')
-        else:
-            self.name = ncname_avt('name', name)
+        self.name = name
         return
 
 
 class comment_instruction(xupdate_instruction):
-    element_name = 'comment'
-
+    pass

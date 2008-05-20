@@ -1,0 +1,127 @@
+<?xml version = "1.0"?>
+<bisongen version='1.0' name='avt' project='amara.xslt.expressions'>
+
+  <options mode='c'/>
+
+  <!-- Python modules to import -->
+  <modules>
+    <?include ../../xpath/parser/xpath_modules.bgen.frag?>
+  </modules>
+
+  <!-- Token declarations -->
+  <tokens>
+    <?include ../../xpath/parser/xpath_tokens.bgen.frag?>
+    <token>AVT_LITERAL</token>
+    <token>AVT_ESCAPE</token>
+  </tokens>
+
+  <!-- Grammer rules definition -->
+  <grammar>
+    <production>
+      <non-terminal>start</non-terminal>
+      <rule>
+        <symbol>Avt</symbol>
+      </rule>
+    </production>
+
+    <!-- Avt ::= PlainPart? (ParsedPart PlainPart)*
+
+         Which expands to the following:
+           PlainPart
+           PlainPart ParsedPart
+           PlainPart ParsedPart PlainPart
+           ParsedPart
+           ParsedPart PlainPart
+    -->
+    <production>
+      <non-terminal>Avt</non-terminal>
+      <rule>
+        <code language="c">
+          $$ = PyList_New(0);
+        </code>
+      </rule>
+      <rule>
+        <symbol>Avt</symbol>
+        <symbol>PlainPart</symbol>
+        <code language="c">
+          PyList_Append($1, $2);
+          Py_INCREF($1);
+          $$ = $1;
+        </code>
+      </rule>
+      <rule>
+        <symbol>Avt</symbol>
+        <symbol>ParsedPart</symbol>
+        <code language="c">
+          PyList_Append($1, $2);
+          Py_INCREF($1);
+          $$ = $1;
+        </code>
+      </rule>
+    </production>
+
+    <production>
+      <non-terminal>PlainPart</non-terminal>
+      <rule>
+        <symbol>AVT_LITERAL</symbol>
+      </rule>
+      <!-- convert "{{" or "}}" to a single "{" or "}" -->
+      <rule>
+        <symbol>AVT_ESCAPE</symbol>
+        <code language="c">
+          $$ = PyUnicode_FromUnicode(PyUnicode_AS_UNICODE($1), 1);
+        </code>
+      </rule>
+    </production>
+
+    <production>
+      <non-terminal>ParsedPart</non-terminal>
+      <rule>
+        <symbol>'{'</symbol>
+        <symbol>Expr</symbol>
+        <symbol>'}'</symbol>
+        <code language="c">
+          Py_INCREF($2);
+          $$ = $2;
+        </code>
+      </rule>
+    </production>
+
+    <?include ../../xpath/parser/xpath_grammar.bgen.frag?>
+
+  </grammar>
+
+  <lexer start="AVT">
+    <defines>
+      <?include ../../xpath/parser/xpath_lexer_defines.bgen.frag?>
+    </defines>
+
+    <states>
+      <exclusive>AVT</exclusive>
+    </states>
+ 
+    <scope state="AVT">
+      <pattern expression='[{]{2}|[}]{2}'>
+        <token>AVT_ESCAPE</token>
+      </pattern>
+
+      <pattern expression='[^{}]+'>
+        <token>AVT_LITERAL</token>
+      </pattern>
+
+      <pattern expression='.'>
+        <begin>INITIAL</begin> <!-- switch to XPath parsing -->
+        <token>@ASCII@</token>
+      </pattern>
+    </scope>
+
+    <pattern expression='[}]'>
+      <begin>AVT</begin>
+      <token>'}'</token>
+    </pattern>
+
+    <?include ../../xpath/parser/xpath_lexer_patterns.bgen.frag?>
+
+  </lexer>
+
+</bisongen>

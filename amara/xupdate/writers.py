@@ -60,7 +60,7 @@ class node_writer(object):
             self._last.appendData(data)
         else:
             node = self._last = self._factory.createTextNode(data)
-            self._nodes.
+            self._nodes.append(node)
 
     def processing_instruction(self, target, data):
         pass

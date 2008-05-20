@@ -17,18 +17,12 @@ class XUpdateError(Error):
     """
     SYNTAX_ERROR = 1
     ILLEGAL_ELEMENT = 2
-    MISSING_REQUIRED_ATTRIBUTE = 3
+    ILLEGAL_ELEMENT_CHILD = 3
+    MISSING_REQUIRED_ATTRIBUTE = 4
+    INVALID_TEXT = 5
 
     UNSUPPORTED_VERSION = 10
-
-    UNRECOGNIZED_INSTRUCTION = 2
-    NO_VERSION = 10
-    NO_SELECT = 11
-    NO_TEST = 12
-    INVALID_SELECT = 13
-    UNSUPPORTED_VERSION = 14
-    INVALID_DOM_NODE = 100
-    UNKNOWN_NODE_TYPE = 101
+    INVALID_SELECT = 11
 
     @classmethod
     def _load_messages(cls):
@@ -36,20 +30,28 @@ class XUpdateError(Error):
         return {
             XUpdateError.SYNTAX_ERROR: _(
                 'Syntax error in expression %(expression)r: %(text)s'),
-            XUpdateError.UNSUPPORTED_VERSION: _('XUpdate version %(version)s unsupported by this implementation'),
             XUpdateError.ILLEGAL_ELEMENT: _(
                 "Illegal element '%(element)s' in XUpdate namespace"),
+            XUpdateError.ILLEGAL_ELEMENT_CHILD: _(
+                "Illegal child '%(child)s' within element '%(element)s'"),
             XUpdateError.MISSING_REQUIRED_ATTRIBUTE: _(
                 "Element '%(element)s' missing required attribute "
                 "'%(attribute)s'"),
-            XUpdateException.INVALID_SELECT: _('select expression "%(expr)s" must evaluate to a non-empty node-set'),
-            XUpdateException.INVALID_DOM_NODE: _('Invalid DOM node %(node)r'),
-            XUpdateException.UNKNOWN_NODE_TYPE: _('Unknown node type %(nodetype)r'),
+            XUpdateError.INVALID_TEXT: _(
+                "Character data not allowed in the content of element "
+                "'%(element)s'"),
+
+            XUpdateError.UNSUPPORTED_VERSION: _(
+                "XUpdate version ''%(version)s' unsupported by this "
+                "implementation"),
+            XUpdateError.INVALID_SELECT: _(
+                'select expression "%(expr)s" must evaluate to a non-empty '
+                'node-set'),
         }
 
 
 class xupdate_element(object):
-    class __metaclass__(type):
+    class __metaclass__ignore(type):
         def __init__(cls, name, bases, namespace):
             # The base class, the one defining the metaclass, is not a
             # candidate for the dispatch table.
@@ -67,47 +69,4 @@ class xupdate_element(object):
     def __init__(self, tagname, namespaces, attributes):
         self.namespaces = namespaces
         self.attributes = attributes
-        return
-
-
-class handler(object):
-
-    def startDocument(self):
-        self._updates = []
-        self._dispatch = {}
-        self._new_namespaces = {}
-
-    def startPrefixMapping(self, prefix, uri):
-        self._new_namespaces[prefix] = uri
-
-    def startElement(self, expandedName, tagName, attributes):
-        parent_state = self._state_stack[-1]
-        state = parsestate(**parent_state.__dict__)
-        self._state_stack.append(state)
-
-        # ------------------------------------------------------
-        # udate in-scope namespaces
-        namespaces = state.namespaces
-        if self._new_namespaces:
-            namespaces = state.namespaces = namespaces.copy()
-            namespaces.update(self._new_namespaces)
-            self._new_namespaces = {}
-
-        # ------------------------------------------------------
-        # get the class defining this element
-        namespace, local = expandedName
-        if namespace == XUPDATE_NAMESPACE:
-            try:
-                factory = state.dispatch[local]
-            except KeyError:
-                raise XUpdateError(XUpdateError.ILLEGAL_ELEMENT,
-                                   element=tagName)
-        else:
-            pass
-        return
-
-    def endElement(self, expandedName, tagName):
-        return
-
-    def characters(self, data):
         return
