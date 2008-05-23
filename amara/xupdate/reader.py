@@ -4,6 +4,7 @@
 XUpdate document reader
 """
 
+import operator
 from amara import XML_NAMESPACE
 from amara._expat import ContentModel, Handler, Reader
 from amara._xmlstring import SplitQName, IsQName
@@ -314,16 +315,22 @@ def comment_element(tagname, namespaces, attributes):
 
 @autodispatch('value-of', _empty_model)
 def value_of_element(tagname, namespaces, attributes):
-    return
+    # required `select` attribute
+    try:
+        select = attributes[None, 'select']
+    except KeyError:
+        raise XUpdateError(XUpdateError.MISSING_REQUIRED_ATTRIBUTE,
+                            element=tagname, attribute='select')
+    else:
+        try:
+            select = parse_expression(select)
+        except XPathError, error:
+            raise XUpdateError(XUpdateError.SYNTAX_ERROR,
+                               expression=select, text=str(error))
+    return instructions.value_of_instruction(namespaces, select)
 
 
-def literal_element(tagname, namespaces, attributes):
-    attributes = [ (name[0], attributes.getQNameByName(name), attributes[name])
-                   for name in attributes ]
-    return instructions.literal_element_instruction()
-
-
-class parsestate(object):
+class handler_state(object):
     __slots__ = ('item', 'name', 'namespaces', 'validation')
     def __init__(self, item, name, namespaces, validation):
         self.item = item
@@ -332,15 +339,18 @@ class parsestate(object):
         self.validation = validation
 
 
-class handler(Handler):
+class xupdate_handler(Handler):
 
-    def __init__(self, updates):
+    def __init__(self):
+        self._modifications = []
         self._dispatch = _elements
         self._state_stack = [
-            parsestate(updates, '#document', {'xml': XML_NAMESPACE},
-                       _document_model)
+            handler_state(self._modifications, '#document',
+                          {'xml': XML_NAMESPACE, None: None}, _document_model)
             ]
         self._push_state = self._state_stack.append
+
+    modifications = property(operator.attrgetter('_modifications'))
 
     def start_element(self, expandedName, tagName, namespaces, attributes):
         parent_state = self._state_stack[-1]
@@ -379,7 +389,7 @@ class handler(Handler):
         else:
             # save the new state for the next event check
             parent_state.validation = next
-        new_state = parsestate(item, tagName, inscope_namespaces, validation)
+        new_state = handler_state(item, tagName, inscope_namespaces, validation)
         self._push_state(new_state)
         return
 
@@ -387,6 +397,7 @@ class handler(Handler):
         current_state = self._state_stack[-1]
         del self._state_stack[-1]
         parent_state = self._state_stack[-1]
+        item = current_state.item
 
         # verify that the element has all required content
         try:
@@ -394,8 +405,11 @@ class handler(Handler):
         except KeyError:
             raise XUpdateError(XUpdateError.INCOMPLETE_ELEMENT,
                                element=tagName)
+        ## let the XUpdate primitive perform any add'l setup, if needed
+        #if item.has_setup:
+        #    item.setup()
         # update parent state
-        parent_state.item.append(current_state.item)
+        parent_state.item.append(item)
         return
 
     def characters(self, data):
@@ -408,18 +422,12 @@ class handler(Handler):
                                element=current_state.name)
         else:
             current_state.validation = next
-        current_state.item.append(data)
+        current_state.item.append(instructions.literal_text(data))
         return
 
 
-class reader(Reader):
-    def __new__(self):
-        self._updates = []
-        return Reader.__new__(self, (handler(self._updates),))
-
-    _parse = Reader.parse
-    def parse(self, source):
-        self._parse(source)
-        updates = self._updates[0]
-        del self._updates[:]
-        return updates
+def parse(source):
+    handler = xupdate_handler()
+    reader = Reader((handler,))
+    reader.parse(source)
+    return handler.modifications[0]

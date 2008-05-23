@@ -2,7 +2,7 @@
 import unittest
 import cStringIO
 from amara.lib import testsupport, inputsource
-from amara.xupdate import reader, XUpdateError
+from amara.xupdate import reader, XUpdateError, apply_xupdate
 
 class test_xupdate(unittest.TestCase):
     class __metaclass__(type):
@@ -16,7 +16,7 @@ class test_xupdate(unittest.TestCase):
             def test_method(self):
                 source = inputsource(self.source, 'source')
                 xupdate = inputsource(self.xupdate, 'xupdate-source')
-                reader.reader().parse(xupdate)
+                document = apply_xupdate(source, xupdate)
                 return
             return test_method
 
@@ -388,6 +388,13 @@ class test_rename(test_xupdate):
 class test_xupdate_error(test_xupdate):
     # trick __metaclass__ into not treating this as a test-case
     __metaclass__ = test_xupdate.__metaclass__
+    source = """<?xml version="1.0"?>
+<addresses>
+  <address>
+    <town>Los Angeles</town>
+  </address>
+</addresses>
+"""
     @classmethod
     def new_test_method(cls):
         def format_error(error_code):
@@ -398,9 +405,10 @@ class test_xupdate_error(test_xupdate):
             return 'XUpdateError(%s)' % error_code
         expected = format_error(cls.error_code)
         def test_method(self):
+            source = inputsource(self.source, 'source')
             xupdate = inputsource(self.xupdate, 'xupdate-error-source')
             try:
-                reader.reader().parse(xupdate)
+                document = apply_xupdate(source, xupdate)
             except XUpdateError, error:
                 compared = format_error(error.code)
                 self.assertEquals(expected, compared)

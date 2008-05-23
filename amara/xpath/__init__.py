@@ -96,10 +96,11 @@ class XPathError(Error):
 import types
 
 from amara import XML_NAMESPACE
-from amara.xpath import extensions
-from amara.xpath import parser
+from amara.domlette import Node, XPathNamespace
+from amara.writers import writer, treewriter, stringwriter
+from amara.xpath import extensions, parser
 
-class context:
+class context(writer):
     """
     The context of an XPath expression
     """
@@ -108,9 +109,13 @@ class context:
 
     def __init__(self, node, position=1, size=1,
                  variables=None, namespaces=None,
-                 extmodules=(), extfunctions=None):
+                 extmodules=(), extfunctions=None,
+                 output_parameters=None):
+        writer.__init__(self, output_parameters)
         self.node, self.position, self.size = node, position, size
-        self.variables = variables or {}
+        self.variables = {}
+        if variables:
+            self.variables.update(variables)
         self.namespaces = {'xml': XML_NAMESPACE}
         if namespaces:
             self.namespaces.update(namespaces)
@@ -128,6 +133,7 @@ class context:
         # Add functions given directly
         if extfunctions:
             self.functions.update(extfunctions)
+        self._writers = []
         return
 
     def __repr__(self):
@@ -135,6 +141,82 @@ class context:
         if ptr < 0: ptr += 0x100000000L
         return "<Context at 0x%x: Node=%s, Postion=%d, Size=%d>" % (
             ptr, self.node, self.position, self.size)
+
+    def push_writer(self, writer):
+        self._writers.append(writer)
+        # copy writer methods onto `self` for performance
+        self.start_document = writer.start_document
+        self.end_document = writer.end_document
+        self.start_element = writer.start_element
+        self.end_element = writer.end_element
+        self.namespace = writer.namespace
+        self.attribute = writer.attribute
+        self.characters = self.text = writer.text
+        self.comment = writer.comment
+        self.processing_instruction = writer.processing_instruction
+        # begin processing
+        writer.start_document()
+        return
+
+    def push_tree_writer(self, base_uri):
+        writer = treewriter.treewriter(self.output_parameters, base_uri)
+        self.push_writer(writer)
+
+    def push_string_writer(self, errors=True):
+        writer = stringwriter.stringwriter(self.output_parameters, errors)
+        self.push_writer(writer)
+
+    def pop_writer(self):
+        writer = self._writers[-1]
+        del self._writers[-1]
+        writer.end_document()
+        if self._writers:
+            previous = self._writers[-1]
+            # copy writer methods onto `self` for performance
+            self.start_document = previous.start_document
+            self.end_document = previous.end_document
+            self.start_element = previous.start_element
+            self.end_element = previous.end_element
+            self.namespace = previous.namespace
+            self.attribute = previous.attribute
+            self.characters = self.text = previous.characters
+            self.comment = previous.comment
+            self.processing_instruction = previous.processing_instruction
+        return writer
+
+    def copy_nodes(self, nodes):
+        for node in nodes:
+            self.copy_node(node)
+        return
+
+    def copy_node(self, node):
+        node_type = node.nodeType
+        if node_type == Node.DOCUMENT_NODE:
+            for child in node:
+                self.copy_node(child)
+        elif node_type == Node.TEXT_NODE:
+            self.characters(node.data, node.xsltOutputEscaping)
+        elif node_type == Node.ELEMENT_NODE:
+            # The GetAllNs is needed to copy the namespace nodes
+            self.start_element(node.nodeName, node.namespaceURI,
+                              namespaces=GetAllNs(node))
+            for attr in node.xpathAttributes:
+                self.attribute(attr.name, attr.value, attr.namespaceURI)
+            for child in node:
+                self.copy_node(child)
+            self.end_element(node.nodeName, node.namespaceURI)
+        elif node_type == Node.ATTRIBUTE_NODE:
+            if node.namespaceURI != XMLNS_NAMESPACE:
+                self.attribute(node.name, node.value, node.namespaceURI)
+        elif node_type == Node.COMMENT_NODE:
+            self.comment(node.data)
+        elif node_type == Node.PROCESSING_INSTRUCTION_NODE:
+            self.processing_instruction(node.target, node.data)
+        elif node_type == XPathNamespace.NAMESPACE_NODE:
+            self.namespace(node.nodeName, node.value)
+        else:
+            pass
+        return
 
     def addFunction(self, expandedName, function):
         if not callable(function):
@@ -150,10 +232,8 @@ class context:
         return
 
     def clone(self):
-        newobj = self.__class__(self, self.node, self.position, self.size)
-        newobj.variables = self.variables.copy()
-        newobj.namespaces = self.namespaces.copy()
-        return newobj
+        return self.__class__(self, self.node, self.position, self.size,
+                              self.variables, self.namespaces)
 
     def evaluate(self, expr):
         """

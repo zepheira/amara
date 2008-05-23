@@ -23,6 +23,7 @@ class XUpdateError(Error):
 
     UNSUPPORTED_VERSION = 10
     INVALID_SELECT = 11
+    UNDEFINED_PREFIX = 12
 
     @classmethod
     def _load_messages(cls):
@@ -47,26 +48,35 @@ class XUpdateError(Error):
             XUpdateError.INVALID_SELECT: _(
                 'select expression "%(expr)s" must evaluate to a non-empty '
                 'node-set'),
+            XUpdateError.UNDEFINED_PREFIX: _(
+                'Undefined namespace prefix %(prefix)r'),
         }
 
 
-class xupdate_element(object):
-    class __metaclass__ignore(type):
-        def __init__(cls, name, bases, namespace):
-            # The base class, the one defining the metaclass, is not a
-            # candidate for the dispatch table.
-            if '__metaclass__' in namespace and cls.__base__ is object:
-                return
-            # All other sub-classes *MUST* define the attribute `element`.
-            try:
-                mapping[cls.element_name] = cls
-            except AttributeError:
-                raise TypeError("class '%s' must define attribute "
-                                "'element_name'" % (name,))
+class xupdate_primitive(list):
+    # Note, no need to call `list.__init__` if there are no initial
+    # items to be added. `list.__new__` takes care of the setup for
+    # new empty lists.
 
-    __slots__ = ('namespaces', 'attributes')
+    # `pipeline` indicates in which processing stage a command should be
+    # executed. The default value of `0` indicates a non-command and thus
+    # will be ignored.
+    pipeline = 0
 
-    def __init__(self, tagname, namespaces, attributes):
-        self.namespaces = namespaces
-        self.attributes = attributes
-        return
+    has_setup = False
+    def setup(self):
+        pass
+
+    def instantiate(self, context):
+        raise NotImplementedError("subclass '%s' must override" %
+                                  self.__class__.__name__)
+
+# -- High-level API ----------------------------------------------------
+
+from amara import domlette
+from amara.xupdate import reader
+
+def apply_xupdate(source, xupdate):
+    xupdate = reader.parse(xupdate)
+    source = domlette.parse(source)
+    return xupdate.apply_updates(source)
