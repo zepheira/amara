@@ -36,5 +36,12 @@ class _inputsource(InputSource):
         else:
             uri = iri.os_path_to_uri(arg)
             stream = iri.DEFAULT_RESOLVER.resolve(uri)
+
+        #We might add the ability to load zips, gzips & bzip2s
+        #http://docs.python.org/lib/module-zlib.html
+        #http://docs.python.org/lib/module-gzip.html
+        #http://docs.python.org/lib/module-bz2.html
+        #http://docs.python.org/lib/zipfile-objects.html
+        
         return InputSource.__new__(self, stream, uri)
 

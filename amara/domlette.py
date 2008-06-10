@@ -4,7 +4,21 @@
 A very fast DOM-like library tailored for use in XPath/XSLT.
 """
 
+__all__ = ["_parse"]
+
 from amara._domlette import *
+from amara._domlette import parse as _parse
+from amara.lib import inputsource
+
+def parse(obj, uri=None, node_factories=None, standalone=False, validate=False):
+    if standalone:
+        flags = PARSE_FLAGS_STANDALONE
+    elif validate:
+        flags = PARSE_FLAGS_VALIDATE
+    else:
+        flags = PARSE_FLAGS_EXTERNAL_ENTITIES
+    return _parse(inputsource(obj, uri), flags, node_factories=node_factories)
+
 
 def NonvalParse(isrc, readExtDtd=True, nodeFactories=None):
     import warnings

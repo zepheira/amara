@@ -43,3 +43,6 @@ class ReaderError(Error):
 
 class XIncludeError(ReaderError):
     pass
+
+from amara.domlette import parse
+

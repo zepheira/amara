@@ -1,29 +1,7 @@
 ########################################################################
 # amara/xslt/__init__.py
 """
-XSLT initialization and XSLT pattern tools
-
-These are the most common steps for using this XSLT engine:
-
-  1. Create an Ft.Xml.Xslt.Processor.Processor instance:
-
-     from Ft.Xml.Xslt import Processor
-     processor = Processor.Processor()
-
-  2. Prepare Ft.Xml.InputSource instances (via their factory)
-     for the source XML and for the stylesheet.
-
-  3. Call the Processor's appendStylesheet() method, passing it
-     the stylesheet's InputSource.
-
-  4. Call the Processor's run() method, passing it the source
-     document's InputSource.
-
-You can call run() multiple times on different InputSources. When you're
-done, the processor's reset() method can be used to restore a clean slate
-(at which point you would have to append stylesheets to the processor
-again), but in most circumstances it is actually less expensive to just
-create a new Processor instance.
+Please see: http://wiki.xml3k.org/Amara2/Whatsnew#head-6121c5b40e473f1e3d720a66212f3025856bdc90
 """
 
 from amara import Error
