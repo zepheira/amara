@@ -9,7 +9,7 @@ import cStringIO
 import traceback
 
 from amara import domlette
-from amara._domlette import getallns
+from amara._domlette import GetAllNs as getallns
 from amara.xpath import XPathError
 from amara.xpath.parser import xpathparser
 
