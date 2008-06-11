@@ -7,6 +7,7 @@ Represents XSLT output parameters governed by the xsl:output instruction
 class outputparameters(object):
     boolean_attribues = [
         'omit_xml_declaration', 'standalone', 'indent', 'byte_order_mark',
+        'canonical_form',
         ]
     string_attributes = [
         'method', 'version', 'encoding', 'doctype_system', 'doctype_public',
@@ -31,7 +32,7 @@ class outputparameters(object):
                  omit_xml_declaration=None, standalone=None,
                  doctype_public=None, doctype_system=None,
                  cdata_section_elements=(), indent=None, media_type=None,
-                 byte_order_mark=None):
+                 byte_order_mark=None, canonical_form=None):
         self.method = method
         self.version = version
         self.encoding = encoding
@@ -45,6 +46,7 @@ class outputparameters(object):
         self.indent = indent
         self.media_type = media_type
         self.byte_order_mark = byte_order_mark
+        self.canonical_form = canonical_form
 
     def clone(self):
         attrs = {}
@@ -55,7 +57,9 @@ class outputparameters(object):
                 setattr(clone, name, value)
         return self.__class__(**attrs)
 
-    def setdefault(self, attr, value):
-        if getattr(self, attr) is None:
-            setattr(self, attr, value)
-        return
+    def setdefault(self, attr, default):
+        value = getattr(self, attr)
+        if value is not None:
+            return value
+        setattr(self, attr, default)
+        return default
