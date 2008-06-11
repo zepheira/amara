@@ -1327,7 +1327,7 @@ process_error(ExpatReader *reader)
   case XML_ERROR_NONE:
     /* error handler called during non-error condition */
     PyErr_BadInternalCall();
-    XML_StopParser(reader->context->parser, 0);
+    stop_parsing(reader);
     break;
   case XML_ERROR_NO_MEMORY:
     PyErr_NoMemory();
@@ -1354,7 +1354,6 @@ process_error(ExpatReader *reader)
     break;
   default:
     /* terminate parsing and setup ReaderError */
-    stop_parsing(reader);
     Debug_Print("-- Parsing error ------------ \n"
                 "Expat error: %s\n"
                 "Expat error code: %d\n",
@@ -1362,18 +1361,19 @@ process_error(ExpatReader *reader)
     args = Py_BuildValue("iOii", error_code, reader->context->uri,
                          XML_GetErrorLineNumber(reader->context->parser),
                          XML_GetErrorColumnNumber(reader->context->parser));
-    if (args == NULL)
-      break;
-    exception = PyObject_Call(ReaderError, args, NULL);
-    Py_DECREF(args);
-    if (exception == NULL)
-      break;
-    if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
-      (void) ExpatFilter_FatalError(reader->context->filters, exception);
-    } else {
-      PyErr_SetObject(ReaderError, exception);
+    if (args) {
+      exception = PyObject_Call(ReaderError, args, NULL);
+      Py_DECREF(args);
+      if (exception) {
+        if (ExpatReader_HasFlag(reader, ExpatReader_ERROR_HANDLERS)) {
+          (void) ExpatFilter_FatalError(reader->context->filters, exception);
+        } else {
+          PyErr_SetObject(ReaderError, exception);
+        }
+        Py_DECREF(exception);
+      }
     }
-    Py_DECREF(exception);
+    stop_parsing(reader);
   }
 }
 

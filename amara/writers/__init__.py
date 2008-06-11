@@ -1,6 +1,16 @@
 ########################################################################
 # amara/writers/__init__.py
 
+from amara import Error
+
+__all__ = ['WriterError', 'writer', 'streamwriter']
+
+class WriterError(Error):
+
+    ATTRIBUTE_ADDED_TOO_LATE = 1
+    ATTRIBUTE_ADDED_TO_NON_ELEMENT = 2
+
+
 class writer(object):
     # Note, any changes to __slots__ require a change in treewriter.c as well
     __slots__ = ('output_parameters',)
@@ -100,3 +110,15 @@ class writer(object):
         body - comment text.
         """
         return
+
+
+class streamwriter(writer):
+
+    def __init__(self, output_parameters, stream):
+        """
+        output_parameters - instance of
+                            `amara.writers.outputparameters.outputparameters`
+        stream - a stream that takes a byte stream (not a unicode object)
+        """
+        self.output_parameters = output_parameters
+        self.stream = stream
