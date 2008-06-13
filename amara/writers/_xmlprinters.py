@@ -4,12 +4,13 @@
 This module supports document serialization in XML syntax.
 """
 
-import re
-from amara import XML_NAMESPACE
-from amara._xmlstring import SplitQName
+import itertools
+
 from amara.writers import _xmlstream
 
-class xmlprinter:
+__all__ = ('xmlprinter', 'xmlprettyprinter')
+
+class xmlprinter(object):
     """
     An `xmlprinter` instance provides functions for serializing an XML or
     XML-like document to a stream, based on SAX-like event calls
@@ -68,12 +69,12 @@ class xmlprinter:
         """
         if self._element_name:
             if self._canonical_form:
-                # No element content, use minimized form
-                self.write_ascii('/>')
-            else:
                 self.write_ascii('</')
                 self.write_encode(self._element_name, 'end-tag name')
                 self.write_ascii('>')
+            else:
+                # No element content, use minimized form
+                self.write_ascii('/>')
             self._element_name = None
         return
 
@@ -114,24 +115,70 @@ class xmlprinter:
 
         Note, the `namespace` argument is ignored in this class.
         """
+        write_ascii, write_escape, write_encode = (
+            self.write_ascii, self.write_escape, self.write_encode)
+
         if self._element_name:
             # Close current start tag
-            self.write_ascii('>')
+            write_ascii('>')
         self._element_name = name
 
-        self.write_ascii('<')
-        self.write_encode(name, 'start-tag name')
+        write_ascii('<')
+        write_encode(name, 'start-tag name')
 
-        # Write the namespaces
-        for prefix, uri in namespaces:
-            if prefix:
-                self.attribute(namespace, name, u"xmlns:"+prefix, uri)
-            else:
-                self.attribute(namespace, name, u"xmlns", uri)
+        # Create the namespace "attributes"
+        namespaces = [ (prefix and u'xmlns:' + prefix or u'xmlns', uri)
+                       for prefix, uri in namespaces
+                      ]
+        # Merge the namespace and attribute sequences for output
+        attributes = itertools.chain(namespaces, attributes)
+        if self._canonical_form:
+            for name, value in attributes:
+                write_ascii(' ')
+                write_encode(name, 'attibute name')
+                # Replace characters illegal in attribute values and wrap
+                # the value with quotes (") in accordance with Canonical XML.
+                write_ascii('="')
+                write_escape(value, self._attr_entities_quot)
+                write_ascii('"')
+        else:
+            for name, value in attributes:
+                # Writes an attribute to the stream as a space followed by
+                # the name, '=', and quote-delimited value. It is the caller's
+                # responsibility to ensure that this is called in the correct
+                # context, if well-formed output is desired.
 
-        # Now the attributes
-        for attr, value in attributes:
-            self.attribute(namespace, name, attr, value)
+                # Preference is given to quotes (") around attribute values,
+                # in accordance with the DomWriter interface in DOM Level 3
+                # Load and Save (25 July 2002 WD), although a value that
+                # contains quotes but no apostrophes will be delimited by
+                # apostrophes (') instead.
+                write_ascii(" ")
+                write_encode(name, 'attribute name')
+                # Special case for HTML boolean attributes (just a name)
+                if value is not None:
+                    # Replace characters illegal in attribute values and wrap
+                    # the value with appropriate quoting in accordance with
+                    # DOM Level 3 Load and Save:
+                    # 1. Attributes not containing quotes are serialized in
+                    #    quotes.
+                    # 2. Attributes containing quotes but no apostrophes are
+                    #    serialized in apostrophes.
+                    # 3. Attributes containing both forms of quotes are
+                    #    serialized in quotes, with quotes within the value
+                    #    represented by the predefined entity `&quot;`.
+                    if '"' in value and "'" not in value:
+                        # Use apostrophes (#2)
+                        entitymap = self._attr_entities_apos
+                        quote = "'"
+                    else:
+                        # Use quotes (#1 and #3)
+                        entitymap = self._attr_entities_quot
+                        quote = '"'
+                    write_ascii("=")
+                    write_ascii(quote)
+                    write_escape(value, entitymap)
+                    write_ascii(quote)
         return
 
     def end_element(self, namespace, name):
@@ -144,58 +191,14 @@ class xmlprinter:
         Note, the `namespace` argument is ignored in this class.
         """
         if self._element_name:
-            if self._canonical_form:
+            self._element_name = None
+            if not self._canonical_form:
                 # No element content, use minimized form
                 self.write_ascii('/>')
                 return
-            self._element_name = None
         self.write_ascii('</')
         self.write_encode(name, 'end-tag name')
         self.write_ascii('>')
-        return
-
-    # elementUri and elementName are only needed for HTML output
-    def attribute(self, element_namespace, element_name, name, value):
-        """
-        Handles an attribute event.
-
-        Writes an attribute to the stream as a space followed by
-        the name, '=', and quote-delimited value. It is the caller's
-        responsibility to ensure that this is called in the correct
-        context, if well-formed output is desired.
-
-        Preference is given to quotes (\") around attribute values, in
-        accordance with the DomWriter interface in DOM Level 3 Load and
-        Save (25 July 2002 WD), although a value that contains quotes
-        but no apostrophes will be delimited by apostrophes (') instead.
-        The elementName arguments are not used by default,
-        but may be used by subclasses.
-        """
-        self.write_ascii(" ")
-        self.write_encode(name, 'attribute name')
-        self.write_ascii("=")
-
-        # Replace characters illegal in attribute values
-        # Wrap the value with appropriate quoting in accordance with
-        # DOM Level 3 Load and Save:
-        # 1. Attributes not containing quotes are serialized in quotes.
-        # 2. Attributes containing quotes but no apostrophes are serialized
-        #    in apostrophes.
-        # 3. Attributes containing both forms of quotes are serialized in
-        #    quotes, with quotes within the value represented by the
-        #    predefined entity &quot;.
-        if '"' in value and "'" not in value and not self._canonical_form:
-            # Use apostrophes (#2)
-            entitymap = self._attr_entities_apos
-            quote = "'"
-        else:
-            # Use quotes (#1 and #3)
-            entitymap = self._attr_entities_quot
-            quote = '"'
-
-        self.write_ascii(quote)
-        self.write_escape(value, entitymap)
-        self.write_ascii(quote)
         return
 
     def text(self, text, disable_escaping=False):
