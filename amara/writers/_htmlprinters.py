@@ -67,34 +67,6 @@ class htmlprinter(xmlprinter):
             xmlprinter.doctype(self, name, publicId, systemId)
         return
 
-    def _translate_attributes(self, element, attributes):
-        bool_attrs, uri_attrs = self._boolean_attributes, self._uri_attributes
-        for name, value in attributes:
-            attr = name.lower()
-            if attr in bool_attrs and element in bool_attrs[attr]:
-                if attr == value.lower():
-                    # A boolean attribute, just write out the name
-                    value = None
-            elif attr in uri_attrs and element in uri_attrs[attr]:
-                # From HTML 4.0 Section B.2.1
-                # We recommend that user agents adopt the following convention
-                # for handling non-ASCII characters:
-                # 1. Represent each character in UTF-8 (see [RFC2279]) as one
-                #    or more bytes.
-                # 2. Escape these bytes with the URI escaping mechanism
-                #    (i.e., by converting each byte to %HH, where HH is the
-                #     hexadecimal notation of the byte value).
-                # (Although this recommendation is for HTML user agents
-                # that encounter HTML with improperly escaped URI refs,
-                # we implement it in order to comply with XSLT's html
-                # output method, and because there's no compelling reason
-                # not to do it for non-XSLT serializations as well)
-                value = unicode(re.sub('[\x80-\xff]',
-                                lambda match: '%%%02X' % ord(match.group()),
-                                value.encode('UTF-8')))
-            yield (name, value)
-        return
-
     def start_element(self, namespace, name, namespaces, attributes):
         """
         Handles a start-tag event.
@@ -107,16 +79,11 @@ class htmlprinter(xmlprinter):
                                      attributes)
             return
 
-        element = name.lower()
-        if element in self._no_escape_elements:
+        if name.lower() in self._no_escape_elements:
             self._disable_ouput_escaping += 1
 
-        # Translate attribute values as required
-        if namespace is None:
-            attributes = self._translate_attributes(element, attributes)
-
         xmlprinter.start_element(self, namespace, name, namespaces,
-                                 attributes)
+                                attributes)
 
         # HTML tags are never in minimized form ('<tag/>')
         self.write_ascii('>')
@@ -143,6 +110,55 @@ class htmlprinter(xmlprinter):
         # Restore normal escaping if closing a no-escape element.
         if element in self._no_escape_elements:
             self._disable_ouput_escaping -= 1
+        return
+
+    def attribute(self, element_namespace, element_name, name, value):
+        """
+        Handles an attribute event.
+
+        Extends the overridden method by writing boolean attributes in
+        minimized form.
+        """
+        if element_namespace is not None:
+            xmlprinter.attribute(self, element_namespace, element_name,
+                                 name, value)
+            return
+
+        element = element_name.lower()
+        attribute = name.lower()
+        if (attribute in self._boolean_attributes
+            and element in self._boolean_attributes[attribute]
+            and attribute == value.lower()):
+            # A boolean attribute, just write out the name
+            self.write_ascii(' ')
+            self.write_encode(name, 'attribute name')
+        elif (attribute in self._uri_attributes
+              and element in self._uri_attributes[attribute]):
+            # From HTML 4.0 Section B.2.1
+            # We recommend that user agents adopt the following convention for
+            # handling non-ASCII characters:
+            # 1. Represent each character in UTF-8 (see [RFC2279]) as one or
+            #    more bytes.
+            # 2. Escape these bytes with the URI escaping mechanism (i.e., by
+            #    converting each byte to %HH, where HH is the hexadecimal
+            #    notation of the byte value).
+            # (Although this recommendation is for HTML user agents
+            # that encounter HTML with improperly escaped URI refs,
+            # we implement it in order to comply with XSLT's html
+            # output method, and because there's no compelling reason
+            # not to do it for non-XSLT serializations as well)
+            #
+            # FIXME:
+            # "&" should not be escaped in an attribute value when it
+            # it is followed by "{" (see Section B.7.1 of HTML 4.0).
+            value = unicode(re.sub('[\x80-\xff]',
+                                   lambda match: '%%%02X' % ord(match.group()),
+                                   value.encode('UTF-8')))
+            xmlprinter.attribute(self, element_namespace, element_name,
+                                 name, value)
+        else:
+            xmlprinter.attribute(self, element_namespace, element_name,
+                                 name, value)
         return
 
     def text(self, data, disable_escaping=False):

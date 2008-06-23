@@ -1,8 +1,7 @@
 ########################################################################
 # amara/__init__.py
 
-XML_NAMESPACE = u"http://www.w3.org/XML/1998/namespace"
-XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
+from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 
 class Error(Exception):
 

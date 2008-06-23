@@ -122,3 +122,4 @@ class streamwriter(writer):
         """
         self.output_parameters = output_parameters
         self.stream = stream
+
