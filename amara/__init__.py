@@ -279,4 +279,5 @@ class XIncludeError(ReaderError):
     pass
 
 from amara.domlette import parse
+from amara.lib import xmlstring as string
 
