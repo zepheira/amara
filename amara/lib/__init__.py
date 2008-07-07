@@ -70,3 +70,7 @@ class IriError(Error):
             }
 
 from amara.lib._inputsource import _inputsource as inputsource
+
+# Alias amara.test to amara.lib.testsupport
+from amara.lib import importutil
+testsupport = importutil.proxy_module('amara.lib.testsupport', 'amara.test')

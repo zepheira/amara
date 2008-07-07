@@ -19,7 +19,7 @@ from zipimport import zipimporter
 __all__ = [
     # Module Utilities
     'find_loader', 'find_importer', 'get_importer', 'iter_modules',
-    'get_last_modified', 'get_search_path',
+    'get_last_modified', 'get_search_path', 'proxy_module',
     # Resource Utilities
     'os_path_to_resource', 'normalize_resource', 'get_resource_filename',
     'get_resource_string', 'get_resource_stream', 'get_resource_last_modified',
@@ -206,6 +206,22 @@ def get_search_path(fullname):
             package = loader.load_module(fullname)
         return package.__path__
     return None
+
+def proxy_module(fullname, realname):
+    class moduleproxy(types.ModuleType):
+        def __getattribute__(self, name):
+            if realname not in sys.modules:
+                # Load the module
+                module = __import__(realname, {}, {}, [name])
+                # Replace ourselves in `sys.modules`
+                sys.modules[fullname] = module
+            else:
+                module = sys.modules[realname]
+            return module.__getattribute__(name)
+        def __repr__(self):
+            return "<moduleproxy '%s' to '%s'>" % (fullname, realname)
+    module = sys.modules[fullname] = moduleproxy(fullname)
+    return module
 
 # -- Resource Handling ------------------------------------------------
 
