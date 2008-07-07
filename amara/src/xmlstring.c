@@ -853,13 +853,13 @@ static PyMethodDef module_methods[] = {
   { "XmlStrLStrip", string_lstrip,     METH_VARARGS, lstrip_doc },
   { "XmlStrRStrip", string_rstrip,     METH_VARARGS, rstrip_doc },
   { "XmlStrStrip",  string_strip,      METH_VARARGS, strip_doc },
-  { "IsXml",        string_isxml,      METH_VARARGS, isxml_doc },
-  { "IsXmlSpace",   string_isspace,    METH_VARARGS, isspace_doc },
-  { "IsName",       string_isname,     METH_VARARGS, isname_doc },
-  { "IsNmtoken",    string_isnmtoken,  METH_VARARGS, isnmtoken_doc },
-  { "IsQName",      string_isqname,    METH_VARARGS, isqname_doc },
-  { "IsNCName",     string_isncname,   METH_VARARGS, isncname_doc },
-  { "SplitQName",   string_splitqname, METH_VARARGS, splitqname_doc },
+  { "isxml",        string_isxml,      METH_VARARGS, isxml_doc },
+  { "isspace",      string_isspace,    METH_VARARGS, isspace_doc },
+  { "isname",       string_isname,     METH_VARARGS, isname_doc },
+  { "isnmtoken",    string_isnmtoken,  METH_VARARGS, isnmtoken_doc },
+  { "isqname",      string_isqname,    METH_VARARGS, isqname_doc },
+  { "isncname",     string_isncname,   METH_VARARGS, isncname_doc },
+  { "splitqname",   string_splitqname, METH_VARARGS, splitqname_doc },
   { NULL, NULL }
 };
 

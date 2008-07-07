@@ -5,7 +5,10 @@ from cStringIO import StringIO
 from uuid import UUID, uuid1, uuid4
 
 from amara._expat import InputSource
-from amara.lib import iri
+from amara.lib import iri, xmlstring
+from amara.lib.xmlstring import isxml
+
+__all__ = ['_inputsource']
 
 class _inputsource(InputSource):
     def __new__(self, arg, uri=None):
@@ -21,7 +24,7 @@ class _inputsource(InputSource):
         """
         #do the imports within the function: a tad bit less efficient, but
         #avoid circular crap
-        from amara._xmlstring import IsXml as isxml
+        #from amara._xmlstring import IsXml as isxml
 
         if hasattr(arg, 'read'):
             #Create dummy Uri to use as base
@@ -42,6 +45,5 @@ class _inputsource(InputSource):
         #http://docs.python.org/lib/module-gzip.html
         #http://docs.python.org/lib/module-bz2.html
         #http://docs.python.org/lib/zipfile-objects.html
-        
-        return InputSource.__new__(self, stream, uri)
 
+        return InputSource.__new__(self, stream, uri)

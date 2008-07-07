@@ -4,7 +4,7 @@
 The implementation of parsed XPath expression tokens.
 """
 
-from amara._xmlstring import SplitQName
+from amara._xmlstring import splitqname
 from amara.xpath import XPathError
 from amara.xpath import datatypes, expressions
 
@@ -101,7 +101,7 @@ class variable_reference(expressions.expression):
         qualified name for the variable reference.
         """
         # Construct the expanded-name tuple
-        prefix, local = SplitQName(self._name)
+        prefix, local = splitqname(self._name)
         if prefix:
             try:
                 namespace = compiler.namespaces[prefix]

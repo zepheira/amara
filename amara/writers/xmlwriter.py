@@ -8,7 +8,6 @@ import operator
 import itertools
 
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
-from amara._xmlstring import xml_str_strip, split_qname
 from amara.writers import WriterError, streamwriter
 from amara.writers._xmlprinters import xmlprinter, xmlprettyprinter
 

@@ -12,6 +12,7 @@ XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"
 XSLT_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'
 
 #etc
+EXTENSION_NAMESPACE = u'http://xmlns.4suite.org/ext'
 
 XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink" #XML Linking Language: http://www.w3.org/TR/xlink/
 XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'

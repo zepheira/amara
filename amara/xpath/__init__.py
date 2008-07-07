@@ -4,10 +4,7 @@
 XPath initialization and principal functions
 """
 
-EXTENSION_NAMESPACE = 'http://xmlns.4suite.org/ext'
-
 __all__ = [# global constants:
-           'EXTENSION_NAMESPACE',
            # exception class:
            'XPathError',
            # XPath expression processing:
@@ -105,7 +102,7 @@ class context(writer):
     The context of an XPath expression
     """
     functions = extensions.extension_functions
-    currentInstruction = None
+    current_instruction = None
 
     def __init__(self, node, position=1, size=1,
                  variables=None, namespaces=None,
@@ -218,17 +215,10 @@ class context(writer):
             pass
         return
 
-    def addFunction(self, expandedName, function):
+    def add_function(self, name, function):
         if not callable(function):
             raise TypeError("function must be a callable object")
-        self.functions[expandedName] = function
-        return
-
-    def copy(self):
-        return (self.node, self.position, self.size)
-
-    def set(self, state):
-        self.node, self.position, self.size = state
+        self.functions[name] = function
         return
 
     def clone(self):
@@ -243,3 +233,10 @@ class context(writer):
         parsed = parser.parse(expr)
         return parsed.evaluate(self)
 
+    def __repr__(self):
+        ptr = id(self)
+        if ptr < 0:
+            ptr += 0x100000000L
+        return ('<%s at 0x%x: node %r, position %d, size %d>' %
+                (self.__class__.__name__, ptr, self.node, self.position,
+                 self.size))

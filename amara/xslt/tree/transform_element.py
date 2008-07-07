@@ -1,0 +1,642 @@
+########################################################################
+# amara/xslt/tree/stylesheet.py
+"""
+Implementation of the `xsl:stylesheet` and `xsl:transform` elements.
+"""
+
+import sys
+import operator
+import itertools
+import collections
+
+from xml.dom import Node
+from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
+from amara import xpath
+from amara.writers import outputparameters
+from amara.xslt import XsltError, xsltcontext, patternlist
+from amara.xslt.tree import xslt_element, literal_element
+from amara.xslt.reader import content_model, attribute_types
+
+__all__ = ['match_tree', 'stylesheet_element']
+
+TEMPLATE_CONFLICT_LOCATION = _(
+    'In stylesheet %s, line %s, column %s, pattern %r')
+
+_template_location = operator.attrgetter('baseUri', 'lineNumber',
+                                         'columnNumber', '_match')
+
+def _fixup_aliases(node, aliases):
+    for child in node:
+        if isinstance(child, literal_element):
+            child.fixup_aliases(aliases)
+            _fixup_aliases(child, aliases)
+        elif isinstance(child, xslt_element):
+            _fixup_aliases(child, aliases)
+    return
+
+
+# The dispatch table is first keyed by mode, then keyed by node type. If an
+# element type, it is further keyed by the name test.
+def _dispatch_table():
+    class type_dispatch_table(collections.defaultdict):
+        def __missing__(self, node_type):
+            if node_type == Node.ELEMENT_NODE:
+                value = self[node_type] = collections.defaultdict(list)
+            else:
+                value = self[node_type] = []
+            return value
+    return collections.defaultdict(type_dispatch_table)
+
+
+def match_tree(patterns, context):
+    """
+    Returns all nodes, from context on down, that match the patterns
+    """
+    state = context.copy()
+
+    # Save these before any changes are made to the context
+    children = context.node.childNodes
+    attributes = context.node.xpathAttributes or None
+
+    matched = patterns.xsltKeyPrep(context, context.node)
+
+    pos = 1
+    size = len(children)
+    for node in children:
+        context.node, context.position, context.size = node, pos, size
+        map(lambda x, y: x.extend(y), matched, match_tree(patterns, context))
+        pos += 1
+
+    if attributes:
+        size = len(attributes)
+        pos = 1
+        for node in attributes:
+            context.node, context.position, context.size = node, pos, size
+            map(lambda x, y: x.extend(y),
+                matched, patterns.xsltKeyPrep(context, node))
+            pos += 1
+
+    context.set(state)
+    return matched
+
+
+class stylesheet_element(xsltelement):
+    content_model = contentinfo.Seq(
+        contentinfo.Rep(contentinfo.QName(XSL_NAMESPACE, 'xsl:import')),
+        contentinfo.TopLevelElements,
+        )
+    attribute_types = {
+        'id': attributeinfo.Id(),
+        'extension-element-prefixes': attributeinfo.Prefixes(),
+        'exclude-result-prefixes': attributeinfo.Prefixes(),
+        'version': attributeinfo.Number(required=True),
+        }
+
+    # We don't want ourselves included in these lists since we do the walking
+    doesSetup = doesPrime = doesIdle = False
+
+    match_templates = None
+    named_templates = None
+    global_variables = None
+    initial_functions = None
+
+    def __init__(self, *args, **kwds):
+        xslt_element.__init__(self, *args, **kwds)
+        self.reset1()
+        return
+
+    def reset1(self):
+        self.matchTemplates = {}
+        self.namedTemplates = {}
+        self.globalVars = {}
+        self.initialFunctions = {}
+        return
+
+    def reset2(self):
+        self.output_parameters = OutputParameters.OutputParameters()
+        self.spaceRules = []
+        self.namespaceAliases = {}
+        self.decimalFormats = {}
+        return
+
+    def setup(self):
+        """
+        Called only once, at the first initialization
+        """
+        self.reset2()
+
+        # Sort the top-level elements in decreasing import precedence to ease
+        # processing later.
+        precedence_key = operator.attrgetter('import_precedence')
+        elements = sorted(self.children, key=precedence_key, reverse=True)
+
+        # Merge the top-level stylesheet elements into their respective
+        # lists.  Any element name not in the mapping is discarded.
+        # Note, by sharing the same list no merging is required later.
+        whitespace_elements, variable_elements = [], []
+        top_level_elements = {
+            'strip-space' : whitespace_elements,
+            'preserve-space' : whitespace_elements,
+            'output' : [],
+            'key' : [],
+            'decimal-format' : [],
+            'namespace-alias' : [],
+            'attribute-set': [],
+            'variable' : variable_elements,
+            'param' : variable_elements,
+            'template' : [],
+            }
+        # Using `groupby` takes advantage of series of same-named elements
+        # appearing adjacent to each other.
+        key = operator.attrgetter('expanded_name')
+        for (namespace, name), nodes in itertools.groupby(self.children, key):
+            if namespace == XSL_NAMESPACE and name in top_level_elements:
+                top_level_elements[name].extend(nodes)
+
+        # - process the `xsl:preserve-space` and `xsl:strip-space` elements
+        # RECOVERY: Multiple matching patterns use the last occurance
+        space_rules = {}
+        for element in whitespace_elements:
+            strip = element._strip_whitespace
+            for token in element._elements:
+                namespace, name = token
+                space_rules[token] = (namespace, name, strip)
+        self.space_rules = space_rules.values()
+        # sort in decreasing priority, where `*` is lowest, followed by
+        # `prefix:*`, then all others.
+        self.space_rules.sort(reverse=True)
+
+        # - process the `xsl:output` elements
+        # Sort in increasing import precedence, so the last one added
+        # will have the highest import precedence
+        elements = top_level_elements['output']
+        for element in elements:
+            self.output_parameters.parse(element)
+
+        # - process the `xsl:key` elements
+        # Group the keys by name
+        keys = top_level_elements['key']
+        name_key = operator.attrgetter('_name')
+        keys.sort(key=name_key)
+        self._keys = {}
+        getter = operator.attrgetter('_match', '_use', 'namespaces')
+        for name, keys in itertools.groupby(keys, name_key):
+            self._keys[name] = map(getter, keys)
+
+        # - process the `xsl:decimal-format` elements
+        formats = self.decimal_formats
+        getter = operator.attrgetter(
+            '_decimal_separator', '_grouping_separator', '_infinity',
+            '_minus_sign', '_NaN', '_percent', '_per_mille', '_zero_digit',
+            '_digit', '_pattern_separator')
+        for element in top_level_elements['decimal-format']:
+            name = element._name
+            format = getter(element)
+            # It is an error to declare a decimal-format more than once
+            # (even with different import precedence) with different values.
+            if name in formats and formats[name] != format:
+                # Construct a useful name for the error message.
+                if name:
+                    namespace, name = name
+                    if namespace:
+                        name = element.namespaces[namespace] + ':' + name
+                else:
+                    name = '#default'
+                raise XsltError(XsltError.DUPLICATE_DECIMAL_FORMAT, name)
+            else:
+              formats[name] = format
+        # Add the default decimal format, if not declared.
+        if None not in formats:
+            formats[None] = ('.', ',', 'Infinity', '-', 'NaN', '%',
+                             unichr(0x2030), '0', '#', ';')
+
+        # - process the `xsl:namespace-alias` elements
+        elements = top_level_elements['namespace-alias']
+        elements.reverse()
+        aliases = self.namespace_aliases
+        for precedence, group in itertools.groupby(precedence_key, elements):
+            mapped = {}
+            for element in group:
+                namespace = element.namespaces[element._stylesheet_prefix]
+                if namespace not in aliases:
+                    mapped[namespace] = True
+                    result_prefix = alias._result_prefix
+                    result_namespace = element.namespaces[result_prefix]
+                    aliases[namespace] = (result_namespace, result_prefix)
+                # It is an error for a namespace URI to be mapped to multiple
+                # different namespace URIs (with the same import precedence).
+                elif namespace in mapped:
+                    raise XsltError(XsltError.DUPLICATE_NAMESPACE_ALIAS,
+                                    element._stylesheet_prefix)
+        if aliases:
+            # apply namespace fixup for the literal elements
+            _fixup_aliases(self, aliases)
+
+        # - process the `xsl:attribute-set` elements
+        elements = top_level_elements['attribute-set']
+
+        # - process the `xsl:param` and `xsl:variable` elements
+        self._topVariables = index, ordered = {}, variable_elements[:]
+        variable_elements.reverse()
+        for element in variable_elements:
+            name = element._name
+            if name in index:
+                # shadowed variable binding, remove from processing list
+                ordered.remove(element)
+            else:
+                # unique (or first) variable binding
+                index[name] = element
+
+        # - process the `xsl:template` elements
+        match_templates = _dispatch_table()
+        named_templates = self.named_templates = {}
+        elements = top_level_elements['template']
+        elements.reverse()
+        for position, element in enumerate(elements):
+            match, name = element._match, element._name
+            precedence = element.import_precedence
+            if match:
+                namespaces = element.namespaces
+                template_priority = element._priority
+                mode_table = match_templates[template._mode]
+                for pattern in match.patterns:
+                    node_test, axis_type = pattern.get_shortcut()
+                    if template_priority is None:
+                        priority = node_test.priority
+                    else:
+                        priority = template_priority
+                    info = ((precedence, template_priority, position),
+                            node_test, axis_type, element)
+                    # Add the template rule to the dispatch table
+                    node_type, name_key = pattern.get_match_key(namespaces)
+                    if node_type == Node.ELEMENT_NODE:
+                        # Element types are further keyed by the name test.
+                        mode_table[node_type][name_key].append(info)
+                    else:
+                        # Every other node type gets lumped into a single list
+                        # for that node type
+                        mode_table[node_type].append(info)
+            if name:
+                # XSLT 1.0, Section 6, Paragraph 3:
+                # It is an error if a stylesheet contains more than one
+                # template with the same name and same import precedence.
+                if name not in named_templates:
+                    named_templates[name] = element
+                elif named_templates[name].import_precedence == precedence:
+                    # Construct a useful name for the error message.
+                    namespace, name = name
+                    if namespace:
+                        name = element.namespaces[namespace] + ':' + name
+                    raise XsltError(XsltError.DUPLICATE_NAMED_TEMPLATE, name)
+        # Now expanded the tables and convert to regular dictionaries to
+        # prevent inadvertant growth when non-existant keys are used.
+        match_templates = self.match_templates = dict(match_templates)
+        for mode, type_table in match_templates.iteritems():
+            # Add those patterns that don't have a distinct type:
+            #   node(), id() and key() patterns
+            any_patterns = type_table[None]
+            type_table = match_templates[mode] = dict(type_table)
+            for node_type, patterns in type_table.iteritems():
+                if node_type == Node.ELEMENT_NODE:
+                    # Add those that are wildcard tests ('*' and 'prefix:*')
+                    wildcard_names = patterns[None]
+                    name_table = type_table[node_type] = dict(patterns)
+                    for name_key, patterns in name_table.iteritems():
+                        if name_key is not None:
+                            patterns.extend(wildcard_names)
+                        patterns.extend(any_patterns)
+                        patterns.sort(reverse=True)
+                elif node_type is not None:
+                    type_table.extend(any_patterns)
+                    type_table.sort(reverse=True)
+        return
+
+    #def _printMatchTemplates(self):
+    #    print "=" * 50
+    #    print "matchTemplates:"
+    #    templates = {}
+    #    for mode in self.matchTemplates.keys():
+    #        print "-" * 50
+    #        print "mode:",mode
+    #        for nodetype in self.matchTemplates[mode].keys():
+    #            print "  node type:",nodetype
+    #            for patterninfo in self.matchTemplates[mode][nodetype]:
+    #                pat, axistype, template = patterninfo
+    #                print "    template matching pattern  %r  for axis type %s" % (pat, axistype)
+    #                templates[template] = 1
+    #
+    #    print
+    #    for template in templates.keys():
+    #        template._printTemplateInfo()
+    #
+    #    return
+
+    ############################# Prime Routines #############################
+
+    def primeStylesheet(self, contextNode, processor, topLevelParams, docUri):
+        doc = contextNode.rootNode
+        #self.newSource(doc, processor)
+
+        context = XsltContext.XsltContext(doc, 1, 1,
+                                          processorNss=self.namespaces,
+                                          stylesheet=self,
+                                          processor=processor,
+                                          extFunctionMap=processor.extFunctions
+                                          )
+
+        baseUri = docUri or getattr(context.node, 'refUri', None)
+        context.addDocument(doc, baseUri)
+
+        #Run prime for all instructions that declared they used it
+        #NOTE: Must prime instructions *before* setting up variables and
+        #parameters because vars and params might rely on context updates
+        #while priming (e.g. if an EXSLT func:function is declared and used
+        #in a variable defn)
+        for instruction in self.root.primeInstructions:
+            instruction.prime(processor, context)
+
+        self.initialFunctions.update(context.functions)
+
+        overridden_params = {}
+        for split_name, value in topLevelParams.items():
+            if not isinstance(split_name, tuple):
+                try:
+                    split_name = context.expandQName(split_name)
+                except KeyError:
+                    continue
+            overridden_params[split_name] = value
+
+        processed, deferred = {}, []
+        for vnode in self._topVariables[1]:
+            name = vnode._name
+            if vnode.expandedName[1][0] == 'p':
+                if name in overridden_params:
+                    context.varBindings[name] = overridden_params[name]
+                else:
+                    self._computeGlobalVar(name, context, processed, deferred,
+                                           processor)
+                    #Set up so that later stylesheets will get overridden by
+                    #parameter values set in higher-priority stylesheets
+                    overridden_params[name] = context.varBindings[name]
+            else:
+                self._computeGlobalVar(name, context, processed, deferred,
+                                       processor)
+            self.globalVars.update(context.varBindings)
+        return
+
+
+    def _computeGlobalVar(self, vname, context, processed, deferred,
+                          processor):
+        vnode = self._topVariables[0][vname]
+
+        if vnode in deferred:
+            raise XsltError(XsltError.CIRCULAR_VAR, vname[0], vname[1])
+        if vnode in processed:
+            return
+        while True:
+            depth = len(processor.writers)
+            try:
+                vnode.instantiate(context, processor)
+            except xpath.RuntimeException, e:                  #FIX
+                if e.errorCode == xpath.RuntimeException.UNDEFINED_VARIABLE:
+                    #Remove any aborted and possibly unbalanced
+                    #outut handlers on the stack
+                    depth -= len(processor.writers)
+                    if depth:
+                        assert depth < 0
+                        del processor.writers[depth:]
+                    #Defer the current and try evaluating the
+                    #one that turned up undefined
+                    deferred.append(vnode)
+                    self._computeGlobalVar(e.params['key'], context, processed,
+                                           deferred, processor)
+                    deferred.remove(vnode)
+                else:
+                    raise
+            else:
+                break
+        processed[vnode] = True
+        return
+
+    def updateKey(self, doc, keyName, processor):
+        """
+        Update a particular key for a new document
+        """
+        from pprint import pprint
+        if doc not in processor.keys:
+            processor.keys[doc] = {}
+        if keyName not in processor.keys[doc]:
+            key_values = processor.keys[doc][keyName] = {}
+        else:
+            key_values = processor.keys[doc][keyName]
+        try:
+            keys = self._keys[keyName]
+        except KeyError:
+            return
+
+        # Find the matching nodes using all matching xsl:key elements
+        updates = {}
+        for key in keys:
+            match_pattern, use_expr, namespaces = key
+            context = xsltcontext.xslt_context(
+                doc, 1, 1, processorNss=namespaces, processor=processor,
+                extFunctionMap=self.initialFunctions)
+            patterns = PatternList([match_pattern], namespaces)
+            matched = match_tree(patterns, context)[0]
+            for node in matched:
+                state = context.copy()
+                context.node = node
+                key_value_list = use_expr.evaluate(context)
+                if not isinstance(key_value_list, list):
+                    key_value_list = [key_value_list]
+                for key_value in key_value_list:
+                    if key_value not in updates:
+                        updates[key_value] = [node]
+                    else:
+                        updates[key_value].append(node)
+                context.set(state)
+
+        # Put the updated results in document order with duplicates removed
+        for key_value in updates:
+            if key_value in key_values:
+                nodes = Set.Union(key_values[key_value], updates[key_value])
+            else:
+                nodes = Set.Unique(updates[key_value])
+            key_values[key_value] = nodes
+        return
+
+    def updateAllKeys(self, context, processor):
+        """
+        Update all the keys for all documents in the context
+        Only used as an override for the default lazy key eval
+        """
+        for keyName in self._keys:
+            for doc in context.documents.values():
+                self.updateKey(doc, keyName, processor)
+        return
+
+    ############################# Exit Routines #############################
+
+    def idle(self, contextNode, processor, baseUri=None):
+        # run idle for all instructions that declared they used it
+        for instruction in self.root.idleInstructions:
+            instruction.idle(processor)
+        return
+
+    def reset(self):
+        """
+        Called whenever the processor is reset, i.e. after each run
+        Also called whenever multiple stylesheets are appended to
+        a processor, because the new top-level elements from the
+        new stylesheet need to be processed into the main one
+        """
+        self.reset1()
+        self.reset2()
+        return
+
+    ############################ Runtime Routines ############################
+
+    def getNamedTemplates(self):
+        return self.namedTemplates.copy()
+
+    def getGlobalVariables(self):
+        return self.globalVars.copy()
+
+    def getInitialFunctions(self):
+        return self.initialFunctions.copy()
+
+    def apply_templates(self, context, nodes, mode=None, params=None,
+                        precedence=None):
+        """
+        Intended to be used by XSLT instruction implementations only.
+
+        Implements the xsl:apply-templates instruction by attempting to
+        let the stylesheet apply its own template for the given context.
+        If the stylesheet does not have a matching template, the
+        built-in templates are invoked.
+
+        context is an XsltContext instance. params is a dictionary of
+        parameters being passed in, defaulting to None.
+        """
+        initial_focus = context.node, context.position, context.size
+        initial_state = context.template, context.mode
+
+        if params is None:
+            params = {}
+
+        context.size, context.mode = len(nodes), mode
+        # Note, it is quicker to increment the `position` variable than it
+        # is to use enumeration: itertools.izip(nodes, itertools.count(1))
+        position = 1
+        for node in nodes:
+            # Set the current node for this template application
+            context.node = context.current_node = node
+            context.position = position
+
+            # Get the possible template rules for `node`
+            node_type = node.nodeType
+            if mode in self.match_templates:
+                type_table = self.matchTemplates[mode]
+                if node_type in type_table:
+                    if node_type == Node.ELEMENT_NODE:
+                        name_table = type_table[node_type]
+                        name = (node.namespaceURI, node.localName)
+                        if name in name_table:
+                            template_rules = name_table[name]
+                        else:
+                            template_rules = name_table[None]
+                    else:
+                        template_rules = type_table[node_type]
+                else:
+                    template_rules = type_table[None]
+            else:
+                template_rules = ()
+
+            # If this is called from apply-imports, remove those patterns
+            # with a higher import precedence than what was specified.
+            if precedence:
+                template_rules = ( rule for rule in template_rules
+                                   if rule[0][0] < precedence )
+
+            for sort_key, pattern, axis_type, template in template_rules:
+                context.namespaces = template.namespaces
+                if pattern.match(context, node, axis_type):
+                    if 1: # recovery_method == Recovery.SILENT
+                        # (default until recovery behaviour is selectable)
+                        # Just use the first matching pattern since they are
+                        # already sorted in descending order.
+                        break
+                    else: # recovery_method in (Recovery.WARNING, Recovery.NONE)
+                        if not first_template:
+                            first_template = template
+                        else:
+                            if not locations:
+                                locations = [_template_location(first_template)]
+                            locations.append(_template_location(template))
+            else:
+                # All template rules have been processed
+                if locations:
+                    # Multiple template rules have matched.  Report the
+                    # template rule conflicts, sorted by position
+                    locations.sort()
+                    locations = '\n'.join(TEMPLATE_CONFLICT_LOCATION % location
+                                          for location in locations)
+                    exception = XsltError(XsltError.MULTIPLE_MATCH_TEMPLATES,
+                                          node, locations)
+                    if 1: # recovery_method == Recovery.WARNING
+                        processor.warning(str(exception))
+                    else:
+                        raise exception
+                if first_template:
+                    template = first_template
+                    context.namespaces = template.namespaces
+                else:
+                    template = None
+
+            # let Python collect this list to reduce memory usage
+            del patterns
+            if template:
+                context.template = template
+                # Make sure the template starts with a clean slate
+                variables = context.variables
+                context.variables = self.global_variables
+                try:
+                    template.instantiate(context, params)
+                finally:
+                    context.variables = variables
+            else:
+                # Nothing matched, use builtin templates
+                if params and not self._builtInWarningGiven:
+                    self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
+                    self._builtInWarningGiven = 1
+                if node_type in (Node.ELEMENT_NODE, Node.DOCUMENT_NODE):
+                    self.apply_templates(context, node.childNodes)
+                elif node_type == (Node.TEXT_NODE, Node.ATTRIBUTE_NODE):
+                    context.text(node.nodeValue)
+
+        # Restore context
+        context.node, context.position, context.size = initial_focus
+        context.template, context.mode = initial_state
+        return
+
+#def PrintStylesheetTree(node, stream=None, indentLevel=0, showImportIndex=0,
+#                        lastUri=None):
+#    """
+#    Function to print the nodes in the stylesheet tree, to aid in debugging.
+#    """
+#    stream = stream or sys.stdout
+#    if lastUri != node.baseUri:
+#        stream.write(indentLevel * '  ')
+#        stream.write('====%s====\n' % node.baseUri)
+#        lastUri = node.baseUri
+#    stream.write(indentLevel * '  ' + str(node))
+#    if showImportIndex:
+#        stream.write(' [' + str(node.import_precedence) + ']')
+#    stream.write('\n')
+#    stream.flush()
+#    show_ii = isinstance(node, xsltelement) and \
+#        node.expandedName in [(XSL_NAMESPACE, 'stylesheet'),
+#                              (XSL_NAMESPACE, 'transform')]
+#    for child in node.children:
+#        PrintStylesheetTree(child, stream, indentLevel+1, show_ii, lastUri)
+#    return
