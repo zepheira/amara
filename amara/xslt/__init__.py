@@ -411,3 +411,31 @@ class XsltError(Error):
 
             #XsltError.FEATURE_NOT_SUPPORTED: _('4XSLT does not yet support this feature.'),
         }
+
+
+def transform(source, transforms, params=None, output=None):
+    """
+    Convenience function for applying an XSLT transform.  Returns
+    a result object.
+
+    source - XML source document in the form of a string (not Unicode
+             object), file-like object (stream), file path, URI or
+             amara.lib.inputsource instance.  If string or stream
+             it must be self-contained  XML (i.e. not requiring access to
+             any other resource such as external entities or includes)
+    transforms - XSLT document (or list thereof) in the form of a string, stream, URL,
+                file path or amara.lib.inputsource instance
+    params - optional dictionary of stylesheet parameters, the keys of
+             which may be given as unicode objects if they have no namespace,
+             or as (uri, localname) tuples if they do.
+    output - optional file-like object to which output is written (incrementally, as processed)
+    """
+    #do the imports within the function: a tad bit less efficient, but
+    #avoid circular crap
+    from amara.xpath.util import parameterize
+    from amara.lib import inputsource
+    params = parameterize(params) if params else {}
+    proc = amara.xslt.processor.processor()
+    _attach_transform_to_processor(transform, processor)
+    result = proc.run(inputsource(source), transforms, params, output=output)
+

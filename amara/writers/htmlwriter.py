@@ -53,3 +53,11 @@ class htmlwriter(xmlwriter):
         self._printer.start_document(version)
         self._complete_element = self._complete_head_element
         return
+
+
+from amara.writers import _userwriter
+
+class _htmluserwriter(_userwriter, htmlwriter):
+    def __init__(self, oparams, stream):
+        htmlwriter.__init__(self, oparams, stream)
+

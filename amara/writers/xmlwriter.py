@@ -316,3 +316,10 @@ class cdatasectionwriter(xmlwriter):
             xmlwriter.text(self, data, disable_escaping)
         return
 
+
+from amara.writers import _userwriter
+
+class _xmluserwriter(_userwriter, xmlwriter):
+    def __init__(self, oparams, stream):
+        xmlwriter.__init__(self, oparams, stream)
+
