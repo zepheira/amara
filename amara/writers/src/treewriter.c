@@ -656,7 +656,7 @@ static PyTypeObject TreeWriter_Type = {
   /* tp_flags          */ Py_TPFLAGS_DEFAULT,
   /* tp_doc            */ (char *) treewriter_doc,
   /* tp_traverse       */ (traverseproc) 0,
-  /* tp_clear          */ 0,
+  /* tp_clear          */ (inquiry) 0,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,

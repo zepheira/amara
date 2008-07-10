@@ -1,5 +1,5 @@
 /***********************************************************************
- * $Header: /var/local/cvsroot/4Suite/Ft/Xml/src/StreamWriter.c,v 1.14.2.1 2006-09-24 15:54:39 uogbuji Exp $
+ * amara/writers/src/xmlstream.c
  ***********************************************************************/
 
 static char module_doc[] = "\
@@ -53,10 +53,10 @@ typedef struct {
   Py_UNICODE max_entity;
 } EntityMapObject;
 
-static PyTypeObject StreamWriter_Type;
 static PyTypeObject EntityMap_Type;
+static PyObject *ascii_string;
 
-/** StreamWriter internal functions ************************************/
+/** XmlStream internal functions **************************************/
 
 Py_LOCAL(int)
 write_none(XmlStreamObject *self, const char *s, int n)
@@ -264,35 +264,28 @@ static char xmlstream_doc[] = \
 `encoding` specifies the encoding which is to be used for the stream.\n\
 ";
 
-static int xmlstream_init(XmlStreamObject *self, PyObject *args, PyObject *kwds)
+static PyObject *
+xmlstream_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+  XmlStreamObject *self;
   PyObject *stream, *encoding;
   static char *kwlist[] = { "stream", "encoding", NULL };
-  static PyObject *ascii = NULL;
   PyObject *test;
-
-  if (ascii == NULL) {
-    ascii = \
-      PyUnicode_DecodeASCII("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
-                            "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13"
-                            "\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d"
-                            "\x1e\x1f !\"#$%&\'()*+,-./0123456789:;<="
-                            ">?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcd"
-                            "efghijklmnopqrstuvwxyz{|}~\x7f",
-                            128, "strict");
-    if (ascii == NULL) return -1;
-  }
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "OS:xmlstream", kwlist,
                                    &stream, &encoding))
-    return -1;
+    return NULL;
+
+  self = (XmlStreamObject *)type->tp_alloc(type, 1);
+  if (self == NULL)
+    return NULL;
 
   if (PyFile_Check(stream)) {
     self->fp = PyFile_AsFile(stream);
     if (self->fp == NULL) {
       PyErr_SetString(PyExc_ValueError, "I/O operation on closed file");
       Py_DECREF(self);
-      return -1;
+      return NULL;
     }
     self->write_func = write_file;
   }
@@ -309,7 +302,7 @@ static int xmlstream_init(XmlStreamObject *self, PyObject *args, PyObject *kwds)
       PyErr_SetString(PyExc_TypeError,
                       "stream argument must have a 'write' attribute");
       Py_DECREF(self);
-      return -1;
+      return NULL;
     }
   }
 
@@ -332,7 +325,7 @@ static int xmlstream_init(XmlStreamObject *self, PyObject *args, PyObject *kwds)
   }
   if (self->encode == NULL) {
     Py_DECREF(self);
-    return -1;
+    return NULL;
   }
 
   Py_INCREF(stream);
@@ -342,7 +335,7 @@ static int xmlstream_init(XmlStreamObject *self, PyObject *args, PyObject *kwds)
   self->encoding = encoding;
 
   /* Determine if we can write ASCII directly to the stream */
-  test = encode_unicode(self, ascii);
+  test = encode_unicode(self, ascii_string);
   if (test == NULL)
     PyErr_Clear();
   else {
@@ -351,7 +344,7 @@ static int xmlstream_init(XmlStreamObject *self, PyObject *args, PyObject *kwds)
     Py_DECREF(test);
   }
 
-  return 0;
+  return (PyObject *)self;
 }
 
 static char write_ascii_doc[] =
@@ -562,7 +555,7 @@ static void xmlstream_dealloc(XmlStreamObject *self)
   Py_XDECREF(self->stream);
   Py_XDECREF(self->encoding);
 
-  PyObject_Del(self);
+  ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }
 
 static PyObject *xmlstream_repr(XmlStreamObject *self)
@@ -643,9 +636,9 @@ static PyTypeObject XmlStream_Type = {
   /* tp_descr_get      */ (descrgetfunc) 0,
   /* tp_descr_set      */ (descrsetfunc) 0,
   /* tp_dictoffset     */ 0,
-  /* tp_init           */ (initproc) xmlstream_init,
+  /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) 0,
+  /* tp_new            */ (newfunc) xmlstream_new,
   /* tp_free           */ 0,
 };
 
@@ -661,8 +654,10 @@ mapping represents the character to escape and the value is the replacement.";
 
 /* EntityMap methods */
 
-static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
+static PyObject *
+entitymap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+  EntityMapObject *self;
   static char *kwlist[] = { "entities", NULL };
   PyObject *entities, *keys, *seq, *key, *value;
   Py_ssize_t size, i;
@@ -670,19 +665,21 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!:entitymap", kwlist,
                                    &PyDict_Type, &entities))
-    return -1;
+    return NULL;
 
   /* create a copy of the mapping (doesn't need to be a dictionary) */
   keys = PyMapping_Keys(entities);
-  if (keys == NULL) {
-    Py_DECREF(self);
-    return -1;
-  }
+  if (keys == NULL)
+    return NULL;
   seq = PySequence_Fast(keys, "keys() returned non-iterable");
   Py_DECREF(keys);
-  if (seq == NULL) {
-    Py_DECREF(self);
-    return -1;
+  if (seq == NULL)
+    return NULL;
+
+  self = (EntityMapObject *)type->tp_alloc(type, 1);
+  if (self == NULL) {
+    Py_DECREF(seq);
+    return NULL;
   }
 
   /* find the largest character ordinal also do validation */
@@ -696,7 +693,7 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
                      "expected a character, but string of length "
                      "%" PY_FORMAT_SIZE_T "d found", PyString_GET_SIZE(key));
         Py_DECREF(self);
-        return -1;
+        return NULL;
       }
     } else if (PyUnicode_Check(key)) {
       if (PyUnicode_GET_SIZE(key) == 1) {
@@ -706,14 +703,14 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
                      "expected a character, but string of length "
                      "%" PY_FORMAT_SIZE_T "d found", PyUnicode_GET_SIZE(key));
         Py_DECREF(self);
-        return -1;
+        return NULL;
       }
     } else {
       PyErr_Format(PyExc_TypeError,
                    "expected string of length 1, but %.200s found", 
                    key->ob_type->tp_name);
       Py_DECREF(self);
-      return -1;
+      return NULL;
     }
 
     if (ord > self->max_entity) self->max_entity = ord;
@@ -722,7 +719,7 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
     if (value == NULL) {
       Py_DECREF(seq);
       Py_DECREF(self);
-      return -1;
+      return NULL;
     } else if (!(PyString_Check(value) || PyCallable_Check(value))) {
       PyErr_Format(PyExc_TypeError, 
                    "expected string or callable object, but %.200s found", 
@@ -730,7 +727,7 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
       Py_DECREF(value);
       Py_DECREF(seq);
       Py_DECREF(self);
-      return -1;
+      return NULL;
     }
 
     Py_DECREF(value);
@@ -743,7 +740,7 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
     Py_DECREF(seq);
     Py_DECREF(self);
     PyErr_NoMemory();
-    return -1;
+    return NULL;
   }
 
   for (i = 0; i < size; i++) {
@@ -759,14 +756,14 @@ static int entitymap_init(EntityMapObject *self, PyObject *args, PyObject *kwds)
     if (value == NULL) {
       Py_DECREF(seq);
       Py_DECREF(self);
-      return -1;
+      return NULL;
     }
 
     self->entity_table[ord] = value;
   }
   Py_DECREF(seq);
 
-  return 0;
+  return (PyObject *)self;
 }
 
 static void entitymap_dealloc(EntityMapObject *self)
@@ -781,7 +778,7 @@ static void entitymap_dealloc(EntityMapObject *self)
     free(self->entity_table);
   }
 
-  PyObject_Del(self);
+  ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }
 
 static PyObject *entitymap_repr(EntityMapObject *self)
@@ -872,9 +869,9 @@ static PyTypeObject EntityMap_Type = {
   /* tp_descr_get      */ (descrgetfunc) 0,
   /* tp_descr_set      */ (descrsetfunc) 0,
   /* tp_dictoffset     */ 0,
-  /* tp_init           */ (initproc) entitymap_init,
+  /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) 0,
+  /* tp_new            */ (newfunc) entitymap_new,
   /* tp_free           */ 0,
 };
 
@@ -890,7 +887,7 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
 
   PycString_IMPORT;
 
-  if (PyType_Ready(&StreamWriter_Type) < 0)
+  if (PyType_Ready(&XmlStream_Type) < 0)
     return;
   if (PyType_Ready(&EntityMap_Type) < 0)
     return;
@@ -904,8 +901,16 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
   if (PyDict_SetItemString(dict, "entitymap", (PyObject *)&EntityMap_Type) < 0)
     return;
 
+  ascii_string =
+    PyUnicode_DecodeASCII("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+                          "\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13"
+                          "\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d"
+                          "\x1e\x1f !\"#$%&\'()*+,-./0123456789:;<="
+                          ">?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcd"
+                          "efghijklmnopqrstuvwxyz{|}~\x7f",
+                          128, "strict");
+  if (ascii_string == NULL)
+    return;
+
   return;
 }
-
-
-

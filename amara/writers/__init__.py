@@ -169,7 +169,7 @@ class _userwriter:
         """
         raise NotImplementedErr
 
-class userwriter:
+class userwriter(object):
     def __init__(self, stream=sys.stdout, **kwargs):
         print 1
         from amara.writers.outputparameters import outputparameters
