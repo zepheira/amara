@@ -169,20 +169,4 @@ class _userwriter:
         """
         raise NotImplementedErr
 
-class userwriter(object):
-    def __init__(self, stream=sys.stdout, **kwargs):
-        print 1
-        from amara.writers.outputparameters import outputparameters
-        print 2
-        oparams = outputparameters(**kwargs)
-        if kwargs.get("method", "xml") == "xml":
-            from amara.writers.xmlwriter import _xmluserwriter
-            writer_class = _xmluserwriter
-        else:
-            from amara.writers.htmlwriter import _htmluserwriter
-            writer_class = _htmluserwriter
-        print 3
-        self.__class__ = writer_class
-        writer_class.__init__(self, oparams, stream)
-        print 4
 

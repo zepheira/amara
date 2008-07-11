@@ -10,6 +10,7 @@ import itertools
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 from amara.writers import WriterError, streamwriter
 from amara.writers._xmlprinters import xmlprinter, xmlprettyprinter
+from amara.lib.xmlstring import *
 
 DEFAULT_GENERATED_PREFIX = u"org.4suite.4xslt.ns"
 
@@ -82,7 +83,7 @@ class xmlwriter(streamwriter):
         self._printer = printer_class(self.stream, encoding, bom,
                                       self._canonical_form)
 
-        if not omit_xml_declaration:
+        if not omit_decl:
             self._printer.start_document(version.encode('ascii'),
                                          self.output_parameters.standalone)
 
@@ -137,7 +138,7 @@ class xmlwriter(streamwriter):
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TOO_LATE)
             else:
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT)
-        prefix, local = SplitQName(name)
+        prefix, local = splitqname(name)
         if namespace is not None:
             # The general approach is as follows:
             # - If the new namespace/prefix combo is unique in the scope, add
@@ -231,7 +232,7 @@ class xmlwriter(streamwriter):
         # I don't think this is correct per Canonical XML 1.0, but we
         # have a testcase explicitly for WS in data.
         # (http://www.w3.org/TR/xml-c14n#Example-OutsideDoc)
-        self._printer.processing_instruction(target, XmlStrStrip(data))
+        self._printer.processing_instruction(target, xml_str_strip(data))
         return
 
     def comment(self, data):
@@ -251,7 +252,7 @@ class xmlwriter(streamwriter):
 
         self._element_name = name
         self._element_namespace = namespace
-        prefix, local = SplitQName(name)
+        prefix, local = splitqname(name)
 
         # Update in-scope namespaces
         inscope_namespaces = self._namespaces[-1].copy()

@@ -280,5 +280,17 @@ class XIncludeError(ReaderError):
 
 from amara.domlette import parse
 from amara.lib import xmlstring as string
-from amara.writers import userwriter as writer
+
+import sys
+
+def writer(stream=sys.stdout, **kwargs):
+    from amara.writers.outputparameters import outputparameters
+    oparams = outputparameters(**kwargs)
+    if kwargs.get("method", "xml") == "xml":
+        from amara.writers.xmlwriter import _xmluserwriter
+        writer_class = _xmluserwriter
+    else:
+        from amara.writers.htmlwriter import _htmluserwriter
+        writer_class = _htmluserwriter
+    return writer_class(oparams, stream)
 
