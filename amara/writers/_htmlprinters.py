@@ -7,7 +7,7 @@ This module supports document serialization in HTML syntax.
 import re
 
 from amara.writers import _xmlstream, htmlentities
-from amara.writers._xmlprinter import xmlprinter
+from amara.writers._xmlprinters import xmlprinter
 
 __all__ = ('htmlprinter', 'htmlprettyprinter')
 
