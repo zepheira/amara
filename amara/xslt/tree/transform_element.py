@@ -8,12 +8,12 @@ import sys
 import operator
 import itertools
 import collections
-
+from gettext import gettext as _
 from xml.dom import Node
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import xpath
 from amara.writers import outputparameters
-from amara.xslt import XsltError, xsltcontext, patternlist
+from amara.xslt import XsltError, xsltcontext
 from amara.xslt.tree import xslt_element, literal_element
 from amara.xslt.reader import content_model, attribute_types
 
@@ -80,21 +80,22 @@ def match_tree(patterns, context):
     return matched
 
 
-class stylesheet_element(xsltelement):
-    content_model = contentinfo.Seq(
-        contentinfo.Rep(contentinfo.QName(XSL_NAMESPACE, 'xsl:import')),
-        contentinfo.TopLevelElements,
+class transform_element(xslt_element):
+    content_model = content_model.seq(
+        content_model.rep(content_model.qname(XSL_NAMESPACE, 'xsl:import')),
+        content_model.top_level_elements,
         )
     attribute_types = {
-        'id': attributeinfo.Id(),
-        'extension-element-prefixes': attributeinfo.Prefixes(),
-        'exclude-result-prefixes': attributeinfo.Prefixes(),
-        'version': attributeinfo.Number(required=True),
+        'id': attribute_types.id(),
+        'extension-element-prefixes': attribute_types.prefixes(),
+        'exclude-result-prefixes': attribute_types.prefixes(),
+        'version': attribute_types.number(required=True),
         }
 
     # We don't want ourselves included in these lists since we do the walking
     doesSetup = doesPrime = doesIdle = False
 
+    space_rules = None
     match_templates = None
     named_templates = None
     global_variables = None
@@ -114,7 +115,6 @@ class stylesheet_element(xsltelement):
 
     def reset2(self):
         self.output_parameters = OutputParameters.OutputParameters()
-        self.spaceRules = []
         self.namespaceAliases = {}
         self.decimalFormats = {}
         return
@@ -634,7 +634,7 @@ class stylesheet_element(xsltelement):
 #        stream.write(' [' + str(node.import_precedence) + ']')
 #    stream.write('\n')
 #    stream.flush()
-#    show_ii = isinstance(node, xsltelement) and \
+#    show_ii = isinstance(node, xslt_element) and \
 #        node.expandedName in [(XSL_NAMESPACE, 'stylesheet'),
 #                              (XSL_NAMESPACE, 'transform')]
 #    for child in node.children:

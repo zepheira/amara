@@ -4,14 +4,12 @@
 Implementation of `xsl:copy-of` element.
 """
 
-from xml.dom import Node
-from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE, NAMESPACE_NODE
 from amara.xpath import datatypes
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element
 from amara.xslt.reader import content_model, attribute_types
 
-class copy_of_element(xsltelement):
+class copy_of_element(xslt_element):
 
     content_model = content_model.empty
     attribute_types = {

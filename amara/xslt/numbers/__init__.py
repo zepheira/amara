@@ -79,7 +79,7 @@ class formatter(object):
         if not format:
             format = DEFAULT_FORMAT
         self._format = format
-        parts = self._tokenize_re.findall(format))
+        parts = self._tokenize_re.findall(format)
         if not parts:
             # No alphanumeric token in the format string
             self._prefix = self._suffix = format

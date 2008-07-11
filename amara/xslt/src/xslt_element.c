@@ -2,8 +2,8 @@
 #include "xslt_root.h"
 #include "xmlstring.h"
 
-static PyObject *processor_nss_string;
-static PyObject *current_instruction_string;
+static PyObject *namespaces_string;
+static PyObject *instruction_string;
 static PyObject *instantiate_string;
 static PyObject *does_setup_string;
 static PyObject *setup_string;
@@ -62,14 +62,10 @@ static PyObject *process_children(XsltElementObject *self, PyObject *args,
 {
   Py_ssize_t i, size;
 
-  if (PyObject_SetAttr(context, processor_nss_string,
-                       self->namespaces) == -1) {
+  if (PyObject_SetAttr(context, instruction_string, (PyObject *)self) == -1)
     return NULL;
-  }
-  if (PyObject_SetAttr(context, current_instruction_string,
-                       (PyObject *) self) == -1) {
+  if (PyObject_SetAttr(context, namespaces_string, self->namespaces) == -1)
     return NULL;
-  }
 
   size = XsltElement_GET_COUNT(self);
   for (i = 0; i < size; i++) {
@@ -537,7 +533,8 @@ static PyObject *element_setstate(XsltElementObject *self, PyObject *args)
 {
   PyObject *root, *parent, *children, *name, *expanded, *attributes;
   PyObject *namespaces, *base, *dict, *temp;
-  int line, column, precedence, i, n;
+  int line, column, precedence;
+  Py_ssize_t i, n;
   XsltNodeObject *child;
 
   if (!PyArg_ParseTuple(args, "(OOO!OO!OOOOOOO):__setstate__", &root, &parent,
@@ -1093,7 +1090,7 @@ static PyTypeObject NodeIter_Type = {
 
 int XsltElement_Init(PyObject *module)
 {
-  PyObject *dict, *import, *temp;
+  PyObject *dict;
 
   XmlString_IMPORT;
 
@@ -1110,28 +1107,20 @@ int XsltElement_Init(PyObject *module)
   if (PyType_Ready(&NodeIter_Type) < 0)
     return -1;
 
-  if (PyModule_AddObject(module, "XsltElement", (PyObject*)&XsltElement_Type))
+  if (PyModule_AddObject(module, "xslt_element", (PyObject*)&XsltElement_Type))
     return -1;
 
   /* Assign "class" constants */
   dict = XsltElement_Type.tp_dict;
-  if (PyDict_SetItemString(dict, "legalAttrs", Py_None)) return -1;
-
-  /* Ft.Xml.Xslt.ContentInfo */
-  import = PyImport_ImportModule("Ft.Xml.Xslt.ContentInfo");
-  if (import == NULL) return -1;
-  temp = PyObject_GetAttrString(import, "Template");
-  Py_DECREF(import);
-  if (temp == NULL) return -1;
-  if (PyDict_SetItemString(dict, "content", temp)) return -1;
-  Py_DECREF(temp);
+  if (PyDict_SetItemString(dict, "attribute_types", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "content_model", Py_None)) return -1;
 
   /* Pre-build frequently used values */
-  processor_nss_string = PyString_FromString("processorNss");
-  if (processor_nss_string == NULL) return -1;
+  namespaces_string = PyString_FromString("namespaces");
+  if (namespaces_string == NULL) return -1;
 
-  current_instruction_string = PyString_FromString("currentInstruction");
-  if (current_instruction_string == NULL) return -1;
+  instruction_string = PyString_FromString("instruction");
+  if (instruction_string == NULL) return -1;
 
   instantiate_string = PyString_FromString("instantiate");
   if (instantiate_string == NULL) return -1;
@@ -1158,8 +1147,8 @@ void XsltElement_Fini(void)
 {
   Py_DECREF(empty_tuple);
   Py_DECREF(empty_dict);
-  Py_DECREF(processor_nss_string);
-  Py_DECREF(current_instruction_string);
+  Py_DECREF(namespaces_string);
+  Py_DECREF(instruction_string);
   Py_DECREF(instantiate_string);
   Py_DECREF(does_setup_string);
   Py_DECREF(setup_string);

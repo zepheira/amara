@@ -4,6 +4,7 @@
 HTML writer for XSLT processor output
 """
 
+from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 from amara.writers.xmlwriter import xmlwriter
 from amara.writers._htmlprinters import htmlprinter, htmlprettyprinter
 
@@ -52,6 +53,11 @@ class htmlwriter(xmlwriter):
         self._printer = printer_class(self.stream, encoding)
         self._printer.start_document(version)
         self._complete_element = self._complete_head_element
+
+        self._namespaces = [{'': None,
+                             'xml': XML_NAMESPACE,
+                             'xmlns': XMLNS_NAMESPACE}]
+        self._attributes = {}
         return
 
 

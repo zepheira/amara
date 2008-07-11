@@ -9,7 +9,6 @@ ASCII_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 class english_formatter(formatter):
 
-if 1:
     _roman_digits = _roman_upper, _roman_lower = [], []
     for multiplier, combining in ((1, ''), (1000, u'\u0305')):
         for base, one, five, ten in ((1, u'I', u'V', u'X'),

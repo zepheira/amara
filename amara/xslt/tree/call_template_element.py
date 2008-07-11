@@ -10,7 +10,7 @@ from amara.xslt.tree import \
     xslt_element, choose_element, when_element, otherwise_element, if_element
 from amara.xslt.reader import content_model, attribute_types
 
-_CONDITIONAL_ELEMENTS = (
+_conditional_elements = (
     choose_element, when_element, otherwise_element, if_element)
 
 
@@ -46,7 +46,7 @@ class call_template_element(xslt_element):
                     node = self.parent
                     while node is not current:
                         if not (node.isLastChild() and
-                                isinstance(node, _CONDITIONAL_ELEMENTS)):
+                                isinstance(node, _conditional_elements)):
                             use_tail = 0
                             break
                         node = node.parent

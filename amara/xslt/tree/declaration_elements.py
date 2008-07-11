@@ -35,7 +35,7 @@ class include_element(_combining_element):
 class _whitespace_element(xslt_element):
     content_model = content_model.empty
     attribute_types = {
-        'elements' : attributeinfo.tokens(required=1),
+        'elements' : attribute_types.tokens(required=1),
         }
 
     _strip_whitespace = None
@@ -84,7 +84,7 @@ class key_element(xslt_element):
 class decimal_format_element(xslt_element):
     content_model = content_model.empty
     attribute_types = {
-        'name': attributeinfo.QName(),
+        'name': attribute_types.qname(),
         'decimal-separator': attribute_types.char(default='.'),
         'grouping-separator': attribute_types.char(default=','),
         'infinity': attribute_types.string(default='Infinity'),

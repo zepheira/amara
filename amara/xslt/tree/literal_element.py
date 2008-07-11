@@ -5,7 +5,6 @@
 Implementation of XSLT literal result elements
 """
 
-from amara.xpath import RuntimeException as XPathRuntimeException
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element
 

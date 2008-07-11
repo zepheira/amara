@@ -4,7 +4,6 @@
 Implementation of the `xsl:number` element.
 """
 
-from amara.lib import number
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError, numbers
 from amara.xslt.tree import xslt_element

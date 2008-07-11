@@ -12,8 +12,8 @@ from amara.xslt.reader import content_model, attribute_types
 class element_element(xslt_element):
     content_model = content_model.template
     attribute_types = {
-        'name': attribute_types.RawQNameAvt(required=True),
-        'namespace': attribute_types.namspace_uri_avt(),
+        'name': attribute_types.raw_qname_avt(required=True),
+        'namespace': attribute_types.namespace_uri_avt(),
         'use-attribute-sets': attribute_types.qnames(),
         }
 

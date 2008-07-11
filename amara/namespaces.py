@@ -9,7 +9,7 @@ XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
 
 HTML_NAMESPACE = u"http://www.w3.org/TR/REC-html40" #HTML4.0
 XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"
-XSLT_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'
+XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'
 
 #etc
 EXTENSION_NAMESPACE = u'http://xmlns.4suite.org/ext'

@@ -390,13 +390,12 @@ PyTypeObject XsltRoot_Type = {
 int XsltRoot_Init(PyObject *module)
 {
   PyTypeObject *type;
-  PyObject *dict, *import, *constant;
-  PyObject *stylesheet_qname, *transform_qname, *result_elements;
+  PyObject *dict, *constant;
 
   type = &XsltRoot_Type;
   type->tp_base = &XsltNode_Type;
   if (PyType_Ready(type) < 0) return -1;
-  if (PyModule_AddObject(module, "XsltRoot", (PyObject *)type)) return -1;
+  if (PyModule_AddObject(module, "xslt_root", (PyObject *)type)) return -1;
 
   /* Assign "class" constants */
   dict = XsltRoot_Type.tp_dict;
@@ -405,43 +404,6 @@ int XsltRoot_Init(PyObject *module)
   constant = PyUnicode_DecodeASCII("#document", 9, NULL);
   if (constant == NULL) return -1;
   if (PyDict_SetItemString(dict, "nodeName", constant)) return -1;
-  Py_DECREF(constant);
-
-  /* content = ContentInfo.Alt(
-   *     ContentInfo.QName(XSL_NAMESPACE, 'xsl:stylesheet'),
-   *     ContentInfo.QName(XSL_NAMESPACE, 'xsl:transform'),
-   *     ContentInfo.ResultElements)
-   */
-  import = PyImport_ImportModule("Ft.Xml.Xslt");
-  if (import == NULL) return -1;
-  constant = PyObject_GetAttrString(import, "XSL_NAMESPACE");
-  Py_DECREF(import);
-  if (constant == NULL) return -1;
-
-  import = PyImport_ImportModule("Ft.Xml.Xslt.ContentInfo");
-  if (import == NULL) {
-    Py_DECREF(constant);
-    return -1;
-  }
-  stylesheet_qname = PyObject_CallMethod(import, "QName", "Os", constant,
-                                         "xsl:stylesheet");
-  transform_qname = PyObject_CallMethod(import, "QName", "Os", constant,
-                                        "xsl:transform");
-  result_elements = PyObject_GetAttrString(import, "ResultElements");
-  Py_DECREF(constant);
-  if (stylesheet_qname == NULL || transform_qname == NULL ||
-      result_elements == NULL) {
-    Py_XDECREF(stylesheet_qname);
-    Py_XDECREF(transform_qname);
-    Py_XDECREF(result_elements);
-    Py_DECREF(import);
-    return -1;
-  }
-  constant = PyObject_CallMethod(import, "Alt", "NNN", stylesheet_qname,
-                                 transform_qname, result_elements);
-  Py_DECREF(import);
-  if (constant == NULL) return -1;
-  if (PyDict_SetItemString(dict, "content", constant)) return -1;
   Py_DECREF(constant);
 
   return 0;

@@ -1,5 +1,5 @@
 ########################################################################
-# amara/xslt/xpatterns.py
+# amara/xslt/xpatterns/__init__.py
 """
 Implement Patterns according to the XSLT spec
 
@@ -184,3 +184,6 @@ class id_key_node_test:
     def __repr__(self):
         return repr(self.idOrKey)
 
+
+def parse(string):
+    return

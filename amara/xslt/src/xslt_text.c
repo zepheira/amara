@@ -282,7 +282,7 @@ int XsltText_Init(PyObject *module)
   if (PyType_Ready(&XsltText_Type) < 0)
     return -1;
 
-  if (PyModule_AddObject(module, "XsltText", (PyObject *) &XsltText_Type))
+  if (PyModule_AddObject(module, "xslt_text", (PyObject *) &XsltText_Type))
     return -1;
 
   /* Assign "class" constants */

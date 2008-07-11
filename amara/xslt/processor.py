@@ -13,11 +13,11 @@ from amara import domlette
 from amara.lib import iri, inputsource
 #from amara.xpath import RuntimeException as XPathRuntimeException
 from amara.xslt import XsltError
-from amara.xslt import xsltcontext, outputhandler, rtfwriter, stringwriter
+from amara.xslt import xsltcontext, outputhandler
 from amara.xslt.reader import stylesheet_reader
 # For builtin extension elements/functions
-from amara.xslt import exslt
-from amara.xslt.extensions import builtins
+#from amara.xslt import exslt
+#from amara.xslt.extensions import builtins
 
 
 # Media types that signal that an xml-stylesheet PI points to an XSLT
@@ -108,15 +108,15 @@ class processor(object):
 
         self._extfunctions = {}  #Cache ext functions to give to the context
         self._extelements = {}
-        self._extelements.update(exslt.ExtElements)
-        self._extelements.update(builtins.ExtElements)
+        #self._extelements.update(exslt.ExtElements)
+        #self._extelements.update(builtins.ExtElements)
         return
 
     def getStripElements(self):
-        if self.stylesheet:
-            return self.stylesheet.spaceRules
+        if self.transform:
+            return self.transform.space_rules
         else:
-            return []
+            return ()
 
     def registerExtensionModules(self, modules):
         """
@@ -177,7 +177,7 @@ class processor(object):
         self._reader.addExtensionElementMapping(mapping)
         return
 
-    def add_transform(self, source, uri=None):
+    def append_transform(self, source, uri=None):
         """
         Add an XSL transformation document to the processor.
 
@@ -235,14 +235,11 @@ class processor(object):
         #Update the strip elements
         #Assume that the ones from XSLT have higher priority
         ns = self.getStripElements()
-        for s in iSrc.stripElements:
-            ns.append(s)
-        iSrc.stripElements = ns
         try:
-            src = self._docReader.parse(iSrc)
+            src = self._docReader.parse(source)
         except Exception, e:
             raise XsltError(XsltError.SOURCE_PARSE_ERROR,
-                                iSrc.uri or '<Python string>', e)
+                            source.uri or '<Python string>', e)
         if not ignorePis and self.__checkStylesheetPis(src, iSrc):
             #Do it again with updates WS strip lists
 

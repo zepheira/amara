@@ -1,13 +1,9 @@
 /***********************************************************************
- * $Header: /var/local/cvsroot/4Suite/Ft/Xml/Xslt/src/stylesheet_tree.c,v 1.1 2006-11-27 16:29:30 jkloth Exp $
+ * amara/xslt/src/xslt_tree.c
  ***********************************************************************/
 
 static char module_doc[] = "\
 Node classes for the stylesheet tree\n\
-\n\
-Copyright 2006 Fourthought, Inc. (USA).\n\
-Detailed license and copyright information: http://4suite.org/COPYRIGHT\n\
-Project home, documentation, distributions: http://4suite.org/\n\
 ";
 
 //#include "stylesheet_reader.h"
@@ -84,7 +80,7 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
 {
   PyObject *module, *cobj;
 
-  module = Py_InitModule3("cStylesheetTree", module_methods, module_doc);
+  module = Py_InitModule3(MODULE_NAME, module_methods, module_doc);
   if (module == NULL) return;
 
   /* initialize the sub-components */

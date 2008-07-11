@@ -6,12 +6,10 @@ Please see: http://wiki.xml3k.org/Amara2/Whatsnew#head-6121c5b40e473f1e3d720a662
 
 from amara import Error
 
-__all__ = ['XSL_NAMESPACE']
-
-XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'
+__all__ = ['XsltError', 'transform']
 
 class XsltError(Error):
-
+    INTERNAL_ERROR = 1
     # xsl:stylesheet
     NO_STYLESHEET = 20
     #STYLESHEET_MISSING_VERSION = 21
@@ -172,6 +170,12 @@ class XsltError(Error):
     @classmethod
     def _load_messages(cls):
         return {
+            XsltError.INTERNAL_ERROR: _(
+                'There is an internal bug in 4Suite. Please make a post to '
+                'the 4Suite mailing list to report this error message to the '
+                'developers. Include platform details and info about how to '
+                'reproduce the error. Info about the mailing list is at '
+                'http://lists.fourthought.com/mailman/listinfo/4suite. '),
             # xsl:stylesheet
             XsltError.NO_STYLESHEET: _(
                 'No stylesheets to process.'),
@@ -412,7 +416,6 @@ class XsltError(Error):
             #XsltError.FEATURE_NOT_SUPPORTED: _('4XSLT does not yet support this feature.'),
         }
 
-
 def transform(source, transforms, params=None, output=None):
     """
     Convenience function for applying an XSLT transform.  Returns
@@ -432,10 +435,11 @@ def transform(source, transforms, params=None, output=None):
     """
     #do the imports within the function: a tad bit less efficient, but
     #avoid circular crap
-    from amara.xpath.util import parameterize
     from amara.lib import inputsource
+    from amara.xpath.util import parameterize
+    from amara.xslt.processor import processor
     params = parameterize(params) if params else {}
-    proc = amara.xslt.processor.processor()
-    _attach_transform_to_processor(transform, processor)
-    result = proc.run(inputsource(source), transforms, params, output=output)
+    proc = processor()
+    proc.append_transform(inputsource(transform))
+    return proc.run(inputsource(source), transforms, params, output=output)
 

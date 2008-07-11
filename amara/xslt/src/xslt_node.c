@@ -436,7 +436,7 @@ int XsltNode_Init(PyObject *module)
   if (PyType_Ready(&XsltNode_Type) < 0)
     return -1;
 
-  if (PyModule_AddObject(module, "XsltNode", (PyObject *) &XsltNode_Type))
+  if (PyModule_AddObject(module, "xslt_node", (PyObject *) &XsltNode_Type))
     return -1;
 
   /* Assign "class" constants */

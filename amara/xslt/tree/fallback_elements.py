@@ -13,7 +13,7 @@ __all__ = (
     )
 
 class fallback_element(xslt_element):
-    content_model = content_model.tempate
+    content_model = content_model.template
     attribute_types = {}
 
     def instantiate(self, context):

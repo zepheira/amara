@@ -4,10 +4,9 @@ import os
 import cStringIO
 import unittest
 
+from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
-
-from Ft.Xml.Lib import TreeCompare
 
 
 class test_basics_1(xslt_test):

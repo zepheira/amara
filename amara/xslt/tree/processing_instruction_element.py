@@ -9,7 +9,7 @@ from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element
 from amara.xslt.reader import content_model, attribute_types
 
-class processing_instruction_element(xsltelement):
+class processing_instruction_element(xslt_element):
     content_model = content_model.template
     attribute_types = {
         'name': attribute_types.ncname_avt(required=True),

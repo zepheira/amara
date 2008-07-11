@@ -4,7 +4,6 @@
 Implementation of `xsl:sort` element
 """
 
-from amara.lib import number
 from amara.xslt.tree import xslt_element
 from amara.xslt.reader import content_model, attribute_types
 
@@ -14,7 +13,7 @@ class sort_element(xslt_element):
         'select': attribute_types.string_expression(default='.'),
         'lang': attribute_types.nmtoken_avt(),
         # We don't support any additional data-types, hence no
-        # attributeinfo.QNameButNotNCName()
+        # attribute_types.QNameButNotNCName()
         'data-type': attribute_types.choice_avt(('text', 'number'),
                                                 default='text'),
         'order': attribute_types.choice_avt(('ascending', 'descending'),

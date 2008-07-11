@@ -2,7 +2,7 @@
 # amara/xslt/contentinfo.py
 from amara._expat import ContentModel
 from amara.namespaces import XSL_NAMESPACE
-from amara.lib.string import isqname
+from amara.lib.xmlstring import isqname
 
 __all__ = ['qname', 'seq', 'alt', 'rep1', 'rep', 'opt',
            'empty', 'text', 'resultelements', 'instructions', 'template',

@@ -8,7 +8,7 @@ from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, sort_element
 from amara.xslt.reader import content_model, attribute_types
-from amara.xslt.extensions import sorted_expression
+from amara.xslt.expressions import sorted_expression
 
 class for_each_element(xslt_element):
 

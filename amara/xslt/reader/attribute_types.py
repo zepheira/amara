@@ -5,21 +5,20 @@ Classes that support validation and evaluation of attribute values in
 XSLT instruction elements
 """
 
-from amara import TranslateMessage as _
+#from amara import TranslateMessage as _
+from gettext import gettext as _
 
 import cStringIO, traceback
 
-from amara.xpath import RuntimeException as XPathRuntimeException
-from amara.xpath import datatypes
-_xpath_parser = parser.new()
+#from amara.xpath import RuntimeException as XPathRuntimeException
+from amara.xpath import datatypes, parser
+from amara.xpath.parser import parse as parse_xpath
 
 from amara.xslt import XsltError
-from amara.xslt import parser
-_xpattern_parser = parser.new()
-del parser
+from amara.xslt.xpatterns import parse as parse_xpattern
 
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
-from amara.lib.string import isqname, splitqname
+from amara.lib.xmlstring import isqname, splitqname
 from amara.xslt.expressions.avt import avt_expression
 
 
@@ -187,7 +186,7 @@ class number(attribute_type):
 
 
 class number_avt(avt, number):
-    reprocess = Number.prepare
+    reprocess = number.prepare
 
 
 class uri_reference(attribute_type):
@@ -200,7 +199,7 @@ class uri_reference(attribute_type):
     reprocess = prepare
 
 
-class uri_reference_avt(avt, urireference):
+class uri_reference_avt(avt, uri_reference):
     pass
 
 
@@ -262,7 +261,7 @@ class qname_avt(avt, qname):
     pass
 
 
-class raw_q_name(qname):
+class raw_qname(qname):
 
     def prepare(self, element, value):
         if value is None:
@@ -275,7 +274,7 @@ class raw_q_name(qname):
     reprocess = prepare
 
 
-class raw_q_name_avt(avt, rawqname):
+class raw_qname_avt(avt, raw_qname):
     pass
 
 
@@ -457,22 +456,22 @@ class expression(attribute_type):
                 return None
             value = self.default
         try:
-            return _xpath_parser.parse(value)
+            return parse_xpath(value)
         except SyntaxError, error:
             raise XsltError(XsltError.INVALID_EXPRESSION, value,
                                 element.baseUri, element.lineNumber,
                                 element.columnNumber, str(error))
 
-class nodeset_expression(Expression):
+class nodeset_expression(expression):
     display = _('nodeset-expression')
 
-class string_expression(Expression):
+class string_expression(expression):
     display = _('string-expression')
 
-class number_expression(Expression):
+class number_expression(expression):
     display = _('number-expression')
 
-class boolean_expression(Expression):
+class boolean_expression(expression):
     display = _('boolean-expression')
 
 
@@ -489,13 +488,13 @@ class pattern(attribute_type):
             else:
                 return None
         try:
-            return _xpattern_parser.parse(value)
+            return parse_xpattern(value)
         except SyntaxError, error:
             raise XsltError(XsltError.INVALID_PATTERN, value,
                                 element.baseUri, element.lineNumber,
                                 element.columnNumber, str(error))
 
-class tokens(Token):
+class tokens(token):
     """
     A whitespace separated list of tokens (see Token for description of a token)
     """
@@ -505,8 +504,8 @@ class tokens(Token):
         if value is None:
             return []
         tokens = []
-        for token in value.split():
-            prepared = Token.prepare(self, element, token)
+        for value in value.split():
+            prepared = token.prepare(self, element, value)
             tokens.append(prepared)
         return tokens
     reprocess = prepare
@@ -525,8 +524,8 @@ class qnames(qname):
         if value is None:
             return []
         qnames = []
-        for qname in value.split():
-            prepared = QName.prepare(self, element, qname)
+        for value in value.split():
+            prepared = qname.prepare(self, element, value)
             qnames.append(prepared)
         return qnames
     reprocess = prepare
@@ -545,8 +544,8 @@ class prefixes(prefix):
         if value is None:
             return []
         prefixes = []
-        for prefix in value.split():
-            prepared = Prefix.prepare(self, element, prefix)
+        for value in value.split():
+            prepared = prefix.prepare(self, element, value)
             prefixes.append(prepared)
         return prefixes
     reprocess = prepare

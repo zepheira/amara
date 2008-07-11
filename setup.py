@@ -164,8 +164,10 @@ setup(name='Amara',
                 'amara.xpath.parser',
                 'amara.xslt',
                 'amara.xslt.expressions',
-                'amara.xslt.tree',
+                'amara.xslt.numbers',
                 'amara.xslt.reader',
+                'amara.xslt.tree',
+                'amara.xslt.xpatterns',
                 'amara.xupdate',
                 # Test support; would be possible to break out into separate
                 # package at some point.

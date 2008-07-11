@@ -97,10 +97,10 @@ class xslt_test(unittest.TestCase):
         from amara.xslt.processor import processor
         P = self.processor = processor()
         if isinstance(self.transform, testsource):
-            P.add_transform(self.transform)
+            P.append_transform(self.transform)
         else:
             for transform in (self.transform or ()):
-                P.add_transform(transform)
+                P.append_transform(transform)
         return
 
     def runTest(self):

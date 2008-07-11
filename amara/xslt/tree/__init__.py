@@ -40,30 +40,34 @@ __all__ = [
     'ELEMENT_CLASSES',
     ]
 
-from amara.xslt._tree import xslt_node, xslt_root, xslt_text, xslt_element
+from _tree import xslt_node, xslt_root, xslt_text, xslt_element
 from literal_element import literal_element
+
+# referenced by other element implementations
+from sort_element import sort_element
+from with_param_element import with_param_element
+from variable_elements import variable_element, param_element
 
 from apply_imports_element import apply_imports_element
 from apply_templates_element import apply_templates_element
 from attribute_element import attribute_element
-from call_template_element import call_template_element
 from choose_elements import choose_element, when_element, otherwise_element
+from comment_element import comment_element
 from copy_element import copy_element
 from copy_of_element import copy_of_element
 from element_element import element_element
-from fallback_element import fallback_element
+from fallback_elements import fallback_element
 from for_each_element import for_each_element
 from if_element import if_element
 from message_element import message_element
 from number_element import number_element
 from processing_instruction_element import processing_instruction_element
-from sort_element import sort_element
 from template_element import template_element
+# imported here for purposes of tail-recursion checking
+from call_template_element import call_template_element
 from text_element import text_element
 from transform_element import transform_element
 from value_of_element import value_of_element
-from variable_elements import variable_element, param_element
-from with_param_element import with_param_element
 from declaration_elements import (import_element, include_element,
                                   strip_space_element, preserve_space_element,
                                   output_element,  key_element,

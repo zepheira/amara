@@ -9,7 +9,7 @@ from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, param_element
 from amara.xslt.reader import content_model, attribute_types
 
-class template_element(xsltelement):
+class template_element(xslt_element):
 
     content_model = content_model.seq(
         content_model.rep(content_model.qname(XSL_NAMESPACE, 'xsl:param')),
