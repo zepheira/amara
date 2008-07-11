@@ -64,7 +64,7 @@ class htmlprinter(xmlprinter):
             self.write_encode(publicId, 'document type public-id')
             self.write_ascii('">\n')
         else:
-            xmlprinter.doctype(self, name, publicId, systemId)
+            xmlprinter.doctype(self, name, publicid, systemid)
         return
 
     def _translate_attributes(self, element, attributes):
