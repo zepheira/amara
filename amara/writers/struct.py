@@ -10,6 +10,7 @@ for considered reasons of clarity in use
 """
 
 import sys
+from itertools import *
 from amara.writers import WriterError
 #from amara.writers.xmlwriter import *
 from amara import XML_NAMESPACE
@@ -36,19 +37,29 @@ class structwriter(object):
         """
         obj - an object or iterator of objects matching the structwriter's specifications
         """
-        if isinstance(obj, unicode):
-            self.writer.characters(U(obj))
         if isinstance(obj, ROOT):
             self.writer.start_document()
             for subobj in obj.content:
                 self.feed(subobj)
             self.writer.end_document()
+            return
         if isinstance(obj, E):
-            self.writer.start_element(obj.name, obj.ns, obj.attributes)
+            self.writer.start_element(obj.qname, obj.ns, obj.attributes)
             for subobj in obj.content:
                 self.feed(subobj)
-            self.writer.end_element(obj.name, obj.ns)
-            
+            self.writer.end_element(obj.qname, obj.ns)
+            return
+        if isinstance(obj, basestring):
+            self.writer.characters(U(obj))
+            return
+        try:
+            obj = iter(obj)
+            for subobj in obj:
+                self.feed(subobj)
+        except TypeError:
+            if callable(obj):
+                self.feed(obj())
+    
 class E(object):
     def __init__(self, name, *items):
         if items and isinstance(items[0], dict):
@@ -58,18 +69,9 @@ class E(object):
             self.content = items
             self.attributes = None
         if isinstance(name, tuple):
-            self.name, self.ns = name
+            self.qname, self.ns = imap(U, name)
         else:
-            self.name, self.ns = name, None
-        if self.content is not None:
-            if isinstance(self.content, basestring):
-                self.content = [U(self.content)]
-            else:
-                try:
-                    self.content = iter(self.content)
-                except TypeError:
-                    if callable(self.content):
-                        self.content = self.content()
+            self.qname, self.ns = U(name), None
 
 class RAW(object):
     def __init__(self, *content):

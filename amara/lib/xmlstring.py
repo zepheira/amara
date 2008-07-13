@@ -9,5 +9,7 @@ from string import *
 
 def U(s):
     if isinstance(s, unicode): return s
-    return s.decode('utf-8')
+    if isinstance(s, str): return s.decode('utf-8')
+    if s is None: return None
+    return unicode(s, 'utf-8')
 
