@@ -87,7 +87,7 @@ class xmlwriter(streamwriter):
             self._printer.start_document(version.encode('ascii'),
                                          self.output_parameters.standalone)
 
-        self._namespaces = [{'': None,
+        self._namespaces = [{None: None,
                              'xml': XML_NAMESPACE,
                              'xmlns': XMLNS_NAMESPACE}]
         self._attributes = {}
@@ -242,6 +242,9 @@ class xmlwriter(streamwriter):
 
     def start_element(self, name, namespace=None, namespaces=None,
                       attributes=None):
+        """
+        attributes must be a mapping from (name, namespace) to value.  namespace can be None
+        """
         self._complete_element()
 
         if self._need_doctype:
@@ -260,6 +263,8 @@ class xmlwriter(streamwriter):
             inscope_namespaces.update(namespaces)
         inscope_namespaces[prefix] = namespace
         self._namespaces.append(inscope_namespaces)
+        for (name, namespace), value in attributes.iteritems():
+            self.attribute(name, value, namespace)
         return
 
     def end_element(self, name, namespace=None):

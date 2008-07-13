@@ -41,3 +41,25 @@ w.end_element(u'html')
 w.end_document()
 print
 
+from amara.writers.struct import *
+
+w = structwriter()#indent=u"yes")
+test_input = \
+ROOT(
+  E(u'doc',
+    E(u'a', u'hello'),
+    #E('float-content', 3.14),
+    E((u'b', None), u'this is unicode: \u221e'),
+    #E(u'list-content', [E('child', 'a'), RAW('<raw-node message="hello"/>'), E('child', 'b')]),
+    E(u'c', {u'parrot': u'dead', u'spam': u'eggs'}),
+    #E(u'gen-content', (('node', x) for x in range(6))),
+    E(u'monty', E('spam', 'eggs')),
+    E(u'empty'),
+    E(u'func', lambda: u'this is a func'),
+    #E(u'raw-xml-content', RAW('<a>b</a>', '<c>d</c>')) #The multiple raw text bits are just concatenated
+  )
+)
+
+w.feed(test_input)
+print
+

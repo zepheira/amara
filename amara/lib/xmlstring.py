@@ -7,3 +7,7 @@ xml_str_strip = XmlStrStrip
 
 from string import *
 
+def U(s):
+    if isinstance(s, unicode): return s
+    return s.decode('utf-8')
+

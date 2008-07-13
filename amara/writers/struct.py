@@ -5,75 +5,71 @@
 An old idea for a friendly markup serialization interface, with a big hat-tip to pyfo
 http://foss.cpcc.edu/pyfo/
 
-Note: Python stdlib has a struct module so you might want to consider importng as follows:
-
-from amara.writers.struct import struct as structwriter
+Note: this module has some departures from the reguler PEP 8 naming convention
+for considered reasons of clarity in use
 """
 
-from amara.writers import *
-from amara.writers.xmlwriter import *
+import sys
+from amara.writers import WriterError
+#from amara.writers.xmlwriter import *
 from amara import XML_NAMESPACE
+from amara.lib.xmlstring import *
 
-__all__ = ['struct', 'E', 'ROOT', 'RAW']
+__all__ = ['structwriter', 'E', 'ROOT', 'RAW']
 
-class StructWriterError(Error):
+class StructWriterError(WriterError):
 
     ATTRIBUTE_ADDED_TOO_LATE = 1
     ATTRIBUTE_ADDED_TO_NON_ELEMENT = 2
 
 
-class struct(object):
-    def __init__(self, writer=None):
+class structwriter(object):
+    def __init__(self, stream=sys.stdout, **kwargs):
+        #writer - instance of `amara.writers.writer`, or None to create a default instance
         """
-        writer - instance of `amara.writers.writer`, or None to create a default instance
         """
-        self.writer = writer or xmlwriter()
+        #self.writer = writer or xmlwriter()
+        from amara import writer
+        self.writer = writer(stream, **kwargs)
 
     def feed(self, obj):
         """
         obj - an object or iterator of objects matching the structwriter's specifications
         """
+        if isinstance(obj, unicode):
+            self.writer.characters(U(obj))
         if isinstance(obj, ROOT):
+            self.writer.start_document()
             for subobj in obj.content:
                 self.feed(subobj)
+            self.writer.end_document()
         if isinstance(obj, E):
-            try:
-                ns, tagname = E.name
-            except TypeError:
-                ns, tagname = None, E.name
-            if tagname.startswith('xml:'):
-                #Can use such a raw test because of the special restrictions on XML prefix
-                ns = XML_NAMESPACE
-            if ns == EMPTY_NAMESPACE and u':' in tagname:
-                #If there's a prefix, but not a namespace, complain
-                #raise MarkupWriterException(MarkupWriterException.ELEM_PREFIX_WITHOUT_NAMESPACE)
-                raise TypeError("Prefixed name %s specified without namespace.  Namespace should be provided in the tuple."%(tagname))
-            self.writer.startElement(name, ns)
-            if attributes is not None:
-                for name in attributes:
-                    if isinstance(name, tuple):
-                        qname, namespace = name
-                        value = attributes[name]
-                        self.writer.attribute(qname, value, namespace)
-                    else:
-                        if u':' in tagName:
-                            #If they supplied a prefix, but not a namespace, complain
-                            raise TypeError("Prefixed name %s specified without namespace.  Namespace should be provided by using the attribute name form (<qualified-name>, <namespace>)."%(name))
-                        value = attributes[name]
-                        self.writer.attribute(name, value)
+            self.writer.start_element(obj.name, obj.ns, obj.attributes)
             for subobj in obj.content:
                 self.feed(subobj)
-            self.writer.endElement(name, ns)
+            self.writer.end_element(obj.name, obj.ns)
             
 class E(object):
-    def __init__(self, name, attributes=None, content=None):
-        self.name = name
-        self.attributes = attributes
-        self.content = content
-        if not isinstance(attributes, dict) and not content:
-            #Then attributes were omitted, but we do have content
+    def __init__(self, name, *items):
+        if items and isinstance(items[0], dict):
+            self.attributes = items[0]
+            self.content = items[1:]
+        else:
+            self.content = items
             self.attributes = None
-            self.content = attributes
+        if isinstance(name, tuple):
+            self.name, self.ns = name
+        else:
+            self.name, self.ns = name, None
+        if self.content is not None:
+            if isinstance(self.content, basestring):
+                self.content = [U(self.content)]
+            else:
+                try:
+                    self.content = iter(self.content)
+                except TypeError:
+                    if callable(self.content):
+                        self.content = self.content()
 
 class RAW(object):
     def __init__(self, *content):

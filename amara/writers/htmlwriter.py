@@ -18,7 +18,7 @@ class htmlwriter(xmlwriter):
 
     def _complete_head_element(self, _base_class=xmlwriter):
         # `xmlwriter` clears `self._element_name` before returning
-        if self._element_name and self._element_uri is None:
+        if self._element_name and self._element_namespace is None:
             head_tag = (self._element_name.lower() == u'head')
         else:
             head_tag = False
@@ -54,7 +54,7 @@ class htmlwriter(xmlwriter):
         self._printer.start_document(version)
         self._complete_element = self._complete_head_element
 
-        self._namespaces = [{'': None,
+        self._namespaces = [{None: None,
                              'xml': XML_NAMESPACE,
                              'xmlns': XMLNS_NAMESPACE}]
         self._attributes = {}

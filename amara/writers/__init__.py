@@ -3,6 +3,7 @@
 
 import sys
 from amara import Error
+from amara.lib.xmlstring import *
 
 __all__ = ['WriterError', 'writer', 'streamwriter']
 
@@ -125,7 +126,39 @@ class streamwriter(writer):
         self.stream = stream
 
 
-class _userwriter:
+class _userwriter(object):
+    def start_element(self, name, namespace=None, namespaces=None,
+                      attributes=None):
+        """
+        Create a start tag with optional attributes.  Must eventually
+        be matched with an endElement call
+        
+        Note: all "strings" in these parameters must be unicode objects
+        name - qualified name of the element (must be unicode)
+        namespace - optional namespace URI
+        attributes - optional dictionary mapping name to unicode value
+                    the name can either be a unicode QName or a tuple
+                    of (QName, namespace URI)
+        namespaces - optional dictionary (defaults to an empty one) that
+                   creates additional namespace declarations that the
+                   user wants to place on the specific element. Each key
+                   is a ns prefix, and each value a ns name (URI).
+                   You do not need to use extraNss if you will be using
+                   a similar namespace parameter.  In fact, most people
+                   will never need this parameter.
+        """
+        name = U(name)
+        normalized_attrs = {}
+        if attributes is not None:
+            normalized_attrs = dict(*zip((
+                ((U(aname[0]), U(aname[1]), U(value))
+                    if isinstance(aname, tuple) else ((U(aname), None), U(value)))
+                for (aname, value) in attributes.iteritems()
+            )))
+        #Be careful, viz. http://fuhm.net/super-harmful/ but should be safe here
+        super(_userwriter, self).start_element(name, namespace, namespaces, normalized_attrs)
+        return
+
     def simple_element(self, name, namespace=None, namespaces=None,
                       attributes=None, content=u""):
         """
@@ -156,7 +189,7 @@ class _userwriter:
             namespace = XML_NAMESPACE
         self.start_element(name, namespace, namespaces, attributes)
         if content:
-            self.characters(content)
+            self.characters(U(content))
         self.end_element(name, namespace)
         return
 
