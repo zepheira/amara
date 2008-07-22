@@ -10,7 +10,7 @@ import traceback
 
 from amara import domlette
 from amara._domlette import GetAllNs as getallns
-from amara.xpath import XPathError
+from amara.xpath import XPathError, datatypes
 from amara.xpath.parser import xpathparser
 
 # NOTE: XPathParser and Context are imported last to avoid import errors
@@ -130,29 +130,32 @@ def paramvalue(obj):
     
     returns the value if successful, else None
     """
-    if isinstance(obj, unicode):
+    if isinstance(obj, datatypes.xpathobject):
         return obj
+    if isinstance(obj, unicode):
+        return datatypes.string(obj)
     elif isinstance(obj, str):
         try:
-            return obj.decode('utf-8')
+            obj = obj.decode('utf-8')
         except UnicodeError:
             return None
-    elif (isinstance(obj, int) or isinstance(obj, long)
-          or isinstance(obj, float)):
-        return obj
-    elif isinstance(obj, bool):
-        return [ obj ]
+        else:
+            return datatypes.string(obj)
+    elif isinstance(obj, bool): # <bool> is subclasses of <int>, test first
+        return datatypes.TRUE if obj else datatypes.FALSE
+    elif isinstance(obj, (int, long, float)):
+        return datatypes.number(obj)
     elif isinstance(obj, domlette.Node):
         return obj
     #NOTE: At one time (WSGI.xml days) this attemped to be smart and handle all iterables
     #But this would mean blindly dealing with dangerous creatures, such as sockets
     #So now it's more conservative and sticks to list & tuple
-    elif isinstance(obj, list) or isinstance(obj, tuple):
-        #We can only use the list if all its members are domlette nodes
-        if any( not isinstance(o, domlette.Node) for o in obj ):
-            return None
-        else:
-            return list(obj)
+    elif isinstance(obj, (list, tuple)):
+        # We can only use the list if all the items are Nodes.
+        for item in obj:
+            if not isinstance(item, domlette.Node):
+                return None
+        return datatypes.nodeset(obj)
     else:
         return None
 
