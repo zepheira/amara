@@ -27,7 +27,7 @@ class stringwriter(writer):
     def get_result(self):
         return self._result
 
-    def characters(self, data, disable_escaping=False):
+    def text(self, data, disable_escaping=False):
         self._data.append(data)
         return
 

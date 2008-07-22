@@ -17,15 +17,6 @@ class writer(object):
     # Note, any changes to __slots__ require a change in treewriter.c as well
     __slots__ = ('output_parameters',)
 
-    class __metaclass__(type):
-        def __init__(cls, name, bases, members):
-            if 'characters' in members:
-                if 'text' not in members:
-                    cls.text = cls.characters
-            elif 'text' in members:
-                if 'characters' not in members:
-                    cls.characters = cls.text
-
     def __init__(self, output_parameters):
         self.output_parameters = output_parameters
 
@@ -87,7 +78,7 @@ class writer(object):
         """
         return
 
-    def characters(self, data, disable_escaping=False):
+    def text(self, data, disable_escaping=False):
         """
         Called when a text node is generated in the result tree.
 
@@ -189,7 +180,7 @@ class _userwriter(object):
             namespace = XML_NAMESPACE
         self.start_element(name, namespace, namespaces, attributes)
         if content:
-            self.characters(U(content))
+            self.text(U(content))
         self.end_element(name, namespace)
         return
 
