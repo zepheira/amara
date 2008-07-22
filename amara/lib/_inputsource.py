@@ -26,6 +26,9 @@ class _inputsource(InputSource):
         #avoid circular crap
         #from amara._xmlstring import IsXml as isxml
 
+        if isinstance(arg, InputSource):
+            return arg
+
         if hasattr(arg, 'read'):
             #Create dummy Uri to use as base
             uri = uri or uuid4().urn
