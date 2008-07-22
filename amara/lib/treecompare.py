@@ -130,12 +130,12 @@ class _xml_sequence(_markup_sequence):
         parser.ProcessingInstructionHandler = self.processing_instruction
         parser.StartNamespaceDeclHandler = self.namespace_decl
         parser.SkippedEntityHandler = self.skipped_entity
-        if self._lexical:
+        if lexical:
             parser.CommentHandler = self.comment
             parser.StartCdataSectionHandler = self.start_cdata
             parser.EndCdataSectionHandler = self.end_cdata
             parser.StartDoctypeDeclHandler = self.doctype_decl
-        _markup_sequence.__init__(self, whitespace, lexical)
+        _markup_sequence.__init__(self, data, whitespace, lexical)
 
     def _create_parser(self):
         return expat.ParserCreate(namespace_separator='#')
@@ -215,11 +215,11 @@ class _html_sequence(HTMLParser.HTMLParser, _markup_sequence):
             self.append(('end-tag', tagname))
         return
 
-    def handle_endtag(self, tag):
+    def handle_endtag(self, tagname):
         if self._data: self._flush()
         # prevent duplicate end-tags if the HTML is malformed
         if tagname.lower() not in self._forbidden_end_elements:
-            self.append(('end-tag', tag))
+            self.append(('end-tag', tagname))
 
     def handle_charref(self, ref):
         if self._data: self._flush()
