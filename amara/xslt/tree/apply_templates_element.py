@@ -6,8 +6,7 @@ Implementation of `xsl:apply-templates` instruction
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 from amara.xslt.expressions import sorted_expression
 
 class apply_templates_element(xslt_element):

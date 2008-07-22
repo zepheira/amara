@@ -6,8 +6,9 @@ Implementation of the `xsl:template` element.
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element, param_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
+
+from variable_elements import param_element
 
 class template_element(xslt_element):
 
@@ -22,6 +23,8 @@ class template_element(xslt_element):
         'mode': attribute_types.qname(),
         }
 
+    _tail_recursive = False
+
     def setup(self):
         params = self._params = []
         for child in self.children:
@@ -33,6 +36,22 @@ class template_element(xslt_element):
             self._instructions = self.children[len(self._params)+1:-1]
         else:
             self._instructions = self.children
+        # Check for tail-recursive invocation (i.e, call-tempates of self)
+        if self._name and self._instructions:
+            endpoints = [self._instructions[-1]]
+            queue = endpoints.append
+            for last in endpoints:
+                if isinstance(last, call_template_element):
+                    if last._name == self._name:
+                        self._tail_recursive = True
+                        break
+                elif isinstance(last, if_element):
+                    last = last.last_instruction
+                    if last: queue(last)
+                elif isinstance(last, choose_element):
+                    for choice in last.children:
+                        last = choice.last_instruction
+                        if last: queue(last)
         return
 
     def _printTemplateInfo(self):
@@ -62,9 +81,9 @@ class template_element(xslt_element):
             variables = context.variables
             context.variables = variables.copy()
 
+        # The optimizer converts this to, roughly, a do/while loop
         while 1:
             context.recursive_parameters = None
-
             for child, param in self._params:
                 if param in params:
                     context.variables[param] = params[param]
@@ -74,11 +93,10 @@ class template_element(xslt_element):
             for child in self._instructions:
                 child.instantiate(context)
 
-            if context.recursive_parameters is not None:
-                # Update the params from the values given in
-                # `recursive_parameters`.
-                params = context.recursive_parameters
-            else:
+            # Update the params from the values given in
+            # `recursive_parameters`.
+            params = context.recursive_parameters
+            if params is None:
                 break
 
         if self._params:

@@ -14,8 +14,9 @@ from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import xpath
 from amara.writers import outputparameters
 from amara.xslt import XsltError, xsltcontext
-from amara.xslt.tree import xslt_element, literal_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import (xslt_element, content_model, attribute_types,
+                             literal_element, variable_elements)
+
 
 __all__ = ['match_tree', 'stylesheet_element']
 
@@ -92,38 +93,21 @@ class transform_element(xslt_element):
         'version': attribute_types.number(required=True),
         }
 
-    # We don't want ourselves included in these lists since we do the walking
-    doesSetup = doesPrime = doesIdle = False
-
     space_rules = None
+    decimal_formats = None
+    namespace_aliases = None
     match_templates = None
     named_templates = None
+    parameters = None
+    variables = None
     global_variables = None
     initial_functions = None
 
-    def __init__(self, *args, **kwds):
-        xslt_element.__init__(self, *args, **kwds)
-        self.reset1()
-        return
-
-    def reset1(self):
-        self.matchTemplates = {}
-        self.namedTemplates = {}
-        self.globalVars = {}
-        self.initialFunctions = {}
-        return
-
-    def reset2(self):
-        self.output_parameters = OutputParameters.OutputParameters()
-        self.namespaceAliases = {}
-        self.decimalFormats = {}
-        return
-
-    def setup(self):
+    def setup(self, _param_element=variable_elements.param_element):
         """
         Called only once, at the first initialization
         """
-        self.reset2()
+        self.output_parameters = outputparameters.outputparameters()
 
         # Sort the top-level elements in decreasing import precedence to ease
         # processing later.
@@ -170,8 +154,39 @@ class transform_element(xslt_element):
         # Sort in increasing import precedence, so the last one added
         # will have the highest import precedence
         elements = top_level_elements['output']
+        getter = operator.attrgetter(
+            '_method', '_version', '_encoding', '_omit_xml_declaration',
+            '_standalone', '_doctype_system', '_doctype_public',
+            '_cdata_section_elements', '_indent', '_media_type',
+            '_byte_order_mark', '_canonical_form')
         for element in elements:
-            self.output_parameters.parse(element)
+            (method, version, encoding, omit_xmldecl, standalone,
+             doctype_system, doctype_public, cdata_elements, indent,
+             media_type, byte_order_mark, canonical_form) = getter(element)
+            if method is not None:
+                self.output_parameters.method = method
+            if version is not None:
+                self.output_parameters.version = version
+            if encoding is not None:
+                self.output_parameters.encoding = encoding
+            if omit_xmldecl is not None:
+                self.output_parameters.omit_xml_declaration = omit_xmldecl
+            if standalone is not None:
+                self.output_parameters.standalone = standalone
+            if doctype_system is not None:
+                self.output_parameters.doctype_system = doctype_system
+            if doctype_public is not None:
+                self.output_parameters.doctype_public = doctype_public
+            if cdata_elements:
+                self.output_parameters.cdata_section_elements += cdata_elements
+            if indent is not None:
+                self.output_parameters.doctype_public = doctype_public
+            if media_type is not None:
+                self.output_parameters.doctype_public = doctype_public
+            if byte_order_mark is not None:
+                self.output_parameters.byte_order_mark = byte_order_mark
+            if canonical_form is not None:
+                self.output_parameters.canonical_form = canonical_form
 
         # - process the `xsl:key` elements
         # Group the keys by name
@@ -184,7 +199,7 @@ class transform_element(xslt_element):
             self._keys[name] = map(getter, keys)
 
         # - process the `xsl:decimal-format` elements
-        formats = self.decimal_formats
+        formats = self.decimal_formats = {}
         getter = operator.attrgetter(
             '_decimal_separator', '_grouping_separator', '_infinity',
             '_minus_sign', '_NaN', '_percent', '_per_mille', '_zero_digit',
@@ -213,8 +228,8 @@ class transform_element(xslt_element):
         # - process the `xsl:namespace-alias` elements
         elements = top_level_elements['namespace-alias']
         elements.reverse()
-        aliases = self.namespace_aliases
-        for precedence, group in itertools.groupby(precedence_key, elements):
+        aliases = self.namespace_aliases = {}
+        for precedence, group in itertools.groupby(elements, precedence_key):
             mapped = {}
             for element in group:
                 namespace = element.namespaces[element._stylesheet_prefix]
@@ -236,16 +251,18 @@ class transform_element(xslt_element):
         elements = top_level_elements['attribute-set']
 
         # - process the `xsl:param` and `xsl:variable` elements
-        self._topVariables = index, ordered = {}, variable_elements[:]
+        index, self.variables = {}, variable_elements[:]
         variable_elements.reverse()
         for element in variable_elements:
             name = element._name
-            if name in index:
-                # shadowed variable binding, remove from processing list
-                ordered.remove(element)
-            else:
+            if name not in index:
                 # unique (or first) variable binding
-                index[name] = element
+                index[name] = 1
+            else:
+                # shadowed variable binding, remove from processing list
+                self.variables.remove(element)
+        self.parameters = frozenset(element._name for element in self.variables
+                                    if isinstance(element, _param_element))
 
         # - process the `xsl:template` elements
         match_templates = _dispatch_table()
@@ -333,89 +350,48 @@ class transform_element(xslt_element):
 
     ############################# Prime Routines #############################
 
-    def primeStylesheet(self, contextNode, processor, topLevelParams, docUri):
-        doc = contextNode.rootNode
-        #self.newSource(doc, processor)
-
-        context = XsltContext.XsltContext(doc, 1, 1,
-                                          processorNss=self.namespaces,
-                                          stylesheet=self,
-                                          processor=processor,
-                                          extFunctionMap=processor.extFunctions
-                                          )
-
-        baseUri = docUri or getattr(context.node, 'refUri', None)
-        context.addDocument(doc, baseUri)
-
+    def prime(self, context):
         #Run prime for all instructions that declared they used it
         #NOTE: Must prime instructions *before* setting up variables and
         #parameters because vars and params might rely on context updates
         #while priming (e.g. if an EXSLT func:function is declared and used
         #in a variable defn)
         for instruction in self.root.primeInstructions:
-            instruction.prime(processor, context)
+            if instruction is not self:
+                instruction.prime(context)
 
         self.initialFunctions.update(context.functions)
 
-        overridden_params = {}
-        for split_name, value in topLevelParams.items():
-            if not isinstance(split_name, tuple):
-                try:
-                    split_name = context.expandQName(split_name)
-                except KeyError:
+        self.globalVars = processed = context.variables
+        elements, deferred = self._variables, []
+        num_writers = len(context._writers)
+        while 1:
+            for element in elements:
+                if element._name in processed:
                     continue
-            overridden_params[split_name] = value
-
-        processed, deferred = {}, []
-        for vnode in self._topVariables[1]:
-            name = vnode._name
-            if vnode.expandedName[1][0] == 'p':
-                if name in overridden_params:
-                    context.varBindings[name] = overridden_params[name]
-                else:
-                    self._computeGlobalVar(name, context, processed, deferred,
-                                           processor)
-                    #Set up so that later stylesheets will get overridden by
-                    #parameter values set in higher-priority stylesheets
-                    overridden_params[name] = context.varBindings[name]
-            else:
-                self._computeGlobalVar(name, context, processed, deferred,
-                                       processor)
-            self.globalVars.update(context.varBindings)
-        return
-
-
-    def _computeGlobalVar(self, vname, context, processed, deferred,
-                          processor):
-        vnode = self._topVariables[0][vname]
-
-        if vnode in deferred:
-            raise XsltError(XsltError.CIRCULAR_VAR, vname[0], vname[1])
-        if vnode in processed:
-            return
-        while True:
-            depth = len(processor.writers)
-            try:
-                vnode.instantiate(context, processor)
-            except xpath.RuntimeException, e:                  #FIX
-                if e.errorCode == xpath.RuntimeException.UNDEFINED_VARIABLE:
-                    #Remove any aborted and possibly unbalanced
-                    #outut handlers on the stack
-                    depth -= len(processor.writers)
-                    if depth:
-                        assert depth < 0
-                        del processor.writers[depth:]
-                    #Defer the current and try evaluating the
-                    #one that turned up undefined
-                    deferred.append(vnode)
-                    self._computeGlobalVar(e.params['key'], context, processed,
-                                           deferred, processor)
-                    deferred.remove(vnode)
-                else:
-                    raise
-            else:
+                try:
+                    element.instantiate(context)
+                except XPathError, error:
+                    if error.code != XPathError.UNDEFINED_VARIABLE:
+                        raise
+                    # Remove any aborted and possibly unbalanced
+                    # outut handlers on the stack.
+                    del context._writers[num_writers:]
+                    deferred.append(element)
+            if not deferred:
                 break
-        processed[vnode] = True
+            elif deferred == elements:
+                # Just pick the first one as being the "bad" variable.
+                raise XsltError(XsltError.CIRCULAR_VARIABLE,
+                                name=deferred[0]._name)
+            # Re-order stored variable elements to simplify processing for
+            # the next transformation.
+            for element in deferred:
+                self._variables.remove(element)
+                self._variables.append(element)
+            # Try again, but this time processing only the ones that
+            # referenced, as of yet, undefined variables.
+            elements, deferred = deferred, []
         return
 
     def updateKey(self, doc, keyName, processor):
@@ -476,12 +452,6 @@ class transform_element(xslt_element):
         return
 
     ############################# Exit Routines #############################
-
-    def idle(self, contextNode, processor, baseUri=None):
-        # run idle for all instructions that declared they used it
-        for instruction in self.root.idleInstructions:
-            instruction.idle(processor)
-        return
 
     def reset(self):
         """
@@ -558,6 +528,7 @@ class transform_element(xslt_element):
                 template_rules = ( rule for rule in template_rules
                                    if rule[0][0] < precedence )
 
+            first_template = locations = None
             for sort_key, pattern, axis_type, template in template_rules:
                 context.namespaces = template.namespaces
                 if pattern.match(context, node, axis_type):
@@ -593,8 +564,6 @@ class transform_element(xslt_element):
                 else:
                     template = None
 
-            # let Python collect this list to reduce memory usage
-            del patterns
             if template:
                 context.template = template
                 # Make sure the template starts with a clean slate

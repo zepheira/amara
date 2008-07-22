@@ -4,8 +4,7 @@
 Implementation of `xsl:sort` element
 """
 
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 class sort_element(xslt_element):
     content_model = content_model.empty

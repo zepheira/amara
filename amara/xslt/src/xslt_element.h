@@ -12,7 +12,7 @@ extern "C" {
     Py_ssize_t count, allocated;
     XsltNodeObject **nodes;
     PyObject *nodeName;
-    PyObject *expandedName;
+    PyObject *expanded_name;
     PyObject *attributes;
     PyObject *namespaces;
     PyObject *baseUri;
@@ -23,7 +23,7 @@ extern "C" {
 
 #define XsltElement(op) ((XsltElementObject *)(op))
 #define XsltElement_NODE_NAME(op)         (XsltElement(op)->nodeName)
-#define XsltElement_EXPANDED_NAME(op)     (XsltElement(op)->expandedName)
+#define XsltElement_EXPANDED_NAME(op)     (XsltElement(op)->expanded_name)
 #define XsltElement_ATTRIBUTES(op)        (XsltElement(op)->attributes)
 #define XsltElement_NAMESPACES(op)        (XsltElement(op)->namespaces)
 #define XsltElement_BASE_URI(op)          (XsltElement(op)->baseUri)

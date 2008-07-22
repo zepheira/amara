@@ -8,8 +8,7 @@ from cStringIO import StringIO
 from amara.namespaces import XSL_NAMESPACE
 from amara.writers import outputparameters, xmlwriter
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 class message_element(xslt_element):
     content_model = content_model.template

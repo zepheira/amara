@@ -6,8 +6,7 @@ Implementation of the `xsl:number` element.
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError, numbers
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 DEFAULT_LANG = 'en'
 DEFAULT_FORMAT = '1'

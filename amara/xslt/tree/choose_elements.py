@@ -6,8 +6,7 @@ Implementation of `xsl:choose`, `xsl:when` and `xsl:otherwise` elements.
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 __all__ = ('choose_element', 'when_element', 'otherwise_element')
 

@@ -4,10 +4,9 @@
 Implementation of the top-level elements.
 """
 
-from amara.namespaces import XSL_NAMESPACE
+from amara.namespaces import XSL_NAMESPACE, EXTENSION_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 __all__ = (
     'import_element', 'include_element', 'strip_space_element',
@@ -68,8 +67,21 @@ class output_element(xslt_element):
             description=("Whether to force output of a byte order mark (BOM). "
                          "Usually used to generate a UTF-8 BOM.  Do not use "
                          "unless you're sure you know what you're doing")),
+        'f:canonical-form': attribute_types.yesno(),
         }
 
+    def setup(self):
+        if (EXTENSION_NAMESPACE, 'byte-order-mark') in self.attributes:
+            value = self.attributes[EXTENSION_NAMESPACE, 'byte-order-mark']
+            self._byte_order_mark = value == 'yes'
+        else:
+            self._byte_order_mark = None
+        if (EXTENSION_NAMESPACE, 'canonical-form') in self.attributes:
+            value = self.attributes[EXTENSION_NAMESPACE, 'canonical-form']
+            self._canonical_form = value == 'yes'
+        else:
+            self._canonical_form = None
+        return
 
 class key_element(xslt_element):
     """Implementation of the `xsl:key` element"""
@@ -127,8 +139,8 @@ class attribute_set_element(xslt_element):
 
         # XSLT 1.0, Section 7.1.4, Paragraph 4:
         # The available variable bindings are only the top-level ones.
-        variables = context.varBindings
-        context.variables = context.transform.getGlobalVariables()
+        variables = context.variables
+        context.variables = context.global_variables
 
         attribute_sets = context.transform.attribute_sets
         for name in self._use_attribute_sets:
@@ -143,7 +155,6 @@ class attribute_set_element(xslt_element):
         for child in self.children:
             child.instantiate(context)
 
-        context.variables = old_vars
+        context.variables = variables
         used.remove(self)
-
         return

@@ -1,6 +1,5 @@
 ########################################################################
 # amara/xslt/tree/literal_element.py
-
 """
 Implementation of XSLT literal result elements
 """

@@ -6,12 +6,8 @@ Implementation of `xsl:call-template` element
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import \
-    xslt_element, choose_element, when_element, otherwise_element, if_element
-from amara.xslt.reader import content_model, attribute_types
-
-_conditional_elements = (
-    choose_element, when_element, otherwise_element, if_element)
+from amara.xslt.tree import (xslt_element, content_model, attribute_types,
+                             choose_elements, if_element)
 
 
 class call_template_element(xslt_element):
@@ -23,49 +19,53 @@ class call_template_element(xslt_element):
         'name': attribute_types.qname(required=True),
         }
 
+    _tail_recursive = False
+
     def setup(self):
-        self._tail_recursive = 0
-        self._called_template = None
         self._params = [ (child, child._name, child._select.evaluate)
                          for child in self.children ]
         return
 
-    def prime(self, context):
+    def validate(self, context,
+                 _test_elements=(if_element.if_element,),
+                 _choose_elements=(choose_elements.when_element,
+                                   choose_elements.otherwise_element,)):
         transform = context.transform
         try:
-            self._called_template = transform.named_templates[self._name]
+            template = self._template = transform.named_templates[self._name]
         except KeyError:
-            return
-        # check for tail recursion
-        current = self.parent
-        while current is not transform:
-            if current is self._called_template:
-                # we are within the template that we call
-                if self.isLastChild():
-                    use_tail = 1
-                    node = self.parent
-                    while node is not current:
-                        if not (node.isLastChild() and
-                                isinstance(node, _conditional_elements)):
-                            use_tail = 0
+            raise XsltError(XsltError.NAMED_TEMPLATE_NOT_FOUND,
+                            self, self._name)
+        # Check for tail-recursion
+        node = self.parent
+        while node is not transform:
+            if node is template:
+                # The xsl:call-template is contained within the named template.
+                node, parent = self, self.parent
+                while parent is not template:
+                    last = parent.last_instruction
+                    if node is last:
+                        if isinstance(parent, _test_elements):
+                            node, parent = parent, parent.parent
+                        elif isinstance(parent, _choose_elements):
+                            # skip straight to the xsl:choose element
+                            parent = parent.parent
+                            node, parent = parent, parent.parent
+                        else:
+                            # Encountered an ancestor which *may* perform
+                            # add'l processing after instantiating its children
+                            # so this cannot be considered tail recursive.
                             break
-                        node = node.parent
-                    self._tail_recursive = use_tail
+                else:
+                    self._tail_recursive = True
                 break
-            current = current.parent
+            else:
+                # Continue checking the ancestors until the xsl:stylesheet
+                # element is reached.
+                node = node.parent
         return
 
     def instantiate(self, context):
-        # setup parameters for called template
-
-        # This handles the case of top-level variables using call-templates
-        if not self._called_template:
-            self.prime(context)
-            if not self._called_template:
-                raise XsltRuntimeException(XsltError.NAMED_TEMPLATE_NOT_FOUND,
-                                           self, self._name)
-            self._called_template.prime(context)
-
         # We need to calculate the parameters before the variable context
         # is changed back in the template element
         params = {}

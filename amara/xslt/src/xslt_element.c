@@ -6,6 +6,9 @@ static PyObject *namespaces_string;
 static PyObject *instruction_string;
 static PyObject *instantiate_string;
 static PyObject *does_setup_string;
+static PyObject *does_validate_string;
+static PyObject *does_prime_string;
+static PyObject *does_teardown_string;
 static PyObject *setup_string;
 
 static PyObject *empty_dict;
@@ -57,6 +60,65 @@ static int element_resize(XsltElementObject *self, Py_ssize_t newsize) {
 }
 
 
+Py_LOCAL_INLINE(int)
+element_update(XsltElementObject *self, XsltNodeObject *child)
+{
+  PyObject *temp, *callable;
+  PyObject *root = XsltNode_ROOT(self);
+  struct { PyObject *attribute; PyObject *instructions; } 
+    *table, update_table[] = {
+      { does_validate_string, XsltRoot_VALIDATE_INSTRUCTIONS(root) },
+      { does_prime_string, XsltRoot_PRIME_INSTRUCTIONS(root) },
+      { does_teardown_string, XsltRoot_TEARDOWN_INSTRUCTIONS(root) },
+      { NULL }
+    };
+
+  /* if the child does setup, call that function now */
+  temp = PyObject_GetAttr((PyObject *)child, does_setup_string);
+  if (temp == NULL)
+    return -1;
+  switch (PyObject_IsTrue(temp)) {
+  case 1:
+    Py_DECREF(temp);
+    callable = PyObject_GetAttr((PyObject *)child, setup_string);
+    if (callable == NULL)
+      return -1;
+    temp = PyObject_Call(callable, empty_tuple, NULL);
+    Py_DECREF(callable);
+    if (temp == NULL)
+      return -1;
+  case 0:
+    Py_DECREF(temp);
+    break;
+  default:
+    Py_DECREF(temp);
+    return -1;
+  }
+
+  /* update the root-node instruction lists */
+  for (table = update_table; table->attribute; table++) {
+    /* if the child does setup, call that function now */
+    temp = PyObject_GetAttr((PyObject *)child, table->attribute);
+    if (temp == NULL)
+      return -1;
+    switch (PyObject_IsTrue(temp)) {
+    case 1:
+      if (PyList_Append(table->instructions, (PyObject *)child) < 0) {
+        Py_DECREF(temp);
+        return -1;
+      }
+    case 0:
+      Py_DECREF(temp);
+      break;
+    default:
+      Py_DECREF(temp);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
 static PyObject *process_children(XsltElementObject *self, PyObject *args,
                                   PyObject *context, PyObject *processor)
 {
@@ -92,7 +154,6 @@ static PyObject *process_children(XsltElementObject *self, PyObject *args,
 int XsltElement_AppendChild(XsltElementObject *self, XsltNodeObject *child)
 {
   Py_ssize_t count;
-  PyObject *temp;
 
   if (!XsltElement_Check(self) || !XsltNode_Check(child)) {
     PyErr_BadInternalCall();
@@ -111,30 +172,14 @@ int XsltElement_AppendChild(XsltElementObject *self, XsltNodeObject *child)
   Py_INCREF((PyObject *) self);
   child->parent = (PyObject *) self;
 
-  /* if the child does setup, call that function now */
-  temp = PyObject_GetAttr((PyObject *) child, does_setup_string);
-  if (temp == NULL)
-    return -1;
-  if (PyObject_IsTrue(temp)) {
-    PyObject *callable;
-    Py_DECREF(temp);
-    callable = PyObject_GetAttr((PyObject *) child, setup_string);
-    if (callable == NULL)
-      return -1;
-    temp = PyObject_Call(callable, empty_tuple, NULL);
-    Py_DECREF(callable);
-    if (temp == NULL)
-      return -1;
-  }
-  Py_DECREF(temp);
-
-  return 0;
+  return element_update(self, child);
 }
 
 
 int XsltElement_InsertChild(XsltElementObject *self, XsltNodeObject *child,
                             Py_ssize_t where)
 {
+  XsltNodeObject **nodes;
   Py_ssize_t count, i;
 
   if (!XsltElement_Check(self) || !XsltNode_Check(child)) {
@@ -154,9 +199,12 @@ int XsltElement_InsertChild(XsltElementObject *self, XsltNodeObject *child,
   if (where > count)
     where = count;
 
-  for (i = count; --i >= where; )
-    XsltElement_SET_CHILD(self, i+1, XsltElement_GET_CHILD(self, i));
+  /* Shift the effected nodes up one */
+  nodes = XsltElement_GET_NODES(self);
+  for (i = count; --i >= where;)
+    nodes[i+1] = nodes[i];
 
+  /* Set the new child in the array */
   Py_INCREF(child);
   XsltElement_SET_CHILD(self, where, child);
 
@@ -165,7 +213,7 @@ int XsltElement_InsertChild(XsltElementObject *self, XsltNodeObject *child,
   Py_INCREF((PyObject *) self);
   child->parent = (PyObject *) self;
 
-  return 0;
+  return element_update(self, child);
 }
 
 
@@ -257,116 +305,18 @@ Inserts the child at the given position in the children list.";
 
 static PyObject *element_insertChild(XsltElementObject *self, PyObject *args)
 {
-  int index, count, i;
+  Py_ssize_t index;
   XsltNodeObject *child;
-  XsltNodeObject **nodes;
 
   if (!PyArg_ParseTuple(args, "iO!:insertChild", &index, &XsltNode_Type,
                         &child))
     return NULL;
 
-  /* Insert the child at the index in our array */
-  count = XsltElement_GET_COUNT(self);
-  if (element_resize(self, count + 1) == -1)
+  if (XsltElement_InsertChild(self, (XsltNodeObject *) child, index) == -1)
     return NULL;
-
-  nodes = XsltElement_GET_NODES(self);
-  /* Shift the effected nodes up one */
-  for (i = count; --i >= index;)
-    nodes[i+1] = nodes[i];
-
-  /* Set the new child in the array */
-  Py_INCREF(child);
-  XsltElement_SET_CHILD(self, index, child);
-
-  /* Set its parent link */
-  Py_DECREF(XsltNode_GET_PARENT(child));
-  Py_INCREF((PyObject *) self);
-  XsltNode_SET_PARENT(child, (PyObject *)self);
 
   Py_INCREF(Py_None);
   return Py_None;
-}
-
-static char removeChild_doc[] = "\
-removeChild(oldChild)\n\
-\n\
-Removes the node indicated by `oldChild` from the list of children.";
-
-static PyObject *element_removeChild(XsltElementObject *self, PyObject *args)
-{
-  XsltNodeObject *oldChild;
-  int count, i;
-  XsltNodeObject **nodes;
-
-  if (!PyArg_ParseTuple(args, "O!:removeChild", &XsltNode_Type, &oldChild))
-    return NULL;
-
-  /* Find the child in our array */
-  count = XsltElement_GET_COUNT(self);
-  nodes = XsltElement_GET_NODES(self);
-  for (i = 0; i < count; i++) {
-    if (nodes[i] == oldChild) {
-      /* Shift the remaining nodes down one */
-      for (nodes += i; i < count; nodes++)
-        nodes[0] = nodes[1];
-      /* Remove the child from its parent */
-      Py_DECREF(XsltNode_GET_PARENT(oldChild));
-      Py_INCREF(Py_None);
-      XsltNode_SET_PARENT(oldChild, Py_None);
-      Py_DECREF(oldChild);
-      /* Shrink the array */
-      if (element_resize(self, count - 1) < 0)
-        return NULL;
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
-  }
-  PyErr_SetString(PyExc_ValueError, "`oldChild` not in children");
-  return NULL;
-}
-
-static char replaceChild_doc[] = "\
-replaceChild(oldChild, newChild)\n\
-\n\
-Replaces the node `oldChild` with `newChild` in the list of children.";
-
-static PyObject *element_replaceChild(XsltElementObject *self, PyObject *args)
-{
-  int count, i;
-  XsltNodeObject *oldChild, *newChild;
-  XsltNodeObject **nodes;
-
-  if (!PyArg_ParseTuple(args, "O!O!:replaceChild",
-                        &XsltNode_Type, &oldChild, &XsltNode_Type, &newChild))
-    return NULL;
-
-  /* Insert the child at the index in our array */
-  count = XsltElement_GET_COUNT(self);
-  nodes = XsltElement_GET_NODES(self);
-  for (i = 0; i < count; i++) {
-    if (nodes[i] == oldChild) {
-      /* Set the new child in the array */
-      Py_INCREF(newChild);
-      XsltElement_SET_CHILD(self, i, newChild);
-
-      /* Set its parent link */
-      Py_DECREF(XsltNode_GET_PARENT(newChild));
-      Py_INCREF((PyObject *) self);
-      XsltNode_SET_PARENT(newChild, (PyObject *)self);
-
-      /* Remove the old child from the array. */
-      Py_DECREF(XsltNode_GET_PARENT(oldChild));
-      Py_INCREF(Py_None);
-      XsltNode_SET_PARENT(oldChild, Py_None);
-      Py_DECREF(oldChild);
-
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
-  }
-  PyErr_SetString(PyExc_ValueError, "`oldChild` not in children");
-  return NULL;
 }
 
 static char setAttribute_doc[] = "\
@@ -476,9 +426,9 @@ static PyObject *element_getstate(XsltElementObject *self, PyObject *args)
   Py_INCREF(self->nodeName);
   PyTuple_SET_ITEM(state, 3, self->nodeName);
 
-  /* XsltElement.expandedName */
-  Py_INCREF(self->expandedName);
-  PyTuple_SET_ITEM(state, 4, self->expandedName);
+  /* XsltElement.expanded_name */
+  Py_INCREF(self->expanded_name);
+  PyTuple_SET_ITEM(state, 4, self->expanded_name);
 
   /* XsltElement.attributes */
   Py_INCREF(self->attributes);
@@ -573,9 +523,9 @@ static PyObject *element_setstate(XsltElementObject *self, PyObject *args)
   self->nodeName = name;
   Py_DECREF(temp);
 
-  temp = self->expandedName;
+  temp = self->expanded_name;
   Py_INCREF(expanded);
-  self->expandedName = expanded;
+  self->expanded_name = expanded;
   Py_DECREF(temp);
 
   /* only update attributes if there are any to add to preserve
@@ -625,8 +575,6 @@ static PyObject *element_setstate(XsltElementObject *self, PyObject *args)
 static struct PyMethodDef element_methods[] = {
   XsltElement_METHOD(appendChild),
   XsltElement_METHOD(insertChild),
-  XsltElement_METHOD(removeChild),
-  XsltElement_METHOD(replaceChild),
   XsltElement_METHOD(setAttribute),
 
   XsltElement_METHOD(instantiate),
@@ -650,7 +598,7 @@ static struct PyMethodDef element_methods[] = {
 
 static struct PyMemberDef element_members[] = {
   XsltElement_MEMBER(baseUri, T_OBJECT, 0),
-  XsltElement_MEMBER(expandedName, T_OBJECT, READONLY),
+  XsltElement_MEMBER(expanded_name, T_OBJECT, READONLY),
   XsltElement_MEMBER(nodeName, T_OBJECT, READONLY),
   XsltElement_MEMBER(attributes, T_OBJECT, READONLY),
   XsltElement_MEMBER(namespaces, T_OBJECT, 0),
@@ -689,8 +637,8 @@ static int set_prefix(XsltElementObject *self, PyObject *v, char *arg)
     return -1;
   }
 
-  assert(self->expandedName != NULL);
-  localName = PyTuple_GET_ITEM(self->expandedName, 1);
+  assert(self->expanded_name != NULL);
+  localName = PyTuple_GET_ITEM(self->expanded_name, 1);
 
   if (prefix == Py_None) {
     Py_DECREF(self->nodeName);
@@ -863,7 +811,7 @@ static int element_init(XsltElementObject *self, PyObject *args,
                         PyObject *kwds)
 {
   PyObject *root, *namespaceUri, *localName, *nodeName;
-  PyObject *expandedName, *attributes, *temp;
+  PyObject *expanded_name, *attributes, *temp;
   static char *kwlist[] = { "root", "namespaceUri", "localName", "nodeName",
                             NULL };
 
@@ -877,16 +825,16 @@ static int element_init(XsltElementObject *self, PyObject *args,
   XsltNode_ROOT(self) = root;
   Py_DECREF(temp);
 
-  expandedName = PyTuple_New(2);
-  if (expandedName == NULL) {
+  expanded_name = PyTuple_New(2);
+  if (expanded_name == NULL) {
     return -1;
   }
   Py_INCREF(namespaceUri);
-  PyTuple_SET_ITEM(expandedName, 0, namespaceUri);
+  PyTuple_SET_ITEM(expanded_name, 0, namespaceUri);
   Py_INCREF(localName);
-  PyTuple_SET_ITEM(expandedName, 1, localName);
-  temp = self->expandedName;
-  self->expandedName = expandedName;
+  PyTuple_SET_ITEM(expanded_name, 1, localName);
+  temp = self->expanded_name;
+  self->expanded_name = expanded_name;
   Py_DECREF(temp);
 
   temp = self->nodeName;
@@ -916,7 +864,7 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
     self->allocated = 0;
 
     Py_INCREF(Py_None);
-    self->expandedName = Py_None;
+    self->expanded_name = Py_None;
 
     Py_INCREF(Py_None);
     self->nodeName = Py_None;
@@ -1125,8 +1073,17 @@ int XsltElement_Init(PyObject *module)
   instantiate_string = PyString_FromString("instantiate");
   if (instantiate_string == NULL) return -1;
 
-  does_setup_string = PyString_FromString("doesSetup");
+  does_setup_string = PyString_FromString("does_setup");
   if (does_setup_string == NULL) return -1;
+
+  does_validate_string = PyString_FromString("does_validate");
+  if (does_validate_string == NULL) return -1;
+
+  does_prime_string = PyString_FromString("does_prime");
+  if (does_prime_string == NULL) return -1;
+
+  does_teardown_string = PyString_FromString("does_teardown");
+  if (does_teardown_string == NULL) return -1;
 
   setup_string = PyString_FromString("setup");
   if (setup_string == NULL) return -1;
@@ -1151,6 +1108,9 @@ void XsltElement_Fini(void)
   Py_DECREF(instruction_string);
   Py_DECREF(instantiate_string);
   Py_DECREF(does_setup_string);
+  Py_DECREF(does_validate_string);
+  Py_DECREF(does_prime_string);
+  Py_DECREF(does_teardown_string);
   Py_DECREF(setup_string);
 
   PyDict_Clear(XsltElement_Type.tp_dict);

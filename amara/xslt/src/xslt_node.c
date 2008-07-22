@@ -2,7 +2,10 @@
 #include "xslt_root.h"
 #include "xslt_element.h"
 
-static PyObject *is_pseudo_node_string;
+static PyObject *does_setup_string;
+static PyObject *does_validate_string;
+static PyObject *does_prime_string;
+static PyObject *does_teardown_string;
 static PyObject *newobj_function;
 
 /** Private Routines **************************************************/
@@ -94,11 +97,6 @@ static PyObject *node_isLastChild(PyObject *self, PyObject *args)
         result = Py_True;
       else if (result == Py_True) {
         int is_pseudo_node;
-        temp = PyObject_GetAttr(sibling, is_pseudo_node_string);
-        if (temp == NULL)
-          return NULL;
-        is_pseudo_node = PyObject_IsTrue(temp);
-        Py_DECREF(temp);
         if (is_pseudo_node == 0) {
           result = Py_False;
           break;
@@ -131,33 +129,31 @@ static PyObject *node_setup(PyObject *self, PyObject *args)
 }
 
 static char prime_doc[] = "\
-prime(processor, context)\n\
+prime(context)\n\
 \n\
 Subclasses can override this method to perform any specific initialization\n\
 that requires a context node.";
 
 static PyObject *node_prime(PyObject *self, PyObject *args)
 {
-  PyObject *processor, *context;
+  PyObject *context;
 
-  if (!PyArg_ParseTuple(args, "OO:prime", &processor, &context))
+  if (!PyArg_ParseTuple(args, "O:prime", &context))
     return NULL;
 
   Py_INCREF(Py_None);
   return Py_None;
 }
 
-static char idle_doc[] = "\
-idle(processor)\n\
+static char teardown_doc[] = "\
+teardown()\n\
 \n\
 Subclasses can override this method to perform any teardown after a\n\
 transform has been completed.";
 
-static PyObject *node_idle(PyObject *self, PyObject *args)
+static PyObject *node_teardown(PyObject *self, PyObject *args)
 {
-  PyObject *processor;
-
-  if (!PyArg_ParseTuple(args, "O:idle", &processor))
+  if (!PyArg_ParseTuple(args, ":teardown"))
     return NULL;
 
   Py_INCREF(Py_None);
@@ -165,16 +161,16 @@ static PyObject *node_idle(PyObject *self, PyObject *args)
 }
 
 static char instantiate_doc[] = "\
-instantiate(context, processor)\n\
+instantiate(context)\n\
 \n\
 Subclasses can override this method to do the actual transformation\n\
 processing.";
 
 static PyObject *node_instantiate(PyObject *self, PyObject *args)
 {
-  PyObject *context, *processor;
+  PyObject *context;
 
-  if (!PyArg_ParseTuple(args, "OO:instantiate", &context, &processor))
+  if (!PyArg_ParseTuple(args, "O:instantiate", &context))
     return NULL;
 
   Py_INCREF(Py_None);
@@ -249,7 +245,7 @@ static struct PyMethodDef node_methods[] = {
 
   XsltNode_METHOD(setup),
   XsltNode_METHOD(prime),
-  XsltNode_METHOD(idle),
+  XsltNode_METHOD(teardown),
   XsltNode_METHOD(instantiate),
 
   XsltNode_METHOD(pprint),
@@ -425,6 +421,82 @@ PyTypeObject XsltNode_Type = {
 };
 
 
+static PyObject *
+metaclass_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  static char *kwlist[] = { "name", "bases", "dict", NULL };
+  PyObject *name, *bases, *dict, *result;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "SOO:__metaclass__", kwlist,
+                                   &name, &bases, &dict))
+    return NULL;
+
+  if (PyDict_GetItemString(dict, "setup") != NULL) {
+    if (PyDict_SetItemString(dict, "does_setup", Py_True) < 0)
+      return NULL;
+  }
+
+  return type->tp_base->tp_new(type, args, kwds);
+}
+
+static int
+metaclass_init(PyObject *cls, PyObject *args, PyObject *kwds)
+{
+  static char *kwlist[] = { "name", "bases", "dict", NULL };
+  PyObject *name, *bases, *dict;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "SOO:__metaclass__", kwlist,
+                                   &name, &bases, &dict))
+    return -1;
+
+  return 0;
+}
+
+PyTypeObject xslt_metaclass = {
+  /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
+  /* ob_size           */ 0,
+  /* tp_name           */ "amara.xslt.tree._tree.__metaclass__",
+  /* tp_basicsize      */ 0,
+  /* tp_itemsize       */ 0,
+  /* tp_dealloc        */ (destructor) 0,
+  /* tp_print          */ (printfunc) 0,
+  /* tp_getattr        */ (getattrfunc) 0,
+  /* tp_setattr        */ (setattrfunc) 0,
+  /* tp_compare        */ (cmpfunc) 0,
+  /* tp_repr           */ (reprfunc) 0,
+  /* tp_as_number      */ (PyNumberMethods *) 0,
+  /* tp_as_sequence    */ (PySequenceMethods *) 0,
+  /* tp_as_mapping     */ (PyMappingMethods *) 0,
+  /* tp_hash           */ (hashfunc) 0,
+  /* tp_call           */ (ternaryfunc) 0,
+  /* tp_str            */ (reprfunc) 0,
+  /* tp_getattro       */ (getattrofunc) 0,
+  /* tp_setattro       */ (setattrofunc) 0,
+  /* tp_as_buffer      */ (PyBufferProcs *) 0,
+  /* tp_flags          */ (Py_TPFLAGS_DEFAULT |
+                           Py_TPFLAGS_BASETYPE |
+                           0),
+  /* tp_doc            */ (char *) 0,
+  /* tp_traverse       */ (traverseproc) 0,
+  /* tp_clear          */ (inquiry) 0,
+  /* tp_richcompare    */ (richcmpfunc) 0,
+  /* tp_weaklistoffset */ 0,
+  /* tp_iter           */ (getiterfunc) 0,
+  /* tp_iternext       */ (iternextfunc) 0,
+  /* tp_methods        */ (PyMethodDef *) 0,
+  /* tp_members        */ (PyMemberDef *) 0,
+  /* tp_getset         */ (PyGetSetDef *) 0,
+  /* tp_base           */ (PyTypeObject *) 0,
+  /* tp_dict           */ (PyObject *) 0,
+  /* tp_descr_get      */ (descrgetfunc) 0,
+  /* tp_descr_set      */ (descrsetfunc) 0,
+  /* tp_dictoffset     */ 0,
+  /* tp_init           */ (initproc) metaclass_init,
+  /* tp_alloc          */ (allocfunc) 0,
+  /* tp_new            */ (newfunc) metaclass_new,
+  /* tp_free           */ 0,
+};
+
 /** Module Setup & Teardown *******************************************/
 
 
@@ -432,7 +504,24 @@ int XsltNode_Init(PyObject *module)
 {
   PyObject *dict, *constant;
 
-  /* Initialize type object */
+  /* Initialize constants */
+  does_setup_string = PyString_FromString("does_setup");
+  if (does_setup_string == NULL) return -1;
+  does_validate_string = PyString_FromString("does_validate");
+  if (does_validate_string == NULL) return -1;
+  does_prime_string = PyString_FromString("does_prime");
+  if (does_prime_string == NULL) return -1;
+  does_teardown_string = PyString_FromString("does_teardown");
+  if (does_teardown_string == NULL) return -1;
+
+  newobj_function = PyObject_GetAttrString(module, "__newobj__");
+  if (newobj_function == NULL) return -1;
+
+  /* Initialize type objects */
+  xslt_metaclass.tp_base = &PyType_Type;
+  if (PyType_Ready(&xslt_metaclass) < 0)
+    return -1;
+  XsltNode_Type.ob_type = &xslt_metaclass;
   if (PyType_Ready(&XsltNode_Type) < 0)
     return -1;
 
@@ -441,6 +530,10 @@ int XsltNode_Init(PyObject *module)
 
   /* Assign "class" constants */
   dict = XsltNode_Type.tp_dict;
+  if (PyDict_SetItem(dict, does_setup_string, Py_False)) return -1;
+  if (PyDict_SetItem(dict, does_validate_string, Py_False)) return -1;
+  if (PyDict_SetItem(dict, does_prime_string, Py_False)) return -1;
+  if (PyDict_SetItem(dict, does_teardown_string, Py_False)) return -1;
   if (PyDict_SetItemString(dict, "nodeName", Py_None)) return -1;
   if (PyDict_SetItemString(dict, "children", Py_None)) return -1;
   if (PyDict_SetItemString(dict, "attributes", Py_None)) return -1;
@@ -448,7 +541,7 @@ int XsltNode_Init(PyObject *module)
 
   constant = Py_BuildValue("(OO)", Py_None, Py_None);
   if (constant == NULL) return -1;
-  if (PyDict_SetItemString(dict, "expandedName", constant)) return -1;
+  if (PyDict_SetItemString(dict, "expanded_name", constant)) return -1;
   Py_DECREF(constant);
 
   constant = PyString_FromString("?");
@@ -464,11 +557,8 @@ int XsltNode_Init(PyObject *module)
 
   if (PyDict_SetItemString(dict, "isPseudoNode", Py_False)) return -1;
 
-  is_pseudo_node_string = PyString_FromString("isPseudoNode");
-  if (is_pseudo_node_string == NULL) return -1;
-
-  newobj_function = PyObject_GetAttrString(module, "__newobj__");
-  if (newobj_function == NULL) return -1;
+  if (PyDict_SetItemString(dict, "__metaclass__", (PyObject *)&xslt_metaclass))
+    return -1;
 
   return 0;
 }
@@ -476,7 +566,10 @@ int XsltNode_Init(PyObject *module)
 
 void XsltNode_Fini(void)
 {
-  Py_DECREF(is_pseudo_node_string);
+  Py_DECREF(does_setup_string);
+  Py_DECREF(does_validate_string);
+  Py_DECREF(does_prime_string);
+  Py_DECREF(does_teardown_string);
   Py_DECREF(newobj_function);
   PyDict_Clear(XsltNode_Type.tp_dict);
 }

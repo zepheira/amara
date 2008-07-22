@@ -7,8 +7,7 @@ Implementation of `xsl:copy` element.
 from amara.domlette import Node, XPathNamespace
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 
 class copy_element(xslt_element):

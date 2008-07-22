@@ -11,8 +11,9 @@ extern "C" {
     XsltNodeObject __base__;
     PyObject *baseUri;
     PyObject *stylesheet;
-    PyObject *primeInstructions;
-    PyObject *idleInstructions;
+    PyObject *validate_instructions;
+    PyObject *prime_instructions;
+    PyObject *teardown_instructions;
     PyObject *sources;
     PyObject *sourceNodes;
   } XsltRootObject;
@@ -20,8 +21,9 @@ extern "C" {
 #define XsltRoot(op) ((XsltRootObject *)(op))
 #define XsltRoot_BASE_URI(op) (XsltRoot(op)->baseUri)
 #define XsltRoot_STYLESHEET(op) (XsltRoot(op)->stylesheet)
-#define XsltRoot_PRIME_INSTRUCTIONS(op) (XsltRoot(op)->primeInstructions)
-#define XsltRoot_IDLE_INSTRUCTIONS(op) (XsltRoot(op)->idleInstructions)
+#define XsltRoot_VALIDATE_INSTRUCTIONS(op) (XsltRoot(op)->validate_instructions)
+#define XsltRoot_PRIME_INSTRUCTIONS(op) (XsltRoot(op)->prime_instructions)
+#define XsltRoot_TEARDOWN_INSTRUCTIONS(op) (XsltRoot(op)->teardown_instructions)
 #define XsltRoot_SOURCES(op) (XsltRoot(op)->sources)
 
   extern PyTypeObject XsltRoot_Type;

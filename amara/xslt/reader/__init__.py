@@ -13,14 +13,11 @@ from amara import sax
 from amara.lib import IriError, inputsource
 from amara.lib.xmlstring import isspace
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE, XSL_NAMESPACE
-from amara.xslt import XsltError, tree
-
+from amara.xslt import XsltError
 #from amara.xslt import builtinextelements, exslt
-
-import content_model, attribute_types
+from amara.xslt.tree import *
 
 __all__ = ['stylesheet_reader']
-
 
 # Whitespace stripping rules for a stylesheet:
 #   preserve all whitespace within xsl:text elements;
@@ -30,12 +27,12 @@ STYLESHEET_WHITESPACE_RULES = [(XSL_NAMESPACE, 'text', False),
 
 
 # pseudo-nodes for save/restore of variable bindings
-class push_variables_node(tree.xslt_node):
+class push_variables_node(xslt_node):
 
     isPseudoNode = True
 
     def __init__(self, root, bindingStack):
-        tree.xslt_node.__init__(self, root)
+        xslt_node.__init__(self, root)
         self.savedVariables = bindingStack
         return
 
@@ -44,12 +41,12 @@ class push_variables_node(tree.xslt_node):
         context.varBindings = context.varBindings.copy()
         return
 
-class pop_variables_node(tree.xslt_node):
+class pop_variables_node(xslt_node):
 
     isPseudoNode = True
 
     def __init__(self, root, bindingStack):
-        tree.xslt_node.__init__(self, root)
+        xslt_node.__init__(self, root)
         self.savedVariables = bindingStack
         return
 
@@ -59,17 +56,55 @@ class pop_variables_node(tree.xslt_node):
         return
 
 
+ELEMENT_CLASSES = {
+    'apply-imports': apply_imports_element.apply_imports_element,
+    'apply-templates': apply_templates_element.apply_templates_element,
+    'attribute': attribute_element.attribute_element,
+    'call-template': call_template_element.call_template_element,
+    'choose': choose_elements.choose_element,
+    'otherwise': choose_elements.otherwise_element,
+    'when': choose_elements.when_element,
+    'comment': comment_element.comment_element,
+    'copy': copy_element.copy_element,
+    'copy-of': copy_of_element.copy_of_element,
+    'element': element_element.element_element,
+    'fallback': fallback_elements.fallback_element,
+    'for-each': for_each_element.for_each_element,
+    'if': if_element.if_element,
+    'message': message_element.message_element,
+    'number': number_element.number_element,
+    'processing-instruction':
+        processing_instruction_element.processing_instruction_element,
+    'stylesheet': transform_element.transform_element,
+    'transform': transform_element.transform_element,
+    'template': template_element.template_element,
+    'text': text_element.text_element,
+    'value-of': value_of_element.value_of_element,
+    'variable': variable_elements.variable_element,
+    'param': variable_elements.param_element,
+    'sort': sort_element.sort_element,
+    'with-param': with_param_element.with_param_element,
+
+    'import': declaration_elements.import_element,
+    'include': declaration_elements.include_element,
+    'strip-space': declaration_elements.strip_space_element,
+    'preserve-space': declaration_elements.preserve_space_element,
+    'output': declaration_elements.output_element,
+    'key': declaration_elements.key_element,
+    'decimal-format': declaration_elements.decimal_format_element,
+    'namespace-alias': declaration_elements.namespace_alias_element,
+    'attribute-set': declaration_elements.attribute_set_element,
+    }
+
 # The XSL attributes allowed on literal elements
-RESULT_ELEMENT_XSL_ATTRS = {
+_RESULT_ELEMENT_XSL_ATTRS = {
     'exclude-result-prefixes' : attribute_types.prefixes(),
     'extension-element-prefixes' : attribute_types.prefixes(),
     'use-attribute-sets' : attribute_types.qnames(),
     'version' : attribute_types.number(),
     }
-RESULT_ELEMENT_ATTR_INFO = attribute_types.any_avt()
+_RESULT_ELEMENT_ATTR_INFO = attribute_types.any_avt()
 
-# Cached values for stylesheet tree creation
-_XSLT_ELEMENT_CACHE = {}
 _root_content_model = content_model.alt(
     content_model.qname(XSL_NAMESPACE, 'xsl:stylesheet'),
     content_model.qname(XSL_NAMESPACE, 'xsl:transform'),
@@ -125,6 +160,7 @@ class stylesheet_reader(object):
     _input_source = None
     _locator = None
     _stylesheet = None
+    _root = None
 
     def __init__(self):
         self._import_index = 0
@@ -133,8 +169,8 @@ class stylesheet_reader(object):
         self._document_state_stack = []
         self._element_state_stack = []
         self._extelements = {}
-        self._extelements.update(Exslt.ExtElements)
-        self._extelements.update(BuiltInExtElements.ExtElements)
+        #self._extelements.update(Exslt.ExtElements)
+        #self._extelements.update(BuiltInExtElements.ExtElements)
         self._extelement_cache = {}
         return
 
@@ -186,7 +222,7 @@ class stylesheet_reader(object):
         # because we explicitly pass ownerDocument to the nodes as
         # they are created
         document_uri = self._locator.getSystemId()
-        root = tree.xslt_root(document_uri)
+        root = xslt_root(document_uri)
         if not self._root:
             self._root = root
 
@@ -275,13 +311,14 @@ class stylesheet_reader(object):
         return
 
     def startElementNS(self, expandedName, qualifiedName, attribs,
-                       _element_classes=tree.ELEMENT_CLASSES,
-                       _element_cache={}):
+                       _literal_element=literal_element.literal_element,
+                       _element_classes=ELEMENT_CLASSES,
+                       _element_cache={}, ):
         """
         Callback interface for SAX.
         """
         parent_state = self._element_state_stack[-1]
-        state = ParseState(**parent_state.__dict__)
+        state = parse_state(**parent_state.__dict__)
         self._element_state_stack.append(state)
 
         # ----------------------------------------------------------
@@ -309,24 +346,17 @@ class stylesheet_reader(object):
             except KeyError:
                 # We need to try to import (and cache) it
                 try:
-                    module = _element_classes[local]
+                    xsl_class = _element_classes[local]
                 except KeyError:
                     if not state.forwardsCompatible:
                         raise XsltParserException(XsltError.XSLT_ILLEGAL_ELEMENT,
                                                   self._locator, local)
-                    xsl_class = Undefinedxsltelement
+                    xsl_class = fallback_elements.undefined_xslt_element
                     validation_token = content_model.RESULT_ELEMENT
                 else:
-                    parts = module.split('.')
-                    path = '.'.join(['Ft.Xml.Xslt'] + parts[:-1])
-                    module = __import__(path, {}, {}, parts[-1:])
-                    try:
-                        xsl_class = module.__dict__[parts[-1]]
-                    except KeyError:
-                        raise ImportError('.'.join(parts))
                     validation_token = expandedName
-                validation = xsl_class.content.compile()
-                legal_attrs = xsl_class.legalAttrs.items()
+                validation = xsl_class.content_model.compile()
+                legal_attrs = xsl_class.attribute_types.items()
                 _element_cache[local] = (
                     xsl_class, validation, validation_token, legal_attrs)
         elif namespace in state.extensionNamespaces:
@@ -337,17 +367,17 @@ class stylesheet_reader(object):
                 try:
                     ext_class = self._extElements[expandedName]
                 except KeyError:
-                    ext_class = UndefinedExtensionElement
+                    ext_class = fallback_elements.undefined_extension_element
                 validation = ext_class.content.compile()
                 legal_attrs = ext_class.legalAttrs
                 if legal_attrs is not None:
                     legal_attrs = ext_class.legalAttrs.items()
                 self._extensionElementCache[expandedName] = (
                     ext_class, validation, legal_attrs)
-            validation_token = contentinfo.RESULT_ELEMENT
+            validation_token = content_model.RESULT_ELEMENT
         else:
             validation = _LITERAL_ELEMENT_VALIDATION
-            validation_token = contentinfo.RESULT_ELEMENT
+            validation_token = content_model.RESULT_ELEMENT
         state.validation = validation
 
         # ----------------------------------------------------------
@@ -378,7 +408,7 @@ class stylesheet_reader(object):
 
         # ----------------------------------------------------------
         # create the instance defining this element
-        klass = (xsl_class or ext_class or tree.literal_element)
+        klass = (xsl_class or ext_class or _literal_element)
         state.node = instance = klass(self._root, namespace, local,
                                       qualifiedName)
         instance.baseUri = self._locator.getSystemId()
@@ -387,8 +417,7 @@ class stylesheet_reader(object):
         instance.importIndex = self._import_index
         instance.namespaces = state.currentNamespaces
 
-        # -- XSLT element --------------------------------------
-        if xsl_class:
+        if xsl_class: # -- XSLT element --------------------------------
             # Handle attributes in the null-namespace
             standand_attributes = local in ('stylesheet', 'transform')
             inst_dict = instance.__dict__
@@ -434,9 +463,7 @@ class stylesheet_reader(object):
             # XSLT Spec 2.6 - Combining Stylesheets
             if local in ('import', 'include'):
                 self._combine_stylesheet(instance._href, (local == 'import'))
-
-        # -- extension element ---------------------------------
-        elif ext_class:
+        elif ext_class: # -- extension element -------------------------
             validate_attributes = (legal_attrs is not None)
             if validate_attributes:
                 # Handle attributes in the null-namespace
@@ -476,9 +503,7 @@ class stylesheet_reader(object):
                                                          attr_name, value)
                     else:
                         instance.setAttribute(attr_ns, attr_name, value)
-
-        # -- literal result element ----------------------------
-        else:
+        else: # -- literal result element ------------------------------
             output_attrs = []
             for expanded in attribs:
                 attr_ns, attr_local = expanded
@@ -489,7 +514,7 @@ class stylesheet_reader(object):
                                                      attr_local, value)
                 else:
                     # prepare attributes for literal output
-                    value = RESULT_ELEMENT_ATTR_INFO.prepare(instance, value)
+                    value = _RESULT_ELEMENT_ATTR_INFO.prepare(instance, value)
                     attr_qname = attribs.getQNameByName(expanded)
                     output_attrs.append((attr_qname, attr_ns, value))
 
@@ -504,14 +529,10 @@ class stylesheet_reader(object):
                 raise XsltParserException(XsltError.ILLEGAL_ELEMENT_CHILD,
                                           self._locator, qualifiedName,
                                           parent_state.node.nodeName)
-
-        if instance.doesPrime:
-            self._root.primeInstructions.append(instance)
-        if instance.doesIdle:
-            self._root.idleInstructions.append(instance)
         return
 
-    def endElementNS(self, expandedName, qualifiedName):
+    def endElementNS(self, expandedName, qualifiedName,
+                     _variable_element=variable_elements.variable_element):
         """
         Callback interface for SAX.
         """
@@ -524,7 +545,7 @@ class stylesheet_reader(object):
         # ----------------------------------------------------------
         # verify that this element has all required content
         try:
-            state.validation[contentinfo.END_ELEMENT]
+            state.validation[content_model.END_ELEMENT]
         except KeyError:
             if expandedName == (XSL_NAMESPACE, u'choose'):
                 raise XsltParserException(XsltError.CHOOSE_REQUIRES_WHEN,
@@ -554,7 +575,7 @@ class stylesheet_reader(object):
         parent_node = parent_state.node
         if self._stylesheet is None and parent_node is element.root:
             # a literal result element as stylesheet
-            assert isinstance(element, tree.literal_element), element
+            assert isinstance(element, _literal_element), element
             try:
                 version = element._version
             except AttributeError:
@@ -584,7 +605,7 @@ class stylesheet_reader(object):
 
         parent_node.appendChild(element)
 
-        if isinstance(element, GenericVariableElement):
+        if isinstance(element, _variable_element):
             name = element._name
             if parent_node is self._stylesheet:
                 # global variables
@@ -619,26 +640,26 @@ class stylesheet_reader(object):
         parent_state = self._element_state_stack[-1]
         # verify that the current element can have text children
         try:
-            next = parent_state.validation[contentinfo.TEXT_NODE]
+            next = parent_state.validation[content_model.TEXT_NODE]
         except KeyError:
             # If the parent can have element children, but not text nodes,
             # ignore pure whitespace nodes. This clarification is from
             # XSLT 2.0 [3.4] Whitespace Stripping.
             # e.g. xsl:stylesheet, xsl:apply-templates, xsl:choose
-            #self._debug_validation(contentinfo.TEXT_NODE)
-            if (contentinfo.EMPTY in parent_state.validation or
+            #self._debug_validation(content_model.TEXT_NODE)
+            if (content_model.EMPTY in parent_state.validation or
                 not isspace(data)):
                 if len(data) > 10:
                     data = data[:10] + '...'
                 raise XsltParserException(XsltError.ILLEGAL_TEXT_CHILD_PARSE,
                                           self._locator, repr(data),
                                           parent_state.node.nodeName)
-            #self._debug_validation(contentinfo.TEXT_NODE)
+            #self._debug_validation(content_model.TEXT_NODE)
         else:
             # update validation
             parent_state.validation = next
 
-            node = StylesheetTree.XsltText(self._root, data)
+            node = xslt_text(self._root, data)
             parent_state.node.appendChild(node)
         return
 
@@ -726,7 +747,7 @@ class stylesheet_reader(object):
     def _handle_result_element_attr(self, state, instance, elementName,
                                     attributeName, value):
         try:
-            attr_info = RESULT_ELEMENT_XSL_ATTRS[attributeName]
+            attr_info = _RESULT_ELEMENT_XSL_ATTRS[attributeName]
         except KeyError:
             raise XsltParserException(XsltError.ILLEGAL_XSL_NAMESPACE_ATTR,
                                       self._locator, attributeName,
@@ -841,12 +862,12 @@ class stylesheet_reader(object):
                 source = inputsource(content, uri)
 
         if not content:
-            content = isrc.stream.read()
-            isrc = isrc.clone(cStringIO.StringIO(content))
+            content = source.stream.read()
+            source = inputsource(cStringIO.StringIO(content), source.uri)
 
-        features = [(sax.FEATURE_PROCESS_XINCLUDES, isrc.processIncludes)]
-        properties = []
-        stylesheet = self._parseSrc(isrc, features, properties)
+        #features = [(sax.FEATURE_PROCESS_XINCLUDES, True)]
+        features, properties = [], []
+        stylesheet = self._parseSrc(source, features, properties)
 
         # Cache the string content for subsequent uses
         # e.g., xsl:import/xsl:include and document()
@@ -855,7 +876,7 @@ class stylesheet_reader(object):
         return stylesheet
 
     def _parseSrc(self, isrc, features, properties):
-        parser = sax.CreateParser()
+        parser = sax.create_parser()
         parser.setContentHandler(self)
         for featurename, value in features:
             parser.setFeature(featurename, value)

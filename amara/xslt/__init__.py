@@ -169,6 +169,7 @@ class XsltError(Error):
 
     @classmethod
     def _load_messages(cls):
+        from gettext import gettext as _
         return {
             XsltError.INTERNAL_ERROR: _(
                 'There is an internal bug in 4Suite. Please make a post to '
@@ -198,8 +199,8 @@ class XsltError(Error):
                 "(see XSLT 1.0 sec. 2.1)."),
             #XsltError.STYLESHEET_ILLEGAL_ROOT: _(
             #    'Illegal Document Root Element "%s" (see XSLT 1.0 sec. 2.2).'),
-            XsltError.CIRCULAR_VAR: _(
-                'Circular variable reference error (see XSLT 1.0 sec. 11.4) for variable or parameter: (%s, %s)'),
+            XsltError.CIRCULAR_VARIABLE: _(
+                'Circular variable reference error (see XSLT 1.0 sec. 11.4) for variable or parameter: %(name)s'),
             XsltError.DUPLICATE_TOP_LEVEL_VAR: _(
                 'Top level variable %s has duplicate definitions with the same import precedence.  (see XSLT 1.0 sec. 11)'),
             XsltError.DUPLICATE_NAMESPACE_ALIAS: _(
@@ -440,6 +441,10 @@ def transform(source, transforms, params=None, output=None):
     from amara.xslt.processor import processor
     params = parameterize(params) if params else {}
     proc = processor()
-    proc.append_transform(inputsource(transform))
+    if isinstance(transforms, (list, tuple)):
+        for transform in transforms:
+            proc.append_transform(inputsource(transform))
+    else:
+        proc.append_transform(inputsource(transforms))
     return proc.run(inputsource(source), transforms, params, output=output)
 

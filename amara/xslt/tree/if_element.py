@@ -5,8 +5,7 @@ Implementation of the `xsl:if` element.
 """
 
 from amara.namespaces import XSL_NAMESPACE
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 __all__ = ('if_element',)
 

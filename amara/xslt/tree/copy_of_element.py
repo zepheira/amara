@@ -6,8 +6,7 @@ Implementation of `xsl:copy-of` element.
 
 from amara.xpath import datatypes
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 class copy_of_element(xslt_element):
 

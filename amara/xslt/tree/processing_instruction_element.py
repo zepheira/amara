@@ -6,8 +6,7 @@ Implementation of the `xsl:processing-instruction` element.
 """
 
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 class processing_instruction_element(xslt_element):
     content_model = content_model.template

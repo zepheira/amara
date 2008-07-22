@@ -9,12 +9,13 @@ from gettext import gettext as _
 
 DEFAULT_ENCODING = 'UTF-8'
 #from amara import DEFAULT_ENCODING
-from amara import domlette
+from amara import ReaderError, domlette
 from amara.lib import iri, inputsource
-#from amara.xpath import RuntimeException as XPathRuntimeException
+from amara.xpath import XPathError
 from amara.xslt import XsltError
-from amara.xslt import xsltcontext, outputhandler
+from amara.xslt import xsltcontext, proxywriter
 from amara.xslt.reader import stylesheet_reader
+
 # For builtin extension elements/functions
 #from amara.xslt import exslt
 #from amara.xslt.extensions import builtins
@@ -98,6 +99,7 @@ class processor(object):
         # the default value for the media attribute is "screen".
         if media_descriptors is None:
             media_descriptors = set(['screen'])
+        self.media_descriptors = media_descriptors
         if extension_parameters is None:
             extension_parameters = {}
         self.extension_parameters = extension_parameters
@@ -110,6 +112,7 @@ class processor(object):
         self._extelements = {}
         #self._extelements.update(exslt.ExtElements)
         #self._extelements.update(builtins.ExtElements)
+        self._reader = stylesheet_reader()
         return
 
     def getStripElements(self):
@@ -209,8 +212,7 @@ class processor(object):
             self.transform = self._reader.parse(source)
         return
 
-    def run(self, source, topLevelParams=None,
-            writer=None, outputStream=None):
+    def run(self, source, topLevelParams=None, writer=None, output=None):
         """
         Transform a source document as given via an InputSource.
 
@@ -235,12 +237,13 @@ class processor(object):
         #Update the strip elements
         #Assume that the ones from XSLT have higher priority
         ns = self.getStripElements()
+        ignorePis = False
         try:
-            src = self._docReader.parse(source)
-        except Exception, e:
+            document = domlette.parse(source)
+        except ReaderError, e:
             raise XsltError(XsltError.SOURCE_PARSE_ERROR,
                             source.uri or '<Python string>', e)
-        if not ignorePis and self.__checkStylesheetPis(src, iSrc):
+        if not ignorePis and self.__checkStylesheetPis(document, source):
             #Do it again with updates WS strip lists
 
             #NOTE:  There is a case where this will produce the wrong results.  If, there were
@@ -249,9 +252,9 @@ class processor(object):
             #whitespace processing rules, the original trimmed space will be lost
 
             #Regardless, we need to remove any new whitespace defined in the PI
-            self._stripElements(src)
+            self._stripElements(document)
 
-        return self.execute(src, iSrc, topLevelParams, writer, outputStream)
+        return self._run(document, topLevelParams, writer, output)
 
     def runNode(self, node, sourceUri=None,
                 topLevelParams=None, writer=None, outputStream=None,
@@ -346,8 +349,7 @@ class processor(object):
             self._stripElements(node)
 
 
-        return self.execute(node,
-                            docInputSource,
+        return self._run(node,
                             ignorePis=ignorePis,
                             topLevelParams=topLevelParams,
                             writer=writer,
@@ -462,12 +464,11 @@ class processor(object):
                     # type pseudo-attr must match valid XSLT types;
                     # media pseudo-attr must match preferred media
                     # (which can be None)
-                    if pseudo_attrs.has_key('href') and \
-                        pseudo_attrs.has_key('type'):
+                    if 'href' in pseudo_attrs and 'type' in pseudo_attrs:
                         href = pseudo_attrs['href']
                         imt = pseudo_attrs['type']
                         media = pseudo_attrs.get('media') # defaults to None
-                        if media == self.mediaPref and imt in XSLT_IMT:
+                        if media in self.media_descriptors and imt in XSLT_IMT:
                             if pseudo_attrs.has_key('alternate') and \
                                 pseudo_attrs['alternate'] == 'yes':
                                 stys.append((1, media, imt,
@@ -517,8 +518,8 @@ class processor(object):
         # (i.e., the stylesheets they reference are going to be used)
         return not not hrefs
 
-    def execute(self, node, docInputSource, ignorePis=0, topLevelParams=None,
-                writer=None, outputStream=None):
+    def _run(self, node, ignorePis=0, topLevelParams=None, writer=None,
+             outputStream=None):
         """
         Warning: do not call this method directly unless you know what
         you're doing.  If unsure, you probably want the runNode method.
@@ -542,9 +543,9 @@ class processor(object):
         self.chainTo = None
         self.chainParams = None
 
-        if not self.stylesheet:
+        if not self.transform:
             raise XsltError(XsltError.NO_STYLESHEET)
-        self.outputParams = self.stylesheet.outputParams
+        self.outputParams = self.transform.output_parameters
 
         # Use an internal stream to gather the output only if the caller
         # didn't supply other means of retrieving it.
@@ -552,37 +553,29 @@ class processor(object):
 
         if not writer:
             # Use OutputHandler to determine the real writer to use.
-            outputStream = outputStream or cStringIO.StringIO()
-            writer = OutputHandler.OutputHandler(self.outputParams,
-                                                 outputStream)
+            stream = outputStream or cStringIO.StringIO()
+            writer = proxywriter.proxywriter(self.outputParams, stream)
         self.writers = [writer]
 
-        # Setup the named templates
-        self._namedTemplates = self.stylesheet.getNamedTemplates()
-
         # Initialize any stylesheet parameters
-        tlp = topLevelParams.copy()
-        self._normalizeParams(tlp)
-        self._documentInputSource = docInputSource
+        initial_variables = topLevelParams.copy()
+        for name in topLevelParams:
+            if name not in self.transform.parameters:
+                del initial_variables[name]
 
         # Prepare the stylesheet for processing
-        self.stylesheet.primeStylesheet(node, self, tlp, docInputSource.uri)
-
-        # Create the context used for processing
-        variables = self.stylesheet.getGlobalVariables()
-        functions = self.stylesheet.getInitialFunctions()
-        context = XsltContext.XsltContext(node, 1, 1, None,
-                                          varBindings=variables,
+        context = xsltcontext.xsltcontext(node,
+                                          variables=initial_variables,
                                           processor=self,
-                                          extFunctionMap=functions)
-        context.documents.update(self.stylesheet.root.sourceNodes)
-        context.addDocument(node, docInputSource.uri)
+                                          extfunctions=self._extfunctions)
+        context.add_document(node, node.baseURI)
+        self.transform.root.prime(context)
 
         # Process the document
-        self.writers[-1].startDocument()
+        context.start_document()
         try:
-            self.applyTemplates(context)
-        except XPathRuntimeException, e:
+            self.transform.apply_templates(context, [node])
+        except XPathError, e:
             instruction = context.currentInstruction
             strerror = str(e)
             e.message = MessageSource.EXPRESSION_POSITION_INFO % (
@@ -594,6 +587,7 @@ class processor(object):
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
+            raise
             import traceback
             sio = cStringIO.StringIO()
             sio.write("Lower-level traceback:\n")
@@ -603,19 +597,14 @@ class processor(object):
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
                 instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
-        self.writers[-1].endDocument()
+        context.end_document()
 
         # Perform cleanup
-        self.stylesheet.idle(node, self, docInputSource.uri)
-
-        #How does this contrast with access to self.outputParams ?
-        self._lastOutputParams = self.writers[-1]._outputParams
-
-        del self.writers[:]
+        self.transform.root.teardown()
 
         if internalStream:
             # Get the result from our cStringIO 'stream'.
-            result = outputStream.getvalue()
+            result = stream.getvalue()
         else:
             # It is the callers responsibility to get the result
             result = u""
@@ -796,44 +785,6 @@ class processor(object):
         stripElements = self.getStripElements()
         if stripElements:
             StripElements.StripElements(node, stripElements)
-        return
-
-    def _normalize_parameters(self, params):
-        """
-        params is a dictionary of top-level parameters.  The main task is to
-        check this dictionary for lists of strings and convert these to
-        a node set of text nodes
-        """
-
-        def to_unicode(s):
-            try:
-                # Try UTF-8
-                return unicode(s, 'UTF-8')
-            except ValueError:
-                if codecs.lookup('UTF-8') == codecs.lookup(DEFAULT_ENCODING):
-                    raise UnicodeDecodeError("text parameters must be unicode"
-                                             "or UTF-8 byte strings")
-                # Use encoding from locale
-                try:
-                    return unicode(s, DEFAULT_ENCODING)
-                except ValueError:
-                    #FIXME: l10n
-                    raise UnicodeDecodeError("text parameters must be unicode"
-                                             " or UTF-8 or %s byte strings" %
-                                             DEFAULT_ENCODING)
-
-        for k, v in params.items():
-            if v:
-                if isinstance(v, str):
-                    params[k] = to_unicode(v)
-                elif isinstance(v, list) and isinstance(v[0], (str, unicode)):
-                    doc = domlette.Document(self.stylesheet.baseUri)
-                    nodeset = []
-                    for text in v:
-                        if isinstance(text, str):
-                            text = to_unicode(text)
-                        nodeset.append(domlette.Text(text))
-                    params[k] = nodeset
         return
 
     def reset(self):

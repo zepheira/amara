@@ -5,8 +5,7 @@ Implementation of `xsl:fallback` element.
 """
 
 from amara.xslt import XsltError
-from amara.xslt.tree import xslt_element
-from amara.xslt.reader import content_model, attribute_types
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 __all__ = (
     'fallback_element', 'undefined_xslt_element', 'undefined_extension_element'

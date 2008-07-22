@@ -259,7 +259,10 @@ class test_basics(unittest.TestCase):
         xsl = test_basics_1.transform
         expected = test_basics_1.expected
         result = transform(xml, xsl)
-        self.assert_(TreeCompare.HtmlTreeCompare(expected, result))
+        print 'expected', repr(expected)
+        print 'compared', repr(result)
+        print treecompare.html_compare(expected, result)
+        self.assert_(treecompare.html_compare(expected, result))
         return
 
     def test_transform_2(self):
@@ -269,7 +272,7 @@ class test_basics(unittest.TestCase):
         expected = test_basics_1.expected
         io = cStringIO.StringIO()
         result = transform(xml, xsl, output=io)
-        self.assert_(TreeCompare.HtmlTreeCompare(expected, io.getvalue()))
+        self.assert_(treecompare.html_compare(expected, io.getvalue()))
         return
 
     def test_transform_3(self):
@@ -299,7 +302,7 @@ version="1.0">
         expected = """<?xml version='1.0' encoding='UTF-8'?>
 <doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>"""
         result = transform(xml, xsl, params=params)
-        self.assert_(TreeCompare.XmlTreeCompare(expected, result))
+        self.assert_(treecompare.xml_compare(expected, result))
 
 
     # Appending explicit stylesheet when xml-stylesheet PI already

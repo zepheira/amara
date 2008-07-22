@@ -3,6 +3,10 @@
 
 /** Private Routines **************************************************/
 
+static PyObject *setup_string;
+static PyObject *validate_string;
+static PyObject *prime_string;
+static PyObject *teardown_string;
 
 /** Public C API ******************************************************/
 
@@ -17,28 +21,37 @@ XsltRootObject *XsltRoot_New(PyObject *baseUri)
   Py_INCREF((PyObject *) self);
   XsltNode_ROOT(self) = (PyObject *) self;
 
-  if ((self->primeInstructions = PyList_New(0)) == NULL) {
+  if ((self->validate_instructions = PyList_New(0)) == NULL) {
     Py_DECREF((PyObject *) self);
     return NULL;
   }
 
-  if ((self->idleInstructions = PyList_New(0)) == NULL) {
-    Py_DECREF(self->primeInstructions);
+  if ((self->prime_instructions = PyList_New(0)) == NULL) {
+    Py_DECREF(self->validate_instructions);
+    Py_DECREF((PyObject *) self);
+    return NULL;
+  }
+
+  if ((self->teardown_instructions = PyList_New(0)) == NULL) {
+    Py_DECREF(self->validate_instructions);
+    Py_DECREF(self->prime_instructions);
     Py_DECREF((PyObject *) self);
     return NULL;
   }
 
   if ((self->sources = PyDict_New()) == NULL) {
-    Py_DECREF(self->idleInstructions);
-    Py_DECREF(self->primeInstructions);
+    Py_DECREF(self->teardown_instructions);
+    Py_DECREF(self->prime_instructions);
+    Py_DECREF(self->validate_instructions);
     Py_DECREF((PyObject *) self);
     return NULL;
   }
 
   if ((self->sourceNodes = PyDict_New()) == NULL) {
     Py_DECREF(self->sources);
-    Py_DECREF(self->idleInstructions);
-    Py_DECREF(self->primeInstructions);
+    Py_DECREF(self->teardown_instructions);
+    Py_DECREF(self->prime_instructions);
+    Py_DECREF(self->validate_instructions);
     Py_DECREF((PyObject *) self);
     return NULL;
   }
@@ -94,50 +107,91 @@ static PyObject *root_appendChild(XsltRootObject *self, PyObject *args)
   return Py_None;
 }
 
+static char prime_doc[] = "prime(context)";
+
+static PyObject *root_prime(XsltRootObject *self, PyObject *args)
+{
+  PyObject *context;
+  PyObject *nodes = self->prime_instructions;
+  Py_ssize_t i, size;
+
+  if (!PyArg_ParseTuple(args, "O:prime", &context))
+    return NULL;
+
+  if (PyDict_Size(self->sourceNodes)) {
+    PyObject *documents = PyObject_GetAttrString(context, "documents");
+    if (documents == NULL)
+      return NULL;
+    if (PyDict_Merge(documents, self->sourceNodes, 1) < 0) {
+      Py_DECREF(documents);
+      return NULL;
+    }
+    Py_DECREF(documents);
+  }
+
+  /* Call `prime()` for those nodes that have it defined. */
+  size = PyList_GET_SIZE(nodes);
+  for (i = 0; i < size; i++) {
+    PyObject *result = PyList_GET_ITEM(nodes, i);
+    PyObject *func = PyObject_GetAttr(result, prime_string);
+    Py_DECREF(result);
+    if (func == NULL) return NULL;
+    result = PyObject_Call(func, args, NULL);
+    Py_DECREF(func);
+    if (result == NULL) return NULL;
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static char teardown_doc[] = "teardown()";
+
+static PyObject *root_teardown(XsltRootObject *self, PyObject *args)
+{
+  PyObject *nodes = self->teardown_instructions;
+  Py_ssize_t i, size;
+
+  if (!PyArg_ParseTuple(args, ":teardown"))
+    return NULL;
+
+  /* Call `teardown()` for those nodes that have it defined. */
+  size = PyList_GET_SIZE(nodes);
+  for (i = 0; i < size; i++) {
+    PyObject *result = PyList_GET_ITEM(nodes, i);
+    PyObject *func = PyObject_GetAttr(result, teardown_string);
+    Py_DECREF(result);
+    if (func == NULL) return NULL;
+    result = PyObject_Call(func, args, NULL);
+    Py_DECREF(func);
+    if (result == NULL) return NULL;
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static char getstate_doc[] = "helper for pickle";
 
 static PyObject *root_getstate(XsltRootObject *self, PyObject *args)
 {
-  PyObject *state;
-
   if (!PyArg_ParseTuple(args, ":__getstate__"))
     return NULL;
 
-  state = PyTuple_New(5);
-  if (state == NULL)
-    return NULL;
-
-  /* XsltRoot.baseUri */
-  Py_INCREF(self->baseUri);
-  PyTuple_SET_ITEM(state, 0, self->baseUri);
-
-  /* XsltRoot.stylesheet */
-  Py_INCREF(self->stylesheet);
-  PyTuple_SET_ITEM(state, 1, self->stylesheet);
-
-  /* XsltRoot.primeInstructions */
-  Py_INCREF(self->primeInstructions);
-  PyTuple_SET_ITEM(state, 2, self->primeInstructions);
-
-  /* XsltRoot.idleInstructions */
-  Py_INCREF(self->idleInstructions);
-  PyTuple_SET_ITEM(state, 3, self->idleInstructions);
-
-  /* XsltRoot.sources */
-  Py_INCREF(self->sources);
-  PyTuple_SET_ITEM(state, 4, self->sources);
-
-  return state;
+  return PyTuple_Pack(6, self->baseUri, self->stylesheet,
+                      self->validate_instructions, self->prime_instructions,
+                      self->teardown_instructions, self->sources);
 }
 
 static char setstate_doc[] = "helper for pickle";
 
 static PyObject *root_setstate(XsltRootObject *self, PyObject *args)
 {
-  PyObject *base, *stylesheet, *prime, *idle, *sources, *temp;
+  PyObject *base, *stylesheet, *validate, *prime, *teardown, *sources, *temp;
 
-  if (!PyArg_ParseTuple(args, "(OOOOO):__setstate__",
-                        &base, &stylesheet, &prime, &idle, &sources))
+  if (!PyArg_ParseTuple(args, "(OOOOOO):__setstate__",
+                        &base, &stylesheet, &validate, &prime, &teardown,
+                        &sources))
     return NULL;
 
   temp = self->baseUri;
@@ -150,14 +204,19 @@ static PyObject *root_setstate(XsltRootObject *self, PyObject *args)
   self->stylesheet = stylesheet;
   Py_DECREF(temp);
 
-  temp = self->primeInstructions;
-  Py_INCREF(prime);
-  self->primeInstructions = prime;
+  temp = self->validate_instructions;
+  Py_INCREF(validate);
+  self->validate_instructions = validate;
   Py_DECREF(temp);
 
-  temp = self->idleInstructions;
-  Py_INCREF(idle);
-  self->idleInstructions = idle;
+  temp = self->prime_instructions;
+  Py_INCREF(prime);
+  self->prime_instructions = prime;
+  Py_DECREF(temp);
+
+  temp = self->teardown_instructions;
+  Py_INCREF(teardown);
+  self->teardown_instructions = teardown;
   Py_DECREF(temp);
 
   temp = self->sources;
@@ -174,6 +233,8 @@ static PyObject *root_setstate(XsltRootObject *self, PyObject *args)
 
 static struct PyMethodDef root_methods[] = {
   XsltRoot_METHOD(appendChild),
+  XsltRoot_METHOD(prime),
+  XsltRoot_METHOD(teardown),
   { "__getstate__", (PyCFunction) root_getstate, METH_VARARGS, getstate_doc },
   { "__setstate__", (PyCFunction) root_setstate, METH_VARARGS, setstate_doc },
   { NULL }
@@ -187,8 +248,6 @@ static struct PyMethodDef root_methods[] = {
 static struct PyMemberDef root_members[] = {
   XsltRoot_MEMBER(baseUri, 0),
   XsltRoot_MEMBER(stylesheet, READONLY),
-  XsltRoot_MEMBER(primeInstructions, READONLY),
-  XsltRoot_MEMBER(idleInstructions, READONLY),
   XsltRoot_MEMBER(sources, READONLY),
   XsltRoot_MEMBER(sourceNodes, READONLY),
   { NULL }
@@ -227,32 +286,12 @@ static PyObject *root_repr(XsltRootObject *self)
 
 static int root_traverse(XsltRootObject *self, visitproc visit, void *arg)
 {
-  int rt;
-
-  if (self->stylesheet != NULL) {
-    rt = visit(self->stylesheet, arg);
-    if (rt) return rt;
-  }
-
-  if (self->primeInstructions != NULL) {
-    rt = visit(self->primeInstructions, arg);
-    if (rt) return rt;
-  }
-
-  if (self->idleInstructions != NULL) {
-    rt = visit(self->idleInstructions, arg);
-    if (rt) return rt;
-  }
-
-  if (self->sources != NULL) {
-    rt = visit(self->sources, arg);
-    if (rt) return rt;
-  }
-
-  if (self->sourceNodes != NULL) {
-    rt = visit(self->sourceNodes, arg);
-    if (rt) return rt;
-  }
+  Py_VISIT(self->stylesheet);
+  Py_VISIT(self->validate_instructions);
+  Py_VISIT(self->prime_instructions);
+  Py_VISIT(self->teardown_instructions);
+  Py_VISIT(self->sources);
+  Py_VISIT(self->sourceNodes);
 
   if (XsltNode_Type.tp_traverse)
     return XsltNode_Type.tp_traverse((PyObject *)self, visit, arg);
@@ -262,37 +301,12 @@ static int root_traverse(XsltRootObject *self, visitproc visit, void *arg)
 
 static int root_clear(XsltRootObject *self)
 {
-  PyObject *tmp;
-
-  if (self->stylesheet != NULL) {
-    tmp = self->stylesheet;
-    self->stylesheet = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->primeInstructions != NULL) {
-    tmp = self->primeInstructions;
-    self->primeInstructions = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->idleInstructions != NULL) {
-    tmp = self->idleInstructions;
-    self->idleInstructions = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->sources != NULL) {
-    tmp = self->sources;
-    self->sources = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->sourceNodes != NULL) {
-    tmp = self->sourceNodes;
-    self->sourceNodes = NULL;
-    Py_DECREF(tmp);
-  }
+  Py_CLEAR(self->stylesheet);
+  Py_CLEAR(self->validate_instructions);
+  Py_CLEAR(self->prime_instructions);
+  Py_CLEAR(self->teardown_instructions);
+  Py_CLEAR(self->sources);
+  Py_CLEAR(self->sourceNodes);
 
   if (XsltNode_Type.tp_clear)
     return XsltNode_Type.tp_clear((PyObject *) self);
@@ -303,13 +317,8 @@ static int root_clear(XsltRootObject *self)
 
 static void root_dealloc(XsltRootObject *self)
 {
-  if (self->baseUri != NULL) {
-    Py_DECREF(self->baseUri);
-    self->baseUri = NULL;
-  }
-
+  Py_CLEAR(self->baseUri);
   root_clear(self);
-
   XsltNode_Type.tp_dealloc((PyObject *) self);
 }
 
@@ -339,12 +348,12 @@ static PyObject *root_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 
 static char root_doc[] = "\
-This interface represents the root node of the Stylesheet Tree.";
+This interface represents the root node of the stylesheet tree.";
 
 PyTypeObject XsltRoot_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "Ft.Xml.Xslt.cStylesheetTree.XsltRoot",
+  /* tp_name           */ "amara.xslt.tree.xslt_root",
   /* tp_basicsize      */ sizeof(XsltRootObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) root_dealloc,
@@ -392,6 +401,16 @@ int XsltRoot_Init(PyObject *module)
   PyTypeObject *type;
   PyObject *dict, *constant;
 
+  /* Initialize constants */
+  setup_string = PyString_FromString("setup");
+  if (setup_string == NULL) return -1;
+  validate_string = PyString_FromString("validate");
+  if (validate_string == NULL) return -1;
+  prime_string = PyString_FromString("prime");
+  if (prime_string == NULL) return -1;
+  teardown_string = PyString_FromString("teardown");
+  if (teardown_string == NULL) return -1;
+
   type = &XsltRoot_Type;
   type->tp_base = &XsltNode_Type;
   if (PyType_Ready(type) < 0) return -1;
@@ -412,5 +431,9 @@ int XsltRoot_Init(PyObject *module)
 
 void XsltRoot_Fini(void)
 {
+  Py_DECREF(setup_string);
+  Py_DECREF(validate_string);
+  Py_DECREF(prime_string);
+  Py_DECREF(teardown_string);
   PyDict_Clear(XsltRoot_Type.tp_dict);
 }

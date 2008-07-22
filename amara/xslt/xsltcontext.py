@@ -24,22 +24,20 @@ class xsltcontext(context):
 
     instruction = None
     template = None
-    mode = None
+    recursive_parameters = None
 
     def __init__(self, node, position=1, size=1,
                  variables=None, namespaces=None,
-                 current_node=None, stylesheet=None, processor=None,
+                 current_node=None, transform=None, processor=None,
                  mode=None, extmodules=(), extfunctions=None):
         context.__init__(self, node, position, size, variables, namespaces,
                          extmodules, extfunctions)
+        self.global_variables = variables
         self.current_node = current_node
-        self.stylesheet = stylesheet
-        self.mode = mode
+        self.transform = transform
         self.processor = processor
+        self.mode = mode
         self.documents = uridict()
-        self._current_instruction = None
-        self.current_template = None
-        self.recursive_params = None
         return
 
     def get(self):
