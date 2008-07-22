@@ -138,11 +138,11 @@ static PyMethodDef inputsource_methods[] = {
 /** InputSource Members **/
 
 static PyMemberDef inputsource_members[] = {
-  { "byteStream", T_OBJECT, offsetof(InputSourceObject, byte_stream), RO },
+  { "stream", T_OBJECT, offsetof(InputSourceObject, byte_stream), RO },
   { "stringData", T_OBJECT, offsetof(InputSourceObject, string_data), RO },
   { "systemId", T_OBJECT, offsetof(InputSourceObject, system_id), RO },
   { "publicId", T_OBJECT, offsetof(InputSourceObject, public_id), RO },
-  { "baseURI", T_OBJECT, offsetof(InputSourceObject, base_uri), RO },
+  { "uri", T_OBJECT, offsetof(InputSourceObject, base_uri), RO },
   { "encoding", T_OBJECT, offsetof(InputSourceObject, encoding), RO },
   { NULL }
 };
