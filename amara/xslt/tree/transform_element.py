@@ -580,7 +580,7 @@ class transform_element(xslt_element):
                     self._builtInWarningGiven = 1
                 if node_type in (Node.ELEMENT_NODE, Node.DOCUMENT_NODE):
                     self.apply_templates(context, node.childNodes)
-                elif node_type == (Node.TEXT_NODE, Node.ATTRIBUTE_NODE):
+                elif node_type in (Node.TEXT_NODE, Node.ATTRIBUTE_NODE):
                     context.text(node.nodeValue)
 
         # Restore context
