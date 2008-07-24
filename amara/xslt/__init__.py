@@ -446,5 +446,5 @@ def transform(source, transforms, params=None, output=None):
             proc.append_transform(inputsource(transform))
     else:
         proc.append_transform(inputsource(transforms))
-    return proc.run(inputsource(source), transforms, params, output=output)
+    return proc.run(inputsource(source), params, output=output)
 

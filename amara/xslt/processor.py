@@ -212,7 +212,7 @@ class processor(object):
             self.transform = self._reader.parse(source)
         return
 
-    def run(self, source, topLevelParams=None, writer=None, output=None):
+    def run(self, source, parameters=None, writer=None, output=None):
         """
         Transform a source document as given via an InputSource.
 
@@ -221,7 +221,7 @@ class processor(object):
         the source document contains xml-stylesheet processing
         instructions that are not being ignored.
 
-        The topLevelParams argument is an optional dictionary of
+        The `parameters` argument is an optional dictionary of
         stylesheet parameters, the keys of which may be given as
         strings if they have no namespace, or as (uri, localname)
         tuples otherwise.
@@ -231,7 +231,7 @@ class processor(object):
         either an Ft.Xml.Xslt.XmlWriter, HtmlWriter or PlainTextWriter,
         depending on the stylesheet(s).
 
-        The optional outputStream argument is a Python file-like object
+        The optional `output` argument is a Python file-like object
         to be used as the destination for the writer's output.
         """
         #Update the strip elements
@@ -254,10 +254,10 @@ class processor(object):
             #Regardless, we need to remove any new whitespace defined in the PI
             self._stripElements(document)
 
-        return self._run(document, topLevelParams, writer, output)
+        return self._run(document, parameters, writer, output)
 
     def runNode(self, node, sourceUri=None,
-                topLevelParams=None, writer=None, outputStream=None,
+                parameters=None, writer=None, output=None,
                 preserveSrc=0, docInputSource=None):
         """
         Transform a source document as given via a Domlette document
@@ -278,7 +278,7 @@ class processor(object):
         ignorePis - (flag) If set, will cause xml-stylesheet
         processing instructions in the source document to be ignored.
 
-        topLevelParams - optional dictionary of
+        `parameters` - optional dictionary of
         stylesheet parameters, the keys of which may be given as
         strings if they have no namespace, or as (uri, localname)
         tuples otherwise.
@@ -288,7 +288,7 @@ class processor(object):
         either an Ft.Xml.Xslt.XmlWriter, HtmlWriter or PlainTextWriter,
         depending on the stylesheet(s).
 
-        outputStream - optional Python file-like object
+        output - optional Python file-like object
         to be used as the destination for the writer's output.
 
         preserveSrc - (flag) If set signals that the source DOM should not be
@@ -299,6 +299,7 @@ class processor(object):
         isrc - optional input source used strictly for further resolution
         relative the given DOM
         """
+        ignorePis = False
 
         if node.nodeType != Node.DOCUMENT_NODE:
             raise ValueError(MessageSource.g_errorMessages[
@@ -349,11 +350,7 @@ class processor(object):
             self._stripElements(node)
 
 
-        return self._run(node,
-                            ignorePis=ignorePis,
-                            topLevelParams=topLevelParams,
-                            writer=writer,
-                            outputStream=outputStream)
+        return self._run(node, parameters, writer, output)
 
     def __cmp_stys(self, a, b):
         """
@@ -518,8 +515,7 @@ class processor(object):
         # (i.e., the stylesheets they reference are going to be used)
         return not not hrefs
 
-    def _run(self, node, ignorePis=0, topLevelParams=None, writer=None,
-             outputStream=None):
+    def _run(self, node, parameters=None, writer=None, output=None):
         """
         Warning: do not call this method directly unless you know what
         you're doing.  If unsure, you probably want the runNode method.
@@ -534,7 +530,7 @@ class processor(object):
         #  This method is use-at-your-own-risk. The XSLT conformance of the
         #  source is maintained by the caller. This exists as a performance
         #  hook.
-        topLevelParams = topLevelParams or {}
+        parameters = parameters or {}
 
         self.attributeSets = {}
         self.keys = {}
@@ -549,17 +545,16 @@ class processor(object):
 
         # Use an internal stream to gather the output only if the caller
         # didn't supply other means of retrieving it.
-        internalStream = writer is None and outputStream is None
+        internalStream = writer is None and output is None
 
-        if not writer:
-            # Use OutputHandler to determine the real writer to use.
-            stream = outputStream or cStringIO.StringIO()
+        if writer is None:
+            # Use `proxywriter` to determine the real writer to use.
+            stream = output or cStringIO.StringIO()
             writer = proxywriter.proxywriter(self.outputParams, stream)
-        self.writers = [writer]
 
         # Initialize any stylesheet parameters
-        initial_variables = topLevelParams.copy()
-        for name in topLevelParams:
+        initial_variables = parameters.copy()
+        for name in parameters:
             if name not in self.transform.parameters:
                 del initial_variables[name]
 
@@ -569,6 +564,7 @@ class processor(object):
                                           processor=self,
                                           extfunctions=self._extfunctions)
         context.add_document(node, node.baseURI)
+        context.push_writer(writer)
         self.transform.root.prime(context)
 
         # Process the document
