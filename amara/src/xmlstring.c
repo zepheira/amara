@@ -484,7 +484,7 @@ PyObject *ConvertArgument(PyObject *arg, char *name, int nullable)
 /** Public Methods ****************************************************/
 
 static char lstrip_doc[] =
-"XmlStrLStrip(S) -> unicode\n\
+"lstrip(S) -> unicode\n\
 \n\
 Return a copy of the string S with leading whitespace removed.";
 
@@ -493,7 +493,7 @@ static PyObject *string_lstrip(PyObject *self, PyObject *args)
   PyObject *_argc0, *result;  /*Unicode objects*/
   PyUnicodeObject *unistr;
 
-  if (!PyArg_ParseTuple(args,"O:XmlStrLStrip",&_argc0))
+  if (!PyArg_ParseTuple(args,"O:lstrip",&_argc0))
     return NULL;
 
   unistr = (PyUnicodeObject *)PyUnicode_FromObject(_argc0);
@@ -515,7 +515,7 @@ static PyObject *string_lstrip(PyObject *self, PyObject *args)
 
 
 static char rstrip_doc[] =
-"XmlStrRStrip(S) -> unicode\n\
+"rstrip(S) -> unicode\n\
 \n\
 Return a copy of the string S with trailing whitespace removed.";
 
@@ -524,7 +524,7 @@ static PyObject *string_rstrip(PyObject * self, PyObject *args)
   PyObject *_argc0, *result;  /*Unicode objects*/
   PyUnicodeObject *unistr;
 
-  if (!PyArg_ParseTuple(args,"O:XmlStrRStrip",&_argc0))
+  if (!PyArg_ParseTuple(args,"O:rstrip",&_argc0))
     return NULL;
 
   unistr = (PyUnicodeObject *)PyUnicode_FromObject(_argc0);
@@ -546,7 +546,7 @@ static PyObject *string_rstrip(PyObject * self, PyObject *args)
 
 
 static char strip_doc[] =
-"XmlStrStrip(S) -> unicode\n\
+"strip(S) -> unicode\n\
 \n\
 Return a copy of the string S with leading and trailing whitespace removed.";
 
@@ -555,7 +555,7 @@ static PyObject *string_strip(PyObject * self, PyObject *args)
   PyObject *_argc0, *result;  /*Unicode objects*/
   PyUnicodeObject *unistr;
 
-  if (!PyArg_ParseTuple(args,"O:XmlStrStrip",&_argc0))
+  if (!PyArg_ParseTuple(args,"O:strip",&_argc0))
     return NULL;
 
   unistr = (PyUnicodeObject *)PyUnicode_FromObject(_argc0);
@@ -577,7 +577,7 @@ static PyObject *string_strip(PyObject * self, PyObject *args)
 }
 
 static char isxml_doc[] =
-"IsXml(S) -> bool\n\
+"isxml(S) -> bool\n\
 \n\
 Return True if the given bytes represent a (possibly) well-formed XML\n\
 document. (see http://www.w3.org/TR/REC-xml/#sec-guessing).";
@@ -589,7 +589,7 @@ static PyObject *string_isxml(PyObject *self, PyObject *args)
   PyObject *characters, *result;
   Py_UNICODE *p;
 
-  if (!PyArg_ParseTuple(args,"s#:IsXml", &str, &len))
+  if (!PyArg_ParseTuple(args,"s#:isxml", &str, &len))
     return NULL;
 
   /* Determine the encoding of the XML bytes */
@@ -664,7 +664,7 @@ static PyObject *string_isxml(PyObject *self, PyObject *args)
 }
 
 static char isspace_doc[] =
-"IsXmlSpace(S) -> bool\n\
+"isspace(S) -> bool\n\
 \n\
 Return True if there are only whitespace characters in S, False otherwise.";
 
@@ -672,7 +672,7 @@ static PyObject *string_isspace(PyObject *self, PyObject *args)
 {
   PyObject *arg, *str;
 
-  if (!PyArg_ParseTuple(args,"O:IsXmlSpace", &arg))
+  if (!PyArg_ParseTuple(args,"O:isspace", &arg))
     return NULL;
 
   str = PyUnicode_FromObject(arg);
@@ -692,7 +692,7 @@ static PyObject *string_isspace(PyObject *self, PyObject *args)
 }
 
 static char isname_doc[] = "\
-IsName(s) -> bool\n\
+isname(s) -> bool\n\
 \n\
 Returns True if the given string matches the Name production as defined\n\
 by the W3C's XML 1.0 Recommendation.";
@@ -701,7 +701,7 @@ static PyObject *string_isname(PyObject *module, PyObject *args)
 {
   PyObject *arg, *str;
 
-  if (!PyArg_ParseTuple(args,"O:IsName", &arg))
+  if (!PyArg_ParseTuple(args,"O:isname", &arg))
     return NULL;
 
   str = PyUnicode_FromObject(arg);
@@ -722,7 +722,7 @@ static PyObject *string_isname(PyObject *module, PyObject *args)
 
 
 static char isnmtoken_doc[] = "\
-IsNmtoken(s) -> bool\n\
+isnmtoken(s) -> bool\n\
 \n\
 Returns True if the given string matches the Nmtoken production as defined\n\
 by the W3C's XML 1.0 Recommendation.";
@@ -731,7 +731,7 @@ static PyObject *string_isnmtoken(PyObject *module, PyObject *args)
 {
   PyObject *arg, *str;
 
-  if (!PyArg_ParseTuple(args,"O:IsNmtoken", &arg))
+  if (!PyArg_ParseTuple(args,"O:isnmtoken", &arg))
     return NULL;
 
   str = PyUnicode_FromObject(arg);
@@ -752,7 +752,7 @@ static PyObject *string_isnmtoken(PyObject *module, PyObject *args)
 
 
 static char isqname_doc[] = "\
-IsQName(s) -> bool\n\
+isqname(s) -> bool\n\
 \n\
 Returns True if the given string matches the QName production as defined\n\
 by the W3C's Namespaces in XML Recommendation.";
@@ -761,7 +761,7 @@ static PyObject *string_isqname(PyObject *module, PyObject *args)
 {
   PyObject *arg, *str;
 
-  if (!PyArg_ParseTuple(args,"O:IsQName", &arg))
+  if (!PyArg_ParseTuple(args,"O:isqname", &arg))
     return NULL;
 
   str = PyUnicode_FromObject(arg);
@@ -782,7 +782,7 @@ static PyObject *string_isqname(PyObject *module, PyObject *args)
 
 
 static char isncname_doc[] = "\
-IsNCName(s) -> bool\n\
+isncname(s) -> bool\n\
 \n\
 Returns True if the given string matches the NCName production as defined\n\
 by the W3C's Namespaces in XML Recommendation.";
@@ -791,7 +791,7 @@ static PyObject *string_isncname(PyObject *module, PyObject *args)
 {
   PyObject *arg, *str;
 
-  if (!PyArg_ParseTuple(args,"O:IsNCName", &arg))
+  if (!PyArg_ParseTuple(args,"O:isncname", &arg))
     return NULL;
 
   str = PyUnicode_FromObject(arg);
@@ -812,7 +812,7 @@ static PyObject *string_isncname(PyObject *module, PyObject *args)
 
 
 static char splitqname_doc[] = "\
-SplitQName(qualifiedName) -> (prefix, localName)\n\
+splitqname(qualifiedName) -> (prefix, localName)\n\
 \n\
 where 'qualifiedName' is a QName according to XML Namespaces 1.0\n\
 <http://www.w3.org/TR/REC-xml-names>.\n\
@@ -822,7 +822,7 @@ static PyObject *string_splitqname(PyObject *self, PyObject *args)
 {
   PyObject *qualifiedName, *localName, *prefix, *result;
 
-  if (!PyArg_ParseTuple(args, "O:SplitQName", &qualifiedName))
+  if (!PyArg_ParseTuple(args, "O:splitqname", &qualifiedName))
     return NULL;
 
   qualifiedName = PyUnicode_FromObject(qualifiedName);
@@ -850,16 +850,16 @@ static PyObject *string_splitqname(PyObject *self, PyObject *args)
 /** Module Initialization *********************************************/
 
 static PyMethodDef module_methods[] = {
-  { "XmlStrLStrip", string_lstrip,     METH_VARARGS, lstrip_doc },
-  { "XmlStrRStrip", string_rstrip,     METH_VARARGS, rstrip_doc },
-  { "XmlStrStrip",  string_strip,      METH_VARARGS, strip_doc },
-  { "isxml",        string_isxml,      METH_VARARGS, isxml_doc },
-  { "isspace",      string_isspace,    METH_VARARGS, isspace_doc },
-  { "isname",       string_isname,     METH_VARARGS, isname_doc },
-  { "isnmtoken",    string_isnmtoken,  METH_VARARGS, isnmtoken_doc },
-  { "isqname",      string_isqname,    METH_VARARGS, isqname_doc },
-  { "isncname",     string_isncname,   METH_VARARGS, isncname_doc },
-  { "splitqname",   string_splitqname, METH_VARARGS, splitqname_doc },
+  { "lstrip",     string_lstrip,     METH_VARARGS, lstrip_doc },
+  { "rstrip",     string_rstrip,     METH_VARARGS, rstrip_doc },
+  { "strip",      string_strip,      METH_VARARGS, strip_doc },
+  { "isxml",      string_isxml,      METH_VARARGS, isxml_doc },
+  { "isspace",    string_isspace,    METH_VARARGS, isspace_doc },
+  { "isname",     string_isname,     METH_VARARGS, isname_doc },
+  { "isnmtoken",  string_isnmtoken,  METH_VARARGS, isnmtoken_doc },
+  { "isqname",    string_isqname,    METH_VARARGS, isqname_doc },
+  { "isncname",   string_isncname,   METH_VARARGS, isncname_doc },
+  { "splitqname", string_splitqname, METH_VARARGS, splitqname_doc },
   { NULL, NULL }
 };
 

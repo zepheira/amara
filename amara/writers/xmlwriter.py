@@ -7,10 +7,10 @@ XML writer for XSLT output
 import operator
 import itertools
 
+from amara.lib import xmlstring
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 from amara.writers import WriterError, streamwriter
 from amara.writers._xmlprinters import xmlprinter, xmlprettyprinter
-from amara.lib.xmlstring import *
 
 DEFAULT_GENERATED_PREFIX = u"org.4suite.4xslt.ns"
 
@@ -232,7 +232,7 @@ class xmlwriter(streamwriter):
         # I don't think this is correct per Canonical XML 1.0, but we
         # have a testcase explicitly for WS in data.
         # (http://www.w3.org/TR/xml-c14n#Example-OutsideDoc)
-        self._printer.processing_instruction(target, xml_str_strip(data))
+        self._printer.processing_instruction(target, xmlstring.strip(data))
         return
 
     def comment(self, data):

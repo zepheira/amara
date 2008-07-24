@@ -1,11 +1,14 @@
-#XmlStrLStrip', 'XmlStrRStrip', 'XmlStrStrip', 'isname', 'isncname', 'isnmtoken', 'isqname', 'isspace', 'isxml', 'splitqname'
-from amara._xmlstring import *
-
-xml_str_lstrip = XmlStrLStrip
-xml_str_rstrip = XmlStrRStrip
-xml_str_strip = XmlStrStrip
+########################################################################
+# amara/lib/xmlstring.py
 
 from string import *
+from amara._xmlstring import *
+
+__all__ = [
+    'lstrip', 'rstrip', 'strip',
+    'isname', 'isncname', 'isnmtoken', 'isqname', 'isspace', 'splitqname',
+    'U',
+    ]
 
 def U(s):
     if isinstance(s, unicode): return s
