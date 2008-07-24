@@ -2,10 +2,11 @@
 # amara/xslt/proxywriter.py
 """
 Manages XSLT output parameters governed by the xsl:output instruction.
-See also `amara.writers.outputparamters`.
+See also `amara.writers.outputparameters`.
 """
 
 import new
+import weakref
 import operator
 
 from amara.namespaces import EXTENSION_NAMESPACE
@@ -20,16 +21,6 @@ _XML_METHOD = (None, 'xml')
 _XHTML_METHOD = (EXTENSION_NAMESPACE, 'xhtml') #Coming later
 _C14N_METHOD = (EXTENSION_NAMESPACE, 'c14n') #Coming later
 
-def proxymethod_wrapper(func, obj, cls,
-                _instancemethod=new.instancemethod,
-                _members=operator.attrgetter('im_func', 'im_self', 'im_class',
-                                             '__call__')):
-    method = _instancemethod(func, obj, cls)
-    class proxymethod(object):
-        im_func, im_self, im_class, __call__ = _members(method)
-    return proxymethod()
-
-
 class proxymethod(object):
     __slots__ = ('_name', '_func', '_refs')
     def __init__(self, func):
@@ -37,25 +28,39 @@ class proxymethod(object):
         self._func = func
         self._refs = []
 
-    def update(self, obj, cls):
+    def update(self, obj, cls,
+               _instancemethod=new.instancemethod,
+               _members=operator.attrgetter('im_func', 'im_self', 'im_class',
+                                             '__call__')):
         func = getattr(obj, self._name)
         try:
             func  = func.im_func
         except AttributeError:
             for ref in self._refs:
-                if ref.im_self is obj:
+                proxy = ref()
+                if proxy and proxy.im_self is obj:
                     class proxyfunction(object):
                         __call__ = func.__call__
-                    ref.__class__ = proxyfunction
+                    proxy.__class__ = proxyfunction
         else:
             for ref in self._refs:
-                if ref.im_self is obj:
-                    ref.__class__ = proxymethod_wrapper(func, obj, cls)
+                proxy = ref()
+                if proxy and proxy.im_self is obj:
+                    method = _instancemethod(func, obj, cls)
+                    class proxymethod(object):
+                        im_func, im_self, im_class, __call__ = _members(method)
+                    proxy.__class__ = proxymethod
 
-    def __get__(self, obj, cls):
-        method = proxymethod_wrapper(self._func, obj, cls)
-        self._refs.append(weakref.proxy(method, self._refs.remove))
-        return method
+    def __get__(self, obj, cls,
+                _instancemethod=new.instancemethod,
+                _members=operator.attrgetter('im_func', 'im_self', 'im_class',
+                                             '__call__')):
+        method = _instancemethod(self._func, obj, cls)
+        class proxymethod(object):
+            im_func, im_self, im_class, __call__ = _members(method)
+        proxy = proxymethod()
+        self._refs.append(weakref.ref(proxy, self._refs.remove))
+        return proxy
 
 
 class proxywriter(streamwriter):
@@ -73,34 +78,34 @@ class proxywriter(streamwriter):
                 if isinstance(obj, proxymethod))
 
     @classmethod
-    def _lookup(cls, output_paramters):
-        method = output_paramters.method
-        if method is not None:
-            try:
-                cls = cls._methods[method]
-            except KeyError:
-                if method[0] is None:
-                    # display only localName if in the null namespace
-                    method = method[1]
-                raise XsltError(XsltError.UNKNOWN_OUTPUT_METHOD, str(method))
-            if (cls is xmlwriter.xmlwriter and
-                output_paramters.cdata_section_elements):
-                cls = xmlwriter.cdatasectionwriter
+    def _lookup(cls, output_parameters):
+        method = output_parameters.method
+        try:
+            cls = cls._methods[method]
+        except KeyError:
+            if method[0] is None:
+                # display only localName if in the null namespace
+                method = method[1]
+            raise XsltError(XsltError.UNKNOWN_OUTPUT_METHOD, str(method))
+        if (cls is xmlwriter.xmlwriter and
+            output_parameters.cdata_section_elements):
+            cls = xmlwriter.cdatasectionwriter
         return cls
 
-    def __new__(cls, output_paramters, stream):
+    def __new__(cls, output_parameters, stream):
         # Attempt to switch to the "true" writer as soon as possible
-        cls = cls._lookup(output_paramters)
-        return streamwriter.__new__(cls, output_paramters, stream)
+        if output_parameters.method:
+            return cls._lookup(output_parameters)(output_parameters, stream)
+        return streamwriter.__new__(cls, output_parameters, stream)
 
-    def __init__(self, output_paramters, stream):
-        streamwriter.__init__(self, output_paramters, stream)
+    def __init__(self, output_parameters, stream):
+        streamwriter.__init__(self, output_parameters, stream)
         self._stack = []
         return
 
     def _finalize(self, method):
-        self.output_paramters.setdefault('method', method)
-        writer_class = self._lookup(self.output_paramters)
+        self.output_parameters.setdefault('method', method)
+        writer_class = self._lookup(self.output_parameters)
         # Save our instance variables for use after reinitializing
         stack = self._stack
         del self._stack
