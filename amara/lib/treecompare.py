@@ -159,7 +159,7 @@ class _xml_sequence(_markup_sequence):
 
     def end_element(self, name):
         if self._data: self._flush()
-        self.append(('end-tag', nsname))
+        self.append(('end-tag', name))
 
     def characters(self, data):
         if data:

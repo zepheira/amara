@@ -896,7 +896,8 @@ class stylesheet_reader(object):
                 e = e.getException() or e
                 if isinstance(e, XsltError):
                     raise e
-                raise XsltError(XsltError.STYLESHEET_PARSE_ERROR, isrc.uri, e)
+                raise XsltError(XsltError.STYLESHEET_PARSE_ERROR,
+                                uri=isrc.uri, text=str(e))
         finally:
             self._input_source = prev_source
 
