@@ -255,8 +255,8 @@ class test_basics(unittest.TestCase):
 
     def test_transform_1(self):
         from amara.xslt import transform
-        xml = test_basics_1.source
-        xsl = test_basics_1.transform
+        xml = test_basics_1.source.copy()
+        xsl = test_basics_1.transform.copy()
         expected = test_basics_1.expected
         result = transform(xml, xsl)
         print 'expected', repr(expected)
@@ -267,11 +267,14 @@ class test_basics(unittest.TestCase):
 
     def test_transform_2(self):
         from amara.xslt import transform
-        xml = test_basics_1.source
-        xsl = test_basics_1.transform
+        xml = test_basics_1.source.copy()
+        xsl = test_basics_1.transform.copy()
         expected = test_basics_1.expected
         io = cStringIO.StringIO()
         result = transform(xml, xsl, output=io)
+        print 'expected', repr(expected)
+        print 'compared', repr(result)
+        print treecompare.html_compare(expected, result)
         self.assert_(treecompare.html_compare(expected, io.getvalue()))
         return
 
@@ -302,6 +305,9 @@ version="1.0">
         expected = """<?xml version='1.0' encoding='UTF-8'?>
 <doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>"""
         result = transform(xml, xsl, params=params)
+        print 'expected', repr(expected)
+        print 'compared', repr(result)
+        print treecompare.html_compare(expected, result)
         self.assert_(treecompare.xml_compare(expected, result))
 
 

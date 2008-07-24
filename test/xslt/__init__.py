@@ -47,11 +47,15 @@ class testsource(inputsource):
     Encapsulates an inputsource given as a string or URI, so that it can be
     referenced in various ways. Used by XsltTest().
     """
-    def __new__(cls, arg, uri=None, validate=False, xinclude=True):
-        self = inputsource.__new__(cls, arg, uri)
+    def __new__(cls, source, uri=None, validate=False, xinclude=True):
+        self = inputsource.__new__(cls, source, uri)
+        self.source = source
         self.validate = validate
         self.xinclude = xinclude
         return self
+
+    def copy(self):
+        return testsource(self.source, self.uri, self.validate, self.xinclude)
 
 class filesource(testsource):
     def __new__(cls, path, validate=False, xinclude=True):
@@ -97,14 +101,14 @@ class xslt_test(unittest.TestCase):
         from amara.xslt.processor import processor
         P = self.processor = processor()
         if isinstance(self.transform, testsource):
-            P.append_transform(self.transform)
+            P.append_transform(self.transform.copy())
         else:
             for transform in (self.transform or ()):
-                P.append_transform(transform)
+                P.append_transform(transform.copy())
         return
 
     def runTest(self):
-        self.processor.run(self.source, **self.processor_arguments)
+        self.processor.run(self.source.copy(), **self.processor_arguments)
         return
 
 
