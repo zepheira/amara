@@ -138,7 +138,7 @@ class xmlwriter(streamwriter):
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TOO_LATE)
             else:
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT)
-        prefix, local = splitqname(name)
+        prefix, local = xmlstring.splitqname(name)
         if namespace is not None:
             # The general approach is as follows:
             # - If the new namespace/prefix combo is unique in the scope, add
@@ -255,7 +255,7 @@ class xmlwriter(streamwriter):
 
         self._element_name = name
         self._element_namespace = namespace
-        prefix, local = splitqname(name)
+        prefix, local = xmlstring.splitqname(name)
 
         # Update in-scope namespaces
         inscope_namespaces = self._namespaces[-1].copy()
@@ -263,8 +263,9 @@ class xmlwriter(streamwriter):
             inscope_namespaces.update(namespaces)
         inscope_namespaces[prefix] = namespace
         self._namespaces.append(inscope_namespaces)
-        for (name, namespace), value in attributes.iteritems():
-            self.attribute(name, value, namespace)
+        if attributes:
+            for (name, namespace), value in attributes.iteritems():
+                self.attribute(name, value, namespace)
         return
 
     def end_element(self, name, namespace=None):
