@@ -2,71 +2,54 @@
 # amara/xslt/xpatterns/__init__.py
 """
 Implement Patterns according to the XSLT spec
-
-Copyright 1999-2004 Fourthought, Inc. (USA).
-Detailed license and copyright information: http://4suite.org/COPYRIGHT
-Project home, documentation, distributions: http://4suite.org/
 """
 
 from xml.dom import Node
+from amara.xpath.locationpaths import nodetests
 
-ChildAxis = Node.ELEMENT_NODE
-AttributeAxis = Node.ATTRIBUTE_NODE
+child_axis = Node.ELEMENT_NODE
+attribute_axis = Node.ATTRIBUTE_NODE
 
-class patterns:
-    def __init__(self, patterns):
-        self.patterns = patterns
-
-    def getShortcuts(self, namespaces):
-        return [ (pattern.getShortcut(), pattern.getQuickKey(namespaces))
-                 for pattern in self.patterns ]
+class patterns(tuple):
 
     def match(self, context, node):
-        for pattern in self.patterns:
+        for pattern in self:
             if pattern.match(context, node):
-                return 1
-        return 0
+                return True
+        return False
 
     def pprint(self, indent=''):
-        print indent + str(self)
-        for pattern in self.patterns:
+        print indent + repr(self)
+        for pattern in patterns:
             pattern.pprint(indent + '  ')
         return
 
     def __str__(self):
-        return '<Patterns at %x: %s>' % (id(self), repr(self))
+        return ' | '.join(map(str, self))
 
     def __repr__(self):
-        result = repr(self.patterns[0])
-        for pattern in self.patterns[1:]:
-            result = result + ' | ' + repr(pattern)
-        return result
+        return '<Patterns at %x: %s>' % (id(self), str(self))
 
-class pattern:
+
+class pattern(nodetests.node_test):
     def __init__(self, steps):
         # The steps are already in reverse order
         self.steps = steps
         self.priority = 0.5
-        return
-
-    def getShortcut(self):
-        #FIXME: what's up with this description?
-        # A shortcut is (pattern, (pattern, extra_arg))
-        if len(self.steps) == 1:
-            (axis_type, node_test, ancestor) = self.steps[0]
-            shortcut = (node_test, axis_type)
-        else:
-            shortcut = (self, None)
-        return shortcut
-
-    def getQuickKey(self, namespaces):
-        (axis_type, node_test, ancestor) = self.steps[0]
-        (node_type, expanded_name) = node_test.getQuickKey(namespaces)
+        axis_type, node_test, ancestor = steps[0]
         if axis_type == Node.ATTRIBUTE_NODE:
             node_type = axis_type
-        return (node_type, expanded_name)
+        else:
+            node_type = node_test.node_type
+        self.node_type = node_type
+        if len(steps) > 1:
+            node_test, axis_type = self, None
+            self.name_key = node_test.name_key
+        self.node_test = node_test
+        self.axis_type = axis_type
+        return
 
-    def match(self, context, node, dummy=None):
+    def match(self, context, node, principalType=None):
         (axis_type, node_test, ancestor) = self.steps[0]
         if not node_test.match(context, node, axis_type):
             return 0
@@ -93,97 +76,93 @@ class pattern:
         return 1
 
     def pprint(self, indent=''):
-        print indent + str(self)
+        print indent + repr(self)
 
     def __str__(self):
-        return '<Pattern at %x: %s>' % (id(self), repr(self))
-    
-    def __repr__(self):
         result = ''
         for (axis, test, ancestor) in self.steps:
             if axis == Node.ATTRIBUTE_NODE:
-                step = '@' + repr(test)
+                step = '@' + str(test)
             else:
-                step = repr(test)
+                step = str(test)
             result = step + (ancestor and '//' or '/') + result
         # remove trailing slash
         return result[:-1]
 
 
-class predicated_node_test:
-    def __init__(self, nodeTest, predicateList):
-        self.nodeTest = nodeTest
-        self.predicates = predicateList
-        self.priority = 0.5
-        return
+class predicated_test(nodetests.node_test):
 
-    def getQuickKey(self, namespaces):
-        return self.nodeTest.getQuickKey(namespaces)
+    priority = 0.5
+
+    def __init__(self, node_test, predicates):
+        self._node_test = node_test
+        self._predicates = _predicates
+        self.name_key = node_test.name_key
+        return
 
     def match(self, context, node, principalType):
         if principalType == Node.ATTRIBUTE_NODE:
-            node_set = node.ownerElement.attributes.values()
+            nodes = node.ownerElement.attributes.values()
         elif node.parentNode:
-            node_set = node.parentNode.childNodes
+            nodes = node.parentNode.childNodes
         else:
             # Must be a document
-            return 0
+            return False
 
-        # Pass through the NodeTest
-        node_set = [ n for n in node_set if self.nodeTest.match(context, n, principalType) ]
+        # Pass through the NodeTest (genexp)
+        nodes = ( node for node in nodes
+                  if self._node_test.match(context, node, principalType) )
 
         # Child and attribute axes are forward only
-        node_set = self.predicates.filter(node_set, context, reverse=0)
-        return node in node_set
+        nodes = self._predicates.filter(nodes, context, reverse=0)
+        return node in nodes
 
     def __str__(self):
-        return '<%s at %x: %s>' % (
-            self.__class__.__name__,
-            id(self),
-            repr(self))
+        return str(self._node_test) + str(self._predicates)
 
-    def __repr__(self):
-        return repr(self.nodeTest) + repr(self.predicates)
 
-class document_node_test:
-    def __init__(self):
-        self.priority = 0.5
+class document_test(nodetests.node_test):
 
-    def getQuickKey(self, namespaces):
-        return (Node.DOCUMENT_NODE, None)
+    priority = 0.5
+    node_type = Node.DOCUMENT_NODE
 
     def match(self, context, node, principalType):
         return node.nodeType == Node.DOCUMENT_NODE
 
     def __str__(self):
-        return '<%s at %x: %s>' % (
-            self.__class__.__name__,
-            id(self),
-            repr(self))
-
-    def __repr__(self):
         return '/'
 
-class id_key_node_test:
-    def __init__(self, idOrKey):
-        self.priority = 0.5
-        self.idOrKey = idOrKey
 
-    def getQuickKey(self, namespaces):
-        return (None, None)
+class id_key_test(nodetests.node_test):
+
+    priority = 0.5
+
+    def __init__(self, function):
+        self._function = function
 
     def match(self, context, node, principalType):
-        return node in self.idOrKey.evaluate(context)
+        return node in self._function.evaluate(context)
 
     def __str__(self):
-        return '<%s at %x: %s>' % (
-            self.__class__.__name__,
-            id(self),
-            repr(self))
-
-    def __repr__(self):
-        return repr(self.idOrKey)
+        return str(self._function)
 
 
-def parse(string):
-    return
+import _parser
+class parser(_parser.parser):
+
+    _parse = _parser.parser.parse
+
+    def parse(self, expr):
+        """Parses the string `expr` into an AST"""
+        try:
+            return self._parse(expr)
+        except _parser.error, error:
+            raise XsltError(XsltError.INVALID_PATTERN, line=error.lineno,
+                            column=error.offset, text=error.msg)
+
+
+parse = parser().parse
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(_parser.console().cmdloop())

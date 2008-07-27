@@ -1,0 +1,445 @@
+<?xml version = "1.0"?>
+<bisongen version='1.0' name='parser' project='amara.xslt.xpatterns'>
+
+  <options mode="c"/>
+
+  <!-- Python modules to import -->
+  <modules>
+    <?include ../../xpath/parser/xpath_modules.bgen.frag?>
+    <import from="amara.xslt.xpatterns">patterns</import>
+    <import from="amara.xslt.xpatterns">pattern</import>
+    <import from="amara.xslt.xpatterns">predicated_test</import>
+    <import from="amara.xslt.xpatterns">document_test</import>
+    <import from="amara.xslt.xpatterns">id_key_test</import>
+    <import from="amara.xslt.xpatterns">child_axis</import>
+    <import from="amara.xslt.xpatterns">attribute_axis</import>
+  </modules>
+
+  <!-- Token declarations -->
+  <tokens>
+    <token>CHILD_AXIS</token>
+    <token>ATTRIBUTE_AXIS</token>
+    <token>ID_FUNCTION</token>
+    <token>KEY_FUNCTION</token>
+    <?include ../../xpath/parser/xpath_tokens.bgen.frag?>
+  </tokens>
+
+  <!-- Grammer rules definition -->
+  <grammar>
+    <production>
+      <non-terminal>start</non-terminal>
+      <rule>
+        <symbol>Pattern</symbol>
+        <code language="c">
+          $$ = PyObject_CallFunction(patterns, "O", $1);
+        </code>
+        <code language="python">
+          $$ = patterns($1)
+        </code>
+      </rule>
+    </production>
+
+    <!-- Patterns [1] -->
+    <production>
+      <non-terminal>Pattern</non-terminal>
+      <rule>
+        <symbol>LocationPathPattern</symbol>
+        <code language='c'>
+          PyList_Reverse($1);
+          $1 = PyObject_CallFunction(pattern, "N", $1);
+          $$ = PyList_New(1);
+          Py_INCREF($1);
+          PyList_SET_ITEM($$, 0, $1);
+        </code>
+        <code language='python'>
+          $1.reverse()
+          $$ = [pattern($1)]
+        </code>
+      </rule>
+      <rule>
+        <symbol>Pattern</symbol>
+        <symbol>'|'</symbol>
+        <symbol>LocationPathPattern</symbol>
+        <code language='c'>
+          PyList_Reverse($3);
+          $3 = PyObject_CallFunction(pattern, "N", $3);
+          PyList_Append($1, $3);
+          Py_INCREF($1);
+          $$ = $1;
+        </code>
+        <code language='python'>
+          $3.reverse()
+          $1.append(pattern($3))
+          $$ = $1
+        </code>
+      </rule>
+    </production>
+
+    <!-- Patterns [2] -->
+    <production>
+      <non-terminal>LocationPathPattern</non-terminal>
+      <rule>
+        <symbol>'/'</symbol>
+        <code language='c'>
+          Py_DECREF($1);
+          $1 = PyTuple_New(3);
+          PyTuple_SET_ITEM($1, 0, PyInt_FromLong(0));
+          PyTuple_SET_ITEM($1, 1, PyObject_CallObject(document_test, NULL));
+          PyTuple_SET_ITEM($1, 2, PyInt_FromLong(0));
+          $$ = PyList_New(1);
+          if ($$) {
+            Py_INCREF($1);
+            PyList_SET_ITEM($$, 0, $1);
+          }
+        </code>
+        <code language='python'>
+          $$ = [(0, document_test(), 0)]
+        </code>
+      </rule>
+      <rule>
+        <symbol>'/'</symbol>
+        <symbol>RelativePathPattern</symbol>
+        <code language='c'>
+          Py_DECREF($1);
+          $1 = PyTuple_New(3);
+          PyTuple_SET_ITEM($1, 0, PyInt_FromLong(0));
+          PyTuple_SET_ITEM($1, 1, PyObject_CallObject(document_test, NULL));
+          PyTuple_SET_ITEM($1, 2, PyInt_FromLong(0));
+          PyList_Insert($2, 0, $1);
+          Py_INCREF($2);
+          $$ = $2;
+        </code>
+        <code language='python'>
+          $2.insert(0, (0, document_test(), 0))
+          $$ = $2
+        </code>
+      </rule>
+      <rule>
+        <symbol>IdKeyPattern</symbol>
+        <code language="c">
+          PyObject *tuple = PyTuple_New(3);
+          PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(0));
+          Py_INCREF($1);
+          PyTuple_SET_ITEM(tuple, 1, $1);
+          PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong(0));
+          $$ = PyList_New(1);
+          PyList_SET_ITEM($$, 0, tuple);
+        </code>
+        <code language="python">
+          $$ = [(0, $1, 0)]
+        </code>
+      </rule>
+      <rule>
+        <symbol>IdKeyPattern</symbol>
+        <symbol>'/'</symbol>
+        <symbol>RelativePathPattern</symbol>
+        <code language="c">
+          Py_DECREF($2);
+          $2 = PyTuple_New(3);
+          if ($2) {
+            PyTuple_SET_ITEM($2, 0, PyInt_FromLong(0));
+            PyTuple_SET_ITEM($2, 1, $1);
+            PyTuple_SET_ITEM($2, 2, PyInt_FromLong(0));
+            Py_INCREF($1);
+            PyList_Insert($3, 0, $2);
+          }
+          Py_INCREF($3);
+          $$ = $3;
+        </code>
+        <code language="python">
+          $3.insert(0, (0, $1, 0))
+          $$ = $3
+        </code>
+      </rule>
+      <rule>
+        <symbol>IdKeyPattern</symbol>
+        <symbol>DOUBLE_SLASH</symbol>
+        <symbol>RelativePathPattern</symbol>
+        <code language="c">
+          Py_DECREF($2);
+          $2 = PyTuple_New(3);
+          if ($2) {
+            PyTuple_SET_ITEM($2, 0, PyInt_FromLong(0));
+            PyTuple_SET_ITEM($2, 1, $1);
+            PyTuple_SET_ITEM($2, 2, PyInt_FromLong(0));
+            Py_INCREF($1);
+            PyList_Insert($3, 0, $2);
+          }
+          Py_INCREF($3);
+          $$ = $3;
+        </code>
+        <code language="python">
+          $3.insert(0, (0, $1, 1))
+          $$ = $3
+        </code>
+      </rule>
+      <rule>
+        <symbol>DOUBLE_SLASH</symbol>
+        <symbol>RelativePathPattern</symbol>
+        <code language="c">
+          Py_INCREF($2);
+          $$ = $2;
+        </code>
+        <code language="python">
+          $$ = $2;
+        </code>
+      </rule>
+      <rule>
+        <symbol>RelativePathPattern</symbol>
+      </rule>
+    </production>
+
+    <!-- Patterns [3] -->
+    <!-- IdKeyPattern: 'id' '(' Literal ')'
+                     | 'key' '(' Literal ',' Literal ')'
+    -->
+    <production>
+      <non-terminal>IdKeyPattern</non-terminal>
+      <rule>
+        <symbol>ID_FUNCTION</symbol>
+        <symbol>'('</symbol>
+        <symbol>Literal</symbol>
+        <symbol>')'</symbol>
+        <code language="c">
+          $3 = PyObject_CallFunction(string_literal, "N", $3);
+          $1 = PyObject_CallFunction(function_call, "N[O]", $1, $3);
+          $$ = PyObject_CallFunction(id_key_test, "O", $1);
+        </code>
+        <code language="python">
+          args = [string_literal($3)]
+          $$ = id_key_test(function_call($1, args))
+        </code>
+      </rule>
+      <rule>
+        <symbol>KEY_FUNCTION</symbol>
+        <symbol>'('</symbol>
+        <symbol>Literal</symbol>
+        <symbol>','</symbol>
+        <symbol>Literal</symbol>
+        <symbol>')'</symbol>
+        <code language="c">
+          $3 = PyObject_CallFunction(string_literal, "N", $3);
+          $5 = PyObject_CallFunction(string_literal, "N", $5);
+          $1 = PyObject_CallFunction(function_call, "N[OO]", $1, $3, $5);
+          $$ = PyObject_CallFunction(id_key_test, "O", $1);
+        </code>
+        <code language="python">
+          args = [string_literal($3), string_literal($5)]
+          $$ = id_key_test(function_call($1, args))
+        </code>
+      </rule>    
+    </production>
+
+    <!-- Patterns [4] -->
+    <production>
+      <non-terminal>RelativePathPattern</non-terminal>
+      <rule>
+        <symbol>StepPattern</symbol>
+        <code language="c">
+          $$ = PyList_New(1);
+          Py_INCREF($1);
+          PyList_SET_ITEM($$, 0, $1);
+        </code>
+        <code language="python">
+          $$ = [$1]
+        </code>
+      </rule>
+      <rule>
+        <symbol>RelativePathPattern</symbol>
+        <symbol>'/'</symbol>
+        <symbol>StepPattern</symbol>
+        <code language="c">
+          if (PyList_Check($1)) {
+            PyList_Append($1, $3);
+            Py_INCREF($1);
+            $$ = $1;
+          } else {
+            $$ = PyList_New(2);
+            Py_INCREF($1);
+            PyList_SET_ITEM($$, 0, $1);
+            Py_INCREF($3);
+            PyList_SET_ITEM($$, 1, $3);
+          }
+        </code>
+        <code language="python">
+          if isinstance($1, list):
+            $1.append($3)
+            $$ = $1
+          else:
+            $$ = [$1, $3]
+        </code>
+      </rule>
+      <rule>
+        <symbol>RelativePathPattern</symbol>
+        <symbol>DOUBLE_SLASH</symbol>
+        <symbol>StepPattern</symbol>
+        <code language="c">
+          PyObject *step;
+          if (PyList_Check($1)) {
+            step = PyList_GET_ITEM($1, PyList_GET_SIZE($1)-1);
+            PyList_Append($1, $3);
+            Py_INCREF($1);
+            $$ = $1;
+          } else {
+            step = $1;
+            $$ = PyList_New(2);
+            Py_INCREF($1);
+            PyList_SET_ITEM($$, 0, $1);
+            Py_INCREF($3);
+            PyList_SET_ITEM($$, 1, $3);
+          }
+          /* flag as an ancestor */
+          PyTuple_SetItem(step, 2, PyInt_FromLong(1));
+        </code>
+        <code language="python">
+          if isinstance($1, list):
+            axis_type, node_test, ancestor = $1[-1]
+            $1[-1] = (axis_type, node_test, 1)
+            $1.append($3)
+            $$ = $1
+          else:
+            axis_type, node_test, ancestor = $1
+            $$ = [(axis_type, node_test, 1), $3]
+        </code>
+      </rule>
+    </production>
+
+    <!-- Patterns [5] -->
+    <production>
+      <non-terminal>StepPattern</non-terminal>
+      <rule>
+        <symbol>ChildOrAttributeAxisSpecifier</symbol>
+        <symbol>NodeTest</symbol>
+        <code language="c">
+          $$ = PyTuple_New(3);
+          if ($$) {
+            Py_INCREF($1);
+            PyTuple_SET_ITEM($$, 0, $1);
+            Py_INCREF($2);
+            PyTuple_SET_ITEM($$, 1, $2);
+            PyTuple_SET_ITEM($$, 2, PyInt_FromLong(0));
+          }
+        </code>
+        <code language="python">
+          $$ = ($1, $2, 0)
+        </code>
+      </rule>
+      <rule>
+        <symbol>ChildOrAttributeAxisSpecifier</symbol>
+        <symbol>NodeTest</symbol>
+        <symbol>Predicate.list</symbol>
+        <code language="c">
+          $2 = PyObject_CallFunction(predicated_test, "NO", $2, $3);
+          $$ = PyTuple_New(3);
+          if ($$) {
+            Py_INCREF($1);
+            PyTuple_SET_ITEM($$, 0, $1);
+            PyTuple_SET_ITEM($$, 1, $2);
+            PyTuple_SET_ITEM($$, 2, PyInt_FromLong(0));
+          }
+        </code>
+        <code language="python">
+          $$ = ($1, predicated_test($2, $3), 0)
+        </code>
+      </rule>
+    </production>
+
+    <!-- Patterns [6] -->
+    <production>
+      <non-terminal>ChildOrAttributeAxisSpecifier</non-terminal>
+      <rule>
+        <code language="c">
+          Py_INCREF(child_axis);
+          $$ = child_axis;
+        </code>
+        <code language="python">
+          $$ = child_axis
+        </code>
+      </rule>
+      <rule>
+        <symbol>'@'</symbol>
+        <code language="c">
+          Py_INCREF(attribute_axis);
+          $$ = attribute_axis;
+        </code>
+        <code language="python">
+          $$ = attribute_axis
+        </code>
+      </rule>
+      <rule>
+        <symbol>CHILD_AXIS</symbol>
+        <symbol>DOUBLE_COLON</symbol>
+        <code language="c">
+          Py_INCREF(child_axis);
+          $$ = child_axis;
+        </code>
+        <code language="python">
+          $$ = child_axis
+        </code>
+      </rule>
+      <rule>
+        <symbol>ATTRIBUTE_AXIS</symbol>
+        <symbol>DOUBLE_COLON</symbol>
+        <code language="c">
+          Py_INCREF(attribute_axis);
+          $$ = attribute_axis;
+        </code>
+        <code language="python">
+          $$ = attribute_axis
+        </code>
+      </rule>
+    </production>
+
+    <?include ../../xpath/parser/xpath_grammar.bgen.frag?>
+
+  </grammar>
+
+  <lexer start="XPATTERN">
+    <defines>
+      <?include ../../xpath/parser/xpath_lexer_defines.bgen.frag?>
+    </defines>
+
+    <states>
+      <exclusive>XPATTERN</exclusive>
+    </states>
+ 
+    <scope state="XPATTERN">
+      <pattern expression='"//"'>
+        <token>DOUBLE_SLASH</token>
+      </pattern>
+
+      <!-- node types -->
+      <pattern expression='{NodeType}/{S}*\('>
+        <token>NodeType</token>
+      </pattern>
+
+      <!-- axis specifiers -->
+      <pattern expression='child/{S}*::'>
+        <token>CHILD_AXIS</token>
+      </pattern>
+      <pattern expression='attribute/{S}*::'>
+        <token>ATTRIBUTE_AXIS</token>
+      </pattern>
+
+      <pattern expression='id/{S}*\('>
+        <token>ID_FUNCTION</token>
+      </pattern>
+      <pattern expression='key/{S}*\('>
+        <token>KEY_FUNCTION</token>
+      </pattern>
+
+      <pattern expression='({NCName}:\*)|({QName})|\*'>
+        <token>NameTest</token>
+      </pattern>
+
+      <pattern expression='"["'>
+        <begin>INITIAL</begin> <!-- switch to XPath parsing -->
+        <token>@ASCII@</token>
+      </pattern>
+    </scope>
+
+    <?include ../../xpath/parser/xpath_lexer_patterns.bgen.frag?>
+
+  </lexer>
+
+</bisongen>
