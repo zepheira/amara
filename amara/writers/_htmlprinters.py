@@ -390,9 +390,9 @@ class htmlprettyprinter(htmlprinter):
     _inline_elements = frozenset([
         'tt', 'i', 'b', 'u', 's', 'strike', 'big', 'small', 'em', 'strong',
         'dfn', 'code', 'samp', 'kbd', 'var', 'cite', 'abbr', 'acronym', 'a',
-        'img', 'applet', 'object', 'font', 'basefont', 'script', 'map', 'q',
-        'sub', 'sup', 'span', 'bdo', 'iframe', 'input', 'select', 'textarea',
-        'label', 'button',
+        'img', 'applet', 'object', 'font', 'basefont', 'br', 'script', 'map',
+        'q', 'sub', 'sup', 'span', 'bdo', 'iframe', 'input', 'select',
+        'textarea', 'label', 'button',
         ])
 
     # Elements that should never be emitted with additional
