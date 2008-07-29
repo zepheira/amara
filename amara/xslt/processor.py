@@ -61,13 +61,13 @@ class processor(object):
 
     Important instance attributes:
 
-      .extensionParams: a dictionary that allows one to attach
+      .extension_parameters: a dictionary that allows one to attach
         additional metadata to a processor instance. We use this
         to make invocation-specific data like HTTP query args and
         logfile handles available to XSLT extension functions & elements
         when invoking the processor via the repository's HTTP server.
 
-      .mediaPref: the preferred/target media, for the purpose of
+      .media_descriptors: the preferred/target media, for the purpose of
         picking from multiple xml-stylesheet processing instructions.
         Defaults to None. If set to a string, xml-stylesheet PIs
         without that string in their 'media' pseudo-attribute will be

@@ -358,6 +358,10 @@ class htmlprettyprinter(htmlprinter):
         self._indent_end_tag = not is_inline
         return
 
+    def text(self, data, disable_escaping=False):
+        self._indent_end_tag = False
+        htmlprinter.text(self, data, disable_escaping)
+
     def processing_instruction(self, target, data):
         if self._element_name:
             self.write_ascii('>')
