@@ -36,6 +36,12 @@ class test_basics_1(xslt_test):
   </body>
 </html>"""
 
+    def test_transform_output(self):
+        from amara.xslt import transform
+        io = cStringIO.StringIO()
+        result = transform(self.source, self.transform, output=io)
+        self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
+        return
 
 class test_basics_2(xslt_test):
     source = filesource('addr_book1.xml')
@@ -251,37 +257,10 @@ class test_basics_4(xslt_test):
 </HTML>"""
 
 
-class test_basics(unittest.TestCase):
+class test_basics_5(xslt_test):
 
-    def test_transform_1(self):
-        from amara.xslt import transform
-        xml = test_basics_1.source.copy()
-        xsl = test_basics_1.transform.copy()
-        expected = test_basics_1.expected
-        result = transform(xml, xsl)
-        print 'expected', repr(expected)
-        print 'compared', repr(result)
-        print treecompare.html_compare(expected, result)
-        self.assert_(treecompare.html_compare(expected, result))
-        return
-
-    def test_transform_2(self):
-        from amara.xslt import transform
-        xml = test_basics_1.source.copy()
-        xsl = test_basics_1.transform.copy()
-        expected = test_basics_1.expected
-        io = cStringIO.StringIO()
-        result = transform(xml, xsl, output=io)
-        print 'expected', repr(expected)
-        print 'compared', repr(result)
-        print treecompare.html_compare(expected, result)
-        self.assert_(treecompare.html_compare(expected, io.getvalue()))
-        return
-
-    def test_transform_3(self):
-        from amara.xslt import transform
-        xml = stringsource("<dummy/>")
-        xsl = stringsource("""<?xml version="1.0"?>
+    source = stringsource("<dummy/>")
+    transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
 
@@ -301,14 +280,9 @@ version="1.0">
 
 </xsl:stylesheet>
 """)
-        params = {'override': 'xyz', 'list': ['a', 'b', 'c']}
-        expected = """<?xml version='1.0' encoding='UTF-8'?>
+    parameters={'override': 'xyz', 'list': ['a', 'b', 'c']}
+    expected = """<?xml version='1.0' encoding='UTF-8'?>
 <doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>"""
-        result = transform(xml, xsl, params=params)
-        print 'expected', repr(expected)
-        print 'compared', repr(result)
-        print treecompare.html_compare(expected, result)
-        self.assert_(treecompare.xml_compare(expected, result))
 
 
     # Appending explicit stylesheet when xml-stylesheet PI already
