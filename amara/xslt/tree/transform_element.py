@@ -251,7 +251,7 @@ class transform_element(xslt_element):
         elements = top_level_elements['attribute-set']
 
         # - process the `xsl:param` and `xsl:variable` elements
-        index, self.variables = {}, variable_elements[:]
+        index, self._variables = {}, variable_elements[:]
         variable_elements.reverse()
         for element in variable_elements:
             name = element._name
@@ -260,8 +260,8 @@ class transform_element(xslt_element):
                 index[name] = 1
             else:
                 # shadowed variable binding, remove from processing list
-                self.variables.remove(element)
-        self.parameters = frozenset(element._name for element in self.variables
+                self._variables.remove(element)
+        self.parameters = frozenset(element._name for element in self._variables
                                     if isinstance(element, _param_element))
 
         # - process the `xsl:template` elements
@@ -269,15 +269,16 @@ class transform_element(xslt_element):
         named_templates = self.named_templates = {}
         elements = top_level_elements['template']
         elements.reverse()
+        getter = operator.attrgetter('node_test', 'axis_type', 'node_type')
         for position, element in enumerate(elements):
             match, name = element._match, element._name
             precedence = element.import_precedence
             if match:
                 namespaces = element.namespaces
                 template_priority = element._priority
-                mode_table = match_templates[template._mode]
-                for pattern in match.patterns:
-                    node_test, axis_type = pattern.get_shortcut()
+                mode_table = match_templates[element._mode]
+                for pattern in match:
+                    node_test, axis_type, node_type = getter(pattern)
                     if template_priority is None:
                         priority = node_test.priority
                     else:
@@ -285,9 +286,19 @@ class transform_element(xslt_element):
                     info = ((precedence, template_priority, position),
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
-                    node_type, name_key = pattern.get_match_key(namespaces)
                     if node_type == Node.ELEMENT_NODE:
                         # Element types are further keyed by the name test.
+                        name_key = node_test.name_key
+                        if name_key:
+                            prefix, local = name_key
+                            # Unprefixed names are in the null-namespace
+                            try:
+                                namespace = prefix and namespaces[prefix]
+                            except KeyError:
+                                raise XPathError(XPathError.UNDEFINED_PREFIX,
+                                                 prefix=prefix)
+                            else:
+                                name_key = namespace, prefix
                         mode_table[node_type][name_key].append(info)
                     else:
                         # Every other node type gets lumped into a single list
@@ -324,20 +335,20 @@ class transform_element(xslt_element):
                         patterns.extend(any_patterns)
                         patterns.sort(reverse=True)
                 elif node_type is not None:
-                    type_table.extend(any_patterns)
-                    type_table.sort(reverse=True)
+                    patterns.extend(any_patterns)
+                    patterns.sort(reverse=True)
         return
 
     #def _printMatchTemplates(self):
     #    print "=" * 50
-    #    print "matchTemplates:"
+    #    print "match_templates:"
     #    templates = {}
-    #    for mode in self.matchTemplates.keys():
+    #    for mode in self.match_templates:
     #        print "-" * 50
     #        print "mode:",mode
-    #        for nodetype in self.matchTemplates[mode].keys():
+    #        for nodetype in self.match_templates[mode]:
     #            print "  node type:",nodetype
-    #            for patterninfo in self.matchTemplates[mode][nodetype]:
+    #            for patterninfo in self.match_templates[mode][nodetype]:
     #                pat, axistype, template = patterninfo
     #                print "    template matching pattern  %r  for axis type %s" % (pat, axistype)
     #                templates[template] = 1
@@ -351,18 +362,7 @@ class transform_element(xslt_element):
     ############################# Prime Routines #############################
 
     def prime(self, context):
-        #Run prime for all instructions that declared they used it
-        #NOTE: Must prime instructions *before* setting up variables and
-        #parameters because vars and params might rely on context updates
-        #while priming (e.g. if an EXSLT func:function is declared and used
-        #in a variable defn)
-        for instruction in self.root.primeInstructions:
-            if instruction is not self:
-                instruction.prime(context)
-
-        self.initialFunctions.update(context.functions)
-
-        self.globalVars = processed = context.variables
+        processed = context.variables
         elements, deferred = self._variables, []
         num_writers = len(context._writers)
         while 1:
@@ -466,15 +466,6 @@ class transform_element(xslt_element):
 
     ############################ Runtime Routines ############################
 
-    def getNamedTemplates(self):
-        return self.namedTemplates.copy()
-
-    def getGlobalVariables(self):
-        return self.globalVars.copy()
-
-    def getInitialFunctions(self):
-        return self.initialFunctions.copy()
-
     def apply_templates(self, context, nodes, mode=None, params=None,
                         precedence=None):
         """
@@ -502,11 +493,12 @@ class transform_element(xslt_element):
             # Set the current node for this template application
             context.node = context.current_node = node
             context.position = position
+            position += 1
 
             # Get the possible template rules for `node`
             node_type = node.nodeType
             if mode in self.match_templates:
-                type_table = self.matchTemplates[mode]
+                type_table = self.match_templates[mode]
                 if node_type in type_table:
                     if node_type == Node.ELEMENT_NODE:
                         name_table = type_table[node_type]
@@ -568,7 +560,7 @@ class transform_element(xslt_element):
                 context.template = template
                 # Make sure the template starts with a clean slate
                 variables = context.variables
-                context.variables = self.global_variables
+                context.variables = context.global_variables
                 try:
                     template.instantiate(context, params)
                 finally:

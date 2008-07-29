@@ -5,14 +5,8 @@
 static PyObject *namespaces_string;
 static PyObject *instruction_string;
 static PyObject *instantiate_string;
-static PyObject *does_setup_string;
-static PyObject *does_validate_string;
-static PyObject *does_prime_string;
-static PyObject *does_teardown_string;
-static PyObject *setup_string;
 
 static PyObject *empty_dict;
-static PyObject *empty_tuple;
 
 /** Private Routines **************************************************/
 
@@ -59,68 +53,8 @@ static int element_resize(XsltElementObject *self, Py_ssize_t newsize) {
   return 0;
 }
 
-
-Py_LOCAL_INLINE(int)
-element_update(XsltElementObject *self, XsltNodeObject *child)
-{
-  PyObject *temp, *callable;
-  PyObject *root = XsltNode_ROOT(self);
-  struct { PyObject *attribute; PyObject *instructions; } 
-    *table, update_table[] = {
-      { does_validate_string, XsltRoot_VALIDATE_INSTRUCTIONS(root) },
-      { does_prime_string, XsltRoot_PRIME_INSTRUCTIONS(root) },
-      { does_teardown_string, XsltRoot_TEARDOWN_INSTRUCTIONS(root) },
-      { NULL }
-    };
-
-  /* if the child does setup, call that function now */
-  temp = PyObject_GetAttr((PyObject *)child, does_setup_string);
-  if (temp == NULL)
-    return -1;
-  switch (PyObject_IsTrue(temp)) {
-  case 1:
-    Py_DECREF(temp);
-    callable = PyObject_GetAttr((PyObject *)child, setup_string);
-    if (callable == NULL)
-      return -1;
-    temp = PyObject_Call(callable, empty_tuple, NULL);
-    Py_DECREF(callable);
-    if (temp == NULL)
-      return -1;
-  case 0:
-    Py_DECREF(temp);
-    break;
-  default:
-    Py_DECREF(temp);
-    return -1;
-  }
-
-  /* update the root-node instruction lists */
-  for (table = update_table; table->attribute; table++) {
-    /* if the child does setup, call that function now */
-    temp = PyObject_GetAttr((PyObject *)child, table->attribute);
-    if (temp == NULL)
-      return -1;
-    switch (PyObject_IsTrue(temp)) {
-    case 1:
-      if (PyList_Append(table->instructions, (PyObject *)child) < 0) {
-        Py_DECREF(temp);
-        return -1;
-      }
-    case 0:
-      Py_DECREF(temp);
-      break;
-    default:
-      Py_DECREF(temp);
-      return -1;
-    }
-  }
-
-  return 0;
-}
-
 static PyObject *process_children(XsltElementObject *self, PyObject *args,
-                                  PyObject *context, PyObject *processor)
+                                  PyObject *context)
 {
   Py_ssize_t i, size;
 
@@ -167,12 +101,7 @@ int XsltElement_AppendChild(XsltElementObject *self, XsltNodeObject *child)
   Py_INCREF(child);
   XsltElement_SET_CHILD(self, count, child);
 
-  /* Set its parent link */
-  Py_DECREF(child->parent);
-  Py_INCREF((PyObject *) self);
-  child->parent = (PyObject *) self;
-
-  return element_update(self, child);
+  return XsltNode_Link(XsltNode(self), child);
 }
 
 
@@ -208,12 +137,7 @@ int XsltElement_InsertChild(XsltElementObject *self, XsltNodeObject *child,
   Py_INCREF(child);
   XsltElement_SET_CHILD(self, where, child);
 
-  /* Set its parent link */
-  Py_DECREF(child->parent);
-  Py_INCREF((PyObject *) self);
-  child->parent = (PyObject *) self;
-
-  return element_update(self, child);
+  return XsltNode_Link(XsltNode(self), child);
 }
 
 
@@ -341,34 +265,34 @@ static PyObject *element_setAttribute(XsltElementObject *self, PyObject *args)
 }
 
 static char instantiate_doc[] = "\
-instantiate(context, processor)\n\
+instantiate(context)\n\
 \n\
 Implements default behavior for extension elements.";
 
 static PyObject *element_instantiate(XsltElementObject *self, PyObject *args)
 {
-  PyObject *context, *processor;
+  PyObject *context;
 
-  if (!PyArg_ParseTuple(args, "OO:instantiate", &context, &processor))
+  if (!PyArg_ParseTuple(args, "O:instantiate", &context))
     return NULL;
 
-  return process_children(self, args, context, processor);
+  return process_children(self, args, context);
 }
 
-static char processChildren_doc[] = "\
-processChildren(context, processor)\n\
+static char process_children_doc[] = "\
+process_children(context)\n\
 \n\
 Utility method to instantiate each child in order.";
 
-static PyObject *element_processChildren(XsltElementObject *self,
-                                         PyObject *args)
+static PyObject *element_process_children(XsltElementObject *self,
+                                          PyObject *args)
 {
-  PyObject *context, *processor;
+  PyObject *context;
 
-  if (!PyArg_ParseTuple(args, "OO:processChildren", &context, &processor))
+  if (!PyArg_ParseTuple(args, "O:process_children", &context))
     return NULL;
 
-  return process_children(self, args, context, processor);
+  return process_children(self, args, context);
 }
 
 static char _merge_doc[] = "";
@@ -579,7 +503,7 @@ static struct PyMethodDef element_methods[] = {
 
   XsltElement_METHOD(instantiate),
 
-  XsltElement_METHOD(processChildren),
+  XsltElement_METHOD(process_children),
 
   XsltElement_METHOD(_merge),
 
@@ -1073,45 +997,20 @@ int XsltElement_Init(PyObject *module)
   instantiate_string = PyString_FromString("instantiate");
   if (instantiate_string == NULL) return -1;
 
-  does_setup_string = PyString_FromString("does_setup");
-  if (does_setup_string == NULL) return -1;
-
-  does_validate_string = PyString_FromString("does_validate");
-  if (does_validate_string == NULL) return -1;
-
-  does_prime_string = PyString_FromString("does_prime");
-  if (does_prime_string == NULL) return -1;
-
-  does_teardown_string = PyString_FromString("does_teardown");
-  if (does_teardown_string == NULL) return -1;
-
-  setup_string = PyString_FromString("setup");
-  if (setup_string == NULL) return -1;
-
   dict = PyDict_New();
   if (dict == NULL) return -1;
   empty_dict = PyDictProxy_New(dict);
   Py_DECREF(dict);
   if (empty_dict == NULL) return -1;
 
-  empty_tuple = PyTuple_New(0);
-  if (empty_tuple == NULL) return -1;
-
   return 0;
 }
 
 void XsltElement_Fini(void)
 {
-  Py_DECREF(empty_tuple);
   Py_DECREF(empty_dict);
   Py_DECREF(namespaces_string);
   Py_DECREF(instruction_string);
   Py_DECREF(instantiate_string);
-  Py_DECREF(does_setup_string);
-  Py_DECREF(does_validate_string);
-  Py_DECREF(does_prime_string);
-  Py_DECREF(does_teardown_string);
-  Py_DECREF(setup_string);
-
   PyDict_Clear(XsltElement_Type.tp_dict);
 }

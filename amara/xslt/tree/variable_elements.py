@@ -34,8 +34,7 @@ class variable_element(xslt_element):
         elif self.children:
             context.push_tree_writer(self.base_uri)
             try:
-                for child in self.children:
-                    child.instantiate(context)
+                self.process_children(context)
             finally:
                 writer = context.pop_writer()
             result = writer.get_result()

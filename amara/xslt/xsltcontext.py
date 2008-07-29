@@ -10,8 +10,18 @@ Project home, documentation, distributions: http://4suite.org/
 
 from amara._xmlstring import splitqname
 from amara.lib.iri import uridict
-from amara.xpath import context
+from amara.xpath import XPathError, context
 #from amara.xslt import xsltfunctions, builtinextfunctions, exslt
+
+try:
+    import ctypes
+except ImportError:
+    def dictproxy(dict):
+        return dict
+else:
+    dictproxy = ctypes.pythonapi.PyDictProxy_New
+    dictproxy.restype = ctypes.py_object
+    dictproxy.argtypes = (ctypes.py_object,)
 
 __all__ = ['xsltcontext']
 
@@ -29,10 +39,11 @@ class xsltcontext(context):
     def __init__(self, node, position=1, size=1,
                  variables=None, namespaces=None,
                  current_node=None, transform=None, processor=None,
-                 mode=None, extmodules=(), extfunctions=None):
+                 mode=None, extmodules=(), extfunctions=None,
+                 output_parameters=None):
         context.__init__(self, node, position, size, variables, namespaces,
-                         extmodules, extfunctions)
-        self.global_variables = variables
+                         extmodules, extfunctions, output_parameters)
+        self.global_variables = dictproxy(self.variables)
         self.current_node = current_node
         self.transform = transform
         self.processor = processor
@@ -54,35 +65,20 @@ class xsltcontext(context):
             self.documents[document_uri] = document
         return
 
-    def splitQName(self, qualifiedName):
-        if not qualifiedName: return None
-        return SplitQName(qualifiedName)
+    def message(self, message):
+        self.processor.message(message)
 
-    def expandQName(self, qualifiedName):
-        if not qualifiedName: return None
-        prefix, local = SplitQName(qualifiedName)
+    def expandname(self, name):
+        if not name: return None
+        prefix, name = splitqname(name)
         if prefix:
             try:
-                namespace = self.processorNss[prefix]
+                namespace = self.namespaces[prefix]
             except KeyError:
-                raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
-                                       prefix)
+                raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=prefix)
         else:
             namespace = None
-        return (namespace, local)
-
-    def clone(self):
-        context = self.__class__(node=self.node,
-                                 position=self.position,
-                                 size=self.size,
-                                 currentNode=self.currentNode,
-                                 varBindings=self.varBindings.copy(),
-                                 processorNss=self.processorNss,
-                                 stylesheet=self.stylesheet,
-                                 processor=self.processor,
-                                 mode=self.mode)
-        context.functions = self.functions
-        return context
+        return (namespace, name)
 
     def __repr__(self):
         ptr = id(self)

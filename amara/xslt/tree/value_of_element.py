@@ -18,7 +18,7 @@ class value_of_element(xslt_element):
         context.instruction = self
         context.namespaces = self.namespaces
 
-        text = self._select.evaluate(context)
+        text = self._select.evaluate_as_string(context)
         if text:
             if self._disable_output_escaping:
                 context.text(text, False)

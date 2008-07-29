@@ -50,8 +50,7 @@ class element_element(xslt_element):
                     raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, self,
                                     name)
                 attribute_set.instantiate(context)
-        for child in self.children:
-            child.instantiate(context, processor)
+        self.process_children(context)
         context.end_element(name, namespace)
         return
 

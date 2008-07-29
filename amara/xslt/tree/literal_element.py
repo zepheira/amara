@@ -65,8 +65,7 @@ class literal_element(xslt_element):
                                     name)
                 attribute_set.instantiate(context)
 
-        for child in self.children:
-            child.instantiate(context)
+        self.process_children(context)
 
         context.end_element(self.nodeName, self._output_namespace)
         return

@@ -17,13 +17,13 @@ class message_element(xslt_element):
         }
 
     def instantiate(self, context):
-        output_parameters = outputparameters.output_parameters(
+        output_parameters = outputparameters.outputparameters(
             method='xml', encoding=context.output_parameters.encoding,
             omit_xml_declaration=True)
-        context.push_writer(xmlwriter(output_parameters, StringIO()))
+        writer = xmlwriter.xmlwriter(output_parameters, StringIO())
+        context.push_writer(writer)
         try:
-            for child in self.children:
-                child.instantiate(context, processor)
+            self.process_children(context)
         finally:
             writer = context.pop_writer()
         msg = writer.stream.getvalue()

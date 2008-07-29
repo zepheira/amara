@@ -26,8 +26,7 @@ class processing_instruction_element(xslt_element):
         context.push_string_writer()
         try:
             try:
-                for child in self.children:
-                    child.instantiate(context)
+                self.process_children(context)
             except RuntimeError:
                 raise XsltError(XsltError.NONTEXT_IN_PI, self)
         finally:

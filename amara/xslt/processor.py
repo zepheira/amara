@@ -90,7 +90,7 @@ class processor(object):
 
     def __init__(self, ignore_pis=False, content_types=None,
                  media_descriptors=None, extension_parameters=None,
-                 message_template=None):
+                 message_stream=None, message_template=None):
         self.ignore_pis = ignore_pis
         if content_types is None:
             content_types = set(XSLT_IMT)
@@ -103,6 +103,9 @@ class processor(object):
         if extension_parameters is None:
             extension_parameters = {}
         self.extension_parameters = extension_parameters
+        if message_stream is None:
+            message_stream = sys.stderr
+        self.message_stream = message_stream
         if message_template is None:
             message_template = MESSAGE_TEMPLATE
         self.message_template = message_template
@@ -561,8 +564,10 @@ class processor(object):
         # Prepare the stylesheet for processing
         context = xsltcontext.xsltcontext(node,
                                           variables=initial_variables,
+                                          transform=self.transform,
                                           processor=self,
-                                          extfunctions=self._extfunctions)
+                                          extfunctions=self._extfunctions,
+                                          output_parameters=self.outputParams)
         context.add_document(node, node.baseURI)
         context.push_writer(writer)
         self.transform.root.prime(context)
@@ -572,7 +577,8 @@ class processor(object):
         try:
             self.transform.apply_templates(context, [node])
         except XPathError, e:
-            instruction = context.currentInstruction
+            raise
+            instruction = context.instruction
             strerror = str(e)
             e.message = MessageSource.EXPRESSION_POSITION_INFO % (
                 instruction.baseUri, instruction.lineNumber,
@@ -658,10 +664,10 @@ class processor(object):
         messages are suppressed (see messageControl()). Uses the
         msgPrefix & msgSuffix instance attributes.
         """
-        message = self.message_template % (msg,)
+        message = self.message_template % (message,)
         if not self._suppress_messages:
-            sys.stderr.write(message)
-            sys.stderr.flush()
+            self.message_stream.write(message)
+            self.message_stream.flush()
         return
 
     def warning(self, message):

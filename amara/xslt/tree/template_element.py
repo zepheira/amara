@@ -25,6 +25,10 @@ class template_element(xslt_element):
 
     _tail_recursive = False
 
+    def __repr__(self):
+      return "<template_element match='%s', name='%s', mode='%s', priority='%s'>" % (
+          self._match, self._name, self._mode, self._priority)
+
     def setup(self):
         params = self._params = []
         for child in self.children:

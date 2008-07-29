@@ -52,8 +52,7 @@ class for_each_element(xslt_element):
         for node in nodes:
             context.node = context.current_node = node
             context.position = position
-            for child in self.children:
-                child.instantiate(context)
+            self.process_children(context)
             position += 1
 
         context.node, context.position, context.size, context.template = state

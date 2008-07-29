@@ -152,8 +152,7 @@ class attribute_set_element(xslt_element):
             else:
               attribute_set.instantiate(context)
 
-        for child in self.children:
-            child.instantiate(context)
+        self.process_children(context)
 
         context.variables = variables
         used.remove(self)

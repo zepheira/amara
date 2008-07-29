@@ -36,30 +36,12 @@ XsltNodeObject *XsltText_New(XsltRootObject *root, PyObject *data)
 
 static PyObject *text_instantiate(PyObject *self, PyObject *args)
 {
-  PyObject *context, *processor;
-  PyObject *result, *writer;
+  PyObject *context;
 
-  if (!PyArg_ParseTuple(args, "OO:instantiate", &context, &processor))
+  if (!PyArg_ParseTuple(args, "O:instantiate", &context))
     return NULL;
 
-  result = PyObject_GetAttrString(processor, "writers");
-  if (result == NULL) return NULL;
-
-  writer = PySequence_GetItem(result, -1);
-  Py_DECREF(result);
-  if (writer == NULL) {
-    return NULL;
-  }
-
-  result = PyObject_CallMethod(writer, "text", "O", XsltText_DATA(self));
-  Py_DECREF(writer);
-  if (result == NULL) {
-    return NULL;
-  }
-  Py_DECREF(result);
-
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PyObject_CallMethod(context, "text", "O", XsltText_DATA(self));
 }
 
 static char getstate_doc[] = "helper for pickle";

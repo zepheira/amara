@@ -88,13 +88,13 @@ class function_call(expression):
         return
 
     def evaluate_as_boolean(self, context):
-        return boolean(self.evaluate(context))
+        return datatypes.boolean(self.evaluate(context))
 
     def evaluate_as_number(self, context):
-        return number(self.evaluate(context))
+        return datatypes.number(self.evaluate(context))
 
     def evaluate_as_string(self, context):
-        return string(self.evaluate(context))
+        return datatypes.string(self.evaluate(context))
 
     def pprint(self, indent='', stream=None):
         print >> stream, indent + repr(self)

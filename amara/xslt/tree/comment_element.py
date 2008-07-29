@@ -23,8 +23,7 @@ class comment_element(xslt_element):
         context.push_string_writer()
         try:
             try:
-                for child in self.children:
-                    child.instantiate(context)
+                self.process_children(context)
             except RuntimeError:
                 raise XsltRuntimeException(XsltError.NONTEXT_IN_COMMENT, self)
         finally:

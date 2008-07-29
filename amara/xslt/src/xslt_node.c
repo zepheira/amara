@@ -2,10 +2,15 @@
 #include "xslt_root.h"
 #include "xslt_element.h"
 
+static PyObject *setup_string;
 static PyObject *does_setup_string;
+static PyObject *validate_string;
 static PyObject *does_validate_string;
+static PyObject *prime_string;
 static PyObject *does_prime_string;
+static PyObject *teardown_string;
 static PyObject *does_teardown_string;
+static PyObject *empty_tuple;
 static PyObject *newobj_function;
 
 /** Private Routines **************************************************/
@@ -66,6 +71,71 @@ int XsltNode_PrettyPrint(XsltNodeObject *self)
   }
 
   return node_pretty_print(self, 0);
+}
+
+int XsltNode_Link(XsltNodeObject *self, XsltNodeObject *child)
+{
+  PyObject *temp, *callable;
+  PyObject *root = XsltNode_ROOT(self);
+  struct { PyObject *attribute; PyObject *instructions; } 
+    *table, update_table[] = {
+      { does_validate_string, XsltRoot_VALIDATE_INSTRUCTIONS(root) },
+      { does_prime_string, XsltRoot_PRIME_INSTRUCTIONS(root) },
+      { does_teardown_string, XsltRoot_TEARDOWN_INSTRUCTIONS(root) },
+      { NULL }
+    };
+
+  /* Set its parent link */
+  temp = child->parent;
+  Py_INCREF((PyObject *)self);
+  child->parent = (PyObject *)self;
+  Py_DECREF(temp);
+
+  /* if the child does setup, call that function now */
+  temp = PyObject_GetAttr((PyObject *)child, does_setup_string);
+  if (temp == NULL)
+    return -1;
+  switch (PyObject_IsTrue(temp)) {
+  case 1:
+    Py_DECREF(temp);
+    callable = PyObject_GetAttr((PyObject *)child, setup_string);
+    if (callable == NULL)
+      return -1;
+    temp = PyObject_Call(callable, empty_tuple, NULL);
+    Py_DECREF(callable);
+    if (temp == NULL)
+      return -1;
+  case 0:
+    Py_DECREF(temp);
+    break;
+  default:
+    Py_DECREF(temp);
+    return -1;
+  }
+
+  /* update the root-node instruction lists */
+  for (table = update_table; table->attribute; table++) {
+    /* if the child does setup, call that function now */
+    temp = PyObject_GetAttr((PyObject *)child, table->attribute);
+    if (temp == NULL)
+      return -1;
+    switch (PyObject_IsTrue(temp)) {
+    case 1:
+      /* FIXME: use weakrefs */
+      if (PyList_Append(table->instructions, (PyObject *)child) < 0) {
+        Py_DECREF(temp);
+        return -1;
+      }
+    case 0:
+      Py_DECREF(temp);
+      break;
+    default:
+      Py_DECREF(temp);
+      return -1;
+    }
+  }
+
+  return 0;
 }
 
 /** Python Methods *****************************************************/
@@ -426,14 +496,26 @@ metaclass_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { "name", "bases", "dict", NULL };
   PyObject *name, *bases, *dict, *result;
+  struct { PyObject *function; PyObject *attribute; }
+    *table, lookup_table[] = {
+      { setup_string, does_setup_string },
+      { validate_string, does_validate_string },
+      { prime_string, does_prime_string },
+      { teardown_string, does_teardown_string },
+      { NULL }
+    };
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "SOO:__metaclass__", kwlist,
                                    &name, &bases, &dict))
     return NULL;
 
-  if (PyDict_GetItemString(dict, "setup") != NULL) {
-    if (PyDict_SetItemString(dict, "does_setup", Py_True) < 0)
-      return NULL;
+  /* update the function lookup attribues */
+  for (table = lookup_table; table->function; table++) {
+    /* if the child does setup, call that function now */
+    if (PyDict_GetItem(dict, table->function) != NULL) {
+      if (PyDict_SetItem(dict, table->attribute, Py_True) < 0)
+        return -1;
+    }
   }
 
   return type->tp_base->tp_new(type, args, kwds);
@@ -505,14 +587,25 @@ int XsltNode_Init(PyObject *module)
   PyObject *dict, *constant;
 
   /* Initialize constants */
+  setup_string = PyString_FromString("setup");
+  if (setup_string == NULL) return -1;
   does_setup_string = PyString_FromString("does_setup");
   if (does_setup_string == NULL) return -1;
+  validate_string = PyString_FromString("validate");
+  if (validate_string == NULL) return -1;
   does_validate_string = PyString_FromString("does_validate");
   if (does_validate_string == NULL) return -1;
+  prime_string = PyString_FromString("prime");
+  if (prime_string == NULL) return -1;
   does_prime_string = PyString_FromString("does_prime");
   if (does_prime_string == NULL) return -1;
+  teardown_string = PyString_FromString("teardown");
+  if (teardown_string == NULL) return -1;
   does_teardown_string = PyString_FromString("does_teardown");
   if (does_teardown_string == NULL) return -1;
+
+  empty_tuple = PyTuple_New(0);
+  if (empty_tuple == NULL) return -1;
 
   newobj_function = PyObject_GetAttrString(module, "__newobj__");
   if (newobj_function == NULL) return -1;
@@ -566,10 +659,15 @@ int XsltNode_Init(PyObject *module)
 
 void XsltNode_Fini(void)
 {
+  Py_DECREF(setup_string);
   Py_DECREF(does_setup_string);
+  Py_DECREF(validate_string);
   Py_DECREF(does_validate_string);
+  Py_DECREF(prime_string);
   Py_DECREF(does_prime_string);
+  Py_DECREF(teardown_string);
   Py_DECREF(does_teardown_string);
+  Py_DECREF(empty_tuple);
   Py_DECREF(newobj_function);
   PyDict_Clear(XsltNode_Type.tp_dict);
 }

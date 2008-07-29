@@ -56,9 +56,7 @@ class choose_element(xslt_element):
             if not chosen:
                 return
 
-        for child in chosen.children:
-            child.instantiate(context)
-        return
+        return chosen.process_children(context)
 
     #def __getstate__(self):
     #    del self._choices

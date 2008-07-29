@@ -19,6 +19,5 @@ class if_element(xslt_element):
         context.instruction = self
         context.namespaces = self.namespaces
         if self._test.evaluate_as_boolean(context):
-            for child in self.children:
-                child.instantiate(context, processor)
+            self.process_children(context)
         return

@@ -91,11 +91,16 @@ class XPathError(Error):
 #from Util import Compile, Evaluate, SimpleEvaluate, NormalizeNode
 
 import types
+import operator
 
 from amara import XML_NAMESPACE
 from amara.domlette import Node, XPathNamespace
 from amara.writers import writer, treewriter, stringwriter
 from amara.xpath import extensions, parser
+
+_writer_methods = operator.attrgetter(
+    'start_document', 'end_document', 'start_element', 'end_element',
+    'namespace', 'attribute', 'text', 'comment', 'processing_instruction')
 
 class context(writer):
     """
@@ -142,15 +147,9 @@ class context(writer):
     def push_writer(self, writer):
         self._writers.append(writer)
         # copy writer methods onto `self` for performance
-        self.start_document = writer.start_document
-        self.end_document = writer.end_document
-        self.start_element = writer.start_element
-        self.end_element = writer.end_element
-        self.namespace = writer.namespace
-        self.attribute = writer.attribute
-        self.characters = self.text = writer.text
-        self.comment = writer.comment
-        self.processing_instruction = writer.processing_instruction
+        (self.start_document, self.end_document, self.start_element,
+         self.end_element, self.namespace, self.attribute, self.text,
+         self.comment, self.processing_instruction) = _writer_methods(writer)
         # begin processing
         writer.start_document()
         return
@@ -168,17 +167,11 @@ class context(writer):
         del self._writers[-1]
         writer.end_document()
         if self._writers:
-            previous = self._writers[-1]
             # copy writer methods onto `self` for performance
-            self.start_document = previous.start_document
-            self.end_document = previous.end_document
-            self.start_element = previous.start_element
-            self.end_element = previous.end_element
-            self.namespace = previous.namespace
-            self.attribute = previous.attribute
-            self.characters = self.text = previous.characters
-            self.comment = previous.comment
-            self.processing_instruction = previous.processing_instruction
+            (self.start_document, self.end_document, self.start_element,
+            self.end_element, self.namespace, self.attribute, self.text,
+            self.comment, self.processing_instruction
+            ) = _writer_methods(self._writers[-1])
         return writer
 
     def copy_nodes(self, nodes):
@@ -192,7 +185,7 @@ class context(writer):
             for child in node:
                 self.copy_node(child)
         elif node_type == Node.TEXT_NODE:
-            self.characters(node.data, node.xsltOutputEscaping)
+            self.text(node.data, node.xsltOutputEscaping)
         elif node_type == Node.ELEMENT_NODE:
             # The GetAllNs is needed to copy the namespace nodes
             self.start_element(node.nodeName, node.namespaceURI,

@@ -15,13 +15,9 @@ class node_test(object):
 
     priority = -0.5
     node_type = None
-
-    def getQuickKey(self, namespaces):
-        """
-        Returns a tuple that indicates the expected node type and, if
-        applicable, the expected name.
-        """
-        return (self.nodeType, None)
+    # By specifing a name_key of None, this test will fall into the 'general'
+    # category for the principal type
+    name_key = None
 
     def pprint(self, indent='', stream=None):
         print >> stream, indent + repr(self)
@@ -131,9 +127,6 @@ class name_test(node_test):
 
 class principal_type_test(name_test):
 
-    def getQuickKey(self, namespaces):
-        return (Node.ELEMENT_NODE, None)
-
     def get_filter(self, compiler, principal_type):
         return _nodetests.typefilter(principal_type)
 
@@ -150,9 +143,7 @@ class local_name_test(name_test):
 
     def __init__(self, name):
         self._name = name
-
-    def getQuickKey(self, namespaces):
-        return (Node.ELEMENT_NODE, (None, self._name))
+        self.name_key = (None, name)
 
     def get_filter(self, compiler, principal_type):
         return _nodetests.namefilter(principal_type, None, self._name)
@@ -174,11 +165,6 @@ class namespace_test(name_test):
     def __init__(self, name):
         self._prefix = name[:name.index(':')]
 
-    def getQuickKey(self, namespaces):
-        # By specifing a name of None, this test will fall into the 'general'
-        # category for the principal type
-        return (Node.ELEMENT_NODE, None)
-
     def get_filter(self, compiler, principal_type):
         try:
             namespace = compiler.namespaces[self._prefix]
@@ -190,7 +176,7 @@ class namespace_test(name_test):
         if node.nodeType != principalType:
             return 0
         try:
-            return node.namespaceURI == context.processorNss[self._prefix]
+            return node.namespaceURI == context.namespaces[self._prefix]
         except KeyError:
             raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
                                    prefix=self._prefix)
@@ -204,31 +190,26 @@ class qualified_name_test(name_test):
     priority = 0
 
     def __init__(self, name):
-        self._prefix, self._local_name = name.split(':', 1)
-
-    def getQuickKey(self, namespaces):
-        try:
-            namespace = namespaces[self._prefix]
-        except KeyError:
-            raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
-        return (Node.ELEMENT_NODE, (namespace, self._local_name))
+        self.name_key = name.split(':', 1)
 
     def get_filter(self, compiler, principal_type):
+        prefix, local_name = self.name_key
         try:
-            namespace = compiler.namespaces[self._prefix]
+            namespace = compiler.namespaces[prefix]
         except KeyError:
-            raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
-        return _nodetests.namefilter(principal_type, namespace, self._local_name)
+            raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=prefix)
+        return _nodetests.namefilter(principal_type, namespace, local_name)
 
     def match(self, context, node, principalType=Node.ELEMENT_NODE):
         if node.nodeType == principalType:
-            if node.localName == self._local_name:
+            prefix, local_name = self.name_key
+            if node.localName == local_name:
                 try:
-                    return node.namespaceURI == context.processorNss[self._prefix]
+                    return node.namespaceURI == context.namespaces[prefix]
                 except KeyError:
                     raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
-                                           prefix=self._prefix)
+                                           prefix=prefix)
         return 0
 
     def __str__(self):
-        return self._prefix + ':' + self._local_name
+        return ':'.join(self.name_key)

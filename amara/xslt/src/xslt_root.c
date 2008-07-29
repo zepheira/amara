@@ -67,22 +67,21 @@ XsltRootObject *XsltRoot_New(PyObject *baseUri)
 
 int XsltRoot_AppendChild(XsltRootObject *self, XsltNodeObject *child)
 {
+  PyObject *temp;
+
   if (!XsltRoot_Check(self) || !XsltNode_Check(child)) {
     PyErr_BadInternalCall();
     return -1;
   }
 
   /* Make the node our only child */
-  Py_DECREF(self->stylesheet);
+  temp = self->stylesheet;
   Py_INCREF(child);
   self->stylesheet = (PyObject *) child;
+  Py_DECREF(temp);
 
   /* Set its parent link */
-  Py_DECREF(child->parent);
-  Py_INCREF((PyObject *) self);
-  child->parent = (PyObject *) self;
-
-  return 0;
+  return XsltNode_Link(XsltNode(self), child);
 }
 
 /** Python Methods ****************************************************/

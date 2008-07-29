@@ -31,28 +31,30 @@ class push_variables_node(xslt_node):
 
     isPseudoNode = True
 
-    def __init__(self, root, bindingStack):
+    def __init__(self, root, scope):
         xslt_node.__init__(self, root)
-        self.savedVariables = bindingStack
+        self._scope = scope
         return
 
-    def instantiate(self, context, processor):
-        self.savedVariables.append(context.varBindings)
-        context.varBindings = context.varBindings.copy()
+    def instantiate(self, context):
+        variables = context.variables
+        self._scope.append(variables)
+        context.varBindings = variables.copy()
         return
 
 class pop_variables_node(xslt_node):
 
     isPseudoNode = True
 
-    def __init__(self, root, bindingStack):
+    def __init__(self, root, scope):
         xslt_node.__init__(self, root)
-        self.savedVariables = bindingStack
+        self._scope = scope
         return
 
-    def instantiate(self, context, processor):
-        context.varBindings = self.savedVariables[-1]
-        del self.savedVariables[-1]
+    def instantiate(self, context):
+        scope = self._scope
+        context.variables = scope[-1]
+        del scope[-1]
         return
 
 
