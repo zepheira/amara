@@ -15,10 +15,6 @@ class xpathcompiler(object):
     _nasts = 0
     _nlocals = 0
 
-    namespaces = None
-    variables = None
-    functions = None
-
     def __init__(self, context=None):
         if context is not None:
             self.namespaces = context.namespaces
