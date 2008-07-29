@@ -33,12 +33,19 @@ _html_find = re.compile("(<!DOCTYPE html)|(<html)", re.IGNORECASE)
 
 
 def document_compare(expected, compared, whitespace=True):
+    for line in document_diff(expected, compared, whitespace):
+        # There is a difference
+        return False
+    return True
+
+
+def document_diff(expected, compared, whitespace=True):
     # See if we need to use XML or HTML
     if not _xmldecl_find.match(expected) and _html_find.search(expected):
-        compare = html_compare
+        diff = html_diff
     else:
-        compare = xml_compare
-    return compare(expected, compared, whitespace)
+        diff = xml_diff
+    return diff(expected, compared, whitespace)
 
 
 def html_compare(expected, compared, whitespace=True):
@@ -62,7 +69,8 @@ def html_diff(expected, compared, whitespace=True):
     """
     expected = _html_sequence(expected, whitespace)
     compared = _html_sequence(compared, whitespace)
-    return difflib.unified_diff(expected, compared, 'expected', 'compared')
+    return difflib.unified_diff(expected, compared, 'expected', 'compared',
+                                n=2, lineterm='')
 
 
 def xml_compare(expected, compared, whitespace=True, lexical=True):
@@ -94,7 +102,8 @@ def xml_diff(expected, compared, whitespace=True):
             sequencer = _entity_sequence
     expected = sequencer(expected, whitespace)
     compared = sequencer(compared, whitespace)
-    return difflib.unified_diff(expected, compared, 'expected', 'compared')
+    return difflib.unified_diff(expected, compared, 'expected', 'compared',
+                                n=2, lineterm='')
 
 
 def entity_compare(expected, compared, ignorews=False):
@@ -102,11 +111,11 @@ def entity_compare(expected, compared, ignorews=False):
 
 
 class _markup_sequence(list):
-    __slots__ = ('_whitespace', '_lexical', '_data')
-    def __init__(self, data, whitespace=True, lexical=True):
+    __slots__ = ('_data',)
+    def __init__(self, data, whitespace=True):
         list.__init__(self)
-        self._whitespace = whitespace
-        self._lexical = lexical
+        if not whitespace:
+            self._flush = self._flush_whitespace
         self._data = u''
         self.feed(data)
         self.close()
@@ -114,28 +123,83 @@ class _markup_sequence(list):
 
     def _flush(self):
         data = self._data
-        if data and self._whitespace or not isspace(data):
-            self.append(('#text', data))
-        self._data = u''
+        if data:
+            self.append('#text: ' + repr(data))
+            self._data = u''
+
+    def _flush_whitespace(self):
+        data = self._data
+        if data:
+            if not isspace(data):
+                self.append('#text: ' + repr(data))
+            self._data = u''
+
+    def namespace_decl(self, prefix, uri):
+        if self._data: self._flush()
+        self.append('namespace: %s=%r' % (prefix, uri))
+
+    def start_element(self, name, attrs):
+        if self._data: self._flush()
+        self.append('start-tag: ' + name)
+        if attrs:
+            attrs = [ '%s=%r' % pair for pair in sorted(attrs) ]
+            self.append('attributes: ' + ', '.join(attrs))
+        return
+
+    def end_element(self, name):
+        if self._data: self._flush()
+        self.append('end-tag: ' + name)
+
+    def characters(self, data):
+        if data:
+            self._data += data
+
+    def processing_instruction(self, target, data):
+        if self._data: self._flush()
+        event = 'processing-instruction: target=%s, data=%r' % (target, data)
+        self.append(event)
+
+    def entity_ref(self, name):
+        if self._data: self._flush()
+        self.append('entity-ref: name=' + name)
+
+    def comment(self, data):
+        if self._data: self._flush()
+        self.append('#comment: ' + repr(data))
+
+    def start_cdata(self):
+        if self._data: self._flush()
+        self.append('start-cdata')
+
+    def end_cdata(self):
+        if self._data: self._flush()
+        self.append('end-cdata')
+
+    def doctype_decl(self, name, sysid, pubid, has_internal_subset):
+        if self._data: self._flush()
+        event = 'doctype-decl: name=%s, sysid=%r, pubid=%r, subset=%s' % (
+            name, sysid, pubid, ('yes' if has_internal_subset else 'no'))
+        self.append(event)
 
 
 class _xml_sequence(_markup_sequence):
     __slots__ = ('_parser',)
     def __init__(self, data, whitespace=True, lexical=True):
         self._parser = parser = self._create_parser()
+        parser.ordered_attributes = True
         parser.SetParamEntityParsing(expat.XML_PARAM_ENTITY_PARSING_NEVER)
         parser.StartElementHandler = self.start_element
         parser.EndElementHandler = self.end_element
         parser.CharacterDataHandler = self.characters
         parser.ProcessingInstructionHandler = self.processing_instruction
         parser.StartNamespaceDeclHandler = self.namespace_decl
-        parser.SkippedEntityHandler = self.skipped_entity
+        parser.SkippedEntityHandler = self.entity_ref
         if lexical:
             parser.CommentHandler = self.comment
             parser.StartCdataSectionHandler = self.start_cdata
             parser.EndCdataSectionHandler = self.end_cdata
             parser.StartDoctypeDeclHandler = self.doctype_decl
-        _markup_sequence.__init__(self, data, whitespace, lexical)
+        _markup_sequence.__init__(self, data, whitespace)
 
     def _create_parser(self):
         return expat.ParserCreate(namespace_separator='#')
@@ -147,47 +211,6 @@ class _xml_sequence(_markup_sequence):
         self._parser.Parse('', 1)
         # break cycle created by expat handlers pointing to our methods
         self._parser = None
-
-    def namespace_decl(self, prefix, uri):
-        if self._data: self._flush()
-        self.append(('namespace', prefix, uri))
-
-    def start_element(self, name, attrs):
-        if self._data: self._flush()
-        self.append(('start-tag', name, tuple(sorted(attrs.items()))))
-        return
-
-    def end_element(self, name):
-        if self._data: self._flush()
-        self.append(('end-tag', name))
-
-    def characters(self, data):
-        if data:
-            self._data += data
-
-    def processing_instruction(self, target, data):
-        if self._data: self._flush()
-        self.append(('processing-instruction', target, data))
-
-    def skipped_entity(self, name):
-        if self._data: self._flush()
-        self.append(('entityref', name))
-
-    def comment(self, data):
-        if self._data: self._flush()
-        self.append(('#comment', data))
-
-    def start_cdata(self):
-        if self._data: self._flush()
-        self.append(('start-cdata',))
-
-    def end_cdata(self):
-        if self._data: self._flush()
-        self.append(('end-cdata',))
-
-    def doctype_decl(self, name, sysid, pubid, has_internal_subset):
-        if self._data: self._flush()
-        self.append(('doctype-decl', name, sysid, pubid, has_internal_subset))
 
 
 class _entity_sequence(_xml_sequence):
@@ -206,34 +229,12 @@ class _html_sequence(HTMLParser.HTMLParser, _markup_sequence):
 
     def __init__(self, data, whitespace=True, lexical=True):
         HTMLParser.HTMLParser.__init__(self)
-        _markup_sequence.__init__(self, data, whitespace, lexical)
+        if lexical:
+            self.handle_comment = self.comment
+        _markup_sequence.__init__(self, data, whitespace)
 
-    def handle_starttag(self, tagname, attrs):
-        if self._data: self._flush()
-        self.append(('start-tag', tagname, tuple(sorted(attrs))))
-        if tagname.lower() in self._forbidden_end_elements:
-            self.append(('end-tag', tagname))
-        return
-
-    def handle_endtag(self, tagname):
-        if self._data: self._flush()
-        # prevent duplicate end-tags if the HTML is malformed
-        if tagname.lower() not in self._forbidden_end_elements:
-            self.append(('end-tag', tagname))
-
-    def handle_charref(self, ref):
-        if self._data: self._flush()
-        self.append(('charref', ref))
-
-    def handle_entityref(self, ref):
-        if self._data: self._flush()
-        self.append(('entityref', ref))
-
-    def handle_data(self, data):
-        if data:
-            self._data += data
-
-    def handle_comment(self, data):
-        if self._lexical:
-            if self._data: self._flush()
-            self.append(('#comment', data))
+    handle_starttag = _markup_sequence.start_element
+    handle_endtag = _markup_sequence.end_element
+    handle_charref = _markup_sequence.entity_ref
+    handle_entityref = _markup_sequence.entity_ref
+    handle_data = _markup_sequence.characters
