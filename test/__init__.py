@@ -17,14 +17,23 @@ import types
 import operator
 import time
 
-class Error(Exception):
-    """Base class for regression test exceptions."""
+# Defined here as to have stack frames originating in this module removed
+# from unittest reports. See `unittest.TestResult._is_relevant_tb_level()`
+__unittest = True
 
-#FIXME: We probably don't need this one
-class TestFailed(Error):
+class TestError(Exception):
+    """Base class for regression test exceptions."""
+    __slots__ = ('message', 'detail')
+    def __init__(self, message=None, detail=None):
+        self.message = message or 'assertion failed'
+        self.detail = detail
+    def __str__(self):
+        return self.message
+
+class TestFailed(TestError):
     """Test failed."""
 
-class TestSkipped(Error):
+class TestSkipped(TestError):
     """Test skipped.
 
     This can be raised to indicate that a test was deliberatly
@@ -320,46 +329,9 @@ def bigaddrspacetest(f):
 #=======================================================================
 # unittest integration.
 
-class BasicTestRunner:
-    def run(self, test):
-        result = unittest.TestResult()
-        test(result)
-        return result
 
-
-def _run_suite(suite):
-    """Run tests from a unittest.TestSuite-derived class."""
-    if verbose:
-        runner = unittest.TextTestRunner(sys.stdout, verbosity=2)
-    else:
-        runner = BasicTestRunner()
-
-    result = runner.run(suite)
-    if not result.wasSuccessful():
-        if len(result.errors) == 1 and not result.failures:
-            err = result.errors[0][1]
-        elif len(result.failures) == 1 and not result.errors:
-            err = result.failures[0][1]
-        else:
-            err = "errors occurred; run in verbose mode for details"
-        raise TestFailed(err)
-
-
-def run_unittest(*classes):
-    """Run tests from unittest.TestCase-derived classes."""
-    valid_types = (unittest.TestSuite, unittest.TestCase)
-    suite = unittest.TestSuite()
-    for cls in classes:
-        if isinstance(cls, str):
-            if cls in sys.modules:
-                suite.addTest(unittest.findTestCases(sys.modules[cls]))
-            else:
-                raise ValueError("str arguments must be keys in sys.modules")
-        elif isinstance(cls, valid_types):
-            suite.addTest(cls)
-        else:
-            suite.addTest(unittest.makeSuite(cls))
-    _run_suite(suite)
+class test_case(unittest.TestCase):
+    failureException = TestFailed
 
 
 class test_loader(unittest.TestLoader):
@@ -384,10 +356,11 @@ class test_loader(unittest.TestLoader):
         suites, cases = [], []
         for name, obj in vars(module).iteritems():
             if isinstance(obj, (type, types.ClassType)):
-                if issubclass(obj, unittest.TestSuite):
-                    suites.append(obj)
-                elif issubclass(obj, unittest.TestCase):
-                    cases.append(obj)
+                if not hasattr(sys.modules[obj.__module__], '__unittest'):
+                    if issubclass(obj, unittest.TestSuite):
+                        suites.append(obj)
+                    elif issubclass(obj, unittest.TestCase):
+                        cases.append(obj)
         tests = []
         for suite in sorted(suites, key=operator.attrgetter('__name__')):
             tests.append(self.loadTestsFromTestSuite(suite))
@@ -469,7 +442,12 @@ class _test_result(unittest.TestResult):
             self.stream.write('\n')
 
     def addFailure(self, test, err):
-        unittest.TestResult.addFailure(self, test, err)
+        exc, val, tb = err
+        if self.verbose and issubclass(exc, TestError):
+            err = val.detail or val.message
+            self.failures.append((test, err))
+        else:
+            unittest.TestResult.addFailure(self, test, err)
         if self.dots:
             self.stream.setcolor('RED')
             self.stream.write('F')
@@ -627,6 +605,11 @@ def test_main(*modules):
     if not modules:
         modules = ('__main__',)
 
+    def load_module(module):
+        if not isinstance(module, types.ModuleType):
+            module = __import__(module, {}, {}, ['__name__'])
+        return module
+
     def usage_exit(msg=None):
         progName = os.path.basename(sys.argv[0] or __file__)
         if msg: print msg
@@ -651,10 +634,13 @@ def test_main(*modules):
 
     # create the tests
     loader = test_loader()
-    suites = []
     if args:
-        test = loader.suiteClass(loader.loadTestsFromNames(args, module)
-                                 for module in modules)
+        suites = []
+        for module in modules:
+            if not isinstance(module, types.ModuleType):
+                module = __import__(module, {}, {}, ['__name__'])
+            suites.append(loader.loadTestsFromNames(args, module))
+        test = loader.suiteClass(suites)
     else:
         test = loader.loadTestsFromNames(modules)
 
