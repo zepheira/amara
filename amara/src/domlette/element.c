@@ -343,293 +343,11 @@ ElementObject *Element_CloneNode(PyObject *node, int deep)
 
 /** Python Methods ****************************************************/
 
-static char element_getAttributeNodeNS_doc[] =
-"Retrieves an Attr node by local name and namespace URI.";
-
-static PyObject *element_getAttributeNodeNS(ElementObject *self,
-                                            PyObject *args)
-{
-  PyObject *namespaceURI, *localName;
-  PyObject *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "OO:getAttributeNodeNS",
-                        &namespaceURI, &localName))
-    return NULL;
-
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
-  if (namespaceURI == NULL) {
-    return NULL;
-  }
-
-  localName = XmlString_ConvertArgument(localName, "localName", 0);
-  if (localName == NULL) {
-    Py_DECREF(namespaceURI);
-    return NULL;
-  }
-
-  attr = Element_GetAttributeNodeNS(self, namespaceURI, localName);
-  Py_DECREF(namespaceURI);
-  Py_DECREF(localName);
-
-  Py_INCREF(attr);
-  return attr;
-}
-
-static char element_getAttributeNS_doc[] =
-"Retrieves an attribute value by local name and namespace URI.";
-
-static PyObject *element_getAttributeNS(ElementObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *localName;
-  PyObject *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "OO:getAttributeNS", &namespaceURI, &localName))
-    return NULL;
-
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
-  if (namespaceURI == NULL) {
-    return NULL;
-  }
-
-  localName = XmlString_ConvertArgument(localName, "localName", 0);
-  if (localName == NULL) {
-    Py_DECREF(namespaceURI);
-    return NULL;
-  }
-
-  attr = Element_GetAttributeNodeNS(self, namespaceURI, localName);
-  Py_DECREF(namespaceURI);
-  Py_DECREF(localName);
-
-  if (attr == Py_None) {
-    /* empty unicode string */
-    return PyUnicode_FromUnicode(NULL, 0);
-  } else {
-    Py_INCREF(Attr_GET_NODE_VALUE(attr));
-    return Attr_GET_NODE_VALUE(attr);
-  }
-}
-
-static char element_hasAttributeNS_doc[] =
-"Returns True when an attribute with a given local name and namespace URI\n\
-is specified on this element or has a default value, False otherwise.";
-
-static PyObject *element_hasAttributeNS(ElementObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *localName;
-  PyObject *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "OO:hasAttributeNS", &namespaceURI, &localName))
-    return NULL;
-
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
-  if (namespaceURI == NULL) {
-    return NULL;
-  }
-
-  localName = XmlString_ConvertArgument(localName, "localName", 0);
-  if (localName == NULL) {
-    Py_DECREF(namespaceURI);
-    return NULL;
-  }
-
-  attr = Element_GetAttributeNodeNS(self, namespaceURI, localName);
-  Py_DECREF(namespaceURI);
-  Py_DECREF(localName);
-
-  if (attr == Py_None) {
-    Py_INCREF(Py_False);
-    return Py_False;
-  }
-
-  Py_INCREF(Py_True);
-  return Py_True;
-}
-
-static char element_setAttributeNS_doc[] =
-"Adds a new attribute.  If an attribute with the same local name and\n\
-namespace URI is already present on the element, its prefix is changed\n\
-to be the prefix part of the qualifiedName, and its value is changed to\n\
-be the value parameter.";
-
-static PyObject *element_setAttributeNS(ElementObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *qualifiedName, *value, *prefix, *localName;
-  PyObject *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "OOO:setAttributeNS",
-                        &namespaceURI, &qualifiedName, &value))
-    return NULL;
-
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
-  if (namespaceURI == NULL) {
-    return NULL;
-  }
-
-  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qualifiedName", 0);
-  if (qualifiedName == NULL) {
-    Py_DECREF(namespaceURI);
-    return NULL;
-  }
-
-  value = XmlString_ConvertArgument(value, "value", 0);
-  if (value == NULL) {
-    Py_DECREF(namespaceURI);
-    Py_DECREF(qualifiedName);
-    return NULL;
-  }
-
-  if (!XmlString_SplitQName(qualifiedName, &prefix, &localName)) {
-    Py_DECREF(namespaceURI);
-    Py_DECREF(qualifiedName);
-    return NULL;
-  }
-
-  /* returns new reference */
-  attr = (PyObject *)Element_SetAttributeNS(self, namespaceURI, qualifiedName,
-                                            localName, value);
-  Py_DECREF(namespaceURI);
-  Py_DECREF(qualifiedName);
-  Py_DECREF(prefix);
-  Py_DECREF(localName);
-  Py_DECREF(value);
-
-  return attr;
-}
-
-static char element_setAttributeNodeNS_doc[] =
-"Adds a new attribute. If an attribute with that local name and that\n\
-namespace URI is already present in the element, it is replaced by the\n\
-new one. Replacing an attribute node by itself has no effect.";
-
-static PyObject *element_setAttributeNodeNS(ElementObject *self,
-                                            PyObject *args)
-{
-  AttrObject *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "O!:setAttributeNodeNS", &DomletteAttr_Type,
-                        &attr))
-    return NULL;
-
-  return Element_SetAttributeNodeNS(self, attr);
-}
-
-static char element_removeAttributeNode_doc[] =
-"Removes the specified attribute node.";
-
-static PyObject *element_removeAttributeNode(ElementObject *self,
-                                             PyObject *args)
-{
-  AttrObject *attr;
-  PyObject *key;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "O!:removeAttributeNode", &DomletteAttr_Type,
-                        &attr))
-    return NULL;
-
-  key = build_attr_key(attr);
-  if (PyDict_DelItem(self->attributes, key) == -1) {
-    if (PyErr_ExceptionMatches(PyExc_KeyError)) {
-      DOMException_NotFoundErr("attribute not found");
-    }
-    Py_DECREF(key);
-    return NULL;
-  }
-  Py_DECREF(key);
-
-  /* Reset the removed attributes owner */
-  assert(Node_GET_PARENT(attr) == (NodeObject *)self);
-  Py_DECREF(Node_GET_PARENT(attr));
-  Node_SET_PARENT(attr, NULL);
-
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-
-static char element_removeAttributeNS_doc[] =
-"Removes an attribute by local name and namespace URI.";
-
-static PyObject *element_removeAttributeNS(ElementObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *qualifiedName, *prefix, *localName, *key, *attr;
-
-  Element_VerifyState(self);
-
-  if (!PyArg_ParseTuple(args, "OO:removeAttributeNS",
-                        &namespaceURI, &qualifiedName))
-    return NULL;
-
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
-  if (namespaceURI == NULL) {
-    return NULL;
-  }
-
-  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qualifiedName", 0);
-  if (qualifiedName == NULL) {
-    Py_DECREF(namespaceURI);
-    return NULL;
-  }
-
-  if (!XmlString_SplitQName(qualifiedName, &prefix, &localName)) {
-    Py_DECREF(namespaceURI);
-    Py_DECREF(qualifiedName);
-    return NULL;
-  }
-
-  /* Done with these */
-  Py_DECREF(qualifiedName);
-  Py_DECREF(prefix);
-
-  key = PyTuple_New(2);
-  /* Let the tuple own these */
-  PyTuple_SetItem(key, 0, namespaceURI);
-  PyTuple_SetItem(key, 1, localName);
-
-  attr = PyDict_GetItem(self->attributes, key);
-  if (attr) {
-    assert(Node_GET_PARENT(attr) == (NodeObject *)self);
-    /* Unset the parent node relationship */
-    Py_DECREF(Node_GET_PARENT(attr));
-    Node_SET_PARENT(attr, NULL);
-
-    /* Remove the entry from the attributes mapping */
-    if (PyDict_DelItem(self->attributes, key) == -1) {
-      Py_DECREF(key);
-      return NULL;
-    }
-  }
-
-  /* Destroy the key */
-  Py_DECREF(key);
-
-  Py_INCREF(Py_None);
-  return Py_None;
-}
 
 #define Element_METHOD(NAME) \
   { #NAME, (PyCFunction) element_##NAME, METH_VARARGS, element_##NAME##_doc }
 
 static PyMethodDef element_methods[] = {
-  Element_METHOD(getAttributeNS),
-  Element_METHOD(getAttributeNodeNS),
-  Element_METHOD(setAttributeNS),
-  Element_METHOD(setAttributeNodeNS),
-  Element_METHOD(removeAttributeNS),
-  Element_METHOD(removeAttributeNode),
-  Element_METHOD(hasAttributeNS),
   { NULL }
 };
 
@@ -639,10 +357,9 @@ static PyMethodDef element_methods[] = {
   { name, T_OBJECT, offsetof(ElementObject, member), RO }
 
 static PyMemberDef element_members[] = {
-  Element_MEMBER("tagName", nodeName),
-  Element_MEMBER("nodeName", nodeName),
-  Element_MEMBER("localName", localName),
-  Element_MEMBER("namespaceURI", namespaceURI),
+  Element_MEMBER("xml_qname", nodeName),
+  Element_MEMBER("xml_local", localName),
+  Element_MEMBER("xml_namespace", namespaceURI),
   { NULL }
 };
 
@@ -669,7 +386,7 @@ static int set_prefix(ElementObject *self, PyObject *v, void *arg)
   PyObject *qualifiedName, *prefix;
   Py_ssize_t size;
 
-  prefix = XmlString_ConvertArgument(v, (char *)arg, 1);
+  prefix = XmlString_ConvertArgument(v, "xml_prefix", 1);
   if (prefix == NULL) {
     return -1;
   } else if (prefix == Py_None) {
@@ -711,32 +428,6 @@ static PyObject *get_attributes(ElementObject *self, void *arg)
   return NamedNodeMap_New(self->attributes);
 }
 
-static PyObject *get_xpath_attributes(ElementObject *self, void *arg)
-{
-  PyObject *attributes = PyList_New(0);
-  if (attributes != NULL) {
-    PyObject *key, *attr;
-    Py_ssize_t pos = 0;
-    while (PyDict_Next(self->attributes, &pos, &key, &attr)) {
-      switch (PyObject_RichCompareBool(Attr_GET_NAMESPACE_URI(attr),
-                                       g_xmlnsNamespace, Py_NE)) {
-      case 0: /* namespace attribute */
-        break;
-      case 1: /* normal attribute */
-        if (PyList_Append(attributes, attr) == -1) {
-          Py_DECREF(attributes);
-          return NULL;
-        }
-        break;
-      default: /* error */
-        Py_DECREF(attributes);
-        return NULL;
-      }
-    }
-  }
-  return attributes;
-}
-
 static PyObject *get_xpath_namespaces(ElementObject *self, void *arg)
 {
   PyObject *namespaces;
@@ -768,10 +459,9 @@ static PyObject *get_xpath_namespaces(ElementObject *self, void *arg)
 }
 
 static PyGetSetDef element_getset[] = {
-  { "prefix", (getter)get_prefix, (setter)set_prefix, NULL, "prefix" },
-  { "attributes", (getter) get_attributes },
+  { "xml_prefix", (getter)get_prefix, (setter)set_prefix},
+  { "xml_attributes", (getter) get_attributes },
   /* XPath-specific accessors */
-  { "xml_attributes", (getter) get_xpath_attributes },
   { "xml_namespaces", (getter) get_xpath_namespaces },
   { NULL }
 };
@@ -821,7 +511,7 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
                              PyObject *kwds)
 {
   PyObject *namespaceURI, *qualifiedName, *prefix, *localName;
-  static char *kwlist[] = { "namespaceURI", "qualifiedName", NULL };
+  static char *kwlist[] = { "namespace", "qname", NULL };
   ElementObject *self;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:Element", kwlist,
@@ -829,10 +519,10 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
 
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
+  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespace", 1);
   if (namespaceURI == NULL) return NULL;
 
-  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qualifiedName", 0);
+  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qname", 0);
   if (qualifiedName == NULL) {
     Py_DECREF(namespaceURI);
     return NULL;
@@ -845,7 +535,7 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
   }
 
   if (namespaceURI == Py_None && prefix != Py_None) {
-    DOMException_NamespaceErr("prefix requires non-null namespaceURI");
+    DOMException_NamespaceErr("If you have a prefix in your qname you must have a non-null namespace");
     Py_DECREF(namespaceURI);
     Py_DECREF(prefix);
     return NULL;
@@ -934,7 +624,7 @@ int DomletteElement_Init(PyObject *module)
   value = PyInt_FromLong(ELEMENT_NODE);
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(DomletteElement_Type.tp_dict, "nodeType", value))
+  if (PyDict_SetItemString(DomletteElement_Type.tp_dict, "xml_node_type", value))
     return -1;
   Py_DECREF(value);
 

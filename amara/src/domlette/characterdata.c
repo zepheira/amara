@@ -229,7 +229,7 @@ static PyObject *characterdata_insert(PyObject *self, PyObject *args)
   Py_ssize_t offset;
   PyObject *data;
 
-  if (!PyArg_ParseTuple(args, "nO:insertData", &offset, &data))
+  if (!PyArg_ParseTuple(args, "nO:insert_data", &offset, &data))
     return NULL;
 
   if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
@@ -252,7 +252,7 @@ static PyObject *characterdata_delete(PyObject *self, PyObject *args)
 {
   Py_ssize_t offset, count;
 
-  if (!PyArg_ParseTuple(args, "nn:deleteData",
+  if (!PyArg_ParseTuple(args, "nn:delete_data",
                         &offset, &count))
     return NULL;
 
@@ -290,11 +290,11 @@ static PyObject *characterdata_replace(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef characterdata_methods[] = {
-  {"substringData", characterdata_substring, METH_VARARGS, substring_doc },
-  {"appendData",    characterdata_append,    METH_VARARGS, append_doc },
-  {"insertData",    characterdata_insert,    METH_VARARGS, insert_doc },
-  {"deleteData",    characterdata_delete,    METH_VARARGS, delete_doc },
-  {"replaceData",   characterdata_replace,   METH_VARARGS, replace_doc },
+  {"xml_substring", characterdata_substring, METH_VARARGS, substring_doc },
+  {"xml_append",    characterdata_append,    METH_VARARGS, append_doc },
+  {"xml_insert",    characterdata_insert,    METH_VARARGS, insert_doc },
+  {"xml_delete",    characterdata_delete,    METH_VARARGS, delete_doc },
+  {"xml_replace",   characterdata_replace,   METH_VARARGS, replace_doc },
   { NULL }
 };
 
@@ -314,7 +314,7 @@ static PyObject *get_data(CharacterDataObject *self, void *arg)
 
 static int set_data(CharacterDataObject *self, PyObject *v, void *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, (char *)arg, 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_data", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -332,9 +332,8 @@ static PyObject *get_length(CharacterDataObject *self, void *arg)
 }
 
 static PyGetSetDef characterdata_getset[] = {
-  { "data",      (getter)get_data,   (setter)set_data, NULL, "data" },
-  { "nodeValue", (getter)get_data,   (setter)set_data, NULL, "nodeValue" },
-  { "length",    (getter)get_length },
+  { "xml_data",      (getter)get_data,   (setter)set_data},
+  { "xml_length",    (getter)get_length },
   { NULL }
 };
 
@@ -415,12 +414,12 @@ static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:CharacterData", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:cdata", kwlist,
                                    &data)) {
     return NULL;
   }
 
-  if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
+  if ((data = XmlString_ConvertArgument(data, "cdata", 0)) == NULL)
     return NULL;
 
   self = CharacterData(type->tp_alloc(type, 0));

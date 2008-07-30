@@ -105,14 +105,7 @@ int DomletteText_Init(PyObject *module)
   value = PyInt_FromLong(TEXT_NODE);
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "nodeType", value))
-    return -1;
-  Py_DECREF(value);
-
-  value = XmlString_FromASCII("#text");
-  if (value == NULL)
-    return -1;
-  if (PyDict_SetItemString(dict, "nodeName", value))
+  if (PyDict_SetItemString(dict, "xml_node_type", value))
     return -1;
   Py_DECREF(value);
 

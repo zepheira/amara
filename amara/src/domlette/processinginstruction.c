@@ -96,7 +96,7 @@ static PyObject *get_data(ProcessingInstructionObject *self, void *arg)
 
 static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, arg, 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -105,8 +105,7 @@ static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef pi_getset[] = {
-  { "data",      (getter)get_data, (setter)set_data, NULL, "data" },
-  { "nodeValue", (getter)get_data, (setter)set_data, NULL, "nodeValue" },
+  { "xml_value", (getter)get_data, (setter)set_data},
   { NULL }
 };
 
@@ -241,7 +240,7 @@ int DomletteProcessingInstruction_Init(PyObject *module)
   if (value == NULL)
     return -1;
   if (PyDict_SetItemString(DomletteProcessingInstruction_Type.tp_dict,
-                           "nodeType", value))
+                           "xml_node_type", value))
     return -1;
   Py_DECREF(value);
 

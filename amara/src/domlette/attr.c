@@ -100,11 +100,10 @@ static PyMethodDef attr_methods[] = {
 /** Python Members ****************************************************/
 
 static PyMemberDef attr_members[] = {
-  { "name",         T_OBJECT, offsetof(AttrObject, nodeName),     RO },
-  { "nodeName",     T_OBJECT, offsetof(AttrObject, nodeName),     RO },
-  { "namespaceURI", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
-  { "localName",    T_OBJECT, offsetof(AttrObject, localName),    RO },
-  { "ownerElement", T_OBJECT, offsetof(AttrObject, parentNode),   RO },
+  { "xml_qname",         T_OBJECT, offsetof(AttrObject, nodeName),     RO },
+  { "xml_namespace", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
+  { "xml_name",    T_OBJECT, offsetof(AttrObject, localName),    RO },
+  { "xml_parent", T_OBJECT, offsetof(AttrObject, parentNode),   RO },
   { NULL }
 };
 
@@ -130,7 +129,7 @@ static int set_prefix(AttrObject *self, PyObject *v, char *arg)
   PyObject *qualifiedName, *prefix;
   Py_ssize_t size;
 
-  prefix = XmlString_ConvertArgument(v, arg, 1);
+  prefix = XmlString_ConvertArgument(v, "xml_prefix", 1);
   if (prefix == NULL) {
     return -1;
   } else if (prefix == Py_None) {
@@ -175,7 +174,7 @@ static PyObject *get_value(AttrObject *self, char *arg)
 
 static int set_value(AttrObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, arg, 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -184,9 +183,8 @@ static int set_value(AttrObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef attr_getset[] = {
-  { "prefix",    (getter)get_prefix, (setter)set_prefix, NULL, "prefix" },
-  { "value",     (getter)get_value,  (setter)set_value,  NULL, "value" },
-  { "nodeValue", (getter)get_value,  (setter)set_value,  NULL, "nodeValue" },
+  { "xml_prefix",    (getter)get_prefix, (setter)set_prefix},
+  { "xml_value",     (getter)get_value,  (setter)set_value},
   { NULL }
 };
 
@@ -223,7 +221,7 @@ static PyObject *attr_repr(AttrObject *self)
 static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   PyObject *namespaceURI, *qualifiedName, *prefix, *localName;
-  static char *kwlist[] = { "namespaceURI", "qualifiedName",
+  static char *kwlist[] = { "namespace", "qname",
                             NULL };
   AttrObject *attr;
 
@@ -232,10 +230,10 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return NULL;
   }
 
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 1);
+  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespace", 1);
   if (namespaceURI == NULL) return NULL;
 
-  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qualifiedName", 0);
+  qualifiedName = XmlString_ConvertArgument(qualifiedName, "qname", 0);
   if (qualifiedName == NULL) {
     Py_DECREF(namespaceURI);
     return NULL;
@@ -248,7 +246,7 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   }
 
   if (namespaceURI == Py_None && prefix != Py_None) {
-    DOMException_NamespaceErr("prefix requires non-null namespaceURI");
+    DOMException_NamespaceErr("If you have a prefix in your qname you must have a non-null namespace");
     Py_DECREF(namespaceURI);
     Py_DECREF(prefix);
     return NULL;
@@ -275,7 +273,7 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char attr_doc[] = "\
-Attr(namespaceURI, qualifiedName) -> Attr object\n\
+Attr(namespace, qname) -> Attr object\n\
 \n\
 The Attr interface represents an attribute in an Element object.";
 
@@ -338,23 +336,23 @@ int DomletteAttr_Init(PyObject *module)
   value = PyInt_FromLong(ATTRIBUTE_NODE);
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "nodeType", value))
+  if (PyDict_SetItemString(dict, "xml_node_type", value))
     return -1;
   Py_DECREF(value);
 
   /* Override default behavior from Node */
-  if (PyDict_SetItemString(dict, "previousSibling", Py_None))
+  if (PyDict_SetItemString(dict, "xml_previous_sibling", Py_None))
     return -1;
 
   /* Override default behavior from Node */
-  if (PyDict_SetItemString(dict, "nextSibling", Py_None))
+  if (PyDict_SetItemString(dict, "xml_next_sibling", Py_None))
     return -1;
 
   /* Until the DTD information is used, assume it was from the document */
   value = PyInt_FromLong(1);
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "specified", value))
+  if (PyDict_SetItemString(dict, "xml_specified", value))
     return -1;
   Py_DECREF(value);
 
