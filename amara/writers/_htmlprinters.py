@@ -145,21 +145,6 @@ class htmlprinter(xmlprinter):
             self._disable_ouput_escaping -= 1
         return
 
-    def text(self, data, disable_escaping=False):
-        """
-        Handles a text event.
-
-        Extends the overridden method by disabling output escaping if
-        in the content of certain elements like SCRIPT or STYLE.
-        """
-        if self._element_name:
-            self.write_ascii('>')
-            self._element_name = None
-
-        disable_escaping = disable_escaping or self._disable_ouput_escaping
-        xmlprinter.text(self, data, disable_escaping)
-        return
-
     def processing_instruction(self, target, data):
         """
         Handles a processingInstruction event.

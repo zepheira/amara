@@ -115,13 +115,9 @@ class proxywriter(streamwriter):
             proxy.update(self, writer_class)
 
         # Do the saved callbacks
-        newline = 0
+        get_command = self.__getattribute__
         for cmd, args, kw in stack:
-            if newline:
-                self.text(u'\n')
-            else:
-                newline = 1
-            getattr(self, cmd)(*args, **kw)
+            get_command(cmd)(*args, **kw)
         return
 
     @proxymethod

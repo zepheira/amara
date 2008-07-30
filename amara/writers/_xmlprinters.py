@@ -356,7 +356,7 @@ class xmlprettyprinter(xmlprinter):
         self._can_indent = True
         return
 
-    def endElement(self, namespace, name):
+    def end_element(self, namespace, name):
         self._level -= 1
         # Do not break short tag form (<tag/>)
         if self._can_indent and not self._element_name:
