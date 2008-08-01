@@ -51,7 +51,7 @@ class apply_templates_element(xslt_element):
             except TypeError:
                 raise XsltError(XsltError.ILLEGAL_APPLYTEMPLATE_NODESET, self)
         else:
-            nodes = context.node.childNodes
+            nodes = context.node.xml_children
 
         # Process the selected nodes using `self._mode`
         context.transform.apply_templates(context, nodes, self._mode)

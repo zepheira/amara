@@ -96,7 +96,7 @@ static PyObject *get_data(ProcessingInstructionObject *self, void *arg)
 
 static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "data", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -105,7 +105,7 @@ static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef pi_getset[] = {
-  { "xml_value", (getter)get_data, (setter)set_data},
+  { "data", (getter)get_data, (setter)set_data},
   { NULL }
 };
 

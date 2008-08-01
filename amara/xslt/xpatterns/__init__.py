@@ -55,18 +55,12 @@ class pattern(nodetests.node_test):
             return 0
         for (axis_type, node_test, ancestor) in self.steps[1:]:
             # Move up the tree
-            if axis_type == Node.ATTRIBUTE_NODE:
-                node = node.ownerElement
-            else:
-                node = node.parentNode
+            node = node.xml_parent
             if ancestor:
                 while node:
                     if node_test.match(context, node, axis_type):
                         break
-                    if axis_type == Node.ATTRIBUTE_NODE:
-                        node = node.ownerElement
-                    else:
-                        node = node.parentNode
+                    node = node.xml_parent
                 else:
                     # We made it to the document without a match
                     return 0
@@ -101,10 +95,11 @@ class predicated_test(nodetests.node_test):
         return
 
     def match(self, context, node, principalType):
+        
         if principalType == Node.ATTRIBUTE_NODE:
-            nodes = node.ownerElement.attributes.values()
+            nodes = node.xml_parent.xml_attributes.values()
         elif node.parentNode:
-            nodes = node.parentNode.childNodes
+            nodes = node.xml_parent.xml_children
         else:
             # Must be a document
             return False
@@ -127,7 +122,7 @@ class document_test(nodetests.node_test):
     node_type = Node.DOCUMENT_NODE
 
     def match(self, context, node, principalType):
-        return node.nodeType == Node.DOCUMENT_NODE
+        return node.xml_node_type == Node.DOCUMENT_NODE
 
     def __str__(self):
         return '/'

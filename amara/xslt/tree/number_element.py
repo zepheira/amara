@@ -112,14 +112,14 @@ class number_element(xslt_element):
             else:
                 # 'single' without count or from attributes
                 value = 1
-                prev = node.previousSibling
-                type = node.nodeType
-                expanded = (node.namespaceURI, node.localName)
+                prev = node.xml_previous_sibling
+                type_ = node.xml_node_type
+                expanded = (node.xml_namespace, node.xml_local)
                 while prev:
-                    if prev.nodeType == type and \
-                       (prev.namespaceURI, prev.localName) == expanded:
+                    if prev.xml_node_type == type_ and \
+                       (prev.xml_namespace, prev.xml_local) == expanded:
                         value += 1
-                    prev = prev.previousSibling
+                    prev = prev.xml_previous_sibling
                 result = formatter.format(value, grouping_size, separator)
         # add the resulting formatted value(s) to the result tree
         context.text(result)
@@ -127,35 +127,35 @@ class number_element(xslt_element):
 
     def _single_value(self, context, node, countPattern, fromPattern):
         if not countPattern:
-            if not node.localName:
+            if not node.xml_local:
                 # text, comment and processing instruction
                 countPattern = NodeTypeTest(node)
             else:
                 countPattern = NameTest(node)
 
         if fromPattern:
-            start = node.parentNode
+            start = node.xml_parent
             while start and not fromPattern.match(context, start):
-                start = start.parentNode
+                start = start.xml_parent
         else:
             start = node.rootNode
 
         while not countPattern.match(context, node):
-            node = node.parentNode
+            node = node.xml_parent
             if node is None or node == start:
                 return 0
 
         value = 0
         while node:
             value += 1
-            node = node.previousSibling
+            node = node.xml_previous_sibling
             while node and not countPattern.match(context, node):
-                node = node.previousSibling
+                node = node.xml_previous_sibling
         return value
 
     def _multiple_values(self, context, node):
         if not self._count:
-            if not node.localName:
+            if not node.xml_local:
                 # text, comment and processing instruction
                 count = NodeTypeTest(node)
             else:
@@ -168,14 +168,14 @@ class number_element(xslt_element):
             if count.match(context, node):
                 value = self._single_value(context, node, count,  None)
                 values.insert(0, value)
-            node = node.parentNode
+            node = node.xml_parent
             if node and self._from and self._from.match(context, node):
                 break
         return values
 
     def _any_value(self, context, node):
         if not self._count:
-            if not node.localName:
+            if not node.xml_local:
                 # text, comment and processing instruction
                 count = NodeTypeTest(node)
             else:
@@ -189,34 +189,34 @@ class number_element(xslt_element):
                 break
             if count.match(context, node):
                 value += 1
-            if not node.previousSibling:
-                node = node.parentNode
+            if not node.xml_previous_sibling:
+                node = node.xml_parent
             else:
-                node = node.previousSibling
-                while node.lastChild:
-                    node = node.lastChild
+                node = node.xml_previous_sibling
+                while node.xml_last_child:
+                    node = node.xml_last_child
         return value
 
 
 class node_type_test:
     def __init__(self, node):
-        self.nodeType = node.nodeType
+        self.xml_node_type = node.xml_node_type
         return
 
     def match(self, context, node):
-        return (node.nodeType == self.nodeType)
+        return (node.xml_node_type == self.xml_node_type)
 
 class name_test:
     def __init__(self, node):
-        self.nodeType = node.nodeType
-        self.localName = node.localName
-        self.namespaceURI = node.namespaceURI
+        self.xml_node_type = node.xml_node_type
+        self.xml_local = node.xml_local
+        self.xml_namespace = node.xml_namespace
         return
 
     def match(self, context, node):
-        return (node.nodeType == self.nodeType and
-                node.localName == self.localName and
-                node.namespaceURI == self.namespaceURI)
+        return (node.xml_node_type == self.xml_node_type and
+                node.xml_local == self.xml_local and
+                node.xml_namespace == self.xml_namespace)
 
 ##Note: emacs can uncomment the ff automatically.
 

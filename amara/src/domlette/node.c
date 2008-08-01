@@ -576,23 +576,6 @@ static PyObject *node_normalize(NodeObject *self, PyObject *args)
   return Py_None;
 }
 
-static char hasChildNodes_doc[] = "\
-Returns whether this node has any children.";
-
-static PyObject *node_hasChildNodes(NodeObject *self, PyObject *args)
-{
-  PyObject *result;
-
-  if (!PyArg_ParseTuple(args, ":hasChildNodes"))
-    return NULL;
-
-  result = (Node_HasFlag(self, Node_FLAGS_CONTAINER) &&
-            ContainerNode_GET_COUNT(self) > 0) ? Py_True : Py_False;
-
-  Py_INCREF(result);
-  return result;
-}
-
 static char removeChild_doc[] = "\
 Removes the child node indicated by oldChild from the list of children, and\n\
 returns it.";
@@ -601,7 +584,7 @@ static PyObject *node_removeChild(NodeObject *self, PyObject *args)
 {
   NodeObject *oldChild;
 
-  if (!PyArg_ParseTuple(args, "O!:removeChild", &DomletteNode_Type, &oldChild))
+  if (!PyArg_ParseTuple(args, "O!:xml_remove_child", &DomletteNode_Type, &oldChild))
     return NULL;
 
   if (Node_RemoveChild(self, oldChild) == -1)
@@ -618,7 +601,7 @@ static PyObject *node_appendChild(NodeObject *self, PyObject *args)
 {
   NodeObject *newChild;
 
-  if (!PyArg_ParseTuple(args,"O!:appendChild", &DomletteNode_Type, &newChild))
+  if (!PyArg_ParseTuple(args,"O!:xml_append_child", &DomletteNode_Type, &newChild))
     return NULL;
 
   if (Node_AppendChild(self, newChild) == -1)
@@ -636,7 +619,7 @@ static PyObject *node_insertBefore(NodeObject *self, PyObject *args)
   NodeObject *newChild;
   PyObject *refChild;
 
-  if (!PyArg_ParseTuple(args, "O!O:insertBefore",
+  if (!PyArg_ParseTuple(args, "O!O:xml_insert_before",
                         &DomletteNode_Type, &newChild, &refChild))
     return NULL;
 
@@ -660,7 +643,7 @@ static PyObject *node_replaceChild(NodeObject *self, PyObject *args)
 {
   NodeObject *newChild, *oldChild;
 
-  if (!PyArg_ParseTuple(args, "O!O!:replaceChild",
+  if (!PyArg_ParseTuple(args, "O!O!:xml_replace_child",
                         &DomletteNode_Type, &newChild,
                         &DomletteNode_Type, &oldChild))
     return NULL;
@@ -696,22 +679,6 @@ static PyObject *node_cloneNode(NodeObject *self, PyObject *args)
   return (PyObject *)Node_CloneNode((PyObject *)self, deep);
 }
 
-static char isSameNode_doc[] = "\
-Returns whether this node is the same node as the given one. (DOM Level 3)";
-
-static PyObject *node_isSameNode(NodeObject *self, PyObject *args)
-{
-  NodeObject *other;
-  PyObject *result;
-
-  if (!PyArg_ParseTuple(args, "O!:isSameNode", &DomletteNode_Type, &other))
-    return NULL;
-
-  result = (self == other) ? Py_True : Py_False;
-  Py_INCREF(result);
-  return result;
-}
-
 static char xpath_doc[] = "\
 Evaluates an XPath expression string using this node as context.";
 
@@ -719,9 +686,9 @@ static PyObject *node_xpath(NodeObject *self, PyObject *args, PyObject *kw)
 {
   PyObject *expr, *explicit_nss = Py_None;
   PyObject *module, *result;
-  static char *kwlist[] = { "expr", "explicitNss", NULL };
+  static char *kwlist[] = { "expr", "prefixes", NULL };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:xpath", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:xml_xpath", kwlist,
                                    &expr, &explicit_nss))
     return NULL;
 
@@ -738,13 +705,11 @@ static PyObject *node_xpath(NodeObject *self, PyObject *args, PyObject *kw)
 
 static PyMethodDef node_methods[] = {
   Node_METHOD(normalize,     METH_VARARGS),
-  Node_METHOD(hasChildNodes, METH_VARARGS),
   Node_METHOD(removeChild,   METH_VARARGS),
   Node_METHOD(appendChild,   METH_VARARGS),
   Node_METHOD(insertBefore,  METH_VARARGS),
   Node_METHOD(replaceChild,  METH_VARARGS),
   Node_METHOD(cloneNode,     METH_VARARGS),
-  Node_METHOD(isSameNode,    METH_VARARGS),
   Node_METHOD(xpath,         METH_KEYWORDS),
   { NULL }
 };
@@ -758,22 +723,6 @@ static PyMemberDef node_members[] = {
   Node_MEMBER(parentNode),
   { NULL }
 };
-
-/** Python Computed Members ********************************************/
-
-static PyObject *get_owner_document(NodeObject *self, void *arg)
-{
-  PyObject *node = (PyObject *)self;
-  while (!Document_Check(node)) {
-    node = (PyObject *) Node_GET_PARENT(node);
-    if (node == NULL) {
-      Py_INCREF(Py_None);
-      return Py_None;
-    }
-  }
-  Py_INCREF(node);
-  return node;
-}
 
 static PyObject *get_child_nodes(NodeObject *self, void *arg)
 {
@@ -967,15 +916,12 @@ static PyObject *get_empty_list(NodeObject *self, void *arg)
 }
 
 static PyGetSetDef node_getset[] = {
-  { "ownerDocument",   (getter)get_owner_document },
-  { "rootNode",        (getter)get_owner_document },
-  { "childNodes",      (getter)get_child_nodes },
-  { "baseURI",         (getter)get_base_uri },
-  { "xmlBase",         (getter)get_base_uri },
-  { "firstChild",      (getter)get_first_child },
-  { "lastChild",       (getter)get_last_child },
-  { "nextSibling",     (getter)get_next_sibling },
-  { "previousSibling", (getter)get_previous_sibling },
+  { "xml_children",      (getter)get_child_nodes },
+  { "xml_base",         (getter)get_base_uri },
+  { "xml_first_child",      (getter)get_first_child },
+  { "xml_last_child",       (getter)get_last_child },
+  { "xml_next_sibling",     (getter)get_next_sibling },
+  { "xml_previous_sibling", (getter)get_previous_sibling },
   { "xml_attributes",  (getter)get_empty_list },
   { "xml_namespaces",  (getter)get_empty_list },
   { NULL }
@@ -1391,11 +1337,11 @@ int DomletteNode_Init(PyObject *module)
 
   /* Assign "class" constants */
   dict = DomletteNode_Type.tp_dict;
-  if (PyDict_SetItemString(dict, "attributes", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "localName", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "namespaceURI", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "prefix", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "nodeValue", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_attributes", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_local", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_namespace", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_prefix", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_value", Py_None)) return -1;
 
   shared_empty_nodelist = PyList_New((Py_ssize_t)0);
   if (shared_empty_nodelist == NULL) return -1;

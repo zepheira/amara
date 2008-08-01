@@ -203,7 +203,7 @@ class processor(object):
                     uri = document.documentURI
                 except AttributeError:
                     try:
-                        uri = document.baseURI
+                        uri = document.xml_base
                     except AttributeError:
                         raise ValueError('base-uri required for %s' %
                                          document)
@@ -309,7 +309,7 @@ class processor(object):
                              XsltError.CANNOT_TRANSFORM_FRAGMENT])
 
         if hasattr(node, 'baseURI'):
-            node_baseUri = node.baseURI
+            node_baseUri = node.xml_base
         elif hasattr(node, 'refUri'):
             node_baseUri = node.refUri
         else:
@@ -568,7 +568,7 @@ class processor(object):
                                           processor=self,
                                           extfunctions=self._extfunctions,
                                           output_parameters=self.outputParams)
-        context.add_document(node, node.baseURI)
+        context.add_document(node, node.xml_base)
         context.push_writer(writer)
         self.transform.root.prime(context)
 
@@ -581,7 +581,7 @@ class processor(object):
             instruction = context.instruction
             strerror = str(e)
             e.message = MessageSource.EXPRESSION_POSITION_INFO % (
-                instruction.baseUri, instruction.lineNumber,
+                instruction.xml_base, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror)
             raise
         except XsltError:
@@ -597,7 +597,7 @@ class processor(object):
             instruction = context.currentInstruction
             strerror = sio.getvalue()
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
-                instruction.baseUri, instruction.lineNumber,
+                instruction.xml_base, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
         context.end_document()
 
@@ -756,7 +756,7 @@ class processor(object):
             warnings.warn("Use pushResultTree(uri) to create RTFs",
                           DeprecationWarning, stacklevel=2)
             handler = RtfWriter.RtfWriter(self.outputParams,
-                                          self.stylesheet.baseUri)
+                                          self.stylesheet.xml_base)
         self.writers.append(handler)
         handler.startDocument()
         return

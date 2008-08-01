@@ -48,7 +48,7 @@ class literal_element(xslt_element):
         context.instruction = self
         context.namespaces = self.namespaces
 
-        context.start_element(self.nodeName, self._output_namespace,
+        context.start_element(self.xml_qname, self._output_namespace,
                               self._output_nss)
 
         for name, namespace, value in self._output_attrs:
@@ -67,5 +67,5 @@ class literal_element(xslt_element):
 
         self.process_children(context)
 
-        context.end_element(self.nodeName, self._output_namespace)
+        context.end_element(self.xml_qname, self._output_namespace)
         return

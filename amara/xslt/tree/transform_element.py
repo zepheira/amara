@@ -56,8 +56,8 @@ def match_tree(patterns, context):
     state = context.copy()
 
     # Save these before any changes are made to the context
-    children = context.node.childNodes
-    attributes = context.node.xpathAttributes or None
+    children = context.node.xml_children
+    attributes = context.node.xml_attributes or None
 
     matched = patterns.xsltKeyPrep(context, context.node)
 
@@ -496,13 +496,13 @@ class transform_element(xslt_element):
             position += 1
 
             # Get the possible template rules for `node`
-            node_type = node.nodeType
+            node_type = node.xml_node_type
             if mode in self.match_templates:
                 type_table = self.match_templates[mode]
                 if node_type in type_table:
                     if node_type == Node.ELEMENT_NODE:
                         name_table = type_table[node_type]
-                        name = (node.namespaceURI, node.localName)
+                        name = (node.xml_namespace, node.xml_local)
                         if name in name_table:
                             template_rules = name_table[name]
                         else:
@@ -571,9 +571,9 @@ class transform_element(xslt_element):
                     self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
                     self._builtInWarningGiven = 1
                 if node_type in (Node.ELEMENT_NODE, Node.DOCUMENT_NODE):
-                    self.apply_templates(context, node.childNodes)
+                    self.apply_templates(context, node.xml_children)
                 elif node_type in (Node.TEXT_NODE, Node.ATTRIBUTE_NODE):
-                    context.text(node.nodeValue)
+                    context.text(node.xml_value)
 
         # Restore context
         context.node, context.position, context.size = initial_focus
@@ -586,10 +586,10 @@ class transform_element(xslt_element):
 #    Function to print the nodes in the stylesheet tree, to aid in debugging.
 #    """
 #    stream = stream or sys.stdout
-#    if lastUri != node.baseUri:
+#    if lastUri != node.xml_base:
 #        stream.write(indentLevel * '  ')
-#        stream.write('====%s====\n' % node.baseUri)
-#        lastUri = node.baseUri
+#        stream.write('====%s====\n' % node.xml_base)
+#        lastUri = node.xml_base
 #    stream.write(indentLevel * '  ' + str(node))
 #    if showImportIndex:
 #        stream.write(' [' + str(node.import_precedence) + ']')

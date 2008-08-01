@@ -65,7 +65,7 @@ class template_element(xslt_element):
         else:
             print "Template matching pattern %r :" % self._match
         print "  location: line %d, col %d of %s" % \
-                (self.lineNumber, self.columnNumber, self.baseUri)
+                (self.lineNumber, self.columnNumber, self.xml_base)
         for shortcut in info:
             print "  shortcut:"
             importidx, priority, tmode, patterninfo, quickkey = shortcut

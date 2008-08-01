@@ -33,7 +33,7 @@ class _undefined_element(xslt_element):
         context.namespaces = self.namespaces
 
         if not self._fallback:
-            raise XsltError(self._error_code, self, element=self.nodeName)
+            raise XsltError(self._error_code, self, element=self.xml_qname)
 
         for fallback in self._fallback:
             fallback.process_children(context)

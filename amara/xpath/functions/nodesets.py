@@ -113,7 +113,7 @@ class name_function(builtin_function):
         if nodeType in (Node.ELEMENT_NODE, Node.ATTRIBUTE_NODE,
                         Node.PROCESSING_INSTRUCTION_NODE, 
                         XPathNamespace.XPATH_NAMESPACE_NODE):
-            return datatypes.string(node.nodeName)
+            return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
@@ -136,15 +136,15 @@ class local_name_function(name_function):
             node = arg0[0]
 
         try:
-            nodeType = node.nodeType
+            nodeType = node.xml_node_type
         except AttributeError:
             # not a Node
             return datatypes.EMPTY_STRING
         if nodeType in (Node.ELEMENT_NODE, Node.ATTRIBUTE_NODE):
-            return datatypes.string(node.localName)
+            return datatypes.string(node.xml_local)
         elif nodeType in (Node.PROCESSING_INSTRUCTION_NODE, 
                           XPathNamespace.XPATH_NAMESPACE_NODE):
-            return datatypes.string(node.nodeName)
+            return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
@@ -167,7 +167,7 @@ class namespace_uri_function(name_function):
             node = arg0[0]
 
         try:
-            namespace_uri = node.namespaceURI
+            namespace_uri = node.xml_namespace
         except AttributeError:
             # not a Node
             return datatypes.EMPTY_STRING
@@ -176,3 +176,4 @@ class namespace_uri_function(name_function):
             return datatypes.string(namespace_uri)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
+

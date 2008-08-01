@@ -53,10 +53,10 @@ class ancestor_axis(axis_specifier):
     reverse = True
     def select(self, node):
         """Select all of the ancestors including the root"""
-        node = node.parentNode
+        node = node.xml_parent
         while node:
             yield node
-            node = node.parentNode
+            node = node.xml_parent
         return
     try:
         from _axes import ancestor_axis as select
@@ -70,10 +70,10 @@ class ancestor_or_self_axis(axis_specifier):
     def select(self, node):
         """Select all of the ancestors including ourselves through the root"""
         yield node
-        node = node.parentNode
+        node = node.xml_parent
         while node:
             yield node
-            node = node.parentNode
+            node = node.xml_parent
         return
     try:
         from _axes import ancestor_or_self_axis as select
@@ -111,7 +111,7 @@ class descendant_axis(axis_specifier):
         node_type = Node.ELEMENT_NODE
         for child in node:
             yield child
-            if child.nodeType == node_type:
+            if child.xml_node_type == node_type:
                 for x in descendants(child): yield x
         return
     try:
@@ -144,12 +144,12 @@ class following_axis(descendant_axis):
         """
         descendants = self._descendants
         while node:
-            sibling = node.nextSibling
+            sibling = node.xml_next_sibling
             while sibling:
                 yield sibling
                 for x in descendants(sibling): yield x
-                sibling = sibling.nextSibling
-            node = node.parentNode
+                sibling = sibling.xml_next_sibling
+            node = node.xml_parent
         return
 
 
@@ -157,10 +157,10 @@ class following_sibling_axis(axis_specifier):
     name = 'following-sibling'
     def select(self, node):
         """Select all of the siblings that follow the context node"""
-        sibling = node.nextSibling
+        sibling = node.xml_next_sibling
         while sibling:
             yield sibling
-            sibling = sibling.nextSibling
+            sibling = sibling.xml_next_sibling
         return
     try:
         from _axes import following_sibling_axis as select
@@ -182,7 +182,7 @@ class parent_axis(axis_specifier):
     reverse = True
     def select(self, node):
         """Select the parent of the context node"""
-        parent_node = node.parentNode
+        parent_node = node.xml_parent
         if parent_node:
             yield parent_node
         return
@@ -198,15 +198,15 @@ class preceding_axis(axis_specifier):
         """
         def preceding(node):
             while node:
-                if node.lastChild:
-                    for x in preceding(current_node.lastChild): yield x
+                if node.xml_last_child:
+                    for x in preceding(current_node.xml_last_child): yield x
                 yield node
-                node = node.previousSibling
+                node = node.xml_previous_sibling
             return
 
         while node:
-            for x in preceding(node.previousSibling): yield x
-            node = node.parentNode
+            for x in preceding(node.xml_previous_sibling): yield x
+            node = node.xml_parent
         return
 
 
@@ -215,10 +215,10 @@ class preceding_sibling_axis(axis_specifier):
     reverse = True
     def select(self, node):
         """Select all of the siblings that precede the context node"""
-        sibling = node.previousSibling
+        sibling = node.xml_previous_sibling
         while sibling:
             yield sibling
-            sibling = sibling.previousSibling
+            sibling = sibling.xml_previous_sibling
         return
 
 

@@ -39,7 +39,7 @@ def BaseUri(context, arg=None):
     else:
         raise TypeError("%r must be a node-set, not a %s" % (
             arg, Types.g_xpathPrimitiveTypes.get(type(arg), type(arg).__name__)))
-    return node.baseURI or u''
+    return node.xml_base or u''
 BaseUri.arguments = (Types.NodesetType,)
 BaseUri.result = Types.StringType
 

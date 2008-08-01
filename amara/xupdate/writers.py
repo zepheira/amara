@@ -36,6 +36,7 @@ class node_writer(object):
     __slots__ = ()
     def __init__(self, parent, refnode=None):
         self._parent = parent
+        #FIXME: Use regular constructor. No more DOM factory
         self._factory = parent.rootNode
         self._nodes = []
         self._last = parent
@@ -51,7 +52,7 @@ class node_writer(object):
 
     def attribute(self, namespace, name, value):
         try:
-            self._last.setAttributeNS(namespace, name, value)
+            self._last.xml_attributes[namespace, name] = value
         except AttributeError:
             raise XUpdateError(XUpdateError.ATTRIBUTE_NOT_ALLOWED)
 

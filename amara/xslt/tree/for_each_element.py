@@ -41,7 +41,7 @@ class for_each_element(xslt_element):
             except TypeError:
                 raise XsltError(XsltError.INVALID_FOREACH_NODESET, self)
         else:
-            nodes = context.node.childNodes
+            nodes = context.node.xml_children
 
         # Save the current context state
         state = context.node, context.position, context.size, context.template

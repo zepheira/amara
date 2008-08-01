@@ -257,7 +257,7 @@ class stylesheet_reader(object):
 
         # ----------------------------------------------------------
         # remove URI from recursive inclusion checking
-        del self._visited_stylesheet_uris[root.baseUri]
+        del self._visited_stylesheet_uris[root.xml_base]
 
         # ----------------------------------------------------------
         # finalize the children for the document
@@ -403,7 +403,7 @@ class stylesheet_reader(object):
             if parent.__class__ is not UndefinedExtensionElement:
                 raise XsltParserException(XsltError.ILLEGAL_ELEMENT_CHILD,
                                           self._locator, qualifiedName,
-                                          parent.nodeName)
+                                          parent.xml_qname)
         else:
             # save this state for next go round
             parent_state.validation = next
@@ -413,7 +413,7 @@ class stylesheet_reader(object):
         klass = (xsl_class or ext_class or _literal_element)
         state.node = instance = klass(self._root, namespace, local,
                                       qualifiedName)
-        instance.baseUri = self._locator.getSystemId()
+        instance.xml_base = self._locator.getSystemId()
         instance.lineNumber = self._locator.getLineNumber()
         instance.columnNumber = self._locator.getColumnNumber()
         instance.importIndex = self._import_index
@@ -530,7 +530,7 @@ class stylesheet_reader(object):
                    not namespace and not state.forwardsCompatible:
                 raise XsltParserException(XsltError.ILLEGAL_ELEMENT_CHILD,
                                           self._locator, qualifiedName,
-                                          parent_state.node.nodeName)
+                                          parent_state.node.xml_qname)
         return
 
     def endElementNS(self, expandedName, qualifiedName,
@@ -560,9 +560,9 @@ class stylesheet_reader(object):
             # add context save/restore nodes
             binding_stack = []
             node = PushVariablesNode(self._root, binding_stack)
-            element.insertChild(0, node)
+            element.xml_insert_child(0, node)
             node = PopVariablesNode(self._root, binding_stack)
-            element.appendChild(node)
+            element.xml_append_child(node)
 
         # ----------------------------------------------------------
         # finalize the children for this element
@@ -599,13 +599,13 @@ class stylesheet_reader(object):
             # make this element the template's content
             # Note, this MUST index the stack as the stack has changed
             # due to the startElementNS() calls.
-            stack[-1].node.appendChild(element)
+            stack[-1].node.xml_append_child(element)
 
             self.endElementNS(template, u'xsl:template')
             self.endElementNS(stylesheet, u'xsl:stylesheet')
             return
 
-        parent_node.appendChild(element)
+        parent_node.xml_append_child(element)
 
         if isinstance(element, _variable_element):
             name = element._name
@@ -655,14 +655,14 @@ class stylesheet_reader(object):
                     data = data[:10] + '...'
                 raise XsltParserException(XsltError.ILLEGAL_TEXT_CHILD_PARSE,
                                           self._locator, repr(data),
-                                          parent_state.node.nodeName)
+                                          parent_state.node.xml_qname)
             #self._debug_validation(content_model.TEXT_NODE)
         else:
             # update validation
             parent_state.validation = next
 
             node = xslt_text(self._root, data)
-            parent_state.node.appendChild(node)
+            parent_state.node.xml_append_child(node)
         return
 
     # -- utility functions ---------------------------------------------

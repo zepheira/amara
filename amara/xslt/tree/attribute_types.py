@@ -131,7 +131,7 @@ class avt:
         except XsltError, error:
             # an error from the AVT parser
             raise XsltError(XsltError.INVALID_AVT, value,
-                            element.baseUri, element.lineNumber,
+                            element.xml_base, element.lineNumber,
                             element.columnNumber, str(error))
 
 
@@ -419,7 +419,7 @@ class expression_wrapper:
         except XPathRuntimeException, e:
             import MessageSource
             e.message = MessageSource.EXPRESSION_POSITION_INFO % (
-                self.element.baseUri, self.element.lineNumber,
+                self.element.xml_base, self.element.lineNumber,
                 self.element.columnNumber, self.original, str(e))
             # By modifying the exception value directly, we do not need
             # to raise with that value, thus leaving the frame stack
@@ -441,7 +441,7 @@ class expression_wrapper:
             tb.write("Lower-level traceback:\n")
             traceback.print_exc(1000, tb)
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
-                self.element.baseUri, self.element.lineNumber,
+                self.element.xml_base, self.element.lineNumber,
                 self.element.columnNumber, self.original, tb.getvalue()))
 
 class expression(attribute_type):
@@ -459,7 +459,7 @@ class expression(attribute_type):
             return parse_xpath(value)
         except SyntaxError, error:
             raise XsltError(XsltError.INVALID_EXPRESSION, value,
-                                element.baseUri, element.lineNumber,
+                                element.xml_base, element.lineNumber,
                                 element.columnNumber, str(error))
 
 class nodeset_expression(expression):
@@ -491,7 +491,7 @@ class pattern(attribute_type):
             return parse_xpattern(value)
         except SyntaxError, error:
             raise XsltError(XsltError.INVALID_PATTERN, value,
-                                element.baseUri, element.lineNumber,
+                                element.xml_base, element.lineNumber,
                                 element.columnNumber, str(error))
 
 class tokens(token):

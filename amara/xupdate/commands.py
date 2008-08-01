@@ -67,7 +67,7 @@ class append_command(xupdate_command):
         if not targets:
             raise XUpdateError(XUpdateError.INVALID_SELECT)
         for target in targets:
-            context.push_tree_writer(target.baseURI)
+            context.push_tree_writer(target.xml_base)
             for primitive in self:
                 primitive.instantiate(context)
             writer = context.pop_writer()
@@ -77,18 +77,18 @@ class append_command(xupdate_command):
                 try:
                     context.node = target
                     context.position = 1
-                    size = context.size = len(target.childNodes)
+                    size = context.size = len(target.xml_children)
                     position = int(self.child.evaluate_as_number(context))
                 finally:
                     context.node, context.position, context.size = focus
                 if position < size:
-                    refnode = target.childNodes[position]
+                    refnode = target.xml_children[position]
                 else:
                     refnode = None
             else:
                 refnode = None
-            while tree.firstChild:
-                target.insertBefore(tree.firstChild, refnode)
+            while tree.xml_first_child:
+                target.xml_insert_before(tree.xml_first_child, refnode)
         return
 
 
@@ -122,23 +122,25 @@ class rename_command(xupdate_command):
         if not targets:
             raise XUpdateError(XUpdateError.INVALID_SELECT)
         for target in targets:
-            parent = target.parentNode
-            if target.nodeType == Node.ATTRIBUTE_NODE:
-                parent.setAttributeNS(namespace, name, target.value)
-            elif target.nodeType == Node.PROCESSING_INSTRUCTION_NODE:
+            parent = target.xml_parent
+            if target.xml_node_type == Node.ATTRIBUTE_NODE:
+                parent.xml_attributes[namespace, name] = target.xml_value
+            elif target.xml_node_type == Node.PROCESSING_INSTRUCTION_NODE:
+                #FIXME: Use regular constructor. No more DOM factory
                 pi = parent.rootNode.createProcessingInstruction(
-                    name, target.data)
-                parent.replaceChild(pi, target)
-            elif target.nodeType == Node.ELEMENT_NODE:
+                    name, target.xml_data)
+                parent.xml_replace-child(pi, target)
+            elif target.xml_node_type == Node.ELEMENT_NODE:
+                #FIXME: Use regular constructor. No more DOM factory
                 element = parent.rootNode.createElementNS(namespace, name)
                 # Copy any existing attributes to the newly created element
-                if target.attributes:
-                    for attr in target.attributes.values():
-                        element.setAttributeNodeNS(attr)
+                if target.xml_attributes:
+                    for (ns, qname), attr in target.xml_attributes.iteritems():
+                        element.xml_attributes[ns, qname] = attr
                 # Now copy any children as well
-                while target.firstChild:
-                    element.appendChild(target.firstChild)
-                parent.replaceChild(element, target)
+                while target.xml_first_child:
+                    element.xml_append_child(target.xml_first_child)
+                parent.xml_replace_child(element, target)
         return
 
 
@@ -158,14 +160,14 @@ class insert_before_command(xupdate_command):
     def instantiate(self, context):
         context.namespaces = self.namespaces
         for target in self.select.evaluate_as_nodeset(context):
-            context.push_tree_writer(target.baseURI)
+            context.push_tree_writer(target.xml_base)
             for primitive in self:
                 primitive.instantiate(context)
             writer = context.pop_writer()
             tree = writer.get_result()
-            parent = target.parentNode
-            while tree.firstChild:
-                parent.insertBefore(tree.firstChild, target)
+            parent = target.xml_parent
+            while tree.xml_first_child:
+                parent.xml_insert_before(tree.xml_first_child, target)
         return
 
 
@@ -185,15 +187,15 @@ class insert_after_command(xupdate_command):
     def instantiate(self, context):
         context.namespaces = self.namespaces
         for target in self.select.evaluate_as_nodeset(context):
-            context.push_tree_writer(target.baseURI)
+            context.push_tree_writer(target.xml_base)
             for primitive in self:
                 primitive.instantiate(context)
             writer = context.pop_writer()
             tree = writer.get_result()
-            parent = target.parentNode
-            target = target.nextSibling
-            while tree.firstChild:
-                parent.insertBefore(tree.firstChild, target)
+            parent = target.xml_parent
+            target = target.xml_next_sibling
+            while tree.xml_first_child:
+                parent.xml_insert_before(tree.xml_first_child, target)
         return
 
 
@@ -216,17 +218,17 @@ class update_command(xupdate_command):
         if not targets:
             raise XUpdateError(XUpdateError.INVALID_SELECT)
         for target in targets:
-            if target.nodeType == Node.ELEMENT_NODE:
-                context.push_tree_writer(target.baseURI)
+            if target.xml_node_type == Node.ELEMENT_NODE:
+                context.push_tree_writer(target.xml_base)
                 for primitive in self:
                     primitive.instantiate(context)
                 writer = context.pop_writer()
                 tree = writer.get_result()
-                while target.firstChild:
-                    target.removeChild(target.firstChild)
-                while tree.firstChild:
-                    target.appendChild(tree.firstChild)
-            elif target.nodeType in (Node.ATTRIBUTE_NODE,
+                while target.xml_first_child:
+                    target.xml_remove_child(target.xml_first_child)
+                while tree.xml_first_child:
+                    target.xml_append_child(tree.xml_first_child)
+            elif target.xml_node_type in (Node.ATTRIBUTE_NODE,
                                      Node.TEXT_NODE, Node.COMMENT_NODE,
                                      Node.PROCESSING_INSTRUCTION_NODE):
                 context.push_string_writer(errors=False)
@@ -234,10 +236,10 @@ class update_command(xupdate_command):
                     primitive.instantiate(context)
                 writer = context.pop_writer()
                 value = writer.get_result()
-                if not value and target.nodeType == Node.TEXT_NODE:
-                    target.parentNode.removeChild(target)
+                if not value and target.xml_node_type == Node.TEXT_NODE:
+                    target.xml_parent.xml_remove_child(target)
                 else:
-                    target.nodeValue = value
+                    target.xml_value = value
         return
 
 
@@ -257,12 +259,12 @@ class remove_command(xupdate_command):
     def instantiate(self, context):
         context.namespaces = self.namespaces
         for target in self.select.evaluate_as_nodeset(context):
-            parent = target.parentNode
+            parent = target.xml_parent
             if parent:
-                if target.nodeType == Node.ATTRIBUTE_NODE:
-                    parent.removeAttributeNode(target)
+                if target.xml_node_type == Node.ATTRIBUTE_NODE:
+                    del parent.xml_attributes[target]
                 else:
-                    parent.removeChild(target)
+                    parent.xml_remove_child(target)
         return
 
 

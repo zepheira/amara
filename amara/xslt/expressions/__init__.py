@@ -7,13 +7,13 @@ class rtf_expression:
 
     def evaluate(self, context):
         processor = context.processor
-        processor.pushResultTree(context.currentInstruction.baseUri)
+        processor.pushResultTree(context.currentInstruction.xml_base)
         try:
             for child in self.nodes:
                 child.instantiate(context, processor)
             result = processor.popResult()
         finally:
-            #This causes assertion error to be thrown in the event
+            #FIXME: This causes assertion error to be thrown in the event
             #of an exception in instantiating child nodes, which
             #masks the true exception.  Find a better way to clean up --UO
             #result = processor.popResult()
@@ -47,7 +47,7 @@ class sorted_expression:
 
     def evaluate(self, context):
         if self.expression is None:
-            base = context.node.childNodes
+            base = context.node.xml_children
         else:
             base = self.expression.evaluate(context)
             if type(base) is not type([]):

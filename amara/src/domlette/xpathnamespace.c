@@ -120,7 +120,7 @@ static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   ElementObject *parentNode;
   PyObject *prefix, *namespaceURI;
-  static char *kwlist[] = { "parentNode", "prefix", "namespaceURI", NULL };
+  static char *kwlist[] = { "parent", "prefix", "namespace", NULL };
   XPathNamespaceObject *self;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:Element", kwlist,
@@ -132,7 +132,7 @@ static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   prefix = XmlString_ConvertArgument(prefix, "prefix", 1);
   if (prefix == NULL) return NULL;
 
-  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespaceURI", 0);
+  namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespace", 0);
   if (namespaceURI == NULL) {
     Py_DECREF(prefix);
     return NULL;
@@ -157,7 +157,7 @@ static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char xns_doc[] = "\
-XPathNamespace(parentNode, prefix, namespaceURI) -> XPathNamespace object\n\
+XPathNamespace(parent, prefix, namespace) -> XPathNamespace object\n\
 \n\
 The XPathNamespace interface represents the XPath namespace node type\n\
 that DOM lacks.";
@@ -220,7 +220,7 @@ int DomletteXPathNamespace_Init(PyObject *module)
   value = PyInt_FromLong(XPATH_NAMESPACE_NODE);
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "nodeType", value))
+  if (PyDict_SetItemString(dict, "xml_node_type", value))
     return -1;
   if (PyDict_SetItemString(dict, "XPATH_NAMESPACE_NODE", value))
     return -1;

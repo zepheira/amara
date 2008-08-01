@@ -180,7 +180,7 @@ class context(writer):
         return
 
     def copy_node(self, node):
-        node_type = node.nodeType
+        node_type = node.xml_node_type
         if node_type == Node.DOCUMENT_NODE:
             for child in node:
                 self.copy_node(child)
@@ -188,22 +188,22 @@ class context(writer):
             self.text(node.data, node.xsltOutputEscaping)
         elif node_type == Node.ELEMENT_NODE:
             # The GetAllNs is needed to copy the namespace nodes
-            self.start_element(node.nodeName, node.namespaceURI,
+            self.start_element(node.xml_qname, node.xml_namespace,
                               namespaces=GetAllNs(node))
             for attr in node.xpathAttributes:
-                self.attribute(attr.name, attr.value, attr.namespaceURI)
+                self.attribute(attr.xml_qname, attr.xml_value, attr.xml_namespace)
             for child in node:
                 self.copy_node(child)
-            self.end_element(node.nodeName, node.namespaceURI)
+            self.end_element(node.xml_qname, node.xml_namespace)
         elif node_type == Node.ATTRIBUTE_NODE:
             if node.namespaceURI != XMLNS_NAMESPACE:
-                self.attribute(node.name, node.value, node.namespaceURI)
+                self.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
         elif node_type == Node.COMMENT_NODE:
             self.comment(node.data)
         elif node_type == Node.PROCESSING_INSTRUCTION_NODE:
             self.processing_instruction(node.target, node.data)
         elif node_type == XPathNamespace.NAMESPACE_NODE:
-            self.namespace(node.nodeName, node.value)
+            self.namespace(node.xml_qname, node.value)
         else:
             pass
         return
