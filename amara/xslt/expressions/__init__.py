@@ -1,5 +1,5 @@
 ########################################################################
-# amara/xslt/xpathextensions.py
+# amara/xslt/expressions.py
 
 class rtf_expression:
     def __init__(self, nodes):
@@ -7,7 +7,7 @@ class rtf_expression:
 
     def evaluate(self, context):
         processor = context.processor
-        processor.pushResultTree(context.currentInstruction.xml_base)
+        processor.pushResultTree(context.currentInstruction.baseUri)
         try:
             for child in self.nodes:
                 child.instantiate(context, processor)

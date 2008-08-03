@@ -25,11 +25,11 @@ class copy_element(xslt_element):
         node_type = node.nodeType
         if node_type == Node.ELEMENT_NODE:
             namespaces = {}
-            for (namespace, name), attr in node.xml_attributes.iteritems():
+            for (namespace, name), value in node.xml_attributes.iteritems():
                 # Namespace nodes are automatically copied as well
                 # See XSLT 1.0 Sect 7.5
                 if namespace == XMLNS_NAMESPACE:
-                    namespaces[name] = attr.value
+                    namespaces[name] = value
             context.start_element(node.xml_qname, node.xml_namespace, namespaces)
             if self._use_attribute_sets:
                 attribute_sets = context.transform.attribute_sets

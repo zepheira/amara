@@ -581,7 +581,7 @@ class processor(object):
             instruction = context.instruction
             strerror = str(e)
             e.message = MessageSource.EXPRESSION_POSITION_INFO % (
-                instruction.xml_base, instruction.lineNumber,
+                instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror)
             raise
         except XsltError:
@@ -597,7 +597,7 @@ class processor(object):
             instruction = context.currentInstruction
             strerror = sio.getvalue()
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
-                instruction.xml_base, instruction.lineNumber,
+                instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
         context.end_document()
 
@@ -756,7 +756,7 @@ class processor(object):
             warnings.warn("Use pushResultTree(uri) to create RTFs",
                           DeprecationWarning, stacklevel=2)
             handler = RtfWriter.RtfWriter(self.outputParams,
-                                          self.stylesheet.xml_base)
+                                          self.stylesheet.baseUri)
         self.writers.append(handler)
         handler.startDocument()
         return

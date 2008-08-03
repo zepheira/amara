@@ -57,7 +57,7 @@ def match_tree(patterns, context):
 
     # Save these before any changes are made to the context
     children = context.node.xml_children
-    attributes = context.node.xml_attributes or None
+    attributes = context.node.xml_attributes if context.node.xml_attributes.keys() else: None
 
     matched = patterns.xsltKeyPrep(context, context.node)
 

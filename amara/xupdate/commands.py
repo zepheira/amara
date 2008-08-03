@@ -135,8 +135,8 @@ class rename_command(xupdate_command):
                 element = parent.rootNode.createElementNS(namespace, name)
                 # Copy any existing attributes to the newly created element
                 if target.xml_attributes:
-                    for (ns, qname), attr in target.xml_attributes.iteritems():
-                        element.xml_attributes[ns, qname] = attr
+                    for (ns, qname), value in target.xml_attributes.iteritems():
+                        element.xml_attributes[ns, qname] = value
                 # Now copy any children as well
                 while target.xml_first_child:
                     element.xml_append_child(target.xml_first_child)

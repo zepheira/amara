@@ -97,7 +97,7 @@ class predicated_test(nodetests.node_test):
     def match(self, context, node, principalType):
         
         if principalType == Node.ATTRIBUTE_NODE:
-            nodes = node.xml_parent.xml_attributes.values()
+            nodes = node.xml_parent.xml_attributes.nodes()
         elif node.parentNode:
             nodes = node.xml_parent.xml_children
         else:

@@ -80,7 +80,7 @@ class lang_function(builtin_function):
         lang = arg.evaluate_as_string(context).lower()
         node = context.node
         while node.parentNode:
-            for attr in node.xml_attributes:
+            for attr in node.xml_attributes.nodes():
                 # Search for xml:lang attribute
                 if (attr.localName == 'lang' and
                     attr.namespaceURI == XML_NAMESPACE):

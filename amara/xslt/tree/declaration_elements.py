@@ -71,13 +71,13 @@ class output_element(xslt_element):
         }
 
     def setup(self):
-        if (EXTENSION_NAMESPACE, 'byte-order-mark') in self.xml_attributes:
-            value = self.xml_attributes[EXTENSION_NAMESPACE, 'byte-order-mark']
+        if (EXTENSION_NAMESPACE, 'byte-order-mark') in self.attributes:
+            value = self.attributes[EXTENSION_NAMESPACE, 'byte-order-mark']
             self._byte_order_mark = value == 'yes'
         else:
             self._byte_order_mark = None
-        if (EXTENSION_NAMESPACE, 'canonical-form') in self.xml_attributes:
-            value = self.xml_attributes[EXTENSION_NAMESPACE, 'canonical-form']
+        if (EXTENSION_NAMESPACE, 'canonical-form') in self.attributes:
+            value = self.attributes[EXTENSION_NAMESPACE, 'canonical-form']
             self._canonical_form = value == 'yes'
         else:
             self._canonical_form = None
