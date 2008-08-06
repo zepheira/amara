@@ -57,7 +57,7 @@ def match_tree(patterns, context):
 
     # Save these before any changes are made to the context
     children = context.node.xml_children
-    attributes = context.node.xml_attributes if context.node.xml_attributes.keys() else: None
+    attributes = context.node.xml_attributes
 
     matched = patterns.xsltKeyPrep(context, context.node)
 
@@ -71,7 +71,7 @@ def match_tree(patterns, context):
     if attributes:
         size = len(attributes)
         pos = 1
-        for node in attributes:
+        for node in attributes.nodes():
             context.node, context.position, context.size = node, pos, size
             map(lambda x, y: x.extend(y),
                 matched, patterns.xsltKeyPrep(context, node))

@@ -257,7 +257,7 @@ class stylesheet_reader(object):
 
         # ----------------------------------------------------------
         # remove URI from recursive inclusion checking
-        del self._visited_stylesheet_uris[root..baseUri]
+        del self._visited_stylesheet_uris[root.baseUri]
 
         # ----------------------------------------------------------
         # finalize the children for the document
