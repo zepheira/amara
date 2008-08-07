@@ -5,7 +5,7 @@ import unittest
 import itertools
 from xml.dom import Node
 from amara.lib import inputsource, testsupport
-from amara import domlette
+from amara import tree
 from amara.xpath import context, datatypes
 from amara.xpath.expressions import expression
 from amara.xpath.expressions.basics import string_literal, number_literal
@@ -74,16 +74,16 @@ class nodeset_literal(test_literal):
 
     def __str__(self):
         def nodestr(node):
-            if isinstance(node, domlette.Document):
+            if isinstance(node, tree.Document):
                 return '#document'
-            if isinstance(node, (domlette.Text, domlette.Comment)):
+            if isinstance(node, (tree.Text, tree.Comment)):
                 data = node.nodeValue
                 if len(data) > 20:
                     data = data[:15] + '...' + data[-3:]
                 return '(%s: %s)' % (node.nodeName, data)
-            if isinstance(node, domlette.Element):
+            if isinstance(node, tree.Element):
                 return '<%s>' % node.tagName
-            if isinstance(node, domlette.Attr):
+            if isinstance(node, tree.Attr):
                 return '@%s' % node.name
         nodes = ', '.join(map(nodestr, self._literal))
         return '{%s}' % (nodes,)
@@ -130,7 +130,7 @@ src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 </ROOT>
 <?no-data ?>
 """, 'urn:domlette-test-tree')
-DOC = domlette.parse(src)
+DOC = tree.parse(src)
 
 def children(node, type=Node.ELEMENT_NODE):
     return [ child for child in node if child.nodeType == type ]

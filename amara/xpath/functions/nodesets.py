@@ -4,7 +4,7 @@
 The implementation of the core node-set functions from XPath 1.0.
 """
 from xml.dom import Node
-from amara.domlette import XPathNamespace
+from amara.tree import XPathNamespace
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
 from amara.xpath.locationpaths import relative_location_path

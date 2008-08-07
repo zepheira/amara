@@ -1,7 +1,7 @@
 #########################################################################
-# amara/domlette.py
+# amara/tree.py
 """
-A very fast DOM-like library tailored for use in XPath/XSLT.
+A very fast tree (node API) library for XML processing with sensible conventions.
 """
 
 __all__ = ["_parse"]

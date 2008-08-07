@@ -94,7 +94,7 @@ import types
 import operator
 
 from amara import XML_NAMESPACE
-from amara.domlette import Node, XPathNamespace
+from amara.tree import Node, XPathNamespace
 from amara.writers import writer, treewriter, stringwriter
 from amara.xpath import extensions, parser
 

@@ -8,7 +8,7 @@ import os
 import cStringIO
 import traceback
 
-from amara import domlette
+from amara import tree
 from amara._domlette import GetAllNs as getallns
 from amara.xpath import XPathError, datatypes
 from amara.xpath.parser import xpathparser
@@ -145,7 +145,7 @@ def paramvalue(obj):
         return datatypes.TRUE if obj else datatypes.FALSE
     elif isinstance(obj, (int, long, float)):
         return datatypes.number(obj)
-    elif isinstance(obj, domlette.Node):
+    elif isinstance(obj, tree.Node):
         return obj
     #NOTE: At one time (WSGI.xml days) this attemped to be smart and handle all iterables
     #But this would mean blindly dealing with dangerous creatures, such as sockets
@@ -153,7 +153,7 @@ def paramvalue(obj):
     elif isinstance(obj, (list, tuple)):
         # We can only use the list if all the items are Nodes.
         for item in obj:
-            if not isinstance(item, domlette.Node):
+            if not isinstance(item, tree.Node):
                 return None
         return datatypes.nodeset(obj)
     else:

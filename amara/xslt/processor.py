@@ -9,7 +9,7 @@ from gettext import gettext as _
 
 DEFAULT_ENCODING = 'UTF-8'
 #from amara import DEFAULT_ENCODING
-from amara import ReaderError, domlette
+from amara import ReaderError, tree
 from amara.lib import iri, inputsource
 from amara.xpath import XPathError
 from amara.xslt import XsltError
@@ -242,7 +242,7 @@ class processor(object):
         ns = self.getStripElements()
         ignorePis = False
         try:
-            document = domlette.parse(source)
+            document = tree.parse(source)
         except ReaderError, e:
             raise XsltError(XsltError.SOURCE_PARSE_ERROR,
                             source.uri or '<Python string>', e)

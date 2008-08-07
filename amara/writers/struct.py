@@ -50,7 +50,7 @@ class structwriter(object):
             self.writer.end_element(obj.qname, obj.ns)
             return
         if isinstance(obj, basestring):
-            self.writer.characters(U(obj))
+            self.writer.text(U(obj))
             return
         try:
             obj = iter(obj)

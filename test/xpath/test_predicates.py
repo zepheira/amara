@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from amara.lib import testsupport
-from amara import domlette
 from amara.xpath import context, datatypes
 from amara.xpath.expressions.basics import number_literal, string_literal
 from amara.xpath.expressions.booleans import and_expr, or_expr

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from amara import domlette
+from amara import tree
 from amara.lib import testsupport
 from amara.xpath import datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
@@ -14,12 +14,12 @@ from test_expressions import (
     nodeset_literal, EMPTY_NODESET,
     )
 
-EGG1 = domlette.Element(None, 'egg1')
-EGG1.appendChild(domlette.Text('egg1'))
-EGG2 = domlette.Element(None, 'egg2')
-EGG2.appendChild(domlette.Text('egg2'))
+EGG1 = tree.Element(None, 'egg1')
+EGG1.appendChild(tree.Text('egg1'))
+EGG2 = tree.Element(None, 'egg2')
+EGG2.appendChild(tree.Text('egg2'))
 
-NUM = domlette.Element(None, 'num')
+NUM = tree.Element(None, 'num')
 NUM0 = NUM.setAttributeNS(None, 'num0', '0')
 NUM2 = NUM.setAttributeNS(None, 'num2', '2')
 NUM4 = NUM.setAttributeNS(None, 'num4', '4')

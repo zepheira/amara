@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from amara import domlette
+from amara import tree
 from amara.xpath import context, datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
 
@@ -20,17 +20,17 @@ CONTEXT2 = context(CHILD2, 2, 3)
 CONTEXTLANG1 = context(LCHILD1, 1, 3)
 CONTEXTLANG2 = context(LCHILD2, 2, 3)
 
-DOC = domlette.Document()
-EGG1 = DOC.appendChild(domlette.Element(None, 'egg0'))
-EGG1.appendChild(domlette.Text('0'))
-EGG2 = DOC.appendChild(domlette.Element(None, 'egg1'))
-EGG2.appendChild(domlette.Text('1'))
-EGG3 = DOC.appendChild(domlette.Element(None, 'egg0'))
-EGG3.appendChild(domlette.Text('0'))
-EGG4 = DOC.appendChild(domlette.Element(None, 'egg1'))
-EGG4.appendChild(domlette.Text('1'))
-EGG5 = DOC.appendChild(domlette.Element(None, 'egg0'))
-EGG5.appendChild(domlette.Text('0'))
+DOC = tree.Document()
+EGG1 = DOC.appendChild(tree.Element(None, 'egg0'))
+EGG1.appendChild(tree.Text('0'))
+EGG2 = DOC.appendChild(tree.Element(None, 'egg1'))
+EGG2.appendChild(tree.Text('1'))
+EGG3 = DOC.appendChild(tree.Element(None, 'egg0'))
+EGG3.appendChild(tree.Text('0'))
+EGG4 = DOC.appendChild(tree.Element(None, 'egg1'))
+EGG4.appendChild(tree.Text('1'))
+EGG5 = DOC.appendChild(tree.Element(None, 'egg0'))
+EGG5.appendChild(tree.Text('0'))
 
 
 class test_function_call(test_expression):

@@ -4,7 +4,7 @@
 XUpdate request processing
 """
 
-from amara.domlette import Node
+from amara.tree import Node
 from amara._xmlstring import SplitQName
 from amara.xpath import context
 from amara.xupdate import XUpdateError, xupdate_primitive

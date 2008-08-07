@@ -73,10 +73,10 @@ class xupdate_primitive(list):
 
 # -- High-level API ----------------------------------------------------
 
-from amara import domlette
+from amara import tree
 from amara.xupdate import reader
 
 def apply_xupdate(source, xupdate):
     xupdate = reader.parse(xupdate)
-    source = domlette.parse(source)
+    source = tree.parse(source)
     return xupdate.apply_updates(source)

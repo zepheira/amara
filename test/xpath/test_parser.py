@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from amara.lib import testsupport
-from amara import domlette
+from amara import tree
 from amara.xpath import context, datatypes, XPathError
 
 from test_expressions import (
@@ -35,12 +35,12 @@ CONTEXT_LANG = context(LANG, 1, 1)
 #     </x>
 #   </element>
 # </elements>
-ELEMENTS = domlette.Document().appendChild(domlette.Element(None, 'elements'))
+ELEMENTS = tree.Document().appendChild(tree.Element(None, 'elements'))
 for cdata in ('a', 'z'):
-    node = ELEMENTS.appendChild(domlette.Element(None, 'element'))
-    node = node.appendChild(domlette.Element(None, 'x'))
-    node = node.appendChild(domlette.Element(None, 'y'))
-    node.appendChild(domlette.Text(cdata))
+    node = ELEMENTS.appendChild(tree.Element(None, 'element'))
+    node = node.appendChild(tree.Element(None, 'x'))
+    node = node.appendChild(tree.Element(None, 'y'))
+    node.appendChild(tree.Text(cdata))
 del node, cdata
 CONTEXT_ELEMENT = context(ELEMENTS, 1, 1)
 ELEMENT1, ELEMENT2 = ELEMENTS

@@ -4,7 +4,7 @@
 Implementation of `xsl:copy` element.
 """
 
-from amara.domlette import Node, XPathNamespace
+from amara.tree import Node, XPathNamespace
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types

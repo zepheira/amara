@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from amara import domlette
+from amara import tree
 from amara.xpath import context, datatypes
 from amara.xpath.locationpaths.predicates import predicates, predicate
 

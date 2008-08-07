@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from amara import domlette
+from amara import tree
 from amara.lib import testsupport
 from amara.xpath import context, datatypes
 from amara.xpath.locationpaths import relative_location_path, location_step
