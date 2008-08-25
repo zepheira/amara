@@ -7,7 +7,6 @@ extern "C" {
 
 #include "Python.h"
 #include "node.h"
-#include "attr.h"
 
   typedef struct {
     ContainerNode_HEAD
@@ -15,6 +14,7 @@ extern "C" {
     PyObject *localName;
     PyObject *nodeName;
     PyObject *attributes;
+    PyObject *namespaces;
   } ElementObject;
 
 #define Element(op) ((ElementObject *)(op))
@@ -22,8 +22,11 @@ extern "C" {
 #define Element_GET_LOCAL_NAME(op) (Element(op)->localName)
 #define Element_GET_NODE_NAME(op) (Element(op)->nodeName)
 #define Element_GET_ATTRIBUTES(op) (Element(op)->attributes)
+#define Element_GET_NAMESPACES(op) (Element(op)->namespaces)
 
 #ifdef Domlette_BUILDING_MODULE
+#include "attr.h"
+#include "xpathnamespace.h"
 
   extern PyTypeObject DomletteElement_Type;
 
@@ -39,17 +42,21 @@ extern "C" {
                              PyObject *qualifiedName,
                              PyObject *localName);
 
-  AttrObject *Element_SetAttributeNS(ElementObject *self,
-                                     PyObject *namespaceURI,
-                                     PyObject *qualifiedName,
-                                     PyObject *localName,
-                                     PyObject *value);
+  XPathNamespaceObject *Element_AddNamespace(ElementObject *self,
+                                             PyObject *prefix,
+                                             PyObject *namespace);
 
-  PyObject *Element_GetAttributeNodeNS(ElementObject *self,
-                                       PyObject *namespaceURI,
-                                       PyObject *localName);
-  PyObject *Element_SetAttributeNodeNS(ElementObject *self,
-                                       AttrObject *attr);
+  AttrObject *Element_AddAttribute(ElementObject *self,
+                                   PyObject *namespaceURI,
+                                   PyObject *qualifiedName,
+                                   PyObject *localName,
+                                   PyObject *value);
+  AttrObject *Element_GetAttribute(ElementObject *self, 
+                                   PyObject *namespaceURI,
+                                   PyObject *localName);
+  int Element_SetAttribute(ElementObject *self, AttrObject *attr);
+
+  PyObject *Element_InscopeNamespaces(ElementObject *self);
 
   ElementObject *Element_CloneNode(PyObject *node, int deep);
 

@@ -13,6 +13,7 @@ extern "C" {
 #include "node.h"
 #include "document.h"
 #include "element.h"
+#include "attr.h"
 #include "text.h"
 #include "comment.h"
 #include "processinginstruction.h"
@@ -57,11 +58,15 @@ extern "C" {
     ElementObject *(*Element_New)(PyObject *namespaceURI,
                                   PyObject *qualifiedName,
                                   PyObject *localName);
-    AttrObject *(*Element_SetAttributeNS)(ElementObject *element,
-                                          PyObject *namespaceURI,
-                                          PyObject *qualifiedName,
-                                          PyObject *localName,
-                                          PyObject *value);
+    XPathNamespaceObject *(*Element_AddNamespace)(ElementObject *element,
+                                                  PyObject *prefix,
+                                                  PyObject *namespaceURI);
+    AttrObject *(*Element_AddAttribute)(ElementObject *element,
+                                        PyObject *namespaceURI,
+                                        PyObject *qualifiedName,
+                                        PyObject *localName,
+                                        PyObject *value);
+    PyObject *(*Element_InscopeNamespaces)(ElementObject *self);
 
     /* CharacterData Methods */
     PyObject *(*CharacterData_SubstringData)(CharacterDataObject *node,
@@ -87,6 +92,17 @@ extern "C" {
     ProcessingInstructionObject *(*ProcessingInstruction_New)(PyObject *target,
                                                               PyObject *data);
 
+    XPathNamespaceObject *(*XPathNamespace_New)(ElementObject *parent,
+                                                PyObject *prefix, 
+                                                PyObject *uri);
+
+    /* NamespaceMap Methods */
+    XPathNamespaceObject *(*NamespaceMap_Next)(PyObject *nodemap, 
+                                               Py_ssize_t *pos);
+
+    /* AttributeMap Methods */
+    AttrObject *(*AttributeMap_Next)(PyObject *nodemap, Py_ssize_t *pos);
+
   } Domlette_APIObject;
 
 #ifdef Domlette_BUILDING_MODULE
@@ -96,14 +112,10 @@ extern "C" {
 #include "xmlstring.h"
 #endif
 #include "debug.h"
-#include "nss.h"
 #include "exceptions.h"
 #include "domimplementation.h"
-#include "namednodemap.h"
-
-  /* namespace constants */
-  extern PyObject *g_xmlNamespace;
-  extern PyObject *g_xmlnsNamespace;
+#include "attributemap.h"
+#include "namespacemap.h"
 
 #else /* !defined(Domlette_BUILDING_MODULE) */
 
@@ -138,7 +150,9 @@ extern "C" {
 #define Element_Check(op) PyObject_TypeCheck((op), DomletteElement_Type)
 #define Element_CheckExact(op) ((op)->ob_type == DomletteElement_Type)
 #define Element_New Domlette->Element_New
-#define Element_SetAttributeNS Domlette->Element_SetAttributeNS
+#define Element_AddNamespace Domlette->Element_AddNamespace
+#define Element_AddAttribute Domlette->Element_AddAttribute
+#define Element_InscopeNamespaces Domlette->Element_InscopeNamespaces
 
 #define CharacterData_SubstringData Domlette->CharacterData_SubstringData
 #define CharacterData_AppendData Domlette->CharacterData_AppendData
@@ -159,6 +173,12 @@ extern "C" {
 #define ProcessingInstruction_CheckExact(op) \
   ((op)->ob_type == DomletteProcessingInstruction_Type)
 #define ProcessingInstruction_New Domlette->ProcessingInstruction_New
+
+#define XPathNamespace_New Domlette->XPathNamespace_New
+
+#define NamespaceMap_Next Domlette->NamespaceMap_Next
+
+#define AttributeMap_Next Domlette->AttributeMap_Next
 
 #endif /* !Domlette_BUILDING_MODULE */
 

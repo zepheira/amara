@@ -232,26 +232,11 @@ static PyObject *treewriter_start_element(TreeWriterObject *self,
   if (namespaces) {
     Py_ssize_t i = 0;
     while (PyDict_Next(namespaces, &i, &prefix, &namespace)) {
-      AttrObject *attr;
-
-      if (prefix != Py_None) {
-        prefix = xmlns_string;
-        localName = prefix;
-      } else if (namespace != Py_None) {
-        prefix = prefix;
-        localName = xmlns_string;
-      } else {
-        /* no prefix and no uri indicates default namespace NOT set */
-        continue;
-      }
-      name = XmlString_MakeQName(prefix, localName);
-      if (name == NULL) return NULL;
-
-      attr = Element_SetAttributeNS(element, xmlns_namespace, name,
-                                    localName, namespace);
-      Py_DECREF(name);
-      if (attr == NULL) return NULL;
-      Py_DECREF(attr);
+      XPathNamespaceObject *nsattr;
+      nsattr = Element_AddNamespace(element, prefix, namespace);
+      if (nsattr == NULL) 
+        return NULL;
+      Py_DECREF(nsattr);
     }
   }
 
@@ -384,8 +369,8 @@ static PyObject *treewriter_attribute(TreeWriterObject *self,
     }
     Py_DECREF(prefix);
 
-    attr = Element_SetAttributeNS((ElementObject *)self->current_node,
-                                  namespace, name, localName, value);
+    attr = Element_AddAttribute((ElementObject *)self->current_node,
+                                namespace, name, localName, value);
     Py_DECREF(name);
     Py_DECREF(value);
     Py_DECREF(namespace);

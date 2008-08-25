@@ -346,8 +346,9 @@ static PyObject *Number_New(PyObject *value)
   }
   else if (value->ob_type->tp_as_buffer) {
     const char *buffer;
-    int len;
+    Py_ssize_t len;
     if (PyObject_AsCharBuffer(value, &buffer, &len)) return NULL;
+    /* FIXME: update FROM_STRING() to use `len` instead of assuming 0-term */
     FROM_STRING(char, buffer);
   }
 

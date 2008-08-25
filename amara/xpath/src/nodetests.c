@@ -390,7 +390,7 @@ static PyObject *typefilter_next(TypeFilterObject *self)
   assert(PyIter_Check(nodes));
   iternext = *nodes->ob_type->tp_iternext;
   while ((node = iternext(nodes))) {
-    if (PyObject_IsInstance(node, nodeType)) {
+    if (PyObject_TypeCheck(node, nodeType)) {
       return node;
     }
     Py_DECREF(node);

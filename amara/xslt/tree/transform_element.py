@@ -9,7 +9,7 @@ import operator
 import itertools
 import collections
 from gettext import gettext as _
-from xml.dom import Node
+from amara.tree import Element, Document, Text, Attr
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import xpath
 from amara.writers import outputparameters
@@ -41,7 +41,7 @@ def _fixup_aliases(node, aliases):
 def _dispatch_table():
     class type_dispatch_table(collections.defaultdict):
         def __missing__(self, node_type):
-            if node_type == Node.ELEMENT_NODE:
+            if issubclass(node_type, Element):
                 value = self[node_type] = collections.defaultdict(list)
             else:
                 value = self[node_type] = []
@@ -286,7 +286,7 @@ class transform_element(xslt_element):
                     info = ((precedence, template_priority, position),
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
-                    if node_type == Node.ELEMENT_NODE:
+                    if issubclass(node_type, Element):
                         # Element types are further keyed by the name test.
                         name_key = node_test.name_key
                         if name_key:
@@ -325,7 +325,7 @@ class transform_element(xslt_element):
             any_patterns = type_table[None]
             type_table = match_templates[mode] = dict(type_table)
             for node_type, patterns in type_table.iteritems():
-                if node_type == Node.ELEMENT_NODE:
+                if issubclass(node_type, Element):
                     # Add those that are wildcard tests ('*' and 'prefix:*')
                     wildcard_names = patterns[None]
                     name_table = type_table[node_type] = dict(patterns)
@@ -496,17 +496,17 @@ class transform_element(xslt_element):
             position += 1
 
             # Get the possible template rules for `node`
-            node_type = node.xml_node_type
+            node_type = node.xml_type
             if mode in self.match_templates:
                 type_table = self.match_templates[mode]
                 if node_type in type_table:
-                    if node_type == Node.ELEMENT_NODE:
-                        name_table = type_table[node_type]
-                        name = (node.xml_namespace, node.xml_local)
-                        if name in name_table:
-                            template_rules = name_table[name]
+                    if node_type == Element.xml_type:
+                        element_table = type_table[node_type]
+                        name = node.xml_name
+                        if name in element_table:
+                            template_rules = element_table[name]
                         else:
-                            template_rules = name_table[None]
+                            template_rules = element_table[None]
                     else:
                         template_rules = type_table[node_type]
                 else:
@@ -514,7 +514,7 @@ class transform_element(xslt_element):
             else:
                 template_rules = ()
 
-            # If this is called from apply-imports, remove those patterns
+            # If this is called from apply-imports, filter out those patterns
             # with a higher import precedence than what was specified.
             if precedence:
                 template_rules = ( rule for rule in template_rules
@@ -570,9 +570,9 @@ class transform_element(xslt_element):
                 if params and not self._builtInWarningGiven:
                     self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
                     self._builtInWarningGiven = 1
-                if node_type in (Node.ELEMENT_NODE, Node.DOCUMENT_NODE):
+                if isinstance(node, (Element, Document)):
                     self.apply_templates(context, node.xml_children)
-                elif node_type in (Node.TEXT_NODE, Node.ATTRIBUTE_NODE):
+                elif isinstance(node, (Text, Attr)):
                     context.text(node.xml_value)
 
         # Restore context

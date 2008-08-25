@@ -304,33 +304,25 @@ class processor(object):
         """
         ignorePis = False
 
-        if node.nodeType != Node.DOCUMENT_NODE:
+        if not isinstance(node, tree.Document):
             raise ValueError(MessageSource.g_errorMessages[
                              XsltError.CANNOT_TRANSFORM_FRAGMENT])
 
-        if hasattr(node, 'baseURI'):
-            node_baseUri = node.xml_base
-        elif hasattr(node, 'refUri'):
-            node_baseUri = node.refUri
-        else:
-            node_baseUri = None
-
-        #A base URI must be absolute, but DOM L3 Load & Save allows
+        # A base URI must be absolute, but DOM L3 Load & Save allows
         # implementation-dependent behavior if the URI is actually
         # relative, empty or missing. We'll generate a URN for the
         # InputSource's benefit if the base URI is empty/missing.
         # Relative URIs can pass through; the resolvers will handle
         # them appropriately (we hope).
         if not sourceUri:
-            sourceUri = node_baseUri or Uri.BASIC_RESOLVER.generate()
+            sourceUri = node.xml_base or Uri.BASIC_RESOLVER.generate()
 
         if preserveSrc:
-            #preserve the node's baseURI so our DOM is a true copy
-            newDoc = self._domimp.createRootNode(node_baseUri)
-            for child in node.childNodes:
-                new_node = newDoc.importNode(child,1)
-                newDoc.appendChild(new_node)
-                node = newDoc
+            # preserve the node's baseURI so our DOM is a true copy
+            entity = Document(node.xml_base)
+            for child in node:
+                entity.xml_append(entity.importNode(child, 1))
+            node = entity
 
         self._stripElements(node)
 
@@ -446,41 +438,44 @@ class processor(object):
         c = 1 # count of alternates, +1
         found_nonalt = 0
         stys = []
-        for child in root.childNodes:
+        stylesheets = ( node for node in prolog
+                        if isinstance(node, ProcessingInstruction)
+                        and node.xml_target == 'xml-stylesheet'
+                        )
+        for node in root:
             # only look at prolog, not anything that comes after it
-            if child.nodeType == Node.ELEMENT_NODE:
-                break
+            if isinstance(node, Element): break
             # build dict of pseudo-attrs for the xml-stylesheet PIs
-            if child.nodeType == Node.PROCESSING_INSTRUCTION_NODE:
-                if child.target == 'xml-stylesheet':
-                    data = child.data.split()
-                    pseudo_attrs = {}
-                    for d in data:
-                        seg = d.split('=')
-                        if len(seg) == 2:
-                            pseudo_attrs[seg[0]] = seg[1][1:-1]
+            if not (isinstance(node, ProcessingInstruction)
+                    and node.xml_target == 'xml-stylesheet'):
+                continue
+            pseudo_attrs = {}
+            for attdecl in node.xml_data.split():
+                try:
+                    name, value = attdecl.split('=', 1)
+                except ValueError:
+                    pass
+                else:
+                    pseudo_attrs[name] = value[1:-1]
 
-                    # PI must have both href, type pseudo-attributes;
-                    # type pseudo-attr must match valid XSLT types;
-                    # media pseudo-attr must match preferred media
-                    # (which can be None)
-                    if 'href' in pseudo_attrs and 'type' in pseudo_attrs:
-                        href = pseudo_attrs['href']
-                        imt = pseudo_attrs['type']
-                        media = pseudo_attrs.get('media') # defaults to None
-                        if media in self.media_descriptors and imt in XSLT_IMT:
-                            if pseudo_attrs.has_key('alternate') and \
-                                pseudo_attrs['alternate'] == 'yes':
-                                stys.append((1, media, imt,
-                                             pseudo_attrs['href']))
-                            elif found_nonalt:
-                                c += 1
-                                stys.append((c, media, imt,
-                                             pseudo_attrs['href']))
-                            else:
-                                stys.append((0, media, imt,
-                                             pseudo_attrs['href']))
-                                found_nonalt = 1
+            # PI must have both href, type pseudo-attributes;
+            # type pseudo-attr must match valid XSLT types;
+            # media pseudo-attr must match preferred media
+            # (which can be None)
+            if 'href' in pseudo_attrs and 'type' in pseudo_attrs:
+                href = pseudo_attrs['href']
+                imt = pseudo_attrs['type']
+                media = pseudo_attrs.get('media') # defaults to None
+                if media in self.media_descriptors and imt in XSLT_IMT:
+                    if ('alternate' in pseudo_attrs
+                        and pseudo_attrs['alternate'] == 'yes'):
+                        stys.append((1, media, imt, href))
+                    elif found_nonalt:
+                        c += 1
+                        stys.append((c, media, imt, href))
+                    else:
+                        stys.append((0, media, imt, href))
+                        found_nonalt = 1
 
         stys.sort(self.__cmp_stys)
 
@@ -611,42 +606,6 @@ class processor(object):
             # It is the callers responsibility to get the result
             result = u""
         return result
-
-    def applyTemplates(self, context, params=None):
-        """
-        Intended to be used by XSLT instruction implementations only.
-
-        Implements the xsl:apply-templates instruction by attempting to
-        let the stylesheet apply its own template for the given context.
-        If the stylesheet does not have a matching template, the
-        built-in templates are invoked.
-
-        context is an XsltContext instance. params is a dictionary of
-        parameters being passed in, defaulting to None.
-        """
-        if params is None:
-            params = {}
-        if not self.stylesheet.applyTemplates(context, self, params):
-            # No matching templates found, use builtin templates
-            if params and not self._builtInWarningGiven:
-                self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
-                self._builtInWarningGiven = 1
-            if context.node.nodeType == Node.TEXT_NODE:
-                self.writers[-1].text(context.node.data)
-            elif context.node.nodeType in [Node.ELEMENT_NODE, Node.DOCUMENT_NODE]:
-                state = context.copy()
-                node_set = context.node.childNodes
-                size = len(node_set)
-                pos = 1
-                for node in node_set:
-                    context.node, context.position, context.size = \
-                                  node, pos, size
-                    self.applyTemplates(context)
-                    pos += 1
-                context.set(state)
-            elif context.node.nodeType == Node.ATTRIBUTE_NODE:
-                self.writers[-1].text(context.node.value)
-        return
 
     def message_control(self, suppress):
         """

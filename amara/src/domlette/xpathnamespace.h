@@ -7,7 +7,6 @@ extern "C" {
 
 #include "Python.h"
 #include "node.h"
-#include "element.h"
 
   typedef struct {
     Node_HEAD
@@ -18,8 +17,10 @@ extern "C" {
 #define XPathNamespace(op) ((XPathNamespaceObject *)(op))
 #define XPathNamespace_GET_NAME(op) (XPathNamespace(op)->nodeName)
 #define XPathNamespace_GET_VALUE(op) (XPathNamespace(op)->nodeValue)
+#define XPathNamespace_SET_VALUE(op, v) ((XPathNamespace(op)->nodeValue) = (v))
 
 #ifdef Domlette_BUILDING_MODULE
+#include "element.h"
 
   extern PyTypeObject DomletteXPathNamespace_Type;
 

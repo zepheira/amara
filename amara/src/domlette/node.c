@@ -1346,7 +1346,8 @@ int DomletteNode_Init(PyObject *module)
   shared_empty_nodelist = PyList_New((Py_ssize_t)0);
   if (shared_empty_nodelist == NULL) return -1;
 
-  xml_base_key = Py_BuildValue("(Os)", g_xmlNamespace, "base");
+  xml_base_key = Py_BuildValue("(ss)", 
+                               "http://www.w3.org/XML/1998/namespace", "base");
   if (xml_base_key == NULL) return -1;
 
   Py_INCREF(&DomletteNode_Type);

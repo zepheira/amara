@@ -4,11 +4,12 @@
 Implementation of `xsl:copy` element.
 """
 
-from amara.tree import Node, XPathNamespace
-from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
+from amara.tree import (Element, Attr, Text, ProcessingInstruction,
+                        Comment, Document, XPathNamespace)
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
+__all__ = ['copy_element']
 
 class copy_element(xslt_element):
 
@@ -22,49 +23,50 @@ class copy_element(xslt_element):
         context.namespaces = self.namespaces
 
         node = context.node
-        node_type = node.nodeType
-        if node_type == Node.ELEMENT_NODE:
-            namespaces = {}
-            for (namespace, name), value in node.xml_attributes.iteritems():
-                # Namespace nodes are automatically copied as well
-                # See XSLT 1.0 Sect 7.5
-                if namespace == XMLNS_NAMESPACE:
-                    namespaces[name] = value
-            context.start_element(node.xml_qname, node.xml_namespace, namespaces)
+        if isinstance(node, Element):
+            # Namespace nodes are automatically copied as well
+            # See XSLT 1.0 Sect 7.5
+            nodemap = node.xmlns_attributes
+            if nodemap:
+                namespaces = {}
+                for (xmlns_uri, prefix), value in nodemap.iteritems():
+                    namespaces[prefix] = value
+            else:
+                namespaces = None
+            context.start_element(node.xml_qname, node.xml_namespace,
+                                  namespaces)
             if self._use_attribute_sets:
                 attribute_sets = context.transform.attribute_sets
                 for name in self._use_attribute_sets:
                     try:
                         attribute_set = attribute_sets[name]
                     except KeyError:
-                        raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, self, name)
+                        raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET,
+                                        self, name)
                     attribute_set.instantiate(context)
             self.process_children(context)
             context.end_element(node.xml_qname, node.xml_namespace)
 
-        elif node_type == Node.TEXT_NODE:
+        elif isinstance(node, (Text, Comment)):
             context.text(node.xml_value)
 
-        elif node_type == Node.DOCUMENT_NODE:
+        elif isinstance(node, Document):
             self.process_children(context)
 
-        elif node_type == Node.ATTRIBUTE_NODE:
-            if node.namespaceURI != XMLNS_NAMESPACE:
-                context.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
+        elif isinstance(node, Attr):
+            context.attribute(node.xml_qname, node.xml_value,
+                              node.xml_namespace)
 
-        elif node_type == Node.PROCESSING_INSTRUCTION_NODE:
+        elif isinstance(node, ProcessingInstruction):
             context.processing_instruction(node.xml_target, node.xml_data)
 
-        elif node_type == Node.COMMENT_NODE:
-            context.comment(node.xml_value)
-
-        elif node_type == XPathNamespace.XPATH_NAMESPACE_NODE:
+        elif isinstance(node, XPathNamespace):
             # Relies on XmlWriter rules, which is very close to spec:
             # http://www.w3.org/1999/11/REC-xslt-19991116-errata/#E25
             context.namespace(node.xml_qname, node.xml_value)
 
         else:
-            raise RuntimeError("Unupported node type: %r" % node_type)
+            raise RuntimeError("Unupported node type: %r" % type(node))
 
         return
 

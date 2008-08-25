@@ -174,7 +174,11 @@ class namespace_axis(axis_specifier):
 
     def select(self, node):
         """Select all of the namespaces from the context node."""
-        return iter(node.xml_namespaces)
+        return node.xml_namespaces.nodes()
+    try:
+        from _axes import namespace_axis as select
+    except ImportError:
+        pass
 
 
 class parent_axis(axis_specifier):

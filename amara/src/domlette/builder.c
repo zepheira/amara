@@ -44,7 +44,6 @@ typedef enum {
 
 ParseFlags default_parse_flags = PARSE_FLAGS_EXTERNAL_ENTITIES;
 
-static PyObject *xmlns_string;
 static PyObject *empty_args_tuple;
 static PyObject *gc_enable_function;
 static PyObject *gc_disable_function;
@@ -158,6 +157,11 @@ ParserState_New(NodeFactories *factories)
   } else {
     memset(self, 0, sizeof(ParserState));
     self->factories = factories;
+    self->new_namespaces = PyDict_New();
+    if (self->new_namespaces == NULL) {
+      PyMem_Free(self);
+      return NULL;
+    }
   }
   return self;
 }
@@ -322,107 +326,10 @@ builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
   fprintf(stderr, ")\n");
 #endif
 
-  if (state->new_namespaces == NULL) {
-    /* first namespace for this element */
-    state->new_namespaces = PyDict_New();
-    if (state->new_namespaces == NULL) {
-      return EXPAT_STATUS_ERROR;
-    }
-  }
-
-  if (uri == Py_None) {
-    /* Use an empty string as this will be added as an attribute value.
-       Fixes SF#834917
-    */
-    uri = PyUnicode_FromUnicode(NULL, 0);
-    if (uri == NULL) {
-      return EXPAT_STATUS_ERROR;
-    }
-  } else {
-    Py_INCREF(uri);
-  }
-
-  if (PyDict_SetItem(state->new_namespaces, prefix, uri) < 0) {
-    Py_DECREF(uri);
+  if (PyDict_SetItem(state->new_namespaces, prefix, uri) < 0)
     return EXPAT_STATUS_ERROR;
-  }
 
-  Py_DECREF(uri);
   return EXPAT_STATUS_OK;
-}
-
-Py_LOCAL_INLINE(AttrObject *)
-add_attribute(ParserState *state, ElementObject *element,
-              PyObject *namespaceURI, PyObject *qualifiedName,
-              PyObject *localName, PyObject *value)
-{
-  NodeFactories *factories = state->factories;
-  AttrObject *attr;
-
-  if (factories && factories->attr_new) {
-    PyObject *ob = PyObject_CallFunction(factories->attr_new, "OO",
-                                         namespaceURI, qualifiedName);
-    if (ob == NULL)
-      return NULL;
-    else if (!Attr_Check(ob)) {
-      PyErr_Format(PyExc_TypeError,
-                   "ATTRIBUTE_NODE factory returned non-Attr (type %.200s)",
-                   ob->ob_type->tp_name);
-      Py_DECREF(ob);
-      return NULL;
-    }
-    if (PyObject_SetAttrString(ob, "value", value) < 0) {
-      Py_DECREF(ob);
-      return NULL;
-    }
-    attr = Attr(ob);
-    if (Element_CheckExact(element)) {
-      ob = Element_SetAttributeNodeNS(element, attr);
-    } else {
-      static PyObject *funcname = NULL;
-      PyObject *func, *args;
-      if (funcname == NULL) {
-        funcname = PyString_FromString("setAttributeNodeNS");
-        if (funcname == NULL)
-          return NULL;
-      }
-      func = PyObject_GetAttr((PyObject *)element, funcname);
-      if (func == NULL)
-        return NULL;
-      args = PyTuple_Pack(1, attr);
-      if (args == NULL)
-        return NULL;
-      ob = PyObject_Call(func, args, NULL);
-      Py_DECREF(func);
-      Py_DECREF(args);
-    }
-    if (ob == NULL) {
-      Py_CLEAR(attr);
-    }
-  } else {
-    if (Element_CheckExact(element)) {
-      attr = Element_SetAttributeNS(element, namespaceURI, qualifiedName,
-                                    localName, value);
-    } else {
-      static PyObject *funcname = NULL;
-      PyObject *func, *args;
-      if (funcname == NULL) {
-        funcname = PyString_FromString("setAttributeNS");
-        if (funcname == NULL)
-          return NULL;
-      }
-      func = PyObject_GetAttr((PyObject *)element, funcname);
-      if (func == NULL)
-        return NULL;
-      args = PyTuple_Pack(3, namespaceURI, qualifiedName, value);
-      if (args == NULL)
-        return NULL;
-      attr = Attr(PyObject_Call(func, args, NULL));
-      Py_DECREF(func);
-      Py_DECREF(args);
-    }
-  }
-  return attr;
 }
 
 static ExpatStatus
@@ -434,7 +341,6 @@ builder_StartElement(void *userState, ExpatName *name,
   ElementObject *elem = NULL;
   Py_ssize_t i;
   PyObject *key, *value;
-  PyObject *localName, *qualifiedName, *prefix;
 
 #ifdef DEBUG_PARSER
   fprintf(stderr, "--- builder_StartElement(name=");
@@ -476,44 +382,27 @@ builder_StartElement(void *userState, ExpatName *name,
   /* new_namespaces is a dictionary where key is the prefix and value
    * is the uri.
    */
-  if (state->new_namespaces) {
+  if (((PyDictObject *)state->new_namespaces)->ma_used) {
     i = 0;
     while (PyDict_Next(state->new_namespaces, &i, &key, &value)) {
-      AttrObject *nsattr;
-      if (key != Py_None) {
-        prefix = xmlns_string;
-        localName = key;
-      } else {
-        prefix = key;
-        localName = xmlns_string;
-      }
-
-      qualifiedName = XmlString_MakeQName(prefix, localName);
-      if (qualifiedName == NULL) {
+      XPathNamespaceObject *nsnode;
+      nsnode = Element_AddNamespace(elem, key, value);
+      if (nsnode == NULL) {
         Py_DECREF(elem);
         return EXPAT_STATUS_ERROR;
       }
-
-      nsattr = add_attribute(state, elem, g_xmlnsNamespace, qualifiedName,
-                             localName, value);
-      Py_DECREF(qualifiedName);
-      if (nsattr == NULL) {
-        Py_DECREF(elem);
-        return EXPAT_STATUS_ERROR;
-      }
-      Py_DECREF(nsattr);
+      Py_DECREF(nsnode);
     }
     /* make sure children don't set these namespaces */
-    Py_DECREF(state->new_namespaces);
-    state->new_namespaces = NULL;
+    PyDict_Clear(state->new_namespaces);
   }
 
   /** attributes *******************************************************/
 
   for (i = 0; i < natts; i++) {
-    AttrObject *attr = add_attribute(state, elem, atts[i].namespaceURI,
-                                     atts[i].qualifiedName, atts[i].localName,
-                                     atts[i].value);
+    AttrObject *attr = Element_AddAttribute(elem, atts[i].namespaceURI,
+                                            atts[i].qualifiedName, 
+                                            atts[i].localName, atts[i].value);
     if (attr == NULL) {
       Py_DECREF(elem);
       return EXPAT_STATUS_ERROR;
@@ -580,9 +469,9 @@ builder_Attribute(void *userState, ExpatName *name, PyObject *value,
   fprintf(stderr, ")\n");
 #endif
 
-  attr = add_attribute(state, (ElementObject *)state->context->node,
-                       name->namespaceURI, name->qualifiedName,
-                       name->localName, value);
+  attr = Element_AddAttribute((ElementObject *)state->context->node,
+                              name->namespaceURI, name->qualifiedName,
+                              name->localName, value);
   if (attr == NULL)
     return EXPAT_STATUS_ERROR;
 
@@ -930,10 +819,7 @@ int DomletteBuilder_Init(PyObject *module)
 
   if (Expat_IMPORT == NULL) return -1;
 
-  xmlns_string = XmlString_FromASCII("xmlns");
-  if (xmlns_string == NULL) return -1;
-
-  empty_args_tuple = PyTuple_New((Py_ssize_t)0);
+  empty_args_tuple = PyTuple_New(0);
   if (empty_args_tuple == NULL) return -1;
 
   import = PyImport_ImportModule("gc");
@@ -961,7 +847,6 @@ int DomletteBuilder_Init(PyObject *module)
 
 void DomletteBuilder_Fini(void)
 {
-  Py_DECREF(xmlns_string);
   Py_DECREF(empty_args_tuple);
   Py_DECREF(gc_enable_function);
   Py_DECREF(gc_disable_function);

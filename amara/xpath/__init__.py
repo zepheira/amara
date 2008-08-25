@@ -180,29 +180,26 @@ class context(writer):
         return
 
     def copy_node(self, node):
-        node_type = node.xml_node_type
-        if node_type == Node.DOCUMENT_NODE:
-            for child in node:
-                self.copy_node(child)
-        elif node_type == Node.TEXT_NODE:
-            self.text(node.data, node.xsltOutputEscaping)
-        elif node_type == Node.ELEMENT_NODE:
-            # The GetAllNs is needed to copy the namespace nodes
+        if isinstance(node, Element):
             self.start_element(node.xml_qname, node.xml_namespace,
-                              namespaces=GetAllNs(node))
-            for attr in node.xpathAttributes:
+                               node.xmlns_attributes.copy())
+            for attr in node.xml_attributes.nodes():
                 self.attribute(attr.xml_qname, attr.xml_value, attr.xml_namespace)
             for child in node:
                 self.copy_node(child)
             self.end_element(node.xml_qname, node.xml_namespace)
-        elif node_type == Node.ATTRIBUTE_NODE:
-            if node.namespaceURI != XMLNS_NAMESPACE:
-                self.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
-        elif node_type == Node.COMMENT_NODE:
-            self.comment(node.data)
-        elif node_type == Node.PROCESSING_INSTRUCTION_NODE:
+        elif isinstance(node, Attr):
+            self.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
+        elif isinstance(node, Text):
+            self.text(node.data, node.xsltOutputEscaping)
+        elif isinstance(node, ProcessingInstruction):
             self.processing_instruction(node.target, node.data)
-        elif node_type == XPathNamespace.NAMESPACE_NODE:
+        elif isinstance(node, Comment):
+            self.comment(node.data)
+        elif isinstance(node, Document):
+            for child in node:
+                self.copy_node(child)
+        elif isinstance(node, XPathNamespace):
             self.namespace(node.xml_qname, node.value)
         else:
             pass

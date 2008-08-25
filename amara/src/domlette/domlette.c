@@ -17,9 +17,6 @@ Project home, documentation, distributions: http://4suite.org/\n\
 #include "builder.h"
 #include "refcounts.h"
 
-PyObject *g_xmlNamespace;
-PyObject *g_xmlnsNamespace;
-
 /*
   These are the external interfaces
 */
@@ -57,6 +54,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
   TextObject *text;
   CommentObject *comment;
   AttrObject *attr;
+  XPathNamespaceObject *nsattr;
   PyObject *namespaceURI, *qualifiedName, *localName;
   PyObject *target, *data, *value;
 
@@ -116,31 +114,26 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
   CHECK_REFS(documentElement, 1);
 
   /* Add documentElement namespace declartion */
-  namespaceURI = g_xmlnsNamespace;
-  qualifiedName = XmlString_FromASCII("xmlns:ft");
   localName = XmlString_FromASCII("ft");
-  value = XmlString_FromASCII("http://fourthought.com");
-  if (qualifiedName == NULL || localName == NULL || value == NULL) {
-    Py_XDECREF(qualifiedName);
+  namespaceURI = XmlString_FromASCII("http://fourthought.com");
+  if (localName == NULL || namespaceURI == NULL) {
     Py_XDECREF(localName);
-    Py_XDECREF(value);
+    Py_XDECREF(namespaceURI);
     Py_DECREF(doc);
     return NULL;
   }
-  attr = Element_SetAttributeNS(documentElement, namespaceURI, qualifiedName,
-                                localName, value);
-  Py_DECREF(qualifiedName);
+  nsattr = Element_AddNamespace(documentElement, localName, namespaceURI);
   Py_DECREF(localName);
-  Py_DECREF(value);
-  if (attr == NULL) {
+  Py_DECREF(namespaceURI);
+  if (nsattr == NULL) {
     Py_DECREF(doc);
     return NULL;
   }
-  Py_DECREF(attr);
+  Py_DECREF(nsattr);
 
   CHECK_REFS(doc, 3);
   CHECK_REFS(documentElement, 2);
-  CHECK_REFS(attr, 1);
+  CHECK_REFS(nsattr, 1);
 
   /* Add text 1 to documentElement */
   data = XmlString_FromASCII("\n  ");
@@ -201,8 +194,8 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  attr = Element_SetAttributeNS(element, namespaceURI, qualifiedName,
-                                localName, value);
+  attr = Element_AddAttribute(element, namespaceURI, qualifiedName,
+                              localName, value);
   Py_DECREF(qualifiedName);
   Py_DECREF(value);
   if (attr == NULL) {
@@ -355,8 +348,8 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  attr = Element_SetAttributeNS(element, namespaceURI, qualifiedName,
-                                localName, value);
+  attr = Element_AddAttribute(element, namespaceURI, qualifiedName,
+                              localName, value);
   Py_DECREF(value);
   Py_DECREF(localName);
   Py_DECREF(qualifiedName);
@@ -486,8 +479,8 @@ static PyMethodDef module_methods[] = {
     "parse_fragment(source[, namespaces[, node_factories]]) -> Document" },
 
   /* from nss.c */
-  Domlette_METHOD(GetAllNs, METH_VARARGS),
-  Domlette_METHOD(SeekNss, METH_VARARGS),
+  //Domlette_METHOD(GetAllNs, METH_VARARGS),
+  //Domlette_METHOD(SeekNss, METH_VARARGS),
 
   /* defined here (regression tests) */
   { "TestTree", PyTestTree, METH_VARARGS,
@@ -515,7 +508,9 @@ static Domlette_APIObject Domlette_API = {
   Document_New,
 
   Element_New,
-  Element_SetAttributeNS,
+  Element_AddNamespace,
+  Element_AddAttribute,
+  Element_InscopeNamespaces,
 
   CharacterData_SubstringData,
   CharacterData_AppendData,
@@ -528,6 +523,12 @@ static Domlette_APIObject Domlette_API = {
   Comment_New,
 
   ProcessingInstruction_New,
+
+  XPathNamespace_New,
+
+  NamespaceMap_Next,
+
+  AttributeMap_Next,
 };
 
 struct submodule_t {
@@ -541,7 +542,8 @@ struct submodule_t submodules[] = {
   SUBMODULE(Builder),
   SUBMODULE(DOMImplementation),
   SUBMODULE(Node),
-  SUBMODULE(NamedNodeMap),
+  SUBMODULE(NamespaceMap),
+  SUBMODULE(AttributeMap),
   SUBMODULE(Element),
   SUBMODULE(Attr),
   SUBMODULE(CharacterData),
@@ -560,14 +562,11 @@ static void fini_domlette(void *capi)
   for (submodule = submodules; submodule->fini; submodule++) {
     submodule->fini();
   }
-
-  Py_DECREF(g_xmlNamespace);
-  Py_DECREF(g_xmlnsNamespace);
 }
 
 DL_EXPORT(void) init_domlette(void)
 {
-  PyObject *module, *import;
+  PyObject *module;
   struct submodule_t *submodule;
   PyObject *cobj;
 
@@ -575,17 +574,6 @@ DL_EXPORT(void) init_domlette(void)
   if (module == NULL) return;
 
   if ((XmlString_IMPORT) == NULL) return;
-
-  /* get the namespace constants */
-  import = PyImport_ImportModule("amara");
-  if (import == NULL) return;
-  g_xmlNamespace = PyObject_GetAttrString(import, "XML_NAMESPACE");
-  g_xmlNamespace = XmlString_FromObjectInPlace(g_xmlNamespace);
-  if (g_xmlNamespace == NULL) return;
-  g_xmlnsNamespace = PyObject_GetAttrString(import, "XMLNS_NAMESPACE");
-  g_xmlnsNamespace = XmlString_FromObjectInPlace(g_xmlnsNamespace);
-  if (g_xmlnsNamespace == NULL) return;
-  Py_DECREF(import);
 
   /* initialize the sub-components */
   for (submodule = submodules; submodule->init; submodule++) {

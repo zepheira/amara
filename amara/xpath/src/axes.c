@@ -213,22 +213,12 @@ static void attribute_axis_dealloc(attribute_axis *self)
 static PyObject *attribute_axis_next(attribute_axis *self)
 {
   if (self->adict != NULL) {
-    PyObject *key, *attr;
-    while (PyDict_Next(self->adict, &self->pos, &key, &attr)) {
-      switch (PyObject_RichCompareBool(Attr_GET_NAMESPACE_URI(attr),
-                                       xmlns_namespace, Py_NE)) {
-      case 0: /* namespace attribute */
-        break;
-      case 1: /* normal attribute */
-        Py_INCREF(attr);
-        return attr;
-        break;
-      default: /* error */
-        return NULL;
-      }
+    AttrObject *attr;
+    while ((attr = AttributeMap_Next(self->adict, &self->pos))) {
+      Py_INCREF(attr);
+      return (PyObject *)attr;
     }
-    Py_DECREF(self->adict);
-    self->adict = NULL;
+    Py_CLEAR(self->adict);
   }
   return NULL;
 }
@@ -686,6 +676,107 @@ static PyTypeObject followingsibling_axis_type = {
   /* tp_free           */ 0,
 };
 
+/** NamespaceAxis object ******************************************/
+
+typedef struct {
+  PyObject_HEAD
+  ElementObject *element;
+  PyObject *namespaces;
+  Py_ssize_t pos;
+} namespace_axis;
+
+static PyObject *namespace_axis_new(PyTypeObject *type, PyObject *args,
+                                    PyObject *kwds)
+{
+  PyObject *node;
+  namespace_axis *axis;
+
+  if (!PyArg_ParseTuple(args, "O!:namespace_axis",
+                        Domlette->Node_Type, &node))
+    return NULL;
+
+  axis = (namespace_axis *)type->tp_alloc(type, 0);
+  if (axis == NULL) {
+    return NULL;
+  }
+  if (Element_Check(node)) {
+    axis->element = Element(node);
+    Py_INCREF(axis->element);
+    axis->namespaces = Element_InscopeNamespaces(Element(node));
+    if (axis->namespaces == NULL) {
+      Py_DECREF(axis);
+      return NULL;
+    }
+    axis->pos = 0;
+  }
+  return (PyObject *)axis;
+}
+
+static void namespace_axis_dealloc(namespace_axis *self)
+{
+  Py_CLEAR(self->element);
+  Py_CLEAR(self->namespaces);
+  self->ob_type->tp_free(self);
+}
+
+static PyObject *namespace_axis_next(namespace_axis *self)
+{
+  if (self->namespaces != NULL) {
+    XPathNamespaceObject *node;
+    while ((node = NamespaceMap_Next(self->namespaces, &self->pos))) {
+      node = XPathNamespace_New(self->element, 
+                                XPathNamespace_GET_NAME(node),
+                                XPathNamespace_GET_VALUE(node));
+      return (PyObject *)node;
+    }
+    Py_CLEAR(self->namespaces);
+  }
+  return NULL;
+}
+
+static PyTypeObject namespace_axis_type = {
+  /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
+  /* ob_size           */ 0,
+  /* tp_name           */ MODULE_NAME "." "namespace_axis",
+  /* tp_basicsize      */ sizeof(namespace_axis),
+  /* tp_itemsize       */ 0,
+  /* tp_dealloc        */ (destructor) namespace_axis_dealloc,
+  /* tp_print          */ (printfunc) 0,
+  /* tp_getattr        */ (getattrfunc) 0,
+  /* tp_setattr        */ (setattrfunc) 0,
+  /* tp_compare        */ (cmpfunc) 0,
+  /* tp_repr           */ (reprfunc) 0,
+  /* tp_as_number      */ (PyNumberMethods *) 0,
+  /* tp_as_sequence    */ (PySequenceMethods *) 0,
+  /* tp_as_mapping     */ (PyMappingMethods *) 0,
+  /* tp_hash           */ (hashfunc) 0,
+  /* tp_call           */ (ternaryfunc) 0,
+  /* tp_str            */ (reprfunc) 0,
+  /* tp_getattro       */ (getattrofunc) 0,
+  /* tp_setattro       */ (setattrofunc) 0,
+  /* tp_as_buffer      */ (PyBufferProcs *) 0,
+  /* tp_flags          */ (Py_TPFLAGS_DEFAULT),
+  /* tp_doc            */ (char *) 0,
+  /* tp_traverse       */ (traverseproc) 0,
+  /* tp_clear          */ (inquiry) 0,
+  /* tp_richcompare    */ (richcmpfunc) 0,
+  /* tp_weaklistoffset */ 0,
+  /* tp_iter           */ (getiterfunc) 0,
+  /* tp_iternext       */ (iternextfunc) namespace_axis_next,
+  /* tp_methods        */ (PyMethodDef *) 0,
+  /* tp_members        */ (PyMemberDef *) 0,
+  /* tp_getset         */ (PyGetSetDef *) 0,
+  /* tp_base           */ (PyTypeObject *) 0,
+  /* tp_dict           */ (PyObject *) 0,
+  /* tp_descr_get      */ (descrgetfunc) 0,
+  /* tp_descr_set      */ (descrsetfunc) 0,
+  /* tp_dictoffset     */ 0,
+  /* tp_init           */ (initproc) 0,
+  /* tp_alloc          */ (allocfunc) 0,
+  /* tp_new            */ (newfunc) namespace_axis_new,
+  /* tp_free           */ 0,
+};
+
 /** Module Initialization ********************************************/
 
 static PyMethodDef module_methods[] = {
@@ -703,6 +794,7 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
     &descendant_axis_type,
     &descendant_self_axis_type,
     &followingsibling_axis_type,
+    &namespace_axis_type,
     NULL
   };
   int i;
