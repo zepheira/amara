@@ -58,243 +58,9 @@ CharacterDataObject *_CharacterData_CloneNode(PyTypeObject *type,
   return newNode;
 }
 
-PyObject *CharacterData_SubstringData(CharacterDataObject *self,
-                                      Py_ssize_t index, Py_ssize_t count)
-{
-  PyObject *newValue;
-
-  newValue = PyUnicode_FromUnicode(NULL, count);
-  if (newValue) {
-    Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue),
-                    PyUnicode_AS_UNICODE(self->nodeValue) + index,
-                    count);
-  }
-  return newValue;
-}
-
-int CharacterData_AppendData(CharacterDataObject *self, PyObject *arg)
-{
-  PyObject *oldValue = self->nodeValue;
-  PyObject *newValue;
-
-  if (arg == NULL || !PyUnicode_Check(arg)) {
-    PyErr_BadInternalCall();
-    return -1;
-  }
-
-  newValue = PyUnicode_FromUnicode(NULL,
-                                   PyUnicode_GET_SIZE(oldValue) + \
-                                   PyUnicode_GET_SIZE(arg));
-  if (newValue == NULL) return -1;
-
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue),
-                  PyUnicode_AS_UNICODE(oldValue),
-                  PyUnicode_GET_SIZE(oldValue));
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + PyUnicode_GET_SIZE(oldValue),
-                  PyUnicode_AS_UNICODE(arg),
-                  PyUnicode_GET_SIZE(arg));
-
-  Py_DECREF(oldValue);
-  self->nodeValue = newValue;
-  return 0;
-}
-
-int CharacterData_InsertData(CharacterDataObject *self, Py_ssize_t offset,
-                             PyObject *arg)
-{
-  PyObject *oldValue = self->nodeValue;
-  PyObject *newValue;
-
-  if (arg == NULL || !PyUnicode_Check(arg)) {
-    PyErr_BadInternalCall();
-    return -1;
-  }
-
-  newValue = PyUnicode_FromUnicode(NULL,
-                                   PyUnicode_GET_SIZE(oldValue) + \
-                                   PyUnicode_GET_SIZE(arg));
-  if (newValue == NULL) return -1;
-
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue),
-                  PyUnicode_AS_UNICODE(oldValue),
-                  offset);
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + offset,
-                  PyUnicode_AS_UNICODE(arg),
-                  PyUnicode_GET_SIZE(arg));
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + offset + PyUnicode_GET_SIZE(arg),
-                  PyUnicode_AS_UNICODE(oldValue) + offset,
-                  PyUnicode_GET_SIZE(oldValue) - offset);
-
-  Py_DECREF(oldValue);
-  self->nodeValue = newValue;
-  return 0;
-}
-
-int CharacterData_DeleteData(CharacterDataObject *self, Py_ssize_t offset,
-                             Py_ssize_t count)
-{
-  PyObject *oldValue = self->nodeValue;
-  PyObject *newValue;
-
-  newValue = PyUnicode_FromUnicode(NULL, PyUnicode_GET_SIZE(oldValue) - count);
-  if (newValue == NULL) return -1;
-
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue),
-                  PyUnicode_AS_UNICODE(oldValue),
-                  offset);
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + offset,
-                  PyUnicode_AS_UNICODE(oldValue) + offset + count,
-                  PyUnicode_GET_SIZE(oldValue) - offset - count);
-
-  Py_DECREF(oldValue);
-  self->nodeValue = newValue;
-  return 0;
-}
-
-int CharacterData_ReplaceData(CharacterDataObject *self, Py_ssize_t offset,
-                              Py_ssize_t count, PyObject *arg)
-{
-  PyObject *oldValue = self->nodeValue;
-  PyObject *newValue;
-
-  if (arg == NULL || !PyUnicode_Check(arg)) {
-    PyErr_BadInternalCall();
-    return -1;
-  }
-
-  newValue = PyUnicode_FromUnicode(NULL,
-                                   PyUnicode_GET_SIZE(oldValue) - count + \
-                                   PyUnicode_GET_SIZE(arg));
-  if (newValue == NULL) return -1;
-
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue),
-                  PyUnicode_AS_UNICODE(oldValue),
-                  offset);
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + offset,
-                  PyUnicode_AS_UNICODE(arg),
-                  PyUnicode_GET_SIZE(arg));
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(newValue) + offset + PyUnicode_GET_SIZE(arg),
-                  PyUnicode_AS_UNICODE(oldValue) + offset + count,
-                  PyUnicode_GET_SIZE(oldValue) - offset - count);
-
-  Py_DECREF(oldValue);
-  self->nodeValue = newValue;
-  return 0;
-}
-
 /** Python Methods ****************************************************/
 
-static char substring_doc[] = "\
-Extracts a range of data from the node.";
-
-static PyObject *characterdata_substring(PyObject *self, PyObject *args)
-{
-  Py_ssize_t offset, count;
-
-  if (!PyArg_ParseTuple(args, "nn:substring",
-                        &offset, &count))
-    return NULL;
-
-  return CharacterData_SubstringData(CharacterData(self), offset, count);
-}
-
-static char append_doc[] = "\
-Append the string to the end of the character data of the node.";
-
-static PyObject *characterdata_append(PyObject *self, PyObject *args)
-{
-  PyObject *data;
-
-  if (!PyArg_ParseTuple(args, "O:append", &data))
-    return NULL;
-
-  if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
-    return NULL;
-
-  if (CharacterData_AppendData(CharacterData(self), data) < 0) {
-    Py_DECREF(data);
-    return NULL;
-  }
-  Py_DECREF(data);
-
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-static char insert_doc[] = "\
-Insert a string at the specified unicode unit offset.";
-
-static PyObject *characterdata_insert(PyObject *self, PyObject *args)
-{
-  Py_ssize_t offset;
-  PyObject *data;
-
-  if (!PyArg_ParseTuple(args, "nO:insert", &offset, &data))
-    return NULL;
-
-  if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
-    return NULL;
-
-  if (CharacterData_InsertData(CharacterData(self), offset, data) < 0) {
-    Py_DECREF(data);
-    return NULL;
-  }
-
-  Py_DECREF(data);
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-static char delete_doc[] = "\
-Remove a range of unicode units from the node.";
-
-static PyObject *characterdata_delete(PyObject *self, PyObject *args)
-{
-  Py_ssize_t offset, count;
-
-  if (!PyArg_ParseTuple(args, "nn:delete",
-                        &offset, &count))
-    return NULL;
-
-  if (CharacterData_DeleteData(CharacterData(self), offset, count) < 0)
-    return NULL;
-
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-static char replace_doc[] = "\
-Replace the characters starting at the specified unicode unit offset with\n\
-the specified string.";
-
-static PyObject *characterdata_replace(PyObject *self, PyObject *args)
-{
-  Py_ssize_t offset, count;
-  PyObject *data;
-
-  if (!PyArg_ParseTuple(args, "nnO:replace",
-                        &offset, &count, &data))
-    return NULL;
-
-  if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
-    return NULL;
-
-  if (CharacterData_DeleteData(CharacterData(self), offset, count) < 0) {
-    Py_DECREF(data);
-    return NULL;
-  }
-
-  Py_DECREF(data);
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
 static PyMethodDef characterdata_methods[] = {
-  {"substring", characterdata_substring, METH_VARARGS, substring_doc },
-  {"append",    characterdata_append,    METH_VARARGS, append_doc },
-  {"insert",    characterdata_insert,    METH_VARARGS, insert_doc },
-  {"delete",    characterdata_delete,    METH_VARARGS, delete_doc },
-  {"replace",   characterdata_replace,   METH_VARARGS, replace_doc },
   { NULL }
 };
 
@@ -306,15 +72,15 @@ static PyMemberDef characterdata_members[] = {
 
 /** Python Computed Members ********************************************/
 
-static PyObject *get_data(CharacterDataObject *self, void *arg)
+static PyObject *get_value(CharacterDataObject *self, void *arg)
 {
   Py_INCREF(self->nodeValue);
   return self->nodeValue;
 }
 
-static int set_data(CharacterDataObject *self, PyObject *v, void *arg)
+static int set_value(CharacterDataObject *self, PyObject *v, void *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "data", 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -322,18 +88,8 @@ static int set_data(CharacterDataObject *self, PyObject *v, void *arg)
   return 0;
 }
 
-static PyObject *get_length(CharacterDataObject *self, void *arg)
-{
-#if PY_VERSION_HEX < 0x02050000
-    return PyInt_FromLong(PyUnicode_GET_SIZE(self->nodeValue));
-#else
-    return PyInt_FromSsize_t(PyUnicode_GET_SIZE(self->nodeValue));
-#endif
-}
-
 static PyGetSetDef characterdata_getset[] = {
-  { "data",      (getter)get_data,   (setter)set_data},
-  { "length",    (getter)get_length },
+  { "xml_value", (getter)get_value, (setter)set_value },
   { NULL }
 };
 

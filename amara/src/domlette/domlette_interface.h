@@ -68,20 +68,6 @@ extern "C" {
                                         PyObject *value);
     PyObject *(*Element_InscopeNamespaces)(ElementObject *self);
 
-    /* CharacterData Methods */
-    PyObject *(*CharacterData_SubstringData)(CharacterDataObject *node,
-                                             Py_ssize_t offset,
-                                             Py_ssize_t count);
-    int (*CharacterData_AppendData)(CharacterDataObject *node,
-                                    PyObject *data);
-    int (*CharacterData_InsertData)(CharacterDataObject *node,
-                                    Py_ssize_t offset, PyObject *data);
-    int (*CharacterData_DeleteData)(CharacterDataObject *node,
-                                    Py_ssize_t offset, Py_ssize_t count);
-    int (*CharacterData_ReplaceData)(CharacterDataObject *node,
-                                     Py_ssize_t offset, Py_ssize_t count,
-                                     PyObject *data);
-
     /* Text Methods */
     TextObject *(*Text_New)(PyObject *data);
 
@@ -153,12 +139,6 @@ extern "C" {
 #define Element_AddNamespace Domlette->Element_AddNamespace
 #define Element_AddAttribute Domlette->Element_AddAttribute
 #define Element_InscopeNamespaces Domlette->Element_InscopeNamespaces
-
-#define CharacterData_SubstringData Domlette->CharacterData_SubstringData
-#define CharacterData_AppendData Domlette->CharacterData_AppendData
-#define CharacterData_InsertData Domlette->CharacterData_InsertData
-#define CharacterData_DeleteData Domlette->CharacterData_DeleteData
-#define CharacterData_ReplaceData Domlette->CharacterData_ReplaceData
 
 #define Text_Check(op) PyObject_TypeCheck((op), DomletteText_Type)
 #define Text_CheckExact(op) ((op)->ob_type == DomletteText_Type)

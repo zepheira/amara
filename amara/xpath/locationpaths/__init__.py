@@ -24,7 +24,7 @@ class location_path(nodesets.nodeset_expression):
                 # make the root node the context node
                 'LOAD_FAST', 'context',
                 'LOAD_ATTR', 'node',
-                'LOAD_ATTR', 'rootNode',
+                'LOAD_ATTR', 'xml_root',
                 'BUILD_TUPLE', 1,
                 )
         for step in self._steps:

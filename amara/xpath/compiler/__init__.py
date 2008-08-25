@@ -68,7 +68,7 @@ class xpathcompiler(object):
     def emitRootNodeSet(self):
         self.emit('LOAD_FAST', 'context',
                   'LOAD_ATTR', 'node',
-                  'LOAD_ATTR', 'rootNode',
+                  'LOAD_ATTR', 'xml_root',
                   'BUILD_TUPLE', 1,
                   )
         return

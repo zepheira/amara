@@ -39,20 +39,6 @@ extern "C" {
 #define CharacterData_CloneNode(type, typeobj, node, deep) \
   ((type *) _CharacterData_CloneNode((typeobj), (node), (deep)))
 
-  PyObject *CharacterData_SubstringData(CharacterDataObject *node,
-                                        Py_ssize_t offset, Py_ssize_t count);
-
-  int CharacterData_AppendData(CharacterDataObject *node, PyObject *arg);
-
-  int CharacterData_InsertData(CharacterDataObject *node, Py_ssize_t offset,
-                               PyObject *arg);
-
-  int CharacterData_DeleteData(CharacterDataObject *node, Py_ssize_t offset,
-                               Py_ssize_t count);
-
-  int CharacterData_ReplaceData(CharacterDataObject *node, Py_ssize_t offset,
-                                Py_ssize_t count,PyObject *arg);
-
 #endif /* Domlette_BUILDING_MODULE */
 
 #ifdef __cplusplus

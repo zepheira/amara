@@ -41,7 +41,7 @@ def _fixup_aliases(node, aliases):
 def _dispatch_table():
     class type_dispatch_table(collections.defaultdict):
         def __missing__(self, node_type):
-            if issubclass(node_type, Element):
+            if node_type and issubclass(node_type, Element):
                 value = self[node_type] = collections.defaultdict(list)
             else:
                 value = self[node_type] = []
@@ -286,7 +286,7 @@ class transform_element(xslt_element):
                     info = ((precedence, template_priority, position),
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
-                    if issubclass(node_type, Element):
+                    if node_type and issubclass(node_type, Element):
                         # Element types are further keyed by the name test.
                         name_key = node_test.name_key
                         if name_key:
@@ -325,18 +325,19 @@ class transform_element(xslt_element):
             any_patterns = type_table[None]
             type_table = match_templates[mode] = dict(type_table)
             for node_type, patterns in type_table.iteritems():
-                if issubclass(node_type, Element):
-                    # Add those that are wildcard tests ('*' and 'prefix:*')
-                    wildcard_names = patterns[None]
-                    name_table = type_table[node_type] = dict(patterns)
-                    for name_key, patterns in name_table.iteritems():
-                        if name_key is not None:
-                            patterns.extend(wildcard_names)
+                if node_type:
+                    if issubclass(node_type, Element):
+                        # Add those that are wildcard tests ('*' and 'prefix:*')
+                        wildcard_names = patterns[None]
+                        name_table = type_table[node_type] = dict(patterns)
+                        for name_key, patterns in name_table.iteritems():
+                            if name_key is not None:
+                                patterns.extend(wildcard_names)
+                            patterns.extend(any_patterns)
+                            patterns.sort(reverse=True)
+                    else:
                         patterns.extend(any_patterns)
                         patterns.sort(reverse=True)
-                elif node_type is not None:
-                    patterns.extend(any_patterns)
-                    patterns.sort(reverse=True)
         return
 
     #def _printMatchTemplates(self):

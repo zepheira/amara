@@ -132,18 +132,18 @@ src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 """, 'urn:domlette-test-tree')
 DOC = tree.parse(src)
 
-def children(node, type=Node.ELEMENT_NODE):
-    return [ child for child in node if child.nodeType == type ]
+def children(node, type=tree.Element):
+    return [ child for child in node if isinstance(child, type) ]
 
 # `#document` nodes
-PI, PI2 = children(DOC, Node.PROCESSING_INSTRUCTION_NODE)
-ROOT = DOC.documentElement
+PI, PI2 = children(DOC, tree.ProcessingInstruction)
+ROOT = children(DOC, tree.Element)[0]
 # `ROOT` nodes
-COMMENT = children(ROOT, Node.COMMENT_NODE)[0]
+COMMENT = children(ROOT, tree.Comment)[0]
 CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 # `CHILD1` nodes
-ATTR1 = CHILD1.getAttributeNodeNS(None, 'attr1')
-ATTR31 = CHILD1.getAttributeNodeNS(None, 'attr31')
+ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')
+ATTR31 = CHILD1.xml_attributes.getnode(None, 'attr31')
 GCHILDREN1 = GCHILD11, GCHILD12 = children(CHILD1)
 TEXT1 = CHILD1.lastChild
 # `CHILD2` nodes

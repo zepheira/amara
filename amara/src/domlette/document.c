@@ -109,123 +109,19 @@ DocumentObject *Document_New(PyObject *documentURI)
 
 /** Python Methods ****************************************************/
 
-static char document_createElementNS_doc[] =
-"createElementNS(namespaceURI, qualifiedName) -> new Element\n\
+static char document_lookup_doc[] =
+"xml_lookup(elementId) -> Element\n\
 \n\
-Creates an element of the given qualified name and namespace URI.";
-
-static PyObject *document_createElementNS(PyObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *qualifiedName;
-
-  if(!PyArg_ParseTuple(args, "OO:createElementNS",
-		       &namespaceURI, &qualifiedName))
-    return NULL;
-
-  return PyObject_Call((PyObject *)(&DomletteElement_Type), args, NULL);
-}
-
-static char document_createAttributeNS_doc[] =
-"createAttributeNS(namespaceURI, qualifiedName) -> new Attribute\n\
-\n\
-Creates an attribute of the given qualified name and namespace URI.";
-
-static PyObject *document_createAttributeNS(PyObject *self, PyObject *args)
-{
-  PyObject *namespaceURI, *qualifiedName;
-
-  if (!PyArg_ParseTuple(args, "OO:createAttributeNS",
-			&namespaceURI, &qualifiedName))
-    return NULL;
-
-  return PyObject_Call((PyObject *)(&DomletteAttr_Type), args, NULL);
-}
-
-static char document_createTextNode_doc[] =
-"createTextNode(data) -> new Text\n\
-\n\
-Creates a Text node given the specified string.";
-
-static PyObject *document_createTextNode(PyObject *self, PyObject *args)
-{
-  PyObject *data;
-
-  if (!PyArg_ParseTuple(args, "O:createTextNode", &data))
-    return NULL;
-
-  return PyObject_Call((PyObject *)(&DomletteText_Type), args, NULL);
-}
-
-static char document_createProcessingInstruction_doc[] =
-"createProcessingInstruction(target, data) -> new ProcessingInstruction\n\
-\n\
-Creates a ProcessingInstruction node given the specified name and data\n\
-strings.";
-
-static PyObject *document_createProcessingInstruction(PyObject *self,
-                                                      PyObject *args)
-{
-  PyObject *target, *data;
-
-  if (!PyArg_ParseTuple(args,"OO:createProcessingInstruction", &target, &data))
-    return NULL;
-
-  return PyObject_Call((PyObject *)(&DomletteProcessingInstruction_Type),
-                       args, NULL);
-}
-
-static char document_createComment_doc[] =
-"createComment(data) -> new Comment\n\
-\n\
-Creates a Comment node given the specified string.";
-
-static PyObject *document_createComment(PyObject *self, PyObject *args)
-{
-  PyObject *data;
-
-  if (!PyArg_ParseTuple(args, "O:createComment", &data))
-    return NULL;
-
-  return PyObject_Call((PyObject *)(&DomletteComment_Type), args, NULL);
-}
-
-static char document_importNode_doc[] =
-"importNode(importedNode, deep) -> Node\n\
-\n\
-Imports a node from another document to this document. The returned node\n\
-has no parent; (parentNode is None). The source node is not altered or\n\
-removed from the original document; this method creates a new copy of the\n\
-source node.";
-
-static PyObject *document_importNode(PyObject *self, PyObject *args)
-{
-  PyObject *node, *boolean_deep = Py_False;
-  int deep;
-
-  if (!PyArg_ParseTuple(args,"O|O:importNode", &node, &boolean_deep))
-    return NULL;
-
-  deep = PyObject_IsTrue(boolean_deep);
-  if (deep == -1)
-    return NULL;
-
-  return (PyObject *)Node_CloneNode(node, deep);
-}
-
-
-static char document_getElementById_doc[] =
-"getElementById(elementId) -> Element\n\
-\n\
-Returns the Element whose ID is given by elementId. If no such element\n\
+Returns the Element whose ID is given by `elementId`. If no such element\n\
 exists, returns None. If more than one element has this ID, the first in\n\
 the document is returned.";
 
-static PyObject *document_getElementById(PyObject *self, PyObject *args)
+static PyObject *document_lookup(PyObject *self, PyObject *args)
 {
   PyObject *elementId, *element;
   int i;
 
-  if (!PyArg_ParseTuple(args, "O:getElementById", &elementId))
+  if (!PyArg_ParseTuple(args, "O:xml_lookup", &elementId))
     return NULL;
 
   /* our "document" can have multiple element children */
@@ -246,16 +142,10 @@ static PyObject *document_getElementById(PyObject *self, PyObject *args)
 }
 
 #define Document_METHOD(name) \
-  { #name, document_##name, METH_VARARGS, document_##name##_doc }
+  { "xml_" #name, document_##name, METH_VARARGS, document_##name##_doc }
 
 static PyMethodDef document_methods[] = {
-  Document_METHOD(createElementNS),
-  Document_METHOD(createAttributeNS),
-  Document_METHOD(createTextNode),
-  Document_METHOD(createProcessingInstruction),
-  Document_METHOD(createComment),
-  Document_METHOD(importNode),
-  Document_METHOD(getElementById),
+  Document_METHOD(lookup),
   { NULL }
 };
 
@@ -271,39 +161,10 @@ static PyMemberDef document_members[] = {
 
 /** Python Computed Members *******************************************/
 
-static PyObject *get_root_node(DocumentObject *self, void *arg)
+static PyObject *get_root(DocumentObject *self, void *arg)
 {
   Py_INCREF(self);
   return (PyObject *)self;
-}
-
-static PyObject *get_document_element(DocumentObject *self, void *arg)
-{
-  int i;
-  for (i = 0; i < ContainerNode_GET_COUNT(self); i++) {
-    NodeObject *child = ContainerNode_GET_CHILD(self, i);
-    if (Element_Check(child)) {
-      Py_INCREF(child);
-      return (PyObject *) child;
-    }
-  }
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-static PyObject *get_document_uri(DocumentObject *self, void *arg)
-{
-  Py_INCREF(self->documentURI);
-  return self->documentURI;
-}
-
-static int set_document_uri(DocumentObject *self, PyObject *v, void *arg)
-{
-  if ((v = XmlString_ConvertArgument(v, "documentURI", 1)) == NULL)
-    return -1;
-  Py_DECREF(self->documentURI);
-  self->documentURI = v;
-  return 0;
 }
 
 static PyObject *get_public_id(DocumentObject *self, void *arg)
@@ -337,11 +198,9 @@ static int set_system_id(DocumentObject *self, PyObject *v, void *arg)
 }
 
 static PyGetSetDef document_getset[] = {
-  { "rootNode",        (getter)get_root_node },
-  { "documentElement", (getter)get_document_element },
-  { "documentURI",     (getter)get_document_uri, (setter)set_document_uri },
-  { "publicId",        (getter)get_public_id,    (setter)set_public_id },
-  { "systemId",        (getter)get_system_id,    (setter)set_system_id },
+  { "xml_root",      (getter)get_root },
+  { "xml_public_id", (getter)get_public_id, (setter)set_public_id },
+  { "xml_system_id", (getter)get_system_id, (setter)set_system_id },
   { NULL }
 };
 
@@ -476,28 +335,12 @@ int DomletteDocument_Init(PyObject *module)
 
   dict = DomletteDocument_Type.tp_dict;
 
-  value = PyInt_FromLong(DOCUMENT_NODE);
+  value = PyString_FromString("document");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "nodeType", value))
+  if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
-
-  value = XmlString_FromASCII("#document");
-  if (value == NULL)
-    return -1;
-  if (PyDict_SetItemString(dict, "nodeName", value))
-    return -1;
-  Py_DECREF(value);
-
-  if (PyDict_SetItemString(dict, "ownerDocument", Py_None))
-    return -1;
-
-  if (PyDict_SetItemString(dict, "doctype", Py_None))
-    return -1;
-
-  if (PyDict_SetItemString(dict, "implementation", g_implementation))
-    return -1;
 
   creation_counter = PyLong_FromLong(0L);
   if (creation_counter == NULL) return -1;

@@ -63,7 +63,7 @@ class id_function(builtin_function):
             arg0 = datatypes.string(arg0)
             ids = set(arg0.split())
 
-        doc = context.node.rootNode
+        doc = context.node.xml_root
         nodeset = filter(None, (doc.getElementById(id) for id in ids))
         nodeset.sort()
         return datatypes.nodeset(nodeset)

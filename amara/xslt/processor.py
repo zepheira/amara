@@ -4,12 +4,12 @@
 XSLT processing engine
 """
 import os, sys, operator, cStringIO, warnings
-from xml.dom import Node
 from gettext import gettext as _
 
 DEFAULT_ENCODING = 'UTF-8'
 #from amara import DEFAULT_ENCODING
 from amara import ReaderError, tree
+from amara.tree import Node, Document, Element, ProcessingInstruction
 from amara.lib import iri, inputsource
 from amara.xpath import XPathError
 from amara.xslt import XsltError
@@ -434,14 +434,10 @@ class processor(object):
         #  <?xml-stylesheet type="application/xslt+xml" href="sty2"
         #    alternate="yes"?>
         # then sty1 is used because it comes first.
-        root = node.rootNode
+        root = node.xml_root
         c = 1 # count of alternates, +1
         found_nonalt = 0
         stys = []
-        stylesheets = ( node for node in prolog
-                        if isinstance(node, ProcessingInstruction)
-                        and node.xml_target == 'xml-stylesheet'
-                        )
         for node in root:
             # only look at prolog, not anything that comes after it
             if isinstance(node, Element): break

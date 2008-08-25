@@ -81,7 +81,7 @@ static PyMethodDef pi_methods[] = {
   { #name, T_OBJECT, offsetof(ProcessingInstructionObject, member), RO }
 
 static PyMemberDef pi_members[] = {
-  ProcessingInstruction_MEMBER(target, nodeName),
+  ProcessingInstruction_MEMBER(xml_target, nodeName),
   ProcessingInstruction_MEMBER(nodeName, nodeName),
   { NULL }
 };
@@ -96,7 +96,7 @@ static PyObject *get_data(ProcessingInstructionObject *self, void *arg)
 
 static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "data", 0);
+  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_data", 0);
   if (nodeValue == NULL) return -1;
 
   Py_DECREF(self->nodeValue);
@@ -105,7 +105,7 @@ static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef pi_getset[] = {
-  { "data", (getter)get_data, (setter)set_data},
+  { "xml_data", (getter)get_data, (setter)set_data},
   { NULL }
 };
 

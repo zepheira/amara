@@ -138,7 +138,7 @@ class number_element(xslt_element):
             while start and not fromPattern.match(context, start):
                 start = start.xml_parent
         else:
-            start = node.rootNode
+            start = node.xml_root
 
         while not countPattern.match(context, node):
             node = node.xml_parent

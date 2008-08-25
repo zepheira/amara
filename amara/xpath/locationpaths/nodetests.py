@@ -6,6 +6,7 @@ A parsed token that represents a node test.
 
 from xml.dom import Node
 
+from amara import tree
 from amara.xpath import XPathError
 from amara.xpath.locationpaths import _nodetests
 
@@ -41,13 +42,13 @@ class node_type(node_test):
     def __new__(cls, name, *args):
         return object.__new__(cls._classmap[name])
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
+    def match(self, context, node, principal_type=tree.Element):
         """
         The principalType is discussed in section [2.3 Node Tests]
         of the XPath 1.0 spec.  Only attribute and namespace axes
         differ from the default of elements.
         """
-        return node.nodeType == self.node_type
+        return isinstance(node, principal_type)
 
     def __str__(self):
         return self.name + '()'
@@ -62,7 +63,7 @@ class any_node_test(node_type):
 
 class comment_test(node_type):
     name = 'comment'
-    node_type = Node.COMMENT_NODE
+    node_type = tree.Comment
 
     def get_filter(self, compiler, principal_type):
         return _nodetests.typefilter(Node.COMMENT_NODE)
@@ -70,7 +71,7 @@ class comment_test(node_type):
 
 class text_test(node_type):
     name = 'text'
-    node_type = Node.TEXT_NODE
+    node_type = tree.Text
 
     def get_filter(self, compiler, principal_type):
         return _nodetests.typefilter(Node.TEXT_NODE)
@@ -78,7 +79,7 @@ class text_test(node_type):
 
 class processing_instruction_test(node_type):
     name = 'processing-instruction'
-    node_type = Node.PROCESSING_INSTRUCTION_NODE
+    node_type = tree.ProcessingInstruction
 
     def __init__(self, name, target=None):
         if target:
@@ -96,12 +97,12 @@ class processing_instruction_test(node_type):
                                          None, self._target)
         return _nodetests.typefilter(Node.PROCESSING_INSTRUCTION_NODE)
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
-        if node.nodeType != self.node_type:
-            return 0
-        if self._target:
-            return node.target == self._target
-        return 1
+    def match(self, context, node, principal_type=tree.Element):
+        if isinstance(node, principal_type):
+            if self._target:
+                return node.target == self._target
+            return True
+        return False
 
     def __str__(self):
         if self._target:
@@ -130,8 +131,8 @@ class principal_type_test(name_test):
     def get_filter(self, compiler, principal_type):
         return _nodetests.typefilter(principal_type)
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
-        return node.nodeType == principalType
+    def match(self, context, node, principal_type=tree.Element):
+        return isinstance(node, principal_type)
 
     def __str__(self):
         return '*'
@@ -148,10 +149,10 @@ class local_name_test(name_test):
     def get_filter(self, compiler, principal_type):
         return _nodetests.namefilter(principal_type, None, self._name)
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
+    def match(self, context, node, principal_type=tree.Element):
         # NameTests do not use the default namespace, just as attributes
-        if node.nodeType == principalType and not node.namespaceURI:
-            return node.localName == self._name
+        if isinstance(node, principal_type) and not node.xml_namespace:
+            return node.xml_local == self._name
         return 0
 
     def __str__(self):
@@ -172,11 +173,11 @@ class namespace_test(name_test):
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
         return _nodetests.namefilter(principal_type, namespace, None)
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
-        if node.nodeType != principalType:
-            return 0
+    def match(self, context, node, principal_type=tree.Element):
+        if not isinstance(node, principal_type):
+            return False
         try:
-            return node.namespaceURI == context.namespaces[self._prefix]
+            return node.xml_namespace == context.namespaces[self._prefix]
         except KeyError:
             raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
                                    prefix=self._prefix)
@@ -200,12 +201,12 @@ class qualified_name_test(name_test):
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=prefix)
         return _nodetests.namefilter(principal_type, namespace, local_name)
 
-    def match(self, context, node, principalType=Node.ELEMENT_NODE):
-        if node.nodeType == principalType:
+    def match(self, context, node, principal_type=tree.Element):
+        if isinstance(node, principal_type):
             prefix, local_name = self.name_key
-            if node.localName == local_name:
+            if node.xml_local == local_name:
                 try:
-                    return node.namespaceURI == context.namespaces[prefix]
+                    return node.xml_namespace == context.namespaces[prefix]
                 except KeyError:
                     raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
                                            prefix=prefix)

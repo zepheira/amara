@@ -252,6 +252,9 @@ AttributeMap_GetNode(PyObject *self, PyObject *namespace, PyObject *name)
     return NULL;
   }
   entry = get_entry(nm, hash, name, namespace);
+  Py_DECREF(namespace);
+  Py_DECREF(name);
+
   return AttributeEntry_NODE(entry);
 }
 
@@ -272,7 +275,6 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
   hash = get_hash(namespace, name);
   if (hash == -1)
     return -1;
-
   entry = get_entry(nm, hash, name, namespace);
   assert(entry != NULL);
   if (entry->ne_node == NULL) {
@@ -332,11 +334,16 @@ if they do not identify a node in this map.";
 static PyObject *namednodemap_getnode(PyObject *self, PyObject *args)
 {
   PyObject *namespace, *name;
+  AttrObject *attr;
 
   if (!PyArg_ParseTuple(args, "OO:getnode", &namespace, &name))
     return NULL;
 
-  return (PyObject *)AttributeMap_GetNode(self, namespace, name);
+  attr = AttributeMap_GetNode(self, namespace, name);
+  if (attr != NULL)
+    return (PyObject *)attr;
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 static char namednodemap_setnode_doc[] = "\

@@ -654,10 +654,10 @@ int DomletteElement_Init(PyObject *module)
   if (PyType_Ready(&DomletteElement_Type) < 0)
     return -1;
 
-  value = PyInt_FromLong(ELEMENT_NODE);
+  value = PyString_FromString("element");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(DomletteElement_Type.tp_dict, "xml_node_type", value))
+  if (PyDict_SetItemString(DomletteElement_Type.tp_dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
 

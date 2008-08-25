@@ -512,12 +512,6 @@ static Domlette_APIObject Domlette_API = {
   Element_AddAttribute,
   Element_InscopeNamespaces,
 
-  CharacterData_SubstringData,
-  CharacterData_AppendData,
-  CharacterData_InsertData,
-  CharacterData_DeleteData,
-  CharacterData_ReplaceData,
-
   Text_New,
 
   Comment_New,

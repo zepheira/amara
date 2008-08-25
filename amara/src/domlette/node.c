@@ -553,8 +553,23 @@ static PyObject *node_normalize(NodeObject *self, PyObject *args)
 #endif
         if (!Text_Check(next)) break;
         /* Adjacent Text nodes; merge their data. */
-        if (CharacterData_AppendData(Text(current), Text_GET_DATA(next)) < 0)
-          return NULL;
+        PyObject *current_value, *next_value, *new_value;
+        Py_UNICODE *raw_value;
+        current_value = Text_GET_DATA(current);
+        next_value = Text_GET_DATA(next);
+        new_value = PyUnicode_FromUnicode(NULL,
+                                          PyUnicode_GET_SIZE(current_value) +
+                                          PyUnicode_GET_SIZE(next_value));
+        if (new_value == NULL) return NULL;
+        raw_value = PyUnicode_AS_UNICODE(new_value);
+        Py_UNICODE_COPY(raw_value, PyUnicode_AS_UNICODE(current_value),
+                        PyUnicode_GET_SIZE(current_value));
+        raw_value += PyUnicode_GET_SIZE(current_value);
+        Py_UNICODE_COPY(raw_value, PyUnicode_AS_UNICODE(next_value),
+                        PyUnicode_GET_SIZE(next_value));
+        Text_SET_DATA(current, new_value);
+        Py_DECREF(current_value);
+
 #ifdef DEBUG_NODE_NORMALIZE
         _Node_Dump("normalize: current after merge", current);
 #endif
@@ -679,20 +694,20 @@ static PyObject *node_cloneNode(NodeObject *self, PyObject *args)
   return (PyObject *)Node_CloneNode((PyObject *)self, deep);
 }
 
-static char xpath_doc[] = "\
+static char select_doc[] = "\
 Evaluates an XPath expression string using this node as context.";
 
-static PyObject *node_xpath(NodeObject *self, PyObject *args, PyObject *kw)
+static PyObject *node_select(NodeObject *self, PyObject *args, PyObject *kw)
 {
   PyObject *expr, *explicit_nss = Py_None;
   PyObject *module, *result;
   static char *kwlist[] = { "expr", "prefixes", NULL };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:xml_xpath", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|O:xml_select", kwlist,
                                    &expr, &explicit_nss))
     return NULL;
 
-  module = PyImport_ImportModule("Ft.Xml.XPath.Util");
+  module = PyImport_ImportModule("amara.xpath.util");
   if (module == NULL) return NULL;
   result = PyObject_CallMethod(module, "SimpleEvaluate", "OOO",
                                expr, self, explicit_nss);
@@ -701,16 +716,16 @@ static PyObject *node_xpath(NodeObject *self, PyObject *args, PyObject *kw)
 }
 
 #define Node_METHOD(NAME, ARGSPEC) \
-  { #NAME, (PyCFunction) node_##NAME, ARGSPEC, NAME##_doc }
+  { "xml_" #NAME, (PyCFunction) node_##NAME, ARGSPEC, NAME##_doc }
 
 static PyMethodDef node_methods[] = {
   Node_METHOD(normalize,     METH_VARARGS),
-  Node_METHOD(removeChild,   METH_VARARGS),
-  Node_METHOD(appendChild,   METH_VARARGS),
-  Node_METHOD(insertBefore,  METH_VARARGS),
-  Node_METHOD(replaceChild,  METH_VARARGS),
-  Node_METHOD(cloneNode,     METH_VARARGS),
-  Node_METHOD(xpath,         METH_KEYWORDS),
+  //Node_METHOD(removeChild,   METH_VARARGS),
+  //Node_METHOD(appendChild,   METH_VARARGS),
+  //Node_METHOD(insertBefore,  METH_VARARGS),
+  //Node_METHOD(replaceChild,  METH_VARARGS),
+  //Node_METHOD(cloneNode,     METH_VARARGS),
+  Node_METHOD(select,         METH_KEYWORDS),
   { NULL }
 };
 
@@ -1337,11 +1352,7 @@ int DomletteNode_Init(PyObject *module)
 
   /* Assign "class" constants */
   dict = DomletteNode_Type.tp_dict;
-  if (PyDict_SetItemString(dict, "xml_attributes", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "xml_local", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "xml_namespace", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "xml_prefix", Py_None)) return -1;
-  if (PyDict_SetItemString(dict, "xml_value", Py_None)) return -1;
+  if (PyDict_SetItemString(dict, "xml_type", Py_None)) return -1;
 
   shared_empty_nodelist = PyList_New((Py_ssize_t)0);
   if (shared_empty_nodelist == NULL) return -1;

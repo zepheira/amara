@@ -100,10 +100,10 @@ static PyMethodDef attr_methods[] = {
 /** Python Members ****************************************************/
 
 static PyMemberDef attr_members[] = {
-  { "xml_qname",         T_OBJECT, offsetof(AttrObject, nodeName),     RO },
+  { "xml_qname",     T_OBJECT, offsetof(AttrObject, nodeName),     RO },
   { "xml_namespace", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
-  { "xml_name",    T_OBJECT, offsetof(AttrObject, localName),    RO },
-  { "xml_parent", T_OBJECT, offsetof(AttrObject, parentNode),   RO },
+  { "xml_local",     T_OBJECT, offsetof(AttrObject, localName),    RO },
+  { "xml_parent",    T_OBJECT, offsetof(AttrObject, parentNode),   RO },
   { NULL }
 };
 
@@ -183,8 +183,8 @@ static int set_value(AttrObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef attr_getset[] = {
-  { "xml_prefix",    (getter)get_prefix, (setter)set_prefix},
-  { "xml_value",     (getter)get_value,  (setter)set_value},
+  { "xml_prefix", (getter)get_prefix, (setter)set_prefix},
+  { "xml_value",  (getter)get_value,  (setter)set_value},
   { NULL }
 };
 
@@ -333,20 +333,12 @@ int DomletteAttr_Init(PyObject *module)
 
   dict = DomletteAttr_Type.tp_dict;
 
-  value = PyInt_FromLong(ATTRIBUTE_NODE);
+  value = PyString_FromString("attribute");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "xml_node_type", value))
+  if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
-
-  /* Override default behavior from Node */
-  if (PyDict_SetItemString(dict, "xml_previous_sibling", Py_None))
-    return -1;
-
-  /* Override default behavior from Node */
-  if (PyDict_SetItemString(dict, "xml_next_sibling", Py_None))
-    return -1;
 
   /* Until the DTD information is used, assume it was from the document */
   value = PyInt_FromLong(1);
