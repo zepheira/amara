@@ -34,7 +34,8 @@ extern "C" {
     ContainerNode_HEAD
   } ContainerNodeObject;
 
-#define Node_GET_PARENT(op) (((NodeObject *)(op))->parentNode)
+#define Node(op) ((NodeObject *)(op))
+#define Node_GET_PARENT(op) (Node(op)->parentNode)
 #define Node_SET_PARENT(op, v) (Node_GET_PARENT(op) = (v))
 
 #define ContainerNode_GET_COUNT(op) (((ContainerNodeObject *)(op))->count)
@@ -88,7 +89,6 @@ extern "C" {
                         NodeObject *refChild);
   int Node_ReplaceChild(NodeObject *self, NodeObject *newChild,
                         NodeObject *oldChild);
-  NodeObject *Node_CloneNode(PyObject *node, int deep);
 
 #endif /* Domlette_BUILDING_MODULE */
 

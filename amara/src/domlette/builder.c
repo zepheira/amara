@@ -385,8 +385,7 @@ builder_StartElement(void *userState, ExpatName *name,
   if (((PyDictObject *)state->new_namespaces)->ma_used) {
     i = 0;
     while (PyDict_Next(state->new_namespaces, &i, &key, &value)) {
-      XPathNamespaceObject *nsnode;
-      nsnode = Element_AddNamespace(elem, key, value);
+      NamespaceObject *nsnode = Element_AddNamespace(elem, key, value);
       if (nsnode == NULL) {
         Py_DECREF(elem);
         return EXPAT_STATUS_ERROR;

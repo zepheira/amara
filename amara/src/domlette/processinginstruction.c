@@ -3,6 +3,11 @@
 
 /** Private Routines **************************************************/
 
+#define ProcessingInstruction_SET_TARGET(op, v) \
+  (ProcessingInstruction_GET_TARGET(op) = (v))
+#define ProcessingInstruction_SET_DATA(op, v) \
+  (ProcessingInstruction_GET_DATA(op) = (v))
+
 Py_LOCAL_INLINE(int)
 pi_init(ProcessingInstructionObject *self, PyObject *target, PyObject *data)
 {
@@ -13,11 +18,10 @@ pi_init(ProcessingInstructionObject *self, PyObject *target, PyObject *data)
     return -1;
   }
 
+  ProcessingInstruction_SET_TARGET(self, target);
   Py_INCREF(target);
-  self->nodeName = target;
-
+  ProcessingInstruction_SET_DATA(self, data);
   Py_INCREF(data);
-  self->nodeValue = data;
 
   return 0;
 }
@@ -43,46 +47,26 @@ ProcessingInstructionObject *ProcessingInstruction_New(PyObject *target,
   return self;
 }
 
-ProcessingInstructionObject *ProcessingInstruction_CloneNode(PyObject *node,
-                                                             int deep)
-{
-  PyObject *nodeValue, *target;
-  ProcessingInstructionObject *newNode;
-
-  nodeValue = PyObject_GetAttrString(node, "nodeValue");
-  nodeValue = XmlString_FromObjectInPlace(nodeValue);
-  target = PyObject_GetAttrString(node, "target");
-  target = XmlString_FromObjectInPlace(target);
-  if (nodeValue == NULL || target == NULL) {
-    Py_XDECREF(nodeValue);
-    Py_XDECREF(target);
-    return NULL;
-  }
-
-  newNode = ProcessingInstruction_New(target, nodeValue);
-  Py_DECREF(target);
-  Py_DECREF(nodeValue);
-
-  return newNode;
-}
-
 /** Python Methods ****************************************************/
 
-#define ProcessingInstruction_METHOD(name) \
-  { #name, (PyCFunction) pi_##name, METH_VARARGS, pi_##name##_doc }
+static PyObject *pi_getnewargs(PyObject *self, PyObject *noarg)
+{
+  return PyTuple_Pack(2, ProcessingInstruction_GET_TARGET(self),
+                      ProcessingInstruction_GET_DATA(self));
+}
 
 static PyMethodDef pi_methods[] = {
+  { "__getnewargs__", pi_getnewargs, METH_NOARGS,  "helper for pickle" },
   { NULL }
 };
 
 /** Python Members ****************************************************/
 
-#define ProcessingInstruction_MEMBER(name, member) \
-  { #name, T_OBJECT, offsetof(ProcessingInstructionObject, member), RO }
+#define ProcessingInstruction_OFFSET(name) \
+  offsetof(ProcessingInstructionObject, name)
 
 static PyMemberDef pi_members[] = {
-  ProcessingInstruction_MEMBER(xml_target, nodeName),
-  ProcessingInstruction_MEMBER(nodeName, nodeName),
+  { "xml_target", T_OBJECT, ProcessingInstruction_OFFSET(pi_target), RO },
   { NULL }
 };
 
@@ -90,17 +74,21 @@ static PyMemberDef pi_members[] = {
 
 static PyObject *get_data(ProcessingInstructionObject *self, void *arg)
 {
-  Py_INCREF(self->nodeValue);
-  return self->nodeValue;
+  PyObject *data = ProcessingInstruction_GET_DATA(self);
+  Py_INCREF(data);
+  return data;
 }
 
 static int set_data(ProcessingInstructionObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_data", 0);
-  if (nodeValue == NULL) return -1;
+  PyObject *data, *temp;
 
-  Py_DECREF(self->nodeValue);
-  self->nodeValue = nodeValue;
+  data = XmlString_ConvertArgument(v, "xml_data", 0);
+  if (data == NULL)
+    return -1;
+  temp = ProcessingInstruction_GET_DATA(self);
+  ProcessingInstruction_SET_DATA(self, data);
+  Py_DECREF(temp);
   return 0;
 }
 
@@ -114,16 +102,16 @@ static PyGetSetDef pi_getset[] = {
 static void pi_dealloc(ProcessingInstructionObject *self)
 {
   PyObject_GC_UnTrack((PyObject *)self);
-  Py_CLEAR(self->nodeName);
-  Py_CLEAR(self->nodeValue);
+  Py_CLEAR(self->pi_target);
+  Py_CLEAR(self->pi_data);
   Node_Del(self);
 }
 
 static PyObject *pi_repr(ProcessingInstructionObject *self)
 {
   PyObject *repr;
-  PyObject *target = PyObject_Repr(self->nodeName);
-  PyObject *data = PyObject_Repr(self->nodeValue);
+  PyObject *target = PyObject_Repr(ProcessingInstruction_GET_TARGET(self));
+  PyObject *data = PyObject_Repr(ProcessingInstruction_GET_DATA(self));
   if (target == NULL || data == NULL) {
     Py_XDECREF(target);
     Py_XDECREF(data);

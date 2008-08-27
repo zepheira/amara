@@ -722,11 +722,10 @@ static void namespace_axis_dealloc(namespace_axis *self)
 static PyObject *namespace_axis_next(namespace_axis *self)
 {
   if (self->namespaces != NULL) {
-    XPathNamespaceObject *node;
+    NamespaceObject *node;
     while ((node = NamespaceMap_Next(self->namespaces, &self->pos))) {
-      node = XPathNamespace_New(self->element, 
-                                XPathNamespace_GET_NAME(node),
-                                XPathNamespace_GET_VALUE(node));
+      node = Namespace_New(self->element, Namespace_GET_NAME(node),
+                           Namespace_GET_VALUE(node));
       return (PyObject *)node;
     }
     Py_CLEAR(self->namespaces);

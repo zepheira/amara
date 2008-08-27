@@ -60,40 +60,55 @@ AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
 }
 
 
-AttrObject *Attr_CloneNode(PyObject *node, int deep)
-{
-  PyObject *namespaceURI, *qualifiedName, *localName, *value;
-  AttrObject *attr;
-
-  namespaceURI = PyObject_GetAttrString(node, "namespaceURI");
-  namespaceURI = XmlString_FromObjectInPlace(namespaceURI);
-  qualifiedName = PyObject_GetAttrString(node, "nodeName");
-  qualifiedName = XmlString_FromObjectInPlace(qualifiedName);
-  localName = PyObject_GetAttrString(node, "localName");
-  localName = XmlString_FromObjectInPlace(localName);
-  value = PyObject_GetAttrString(node, "value");
-  value = XmlString_FromObjectInPlace(value);
-  if (namespaceURI == NULL || qualifiedName == NULL || localName == NULL ||
-      value == NULL) {
-    Py_XDECREF(value);
-    Py_XDECREF(localName);
-    Py_XDECREF(qualifiedName);
-    Py_XDECREF(namespaceURI);
-    return NULL;
-  }
-
-  attr = Attr_New(namespaceURI, qualifiedName, localName, value);
-  Py_DECREF(value);
-  Py_DECREF(localName);
-  Py_DECREF(qualifiedName);
-  Py_DECREF(namespaceURI);
-
-  return attr;
-}
-
 /** Python Methods ****************************************************/
 
+static PyObject *attr_getnewargs(PyObject *self, PyObject *noargs)
+{
+  return PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(self),
+                      Attr_GET_NODE_NAME(self));
+}
+
+static PyObject *attr_getstate(PyObject *self, PyObject *args)
+{
+  PyObject *deep=Py_True;
+
+  if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
+    return NULL;
+
+  return Py_BuildValue("OOi", Node_GET_PARENT(self), Attr_GET_NODE_VALUE(self),
+                       Attr_GET_TYPE(self));
+}
+
+static PyObject *attr_setstate(PyObject *self, PyObject *state)
+{
+  NodeObject *parent, *node;
+  PyObject *value, *temp;
+  int type;
+
+  if (!PyArg_ParseTuple(state, "O!Oi", &DomletteNode_Type, &parent, &value,
+                        &type))
+    return NULL;
+
+  node = Node_GET_PARENT(self);
+  Node_SET_PARENT(self, parent);
+  Py_INCREF(parent);
+  Py_XDECREF(node);
+
+  temp = Attr_GET_NODE_VALUE(self);
+  Attr_SET_VALUE(self, value);
+  Py_INCREF(value);
+  Py_XDECREF(temp);
+
+  Attr_SET_TYPE(self, type);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyMethodDef attr_methods[] = {
+  { "__getnewargs__", attr_getnewargs, METH_NOARGS,  "helper for pickle" },
+  { "__getstate__",   attr_getstate,   METH_VARARGS, "helper for pickle" },
+  { "__setstate__",   attr_setstate,   METH_O,       "helper for pickle" },
   { NULL }
 };
 

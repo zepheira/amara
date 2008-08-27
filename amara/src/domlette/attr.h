@@ -31,6 +31,8 @@ extern "C" {
 
 #define Attr_Check(op) PyObject_TypeCheck((op), &DomletteAttr_Type)
 #define Attr_CheckExact(op) ((op)->ob_type == &DomletteAttr_Type)
+#define Attr_SET_VALUE(op, v) (Attr_GET_NODE_VALUE(op) = (v))
+#define Attr_SET_TYPE(op, v) (Attr_GET_TYPE(op) = (v))
 
   /* Module Methods */
   int DomletteAttr_Init(PyObject *module);
@@ -40,7 +42,7 @@ extern "C" {
   AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
                        PyObject *localName, PyObject *value);
 
-  AttrObject *Attr_CloneNode(PyObject *node, int deep);
+  AttrObject *Attr_Copy(PyObject *self, int deep);
 
 #endif
 

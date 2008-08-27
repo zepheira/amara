@@ -5,7 +5,7 @@ Implementation of `xsl:copy` element.
 """
 
 from amara.tree import (Element, Attr, Text, ProcessingInstruction,
-                        Comment, Document, XPathNamespace)
+                        Comment, Document, Namespace)
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
@@ -60,7 +60,7 @@ class copy_element(xslt_element):
         elif isinstance(node, ProcessingInstruction):
             context.processing_instruction(node.xml_target, node.xml_data)
 
-        elif isinstance(node, XPathNamespace):
+        elif isinstance(node, Namespace):
             # Relies on XmlWriter rules, which is very close to spec:
             # http://www.w3.org/1999/11/REC-xslt-19991116-errata/#E25
             context.namespace(node.xml_qname, node.xml_value)

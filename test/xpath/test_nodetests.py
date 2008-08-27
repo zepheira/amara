@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from amara.lib import testsupport
-from amara.domlette import Node, XPathNamespace
+from amara.domlette import Node, Namespace
 from amara.xpath import context
 from amara.xpath.compiler import xpathcompiler
 from amara.xpath.locationpaths.axisspecifiers import axis_specifier

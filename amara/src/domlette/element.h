@@ -26,7 +26,7 @@ extern "C" {
 
 #ifdef Domlette_BUILDING_MODULE
 #include "attr.h"
-#include "xpathnamespace.h"
+#include "namespace.h"
 
   extern PyTypeObject DomletteElement_Type;
 
@@ -42,9 +42,9 @@ extern "C" {
                              PyObject *qualifiedName,
                              PyObject *localName);
 
-  XPathNamespaceObject *Element_AddNamespace(ElementObject *self,
-                                             PyObject *prefix,
-                                             PyObject *namespace);
+  NamespaceObject *Element_AddNamespace(ElementObject *self,
+                                        PyObject *prefix,
+                                        PyObject *namespace);
 
   AttrObject *Element_AddAttribute(ElementObject *self,
                                    PyObject *namespaceURI,
@@ -57,8 +57,6 @@ extern "C" {
   int Element_SetAttribute(ElementObject *self, AttrObject *attr);
 
   PyObject *Element_InscopeNamespaces(ElementObject *self);
-
-  ElementObject *Element_CloneNode(PyObject *node, int deep);
 
 #endif /* Domlette_BUILDING_MODULE */
 

@@ -4,9 +4,7 @@
 A parsed token that represents an axis specifier.
 """
 
-from xml.dom import Node
-
-from amara.tree import XPathNamespace
+from amara import tree
 
 # Bind the class name in the global scope so that the metaclass can be
 # safely called for the construction of the initial class.
@@ -14,7 +12,7 @@ axis_specifier = None
 class axis_specifier(object):
 
     _classmap = {}
-    principal_type = Node.ELEMENT_NODE
+    principal_type = tree.Element
     reverse = False
 
     class __metaclass__(type):
@@ -83,7 +81,7 @@ class ancestor_or_self_axis(axis_specifier):
 
 class attribute_axis(axis_specifier):
     name = 'attribute'
-    principal_type = Node.ATTRIBUTE_NODE
+    principal_type = tree.Attr
     def select(self, node):
         """Select all of the attributes from the context node"""
         return (node.xml_attributes)
@@ -108,10 +106,10 @@ class descendant_axis(axis_specifier):
     name = 'descendant'
     def select(self, node):
         descendants = self.select
-        node_type = Node.ELEMENT_NODE
+        node_type = tree.Element
         for child in node:
             yield child
-            if child.xml_node_type == node_type:
+            if isinstance(child, node_type):
                 for x in descendants(child): yield x
         return
     try:
@@ -170,7 +168,7 @@ class following_sibling_axis(axis_specifier):
 
 class namespace_axis(axis_specifier):
     name = 'namespace'
-    principal_type = XPathNamespace.XPATH_NAMESPACE_NODE
+    principal_type = tree.Namespace
 
     def select(self, node):
         """Select all of the namespaces from the context node."""

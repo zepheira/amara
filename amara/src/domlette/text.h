@@ -30,10 +30,6 @@ extern "C" {
 #define Text_New(data) \
   CharacterData_New(TextObject, &DomletteText_Type, (data))
 
-  TextObject *Text_CloneNode(PyObject *node, int deep);
-#define Text_CloneNode(node, deep) \
-  CharacterData_CloneNode(TextObject, &DomletteText_Type, (node), (deep))
-
 #endif /* Domlette_BUILDING_MODULE */
 
 #ifdef __cplusplus

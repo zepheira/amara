@@ -279,6 +279,7 @@ class transform_element(xslt_element):
                 mode_table = match_templates[element._mode]
                 for pattern in match:
                     node_test, axis_type, node_type = getter(pattern)
+                    print node_type, pattern
                     if template_priority is None:
                         priority = node_test.priority
                     else:

@@ -42,25 +42,16 @@ CharacterDataObject *_CharacterData_New(PyTypeObject *type, PyObject *data)
   return self;
 }
 
-CharacterDataObject *_CharacterData_CloneNode(PyTypeObject *type,
-                                              PyObject *node, int deep)
-{
-  PyObject *nodeValue;
-  CharacterDataObject *newNode;
-
-  nodeValue = PyObject_GetAttrString(node, "nodeValue");
-  nodeValue = XmlString_FromObjectInPlace(nodeValue);
-  if (nodeValue == NULL) return NULL;
-
-  newNode = _CharacterData_New(type, nodeValue);
-  Py_DECREF(nodeValue);
-
-  return newNode;
-}
-
 /** Python Methods ****************************************************/
 
+static PyObject *characterdata_getnewargs(PyObject *self, PyObject *noargs)
+{
+  return PyTuple_Pack(1, CharacterData_GET_NODE_VALUE(self));
+}
+
 static PyMethodDef characterdata_methods[] = {
+  { "__getnewargs__", characterdata_getnewargs, METH_NOARGS,
+    "helper for pickle" },
   { NULL }
 };
 
@@ -170,12 +161,12 @@ static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:cdata", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:CharacterData", kwlist,
                                    &data)) {
     return NULL;
   }
 
-  if ((data = XmlString_ConvertArgument(data, "cdata", 0)) == NULL)
+  if ((data = XmlString_ConvertArgument(data, "data", 0)) == NULL)
     return NULL;
 
   self = CharacterData(type->tp_alloc(type, 0));

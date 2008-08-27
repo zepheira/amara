@@ -94,7 +94,7 @@ import types
 import operator
 
 from amara import XML_NAMESPACE
-from amara.tree import Node, XPathNamespace
+from amara.tree import Node, Namespace
 from amara.writers import writer, treewriter, stringwriter
 from amara.xpath import extensions, parser
 
@@ -199,7 +199,7 @@ class context(writer):
         elif isinstance(node, Document):
             for child in node:
                 self.copy_node(child)
-        elif isinstance(node, XPathNamespace):
+        elif isinstance(node, Namespace):
             self.namespace(node.xml_qname, node.value)
         else:
             pass

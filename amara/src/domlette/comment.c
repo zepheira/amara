@@ -15,13 +15,6 @@ CommentObject *Comment_New(PyObject *data)
   return CharacterData_New(CommentObject, &DomletteComment_Type, data);
 }
 
-#undef Comment_CloneNode
-CommentObject *Comment_CloneNode(PyObject *node, int deep)
-{
-  return CharacterData_CloneNode(CommentObject, &DomletteComment_Type,
-                                 node, deep);
-}
-
 /** Python Methods ****************************************************/
 
 static PyMethodDef comment_methods[] = {

@@ -54,7 +54,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
   TextObject *text;
   CommentObject *comment;
   AttrObject *attr;
-  XPathNamespaceObject *nsattr;
+  NamespaceObject *nsattr;
   PyObject *namespaceURI, *qualifiedName, *localName;
   PyObject *target, *data, *value;
 
@@ -490,7 +490,6 @@ static PyMethodDef module_methods[] = {
 };
 
 static Domlette_APIObject Domlette_API = {
-  &DomletteDOMImplementation_Type,
   &DomletteNode_Type,
   &DomletteDocument_Type,
   &DomletteElement_Type,
@@ -498,7 +497,7 @@ static Domlette_APIObject Domlette_API = {
   &DomletteText_Type,
   &DomletteComment_Type,
   &DomletteProcessingInstruction_Type,
-  &DomletteXPathNamespace_Type,
+  &DomletteNamespace_Type,
 
   Node_RemoveChild,
   Node_AppendChild,
@@ -518,7 +517,7 @@ static Domlette_APIObject Domlette_API = {
 
   ProcessingInstruction_New,
 
-  XPathNamespace_New,
+  Namespace_New,
 
   NamespaceMap_Next,
 
@@ -534,7 +533,6 @@ struct submodule_t {
 struct submodule_t submodules[] = {
   SUBMODULE(Exceptions),
   SUBMODULE(Builder),
-  SUBMODULE(DOMImplementation),
   SUBMODULE(Node),
   SUBMODULE(NamespaceMap),
   SUBMODULE(AttributeMap),
@@ -545,7 +543,7 @@ struct submodule_t submodules[] = {
   SUBMODULE(ProcessingInstruction),
   SUBMODULE(Comment),
   SUBMODULE(Document),
-  SUBMODULE(XPathNamespace),
+  SUBMODULE(Namespace),
   { NULL, NULL }
 };
 

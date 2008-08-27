@@ -10,15 +10,15 @@ extern "C" {
 
   typedef struct {
     Node_HEAD
-    PyObject *nodeName;
-    PyObject *nodeValue;
+    PyObject *pi_target;
+    PyObject *pi_data;
   } ProcessingInstructionObject;
 
 #define ProcessingInstruction(op) ((ProcessingInstructionObject *)(op))
 #define ProcessingInstruction_GET_TARGET(op) \
-  (ProcessingInstruction(op)->nodeName)
+  (ProcessingInstruction(op)->pi_target)
 #define ProcessingInstruction_GET_DATA(op) \
-  (ProcessingInstruction(op)->nodeValue)
+  (ProcessingInstruction(op)->pi_data)
 
 #ifdef Domlette_BUILDING_MODULE
 
@@ -34,11 +34,11 @@ extern "C" {
   void DomletteProcessingInstruction_Fini(void);
 
   /* ProcessingInstruction Methods */
-  ProcessingInstructionObject *ProcessingInstruction_New(PyObject *target,
-                                                         PyObject *data);
+  ProcessingInstructionObject *
+  ProcessingInstruction_New(PyObject *target, PyObject *data);
 
-  ProcessingInstructionObject *ProcessingInstruction_CloneNode(PyObject *node,
-                                                               int deep);
+  ProcessingInstructionObject *
+  ProcessingInstruction_Copy(PyObject *self, int deep);
 
 #endif /* Domlette_BUILDING_MODULE */
 

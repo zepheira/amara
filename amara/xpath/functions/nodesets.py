@@ -4,7 +4,7 @@
 The implementation of the core node-set functions from XPath 1.0.
 """
 from xml.dom import Node
-from amara.tree import XPathNamespace
+from amara.tree import Namespace
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
 from amara.xpath.locationpaths import relative_location_path
@@ -106,7 +106,7 @@ class name_function(builtin_function):
             node = arg0[0]
 
         if isinstance(node, (Element, Attr, ProcessingInstruction,
-                             XPathNamespace)):
+                             Namespace)):
             return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
@@ -131,7 +131,7 @@ class local_name_function(name_function):
 
         if isinstance(node, (Element, Attr)):
             return datatypes.string(node.xml_local)
-        elif isinstance(node, (ProcessingInstruction, XPathNamespace)):
+        elif isinstance(node, (ProcessingInstruction, Namespace)):
             return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string

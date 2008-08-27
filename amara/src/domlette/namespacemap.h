@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include "Python.h"
-#include "xpathnamespace.h"
+#include "namespace.h"
 
 /* NamespaceMap_MINSIZE is the minimum size of a dictionary.  This many slots
  * are allocated directly in the dict object (in the ma_smalltable member).
@@ -20,7 +20,7 @@ extern "C" {
 
   typedef struct {
     Py_ssize_t ne_hash;
-    XPathNamespaceObject *ne_node;
+    NamespaceObject *ne_node;
   } NamespaceEntry;
 
 #define NamespaceEntry_HASH(op) (((NamespaceEntry *)(op))->ne_hash)
@@ -50,11 +50,11 @@ extern "C" {
 
   PyObject *NamespaceMap_New(void);
 
-  XPathNamespaceObject *NamespaceMap_GetNode(PyObject *self, PyObject *prefix);
+  NamespaceObject *NamespaceMap_GetNode(PyObject *self, PyObject *prefix);
 
-  int NamespaceMap_SetNode(PyObject *self, XPathNamespaceObject *node);
+  int NamespaceMap_SetNode(PyObject *self, NamespaceObject *node);
 
-  XPathNamespaceObject *NamespaceMap_Next(PyObject *self, Py_ssize_t *ppos);
+  NamespaceObject *NamespaceMap_Next(PyObject *self, Py_ssize_t *ppos);
 
   /* Module Methods */
   int DomletteNamespaceMap_Init(PyObject *module);

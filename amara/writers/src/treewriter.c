@@ -232,7 +232,7 @@ static PyObject *treewriter_start_element(TreeWriterObject *self,
   if (namespaces) {
     Py_ssize_t i = 0;
     while (PyDict_Next(namespaces, &i, &prefix, &namespace)) {
-      XPathNamespaceObject *nsattr;
+      NamespaceObject *nsattr;
       nsattr = Element_AddNamespace(element, prefix, namespace);
       if (nsattr == NULL) 
         return NULL;

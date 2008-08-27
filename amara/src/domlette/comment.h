@@ -29,10 +29,6 @@ extern "C" {
 #define Comment_New(data) \
   CharacterData_New(CommentObject, &DomletteComment_Type, (data))
 
-  CommentObject *Comment_CloneNode(PyObject *node, int deep);
-#define Comment_CloneNode(node, deep) \
-  CharacterData_CloneNode(CommentObject, &DomletteComment_Type, (node), (deep))
-
 #endif /* Domlette_BUILDING_MODULE */
 
 #ifdef __cplusplus

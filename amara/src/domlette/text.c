@@ -15,12 +15,6 @@ TextObject *Text_New(PyObject *data)
   return CharacterData_New(TextObject, &DomletteText_Type, data);
 }
 
-#undef Text_CloneNode
-TextObject *Text_CloneNode(PyObject *node, int deep)
-{
-  return CharacterData_CloneNode(TextObject, &DomletteText_Type, node, deep);
-}
-
 /** Python Methods ****************************************************/
 
 static PyMethodDef text_methods[] = {

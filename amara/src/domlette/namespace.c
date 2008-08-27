@@ -4,10 +4,10 @@
 /** Private Routines **************************************************/
 
 Py_LOCAL_INLINE(int)
-xns_init(XPathNamespaceObject *self, ElementObject *parentNode,
-         PyObject *prefix, PyObject *namespaceURI)
+namespace_init(NamespaceObject *self, ElementObject *parentNode,
+               PyObject *prefix, PyObject *namespaceURI)
 {
-  if ((self == NULL || !XPathNamespace_Check(self)) ||
+  if ((self == NULL || !Namespace_Check(self)) ||
       (parentNode == NULL || !Element_Check(parentNode)) ||
       (prefix == NULL || !XmlString_NullCheck(prefix)) ||
       (namespaceURI == NULL || !XmlString_Check(namespaceURI))) {
@@ -35,20 +35,20 @@ xns_init(XPathNamespaceObject *self, ElementObject *parentNode,
 
 /** C API *************************************************************/
 
-XPathNamespaceObject *XPathNamespace_New(ElementObject *parentNode,
-                                         PyObject *prefix,
-                                         PyObject *namespaceURI)
+NamespaceObject *Namespace_New(ElementObject *parentNode,
+                               PyObject *prefix,
+                               PyObject *namespaceURI)
 {
-  XPathNamespaceObject *self;
+  NamespaceObject *self;
 
   if (parentNode == NULL || !Element_Check(parentNode)) {
     PyErr_BadInternalCall();
     return NULL;
   }
 
-  self = Node_New(XPathNamespaceObject, &DomletteXPathNamespace_Type);
+  self = Node_New(NamespaceObject, &DomletteNamespace_Type);
   if (self != NULL) {
-    if (xns_init(self, parentNode, prefix, namespaceURI) < 0) {
+    if (namespace_init(self, parentNode, prefix, namespaceURI) < 0) {
       Node_Del(self);
       return NULL;
     }
@@ -61,35 +61,32 @@ XPathNamespaceObject *XPathNamespace_New(ElementObject *parentNode,
 
 /** Python Methods ****************************************************/
 
-#define XPathNamespace_METHOD(name) \
-  { #name, (PyCFunction) xns_##name, METH_VARARGS, xns_##name##_doc }
-
-static PyMethodDef xns_methods[] = {
+static PyMethodDef namespace_methods[] = {
   { NULL }
 };
 
 /** Python Members ****************************************************/
 
-#define XPathNamespace_MEMBER(name, member) \
-  { #name, T_OBJECT, offsetof(XPathNamespaceObject, member), RO }
+#define Namespace_MEMBER(name, member) \
+  { #name, T_OBJECT, offsetof(NamespaceObject, member), RO }
 
-static PyMemberDef xns_members[] = {
-  XPathNamespace_MEMBER(nodeName, nodeName),
-  XPathNamespace_MEMBER(localName, nodeName),
-  XPathNamespace_MEMBER(nodeValue, nodeValue),
-  XPathNamespace_MEMBER(value, nodeValue),
+static PyMemberDef namespace_members[] = {
+  Namespace_MEMBER(nodeName, nodeName),
+  Namespace_MEMBER(localName, nodeName),
+  Namespace_MEMBER(nodeValue, nodeValue),
+  Namespace_MEMBER(value, nodeValue),
   { NULL }
 };
 
 /** Python Computed Members *******************************************/
 
-static PyGetSetDef xns_getset[] = {
+static PyGetSetDef namespace_getset[] = {
   { NULL }
 };
 
 /** Type Object *******************************************************/
 
-static void xns_dealloc(XPathNamespaceObject *self)
+static void namespace_dealloc(NamespaceObject *self)
 {
   PyObject_GC_UnTrack((PyObject *) self);
   Py_CLEAR(self->nodeValue);
@@ -97,7 +94,7 @@ static void xns_dealloc(XPathNamespaceObject *self)
   Node_Del(self);
 }
 
-static PyObject *xns_repr(XPathNamespaceObject *self)
+static PyObject *namespace_repr(NamespaceObject *self)
 {
   PyObject *repr;
   PyObject *name = PyObject_Repr(self->nodeName);
@@ -107,7 +104,7 @@ static PyObject *xns_repr(XPathNamespaceObject *self)
     Py_XDECREF(value);
     return NULL;
   }
-  repr = PyString_FromFormat("<XPathNamespace at %p: name %s, value %s>",
+  repr = PyString_FromFormat("<Namespace at %p: name %s, value %s>",
                              self,
                              PyString_AsString(name),
                              PyString_AsString(value));
@@ -116,12 +113,13 @@ static PyObject *xns_repr(XPathNamespaceObject *self)
   return repr;
 }
 
-static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+static PyObject *
+namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   ElementObject *parentNode;
   PyObject *prefix, *namespaceURI;
   static char *kwlist[] = { "parent", "prefix", "namespace", NULL };
-  XPathNamespaceObject *self;
+  NamespaceObject *self;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:Element", kwlist,
                                    &DomletteElement_Type, &parentNode,
@@ -138,17 +136,17 @@ static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return NULL;
   }
 
-  if (type != &DomletteXPathNamespace_Type) {
-    self = XPathNamespace(type->tp_alloc(type, 0));
+  if (type != &DomletteNamespace_Type) {
+    self = Namespace(type->tp_alloc(type, 0));
     if (self != NULL) {
       _Node_INIT(self);
-      if (xns_init(self, parentNode, prefix, namespaceURI) < 0) {
+      if (namespace_init(self, parentNode, prefix, namespaceURI) < 0) {
         Py_DECREF(self);
         self = NULL;
       }
     }
   } else {
-    self = XPathNamespace_New(parentNode, prefix, namespaceURI);
+    self = Namespace_New(parentNode, prefix, namespaceURI);
   }
   Py_DECREF(prefix);
   Py_DECREF(namespaceURI);
@@ -156,24 +154,24 @@ static PyObject *xns_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   return (PyObject *) self;
 }
 
-static char xns_doc[] = "\
-XPathNamespace(parent, prefix, namespace) -> XPathNamespace object\n\
+static char namespace_doc[] = "\
+Namespace(parent, prefix, namespace) -> Namespace object\n\
 \n\
-The XPathNamespace interface represents the XPath namespace node type\n\
+The Namespace interface represents the XPath namespace node type\n\
 that DOM lacks.";
 
-PyTypeObject DomletteXPathNamespace_Type = {
+PyTypeObject DomletteNamespace_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "XPathNamespace",
-  /* tp_basicsize      */ sizeof(XPathNamespaceObject),
+  /* tp_name           */ Domlette_MODULE_NAME "." "Namespace",
+  /* tp_basicsize      */ sizeof(NamespaceObject),
   /* tp_itemsize       */ 0,
-  /* tp_dealloc        */ (destructor) xns_dealloc,
+  /* tp_dealloc        */ (destructor) namespace_dealloc,
   /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
-  /* tp_repr           */ (reprfunc) xns_repr,
+  /* tp_repr           */ (reprfunc) namespace_repr,
   /* tp_as_number      */ (PyNumberMethods *) 0,
   /* tp_as_sequence    */ (PySequenceMethods *) 0,
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
@@ -184,16 +182,16 @@ PyTypeObject DomletteXPathNamespace_Type = {
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
   /* tp_flags          */ Py_TPFLAGS_DEFAULT,
-  /* tp_doc            */ (char *) xns_doc,
+  /* tp_doc            */ (char *) namespace_doc,
   /* tp_traverse       */ (traverseproc) 0,
   /* tp_clear          */ (inquiry) 0,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,
   /* tp_iternext       */ (iternextfunc) 0,
-  /* tp_methods        */ (PyMethodDef *) xns_methods,
-  /* tp_members        */ (PyMemberDef *) xns_members,
-  /* tp_getset         */ (PyGetSetDef *) xns_getset,
+  /* tp_methods        */ (PyMethodDef *) namespace_methods,
+  /* tp_members        */ (PyMemberDef *) namespace_members,
+  /* tp_getset         */ (PyGetSetDef *) namespace_getset,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
   /* tp_descr_get      */ (descrgetfunc) 0,
@@ -201,37 +199,35 @@ PyTypeObject DomletteXPathNamespace_Type = {
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) xns_new,
+  /* tp_new            */ (newfunc) namespace_new,
   /* tp_free           */ 0,
 };
 
 /** Module Interface **************************************************/
 
-int DomletteXPathNamespace_Init(PyObject *module)
+int DomletteNamespace_Init(PyObject *module)
 {
   PyObject *dict, *value;
 
-  DomletteXPathNamespace_Type.tp_base = &DomletteNode_Type;
-  if (PyType_Ready(&DomletteXPathNamespace_Type) < 0)
+  DomletteNamespace_Type.tp_base = &DomletteNode_Type;
+  if (PyType_Ready(&DomletteNamespace_Type) < 0)
     return -1;
 
-  dict = DomletteXPathNamespace_Type.tp_dict;
+  dict = DomletteNamespace_Type.tp_dict;
 
-  value = PyInt_FromLong(XPATH_NAMESPACE_NODE);
+  value = PyString_FromString("namespace");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(dict, "xml_node_type", value))
-    return -1;
-  if (PyDict_SetItemString(dict, "XPATH_NAMESPACE_NODE", value))
+  if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
 
-  Py_INCREF(&DomletteXPathNamespace_Type);
-  return PyModule_AddObject(module, "XPathNamespace",
-           (PyObject*) &DomletteXPathNamespace_Type);
+  Py_INCREF(&DomletteNamespace_Type);
+  return PyModule_AddObject(module, "Namespace",
+                            (PyObject*)&DomletteNamespace_Type);
 }
 
-void DomletteXPathNamespace_Fini(void)
+void DomletteNamespace_Fini(void)
 {
-  PyType_CLEAR(&DomletteXPathNamespace_Type);
+  PyType_CLEAR(&DomletteNamespace_Type);
 }

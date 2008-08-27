@@ -64,11 +64,11 @@ ElementObject *Element_New(PyObject *namespaceURI,
 }
 
 /* returns a new reference */
-XPathNamespaceObject *
+NamespaceObject *
 Element_AddNamespace(ElementObject *self, PyObject *prefix, PyObject *namespace)
 {
   PyObject *namespaces;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   /* OPT: ensure the NamespaceMap exists */
   namespaces = self->namespaces;
@@ -78,7 +78,7 @@ Element_AddNamespace(ElementObject *self, PyObject *prefix, PyObject *namespace)
       return NULL;
   }
   /* new reference */
-  node = XPathNamespace_New(self, prefix, namespace);
+  node = Namespace_New(self, prefix, namespace);
   if (node != NULL) {
     if (NamespaceMap_SetNode(namespaces, node) < 0)
       Py_CLEAR(node);
@@ -174,14 +174,14 @@ Element_InscopeNamespaces(ElementObject *self)
   NodeObject *current = (NodeObject *)self;
   PyObject *namespaces, *nodemap, *name, *value;
   Py_ssize_t pos;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   namespaces = NamespaceMap_New();
   if (namespaces == NULL) 
     return NULL;
 
   /* add the XML namespace */
-  node = XPathNamespace_New(self, xml_string, xml_namespace);
+  node = Namespace_New(self, xml_string, xml_namespace);
   if (node == NULL) {
     Py_DECREF(namespaces);
     return NULL;
@@ -200,8 +200,8 @@ Element_InscopeNamespaces(ElementObject *self)
       pos = 0;
       while ((node = NamespaceMap_Next(nodemap, &pos))) {
         /* namespace attribute */
-        name = XPathNamespace_GET_NAME(node);
-        value = XPathNamespace_GET_VALUE(node);
+        name = Namespace_GET_NAME(node);
+        value = Namespace_GET_VALUE(node);
         if (PyUnicode_GET_SIZE(value) == 0) {
           /* empty string; remove prefix binding */
           /* NOTE: in XML Namespaces 1.1 it would be possible to do this
@@ -224,145 +224,56 @@ Element_InscopeNamespaces(ElementObject *self)
   return namespaces;
 }
 
-ElementObject *Element_CloneNode(PyObject *node, int deep)
-{
-  ElementObject *element;
-  PyObject *namespaceURI, *localName, *qualifiedName;
-  PyObject *attributes;
-  Py_ssize_t i, count;
-
-  namespaceURI = PyObject_GetAttrString(node, "namespaceURI");
-  namespaceURI = XmlString_FromObjectInPlace(namespaceURI);
-  qualifiedName = PyObject_GetAttrString(node, "nodeName");
-  qualifiedName = XmlString_FromObjectInPlace(qualifiedName);
-  localName = PyObject_GetAttrString(node, "localName");
-  localName = XmlString_FromObjectInPlace(localName);
-
-  /* attributes are cloned regardless of the deep argument */
-  attributes = PyObject_GetAttrString(node, "attributes");
-  if (attributes) {
-    /* get the actual attribute nodes from the attributes mapping */
-    PyObject *values = PyMapping_Values(attributes);
-    Py_DECREF(attributes);
-    attributes = values;
-  }
-  if (namespaceURI == NULL || qualifiedName == NULL || localName == NULL ||
-      attributes == NULL) {
-    Py_XDECREF(attributes);
-    Py_XDECREF(localName);
-    Py_XDECREF(qualifiedName);
-    Py_XDECREF(namespaceURI);
-    return NULL;
-  }
-
-  /* We now have everything we need to create a shallow copy, do it */
-  element = Element_New(namespaceURI, qualifiedName, localName);
-
-  /* Done with these */
-  Py_DECREF(namespaceURI);
-  Py_DECREF(qualifiedName);
-  Py_DECREF(localName);
-
-  if (element == NULL) {
-    Py_DECREF(attributes);
-    return NULL;
-  }
-
-  /* copy the attributes */
-  count = PySequence_Length(attributes);
-  for (i = 0; i < count; i++) {
-    PyObject *attr, *value;
-
-    attr = PySequence_GetItem(attributes, i);
-    if (attr == NULL) {
-      Py_DECREF(element);
-      Py_DECREF(attributes);
-      return NULL;
-    }
-
-    namespaceURI = PyObject_GetAttrString(attr, "namespaceURI");
-    namespaceURI = XmlString_FromObjectInPlace(namespaceURI);
-    qualifiedName = PyObject_GetAttrString(attr, "nodeName");
-    qualifiedName = XmlString_FromObjectInPlace(qualifiedName);
-    localName = PyObject_GetAttrString(attr, "localName");
-    localName = XmlString_FromObjectInPlace(localName);
-    value = PyObject_GetAttrString(attr, "value");
-    value = XmlString_FromObjectInPlace(value);
-    Py_DECREF(attr);
-    if (namespaceURI == NULL || localName == NULL || qualifiedName == NULL ||
-        value == NULL) {
-      Py_XDECREF(value);
-      Py_XDECREF(qualifiedName);
-      Py_XDECREF(localName);
-      Py_XDECREF(namespaceURI);
-      Py_DECREF(element);
-      Py_DECREF(attributes);
-      return NULL;
-    }
-
-    attr = (PyObject *)Element_AddAttribute(element, namespaceURI,
-                                            qualifiedName, localName, value);
-    Py_DECREF(value);
-    Py_DECREF(localName);
-    Py_DECREF(qualifiedName);
-    Py_DECREF(namespaceURI);
-    if (attr == NULL) {
-      Py_DECREF(element);
-      Py_DECREF(attributes);
-      return NULL;
-    }
-    Py_DECREF(attr);
-  }
-  Py_DECREF(attributes);
-
-  if (deep) {
-    PyObject *childNodes;
-
-    childNodes = PyObject_GetAttrString(node, "childNodes");
-    if (childNodes == NULL) {
-      Py_DECREF(element);
-      return NULL;
-    }
-    count = PySequence_Length(childNodes);
-    for (i = 0; i < count; i++) {
-      PyObject *child;
-      NodeObject *cloned_child;
-
-      child = PySequence_GetItem(childNodes, i);
-      if (child == NULL) {
-        Py_DECREF(childNodes);
-        Py_DECREF(element);
-        return NULL;
-      }
-
-      cloned_child = Node_CloneNode(child, deep);
-      Py_DECREF(child);
-      if (cloned_child == NULL) {
-        Py_DECREF(childNodes);
-        Py_DECREF(element);
-        return NULL;
-      }
-
-      if (Node_AppendChild((NodeObject *)element, cloned_child) < 0) {
-        Py_DECREF(cloned_child);
-        Py_DECREF(childNodes);
-        Py_DECREF(element);
-        return NULL;
-      }
-      Py_DECREF(cloned_child);
-    }
-    Py_DECREF(childNodes);
-  }
-
-  return element;
-}
-
 /** Python Methods ****************************************************/
 
-#define Element_METHOD(NAME) \
-  { #NAME, (PyCFunction) element_##NAME, METH_VARARGS, element_##NAME##_doc }
+static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
+{
+  return PyTuple_Pack(2, Element_GET_NAMESPACE_URI(self),
+                      Element_GET_NODE_NAME(self));
+}
+
+static PyObject *element_getstate(PyObject *self, PyObject *args)
+{
+  PyObject *deep=Py_True, *namespaces, *attributes, *children;
+
+  if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
+    return NULL;
+  switch (PyObject_IsTrue(deep)) {
+    case 1:
+      children = PyObject_GetAttrString(self, "xml_children");
+      break;
+    case 0:
+      children = PyTuple_New(0);
+      break;
+    default:
+      return NULL;
+  }
+  return Py_BuildValue("ONNN", Node_GET_PARENT(self), namespaces, attributes,
+                       children);
+}
+
+static PyObject *element_setstate(PyObject *self, PyObject *state)
+{
+  NodeObject *parent, *node;
+  PyObject *namespaces, *attributes, *children;
+
+  if (!PyArg_ParseTuple(state, "O!OOO", &DomletteNode_Type, &parent,
+                        &namespaces, &attributes, &children))
+    return NULL;
+
+  node = Node_GET_PARENT(self);
+  Node_SET_PARENT(self, parent);
+  Py_INCREF(parent);
+  Py_XDECREF(node);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 static PyMethodDef element_methods[] = {
+  { "__getnewargs__", element_getnewargs, METH_NOARGS,  "helper for pickle" },
+  { "__getstate__",   element_getstate,   METH_VARARGS, "helper for pickle" },
+  { "__setstate__",   element_setstate,   METH_O,       "helper for pickle" },
   { NULL }
 };
 

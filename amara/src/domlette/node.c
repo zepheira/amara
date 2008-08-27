@@ -2,6 +2,7 @@
 
 /** Private Routines **************************************************/
 
+static PyObject *newobj_function;
 static PyObject *shared_empty_nodelist;
 static PyObject *xml_base_key;
 static PyObject *is_absolute_function;
@@ -469,41 +470,6 @@ int Node_ReplaceChild(NodeObject *self, NodeObject *newChild,
   return 0;
 }
 
-NodeObject *Node_CloneNode(PyObject *node, int deep)
-{
-  PyObject *obj;
-  int node_type;
-
-  /* Note that this section MUST use attribute lookup and the node type
-   * constant (integer) checks instead in simple type checks, as the node
-   * to be cloned may be from a different implementation (for importNode). */
-
-  /* Get the nodeType as a plain integer */
-  obj = PyObject_GetAttrString(node, "nodeType");
-  if (obj == NULL) return NULL;
-
-  node_type = PyInt_AsLong(obj);
-  Py_DECREF(obj);
-  if (node_type == -1 && PyErr_Occurred()) return NULL;
-
-  switch (node_type) {
-  case ELEMENT_NODE:
-    return (NodeObject *)Element_CloneNode(node, deep);
-  case ATTRIBUTE_NODE:
-    return (NodeObject *)Attr_CloneNode(node, deep);
-  case TEXT_NODE:
-    return (NodeObject *)Text_CloneNode(node, deep);
-  case COMMENT_NODE:
-    return (NodeObject *)Comment_CloneNode(node, deep);
-  case PROCESSING_INSTRUCTION_NODE:
-    return (NodeObject *)ProcessingInstruction_CloneNode(node, deep);
-  default:
-    /* FIXME: DOMException */
-    DOMException_NotSupportedErr("cloneNode: unknown nodeType %d");
-    return NULL;
-  }
-}
-
 /** Python Methods *****************************************************/
 
 static char normalize_doc[] = "\
@@ -670,30 +636,6 @@ static PyObject *node_replaceChild(NodeObject *self, PyObject *args)
   return (PyObject *) oldChild;
 }
 
-static char cloneNode_doc[] = "\
-Returns a duplicate of this node, i.e., serves as a generic copy\n\
-constructor for nodes.";
-
-static PyObject *node_cloneNode(NodeObject *self, PyObject *args)
-{
-  PyObject *deep_obj = Py_False;
-  int deep;
-
-  if (!PyArg_ParseTuple(args,"|O:cloneNode", &deep_obj))
-    return NULL;
-
-  deep = PyObject_IsTrue(deep_obj);
-  if (deep == -1)
-    return NULL;
-
-  if (Document_Check(self)) {
-    PyErr_SetString(PyExc_TypeError, "cloneNode not allowed on documents");
-    return NULL;
-  }
-
-  return (PyObject *)Node_CloneNode((PyObject *)self, deep);
-}
-
 static char select_doc[] = "\
 Evaluates an XPath expression string using this node as context.";
 
@@ -715,6 +657,180 @@ static PyObject *node_select(NodeObject *self, PyObject *args, PyObject *kw)
   return result;
 }
 
+static PyObject *node_copy(PyObject *self, PyObject *noargs)
+{
+  PyObject *info, *callable, *args, *state=NULL;
+  PyObject *result;
+
+  info = PyObject_CallMethod(self, "__reduce__", NULL);
+  if (info == NULL)
+    return NULL;
+  if (!PyArg_UnpackTuple(info, NULL, 2, 3, &callable, &args, &state)) {
+    Py_DECREF(info);
+    return NULL;
+  }
+  Py_DECREF(info);
+
+  result = PyObject_CallObject(callable, args);
+  if (result == NULL)
+    return NULL;
+  if (state != NULL) {
+    info = PyObject_CallMethod(result, "__setstate__", "O", state);
+    if (info == NULL) {
+      Py_DECREF(result);
+      return NULL;
+    }
+    Py_DECREF(info);
+  }
+  return result;
+}
+
+static PyObject *node_deepcopy(PyObject *self, PyObject *memo)
+{
+  PyObject *info, *callable, *args, *state=NULL;
+  PyObject *module, *deepcopy, *result;
+
+  info = PyObject_CallMethod(self, "__reduce__", NULL);
+  if (info == NULL)
+    return NULL;
+  if (!PyArg_UnpackTuple(info, NULL, 2, 3, &callable, &args, &state)) {
+    Py_DECREF(info);
+    return NULL;
+  }
+  Py_DECREF(info);
+
+  module = PyImport_ImportModule("copy");
+  if (module == NULL)
+    return NULL;
+  deepcopy = PyObject_GetAttrString(module, "deepcopy");
+  Py_DECREF(module);
+  if (deepcopy == NULL)
+    return NULL;
+
+  args = PyObject_CallFunctionObjArgs(deepcopy, args, memo, NULL);
+  if (args == NULL) {
+    Py_DECREF(deepcopy);
+    return NULL;
+  }
+  result = PyObject_CallObject(callable, args);
+  Py_DECREF(args);
+  if (result == NULL) {
+    Py_DECREF(deepcopy);
+    return NULL;
+  }
+  if (PyDict_SetItem(memo, self, result) < 0) {
+    Py_DECREF(result);
+    Py_DECREF(deepcopy);
+    return NULL;
+  }
+  if (state != NULL) {
+    state = PyObject_CallFunctionObjArgs(deepcopy, state, memo, NULL);
+    if (state == NULL) {
+      Py_DECREF(result);
+      Py_DECREF(deepcopy);
+      return NULL;
+    }
+    info = PyObject_CallMethod(result, "__setstate__", "O", state);
+    if (info == NULL) {
+      Py_DECREF(result);
+      Py_DECREF(deepcopy);
+      return NULL;
+    }
+    Py_DECREF(info);
+  }
+  Py_DECREF(deepcopy);
+  return result;
+}
+
+static PyObject *node_reduce(PyObject *self, PyObject *noargs)
+{
+  PyObject *newargs, *args, *arg, *state, *info;
+  Py_ssize_t i, n;
+
+  newargs = PyObject_CallMethod(self, "__getnewargs__", NULL);
+  if (newargs == NULL)
+    return NULL;
+  if (!PyTuple_Check(newargs)) {
+    PyErr_Format(PyExc_TypeError,
+                  "__getnewargs__() should return a tuple, not '%.200s'",
+                  newargs == Py_None ? "None" : newargs->ob_type->tp_name);
+    Py_DECREF(newargs);
+    return NULL;
+  }
+  /* construct the argumnt list of (cls, *newargs) */
+  n = PyTuple_GET_SIZE(newargs);
+  args = PyTuple_New(n + 1);
+  if (args == NULL) {
+    Py_DECREF(newargs);
+    return NULL;
+  }
+  i = 0;
+  arg = (PyObject *)self->ob_type;
+  do {
+    PyTuple_SET_ITEM(args, i, arg);
+    Py_INCREF(arg);
+    if (i >= n)
+      break;
+    arg = PyTuple_GET_ITEM(newargs, i++);
+  } while (1);
+  Py_DECREF(newargs);
+
+  state = PyObject_CallMethod(self, "__getstate__", NULL);
+  if (state == NULL) {
+    Py_DECREF(args);
+    return NULL;
+  }
+
+  info = PyTuple_New(3);
+  if (info == NULL) {
+    Py_DECREF(args);
+    Py_DECREF(state);
+  } else {
+    PyTuple_SET_ITEM(info, 0, newobj_function);
+    Py_INCREF(newobj_function);
+    PyTuple_SET_ITEM(info, 1, args);
+    PyTuple_SET_ITEM(info, 2, state);
+  }
+  return info;
+}
+
+static PyObject *node_getnewargs(PyObject *self, PyObject *noarg)
+{
+  return PyTuple_New(0);
+}
+
+static PyObject *node_getstate(PyObject *self, PyObject *args)
+{
+  PyObject *deep=Py_True, *state;
+
+  if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
+    return NULL;
+
+  state = (PyObject *)Node_GET_PARENT(self);
+  Py_INCREF(state);
+  return state;
+}
+
+static PyObject *node_setstate(PyObject *self, PyObject *state)
+{
+  NodeObject *parent, *temp;
+
+  if (Node_Check(state))
+    parent = Node(state);
+  else
+    return PyErr_Format(PyExc_NotImplementedError,
+                        "subclass '%s' must override __setstate__()",
+                        self->ob_type->tp_name);
+
+  temp = Node_GET_PARENT(self);
+  Node_SET_PARENT(self, parent);
+  Py_INCREF(parent);
+  Py_XDECREF(temp);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 #define Node_METHOD(NAME, ARGSPEC) \
   { "xml_" #NAME, (PyCFunction) node_##NAME, ARGSPEC, NAME##_doc }
 
@@ -724,8 +840,13 @@ static PyMethodDef node_methods[] = {
   //Node_METHOD(appendChild,   METH_VARARGS),
   //Node_METHOD(insertBefore,  METH_VARARGS),
   //Node_METHOD(replaceChild,  METH_VARARGS),
-  //Node_METHOD(cloneNode,     METH_VARARGS),
   Node_METHOD(select,         METH_KEYWORDS),
+  { "__copy__",       node_copy,       METH_NOARGS,  "helper for copy" },
+  { "__deepcopy__",   node_deepcopy,   METH_O,       "helper for deepcopy" },
+  { "__reduce__",     node_reduce,     METH_NOARGS,  "helper for pickle" },
+  { "__getnewargs__", node_getnewargs, METH_NOARGS,  "helper for pickle" },
+  { "__getstate__",   node_getstate,   METH_VARARGS, "helper for pickle" },
+  { "__setstate__",   node_setstate,   METH_O,       "helper for pickle" },
   { NULL }
 };
 
@@ -1304,9 +1425,71 @@ static PyTypeObject NodeIter_Type = {
 
 /** Module Interface **************************************************/
 
+static PyObject *newobj_call(PyObject *module, PyObject *args)
+{
+  PyObject *cls, *newargs, *obj;
+  PyTypeObject *type;
+  Py_ssize_t len;
+
+  assert(PyTuple_Check(args));
+  len = PyTuple_GET_SIZE(args);
+  if (len < 1) {
+    PyErr_SetString(PyExc_TypeError, 
+                    "__newobj__() takes at least 1 argument (0 given)");
+    return NULL;
+  }
+
+  cls = PyTuple_GET_ITEM(args, 0);
+  if (!PyType_Check(cls)) {
+    PyErr_Format(PyExc_TypeError,
+                 "__newobj__() argument 1 must be type, not %.50s",
+                 cls == Py_None ? "None" : cls->ob_type->tp_name);
+    return NULL;
+  }
+
+  type = (PyTypeObject *)cls;
+  if (type->tp_new == NULL) {
+    PyErr_Format(PyExc_TypeError, "type '%.100s' has NULL tp_new slot",
+                 type->tp_name);
+    return NULL;
+  }
+
+  /* create the argument tuple for the __new__ method */
+  newargs = PyTuple_New(len - 1);
+  if (newargs == NULL)
+    return NULL;
+  while (len > 1) {
+    PyObject *item = PyTuple_GET_ITEM(args, len--);
+    Py_INCREF(item);
+    PyTuple_SET_ITEM(newargs, len, item);
+  }
+
+  /* call __new__ */
+  obj = type->tp_new(type, newargs, NULL);
+  Py_DECREF(newargs);
+  return obj;
+}
+
+static PyMethodDef newobj_meth = {
+  /* ml_name  */ "__newobj__",
+  /* ml_meth  */ newobj_call,
+  /* ml_flags */ METH_VARARGS,
+  /* ml_doc   */ "helper for pickle",
+};
+
 int DomletteNode_Init(PyObject *module)
 {
   PyObject *node_class, *import, *bases, *dict;
+
+  dict = PyModule_GetDict(module);
+  newobj_function = PyCFunction_NewEx(&newobj_meth, NULL,
+                                      PyDict_GetItemString(dict, "__name__"));
+  if (newobj_function == NULL)
+    return -1;
+  if (PyDict_SetItemString(dict, newobj_meth.ml_name, newobj_function) < 0) {
+    Py_DECREF(newobj_function);
+    return -1;
+  }
 
   import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
@@ -1367,6 +1550,7 @@ int DomletteNode_Init(PyObject *module)
 
 void DomletteNode_Fini(void)
 {
+  Py_DECREF(newobj_function);
   Py_DECREF(shared_empty_nodelist);
   Py_DECREF(xml_base_key);
 

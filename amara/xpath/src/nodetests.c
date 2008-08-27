@@ -199,7 +199,7 @@ static PyObject *namefilter_next(NameFilterObject *self)
     nodeType = Domlette->ProcessingInstruction_Type;
     break;
   case XPATH_NAMESPACE_NODE:
-    nodeType = Domlette->XPathNamespace_Type;
+    nodeType = Domlette->Namespace_Type;
     break;
   default:
     PyErr_BadInternalCall();
@@ -228,7 +228,7 @@ static PyObject *namefilter_next(NameFilterObject *self)
         break;
       case XPATH_NAMESPACE_NODE:
         namespaceURI = Py_None;
-        localName = XPathNamespace_GET_NAME(node);
+        localName = Namespace_GET_NAME(node);
         break;
       default: /* not reached */
         PyErr_BadInternalCall();
@@ -348,7 +348,7 @@ static PyObject *typefilter_new(PyTypeObject *type, PyObject *args,
     nodeType = Domlette->Comment_Type;
     break;
   case XPATH_NAMESPACE_NODE:
-    nodeType = Domlette->XPathNamespace_Type;
+    nodeType = Domlette->Namespace_Type;
     break;
   default:
     PyErr_Format(PyExc_ValueError, "invalid node type: %d", typeCode);

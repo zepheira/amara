@@ -17,7 +17,7 @@ extern "C" {
 #include "text.h"
 #include "comment.h"
 #include "processinginstruction.h"
-#include "xpathnamespace.h"
+#include "namespace.h"
 
 /*
 
@@ -33,7 +33,6 @@ extern "C" {
 */
   typedef struct {
     /* Domlette Node C Types */
-    PyTypeObject *DOMImplementation_Type;
     PyTypeObject *Node_Type;
     PyTypeObject *Document_Type;
     PyTypeObject *Element_Type;
@@ -41,7 +40,7 @@ extern "C" {
     PyTypeObject *Text_Type;
     PyTypeObject *Comment_Type;
     PyTypeObject *ProcessingInstruction_Type;
-    PyTypeObject *XPathNamespace_Type;
+    PyTypeObject *Namespace_Type;
 
     /* Node Methods */
     int (*Node_RemoveChild)(NodeObject *parent, NodeObject *oldChild);
@@ -58,9 +57,9 @@ extern "C" {
     ElementObject *(*Element_New)(PyObject *namespaceURI,
                                   PyObject *qualifiedName,
                                   PyObject *localName);
-    XPathNamespaceObject *(*Element_AddNamespace)(ElementObject *element,
-                                                  PyObject *prefix,
-                                                  PyObject *namespaceURI);
+    NamespaceObject *(*Element_AddNamespace)(ElementObject *element,
+                                             PyObject *prefix,
+                                             PyObject *namespaceURI);
     AttrObject *(*Element_AddAttribute)(ElementObject *element,
                                         PyObject *namespaceURI,
                                         PyObject *qualifiedName,
@@ -78,16 +77,15 @@ extern "C" {
     ProcessingInstructionObject *(*ProcessingInstruction_New)(PyObject *target,
                                                               PyObject *data);
 
-    XPathNamespaceObject *(*XPathNamespace_New)(ElementObject *parent,
-                                                PyObject *prefix, 
-                                                PyObject *uri);
+    NamespaceObject *(*Namespace_New)(ElementObject *parent,
+                                      PyObject *prefix, 
+                                      PyObject *uri);
 
     /* NamespaceMap Methods */
-    XPathNamespaceObject *(*NamespaceMap_Next)(PyObject *nodemap, 
-                                               Py_ssize_t *pos);
+    NamespaceObject *(*NamespaceMap_Next)(PyObject *nodemap, Py_ssize_t *ppos);
 
     /* AttributeMap Methods */
-    AttrObject *(*AttributeMap_Next)(PyObject *nodemap, Py_ssize_t *pos);
+    AttrObject *(*AttributeMap_Next)(PyObject *nodemap, Py_ssize_t *ppos);
 
   } Domlette_APIObject;
 
@@ -99,7 +97,6 @@ extern "C" {
 #endif
 #include "debug.h"
 #include "exceptions.h"
-#include "domimplementation.h"
 #include "attributemap.h"
 #include "namespacemap.h"
 
@@ -112,7 +109,6 @@ extern "C" {
 #define Domlette_IMPORT Domlette = (Domlette_APIObject *) \
      PyCObject_Import(Domlette_MODULE_NAME, "CAPI")
 
-#define DomletteDOMImplementation_Type Domlette->DOMImplementation_Type
 #define DomletteNode_Type Domlette->Node_Type
 #define DomletteDocument_Type Domlette->Document_Type
 #define DomletteElement_Type Domlette->Element_Type
@@ -120,7 +116,7 @@ extern "C" {
 #define DomletteText_Type Domlette->Text_Type
 #define DomletteComment_Type Domlette->Comment_Type
 #define DomletteProcessingInstruction_Type Domlette->ProcessingInstruction_Type
-#define DomletteXPathNamespace_Type Domlette->XPathNamespace_Type
+#define DomletteNamespace_Type Domlette->Namespace_Type
 
 #define Node_Check(op) PyObject_TypeCheck((op), DomletteNode_Type)
 #define Node_CheckExact(op) ((op)->ob_type == DomletteNode_Type)
@@ -154,7 +150,7 @@ extern "C" {
   ((op)->ob_type == DomletteProcessingInstruction_Type)
 #define ProcessingInstruction_New Domlette->ProcessingInstruction_New
 
-#define XPathNamespace_New Domlette->XPathNamespace_New
+#define Namespace_New Domlette->Namespace_New
 
 #define NamespaceMap_Next Domlette->NamespaceMap_Next
 

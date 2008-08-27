@@ -34,11 +34,6 @@ extern "C" {
 #define CharacterData_New(type, typeobj, data) \
   ((type *) _CharacterData_New((typeobj), (data)))
 
-  CharacterDataObject *_CharacterData_CloneNode(PyTypeObject *type,
-                                                PyObject *node, int deep);
-#define CharacterData_CloneNode(type, typeobj, node, deep) \
-  ((type *) _CharacterData_CloneNode((typeobj), (node), (deep)))
-
 #endif /* Domlette_BUILDING_MODULE */
 
 #ifdef __cplusplus

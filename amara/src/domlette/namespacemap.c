@@ -27,9 +27,9 @@ static PyTypeObject NodeIter_Type;
            PyUnicode_GET_DATA_SIZE(a))))
 
 #define KEY_EQ(entry, hash, name) \
-  (XPathNamespace_GET_NAME(NamespaceEntry_NODE(entry)) == (name) || \
+  (Namespace_GET_NAME(NamespaceEntry_NODE(entry)) == (name) || \
    (NamespaceEntry_HASH(entry) == (hash) && \
-    NAME_EQ(XPathNamespace_GET_NAME(NamespaceEntry_NODE(entry)), (name))))
+    NAME_EQ(Namespace_GET_NAME(NamespaceEntry_NODE(entry)), (name))))
 
 Py_LOCAL_INLINE(long)
 get_hash(PyObject *name)
@@ -70,7 +70,7 @@ get_entry(NamespaceMapObject *nm, Py_ssize_t hash, PyObject *name)
 }
 
 Py_LOCAL_INLINE(void)
-set_entry(NamespaceMapObject *nm, Py_ssize_t hash, XPathNamespaceObject *node)
+set_entry(NamespaceMapObject *nm, Py_ssize_t hash, NamespaceObject *node)
 {
   register size_t perturb = hash;
   register size_t mask = (size_t)nm->nm_mask;
@@ -133,23 +133,20 @@ resize_table(NamespaceMapObject *self)
   return 0;
 }
 
-Py_LOCAL(int)
-next_entry(NamespaceMapObject *self, Py_ssize_t *ppos, 
-           XPathNamespaceObject **pnode)
+Py_LOCAL_INLINE(NamespaceObject *)
+next_entry(NamespaceMapObject *self, Py_ssize_t *ppos)
 {
   register Py_ssize_t i = *ppos;
   register Py_ssize_t mask = self->nm_mask;
   register NamespaceEntry *table = self->nm_table;
 
   if (i < 0)
-    return 0;
+    return NULL;
   while (i <= mask && table[i].ne_node == NULL) i++;
   *ppos = i+1;
   if (i > mask)
-    return 0;
-  if (pnode)
-    *pnode = table[i].ne_node;
-  return 1;
+    return NULL;
+  return table[i].ne_node;
 }
 
 Py_LOCAL_INLINE(PyObject *)
@@ -160,8 +157,8 @@ parse_key(PyObject *key, int node_allowed)
   if (key == Py_None || PyUnicode_Check(key)) {
     name = key;
     Py_INCREF(name);
-  } else if (node_allowed && XPathNamespace_Check(key)) {
-    name = XPathNamespace_GET_NAME(key);
+  } else if (node_allowed && Namespace_Check(key)) {
+    name = Namespace_GET_NAME(key);
     Py_INCREF(name);
   } else {
     const char *str;
@@ -176,7 +173,7 @@ parse_key(PyObject *key, int node_allowed)
       return PyErr_Format(PyExc_KeyError,
                           "subscript must be %sunicode string, "
                           "UTF-8 byte-string or None, not '%s'",
-                          node_allowed ? "XPathNamespace instance, " : "",
+                          node_allowed ? "Namespace instance, " : "",
                           key->ob_type->tp_name);
     }
     name = PyUnicode_Decode(str, len, "utf-8", NULL);
@@ -199,7 +196,7 @@ NamespaceMap_New(void)
   return (PyObject *)self;
 }
 
-XPathNamespaceObject *
+NamespaceObject *
 NamespaceMap_GetNode(PyObject *self, PyObject *name)
 {
   NamespaceMapObject *nm = (NamespaceMapObject *)self;
@@ -212,7 +209,7 @@ NamespaceMap_GetNode(PyObject *self, PyObject *name)
 }
 
 int
-NamespaceMap_SetNode(PyObject *self, XPathNamespaceObject *node)
+NamespaceMap_SetNode(PyObject *self, NamespaceObject *node)
 {
   NamespaceMapObject *nm = (NamespaceMapObject *)self;
   NamespaceEntry *entry;
@@ -223,7 +220,7 @@ NamespaceMap_SetNode(PyObject *self, XPathNamespaceObject *node)
     PyErr_BadInternalCall();
     return -1;
   }
-  name = XPathNamespace_GET_NAME(node);
+  name = Namespace_GET_NAME(node);
   hash = get_hash(name);
   if (hash == -1)
     return -1;
@@ -256,23 +253,11 @@ NamespaceMap_DelNode(PyObject *self, PyObject *name)
   return -1;
 }
 
-XPathNamespaceObject *
+NamespaceObject *
 NamespaceMap_Next(PyObject *self, Py_ssize_t *ppos)
 {
-  NamespaceMapObject *nm = (NamespaceMapObject *)self;
-  register Py_ssize_t i = *ppos;
-  register Py_ssize_t mask = nm->nm_mask;
-  register NamespaceEntry *table = nm->nm_table;
-
-  if (i < 0)
-    return NULL;
-  while (i <= mask && table[i].ne_node == NULL) i++;
-  *ppos = i+1;
-  if (i > mask)
-    return NULL;
-  return (XPathNamespaceObject *)table[i].ne_node;
+  return next_entry((NamespaceMapObject *)self, ppos);
 }
-
 
 /** Python Methods ****************************************************/
 
@@ -299,10 +284,10 @@ setnode(node) -> M[node.xml_name] = node.xml_value";
 
 static PyObject *namednodemap_setnode(PyObject *self, PyObject *args)
 {
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (!PyArg_ParseTuple(args, "O!:setnode", &node, 
-                        &DomletteXPathNamespace_Type))
+                        &DomletteNamespace_Type))
     return NULL;
 
   if (NamespaceMap_SetNode(self, node) < 0)
@@ -319,7 +304,7 @@ static PyObject *namednodemap_get(PyObject *self, PyObject *args)
 {
   PyObject *key, *result=Py_None;
   PyObject *name;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (!PyArg_ParseTuple(args, "O|O:get", &key, &result))
     return NULL;
@@ -334,7 +319,7 @@ static PyObject *namednodemap_get(PyObject *self, PyObject *args)
   node = NamespaceMap_GetNode(self, name);
   Py_DECREF(name);
   if (node)
-    result = XPathNamespace_GET_VALUE(node);
+    result = Namespace_GET_VALUE(node);
 
 notfound:
   Py_INCREF(result);
@@ -529,7 +514,7 @@ static PyObject *
 namednodemap_subscript(PyObject *op, PyObject *key)
 {
   PyObject *name;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   name = parse_key(key, 0);
   if (name == NULL)
@@ -562,7 +547,7 @@ namednodemap_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
     /* __setitem__(key, value)
      * `key` can be tuple of (namespace, name) or just name
      */
-    XPathNamespaceObject *node;
+    NamespaceObject *node;
     name = parse_key(key, 0);
     if (name == NULL)
       return -1;
@@ -579,8 +564,8 @@ namednodemap_ass_subscript(PyObject *self, PyObject *key, PyObject *value)
       result = NamespaceMap_SetNode(self, node);
     } else {
       /* just update the node value */
-     Py_DECREF(XPathNamespace_GET_VALUE(node));
-     XPathNamespace_SET_VALUE(node, value);
+     Py_DECREF(Namespace_GET_VALUE(node));
+     Namespace_SET_VALUE(node, value);
      result = 0;
     }
   }
@@ -596,10 +581,10 @@ static PyMappingMethods namednodemap_as_mapping = {
 
 static int namednodemap_contains(NamespaceMapObject *self, PyObject *key)
 {
-  if (XPathNamespace_Check(key)) {
+  if (Namespace_Check(key)) {
     Py_ssize_t pos = 0;
-    XPathNamespaceObject *node;
-    while ((node = NamespaceMap_Next((PyObject *)self, &pos))) {
+    NamespaceObject *node;
+    while ((node = next_entry(self, &pos))) {
       switch (PyObject_RichCompareBool(key, (PyObject *)node, Py_EQ)) {
         case 1:
           return 1;
@@ -689,9 +674,9 @@ static int namednodemap_traverse(NamespaceMapObject *self, visitproc visit,
                                  void *arg)
 {
   Py_ssize_t i = 0;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
-  while ((node = NamespaceMap_Next((PyObject *)self, &i)))
+  while ((node = next_entry(self, &i)))
     Py_VISIT(node);
 
   return 0;
@@ -829,7 +814,7 @@ static PyObject *iter_nextkey(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
   Py_ssize_t pos;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (nodemap == NULL)
     return NULL;
@@ -842,8 +827,8 @@ static PyObject *iter_nextkey(IterObject *self)
   }
 
   pos = self->it_pos;
-  while (next_entry(nodemap, &pos, &node)) {
-    PyObject *result = XPathNamespace_GET_NAME(node);
+  while ((node = next_entry(nodemap, &pos))) {
+    PyObject *result = Namespace_GET_NAME(node);
     Py_INCREF(result);
     self->it_length--;
     return result;
@@ -858,7 +843,7 @@ static PyObject *iter_nextvalue(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
   Py_ssize_t pos;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (nodemap == NULL)
     return NULL;
@@ -871,8 +856,8 @@ static PyObject *iter_nextvalue(IterObject *self)
   }
 
   pos = self->it_pos;
-  while (next_entry(nodemap, &pos, &node)) {
-    PyObject *result = XPathNamespace_GET_VALUE(node);
+  while ((node = next_entry(nodemap, &pos))) {
+    PyObject *result = Namespace_GET_VALUE(node);
     Py_INCREF(result);
     self->it_length--;
     return result;
@@ -887,7 +872,7 @@ static PyObject *iter_nextitem(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
   Py_ssize_t pos;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (nodemap == NULL)
     return NULL;
@@ -900,9 +885,9 @@ static PyObject *iter_nextitem(IterObject *self)
   }
 
   pos = self->it_pos;
-  while (next_entry(nodemap, &pos, &node)) {
-    PyObject *result = PyTuple_Pack(2, XPathNamespace_GET_NAME(node),
-                                    XPathNamespace_GET_VALUE(node));
+  while ((node = next_entry(nodemap, &pos))) {
+    PyObject *result = PyTuple_Pack(2, Namespace_GET_NAME(node),
+                                    Namespace_GET_VALUE(node));
     self->it_length--;
     return result;
   }
@@ -916,7 +901,7 @@ static PyObject *iter_nextnode(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
   Py_ssize_t pos;
-  XPathNamespaceObject *node;
+  NamespaceObject *node;
 
   if (nodemap == NULL)
     return NULL;
@@ -929,7 +914,7 @@ static PyObject *iter_nextnode(IterObject *self)
   }
 
   pos = self->it_pos;
-  while (next_entry(nodemap, &pos, &node)) {
+  while ((node = next_entry(nodemap, &pos))) {
     Py_INCREF(node);
     self->it_length--;
     return (PyObject *)node;
