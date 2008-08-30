@@ -5,7 +5,8 @@ Implementation of `xsl:apply-templates` instruction
 """
 
 from amara.namespaces import XSL_NAMESPACE
-from amara.xslt import XsltError
+from amara.xpath import XPathError
+from amara.xslt import XsltError, XsltTypeError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 from amara.xslt.expressions import sorted_expression
 
@@ -49,7 +50,9 @@ class apply_templates_element(xslt_element):
             try:
               nodes = self._select.evaluate_as_nodeset(context)
             except TypeError:
-                raise XsltError(XsltError.ILLEGAL_APPLYTEMPLATE_NODESET, self)
+                raise
+                raise XsltTypeError(XsltError.INVALID_APPLY_TEMPLATES_SELECT,
+                                    self)
         else:
             nodes = context.node.xml_children
 

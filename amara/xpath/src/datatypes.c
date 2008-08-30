@@ -12,7 +12,6 @@ Implementation of XPath data types\n\
 #include "Python.h"
 #include "structmember.h"
 #include "domlette_interface.h"
-#include "nodetype.h"
 
 /* Floating-point classification macros */
 #if __STDC_VERSION__ < 199901L
@@ -73,95 +72,94 @@ typedef PyListObject XPathNodeSetObject;
 static PyTypeObject XPathNodeSet_Type;
 #define NodeSet_Check(ob) PyObject_TypeCheck((ob), &XPathNodeSet_Type)
 
-static PyObject *node_descendants(PyObject *node, PyObject *descendants)
+static int join_descendants(NodeObject *node, PyObject **result, 
+                            Py_ssize_t *used)
 {
-  PyObject *childNodes, *child, *nodeType, *data;
-  int i;
+  Py_ssize_t i, n;
 
-  childNodes = PyObject_GetAttrString(node, "childNodes");
-  if (childNodes == NULL) return NULL;
+  assert(Node_HasFlag(node, Node_FLAGS_CONTAINER));
+  n = ContainerNode_GET_COUNT(node);
+  for (i = 0; i < n; i++) {
+    NodeObject *child = ContainerNode_GET_CHILD(node, i);
+    if (Element_Check(child)) {
+      if (join_descendants(child, result, used) < 0)
+        return -1;
+    } else if (Text_Check(child)) {
+      Py_ssize_t data_len, new_used, allocated;
+      PyObject *data = Text_GET_DATA(child);
+      assert(PyUnicode_Check(data));
 
-  for (i = 0; i < PySequence_Size(childNodes); i++) {
-    child = PySequence_GetItem(childNodes, i);
-    if (child == NULL) {
-      Py_DECREF(childNodes);
-      return NULL;
-    }
-
-    nodeType = PyObject_GetAttrString(child, "nodeType");
-    if (nodeType == NULL) {
-      Py_DECREF(child);
-      Py_DECREF(childNodes);
-      return NULL;
-    }
-
-    switch (PyInt_AsLong(nodeType)) {
-    case ELEMENT_NODE:
-      if (node_descendants(child, descendants) == NULL) {
-        Py_DECREF(nodeType);
-        Py_DECREF(child);
-        Py_DECREF(childNodes);
-        return NULL;
+      data_len = PyUnicode_GET_SIZE(data);
+      new_used = *used + data_len;
+      if (new_used < 0)
+        goto overflow;
+      allocated = PyUnicode_GET_SIZE(*result);
+      if (new_used > allocated) {
+        /* double allocated size until it's big enough */
+        do {
+            allocated <<= 1;
+            if (allocated <= 0)
+              goto overflow;
+        } while (new_used > allocated);
+        if (PyUnicode_Resize(result, allocated) < 0)
+          goto error;
       }
-      break;
-    case TEXT_NODE:
-      data = PyObject_GetAttrString(child, "data");
-      if (data == NULL) {
-        Py_DECREF(nodeType);
-        Py_DECREF(child);
-        Py_DECREF(childNodes);
-        return NULL;
-      }
-      PyList_Append(descendants, data);
-      Py_DECREF(data);
-      break;
+      Py_UNICODE_COPY(PyUnicode_AS_UNICODE(*result) + *used,
+                      PyUnicode_AS_UNICODE(data), data_len);
+      *used = new_used;
     }
-    Py_DECREF(nodeType);
-    Py_DECREF(child);
   }
+  return 0;
 
-  Py_DECREF(childNodes);
-  return descendants;
+ overflow:
+  PyErr_NoMemory();
+ error:
+  Py_DECREF(*result);
+  return -1;
 }
 
 static PyObject *node_to_string(PyObject *node)
 {
-  PyObject *nodeType, *result, *descendants;
+  PyObject *result;
 
-  nodeType = PyObject_GetAttrString(node, "nodeType");
-  if (nodeType == NULL) {
-    PyErr_Clear();
-    return PyUnicode_FromUnicode(NULL, 0);
-  }
-
-  /* convert DOM node to string */
-  switch (PyInt_AsLong(nodeType)) {
-  case DOCUMENT_NODE:
-  case ELEMENT_NODE:
+  /* convert amara.tree node to string */
+  if (Element_Check(node) || Document_Check(node)) {
     /* The concatenation of all text descendants in document order */
-    descendants = PyList_New(0);
-    if (node_descendants(node, descendants) == NULL) {
-      Py_DECREF(descendants);
+    Py_ssize_t used = 0;
+    PyObject *result = PyUnicode_FromUnicode(NULL, 100);
+    if (result == NULL)
+      return NULL;
+    if (join_descendants((NodeObject *)node, &result, &used) < 0) {
+      Py_DECREF(result);
       return NULL;
     }
-    result = PyUnicode_Join(PyUnicode_FromUnicode(NULL, 0), descendants);
-    Py_DECREF(descendants);
-    break;
-  case ATTRIBUTE_NODE:
-  case XPATH_NAMESPACE_NODE:
-    result = PyObject_GetAttrString(node, "value");
-    break;
-  case PROCESSING_INSTRUCTION_NODE:
-  case COMMENT_NODE:
-  case TEXT_NODE:
-    result = PyObject_GetAttrString(node, "data");
-    break;
-  default:
-    result = PyUnicode_FromUnicode(NULL, 0);
+    if (PyUnicode_Resize(&result, used) < 0) {
+      Py_DECREF(result);
+      return NULL;
+    }
+    return result;
   }
-
-  Py_DECREF(nodeType);
-  return result;
+  if (Attr_Check(node)) {
+    result = Attr_GET_NODE_VALUE(node);
+    Py_INCREF(result);
+    return result;
+  }
+  if (Text_Check(node) || Comment_Check(node)) {
+    result = CharacterData_GET_NODE_VALUE(node);
+    Py_INCREF(result);
+    return result;
+  }
+  if (ProcessingInstruction_Check(node)) {
+    result = ProcessingInstruction_GET_DATA(node);
+    Py_INCREF(result);
+    return result;
+  }
+  if (Namespace_Check(node)) {
+    result = Namespace_GET_VALUE(node);
+    Py_INCREF(result);
+    return result;
+  }
+  return PyUnicode_FromUnicode(NULL, 0);
 }
 
 static PyObject *String_New(PyObject *value)

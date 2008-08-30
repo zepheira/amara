@@ -38,7 +38,7 @@ class location_path(nodesets.nodeset_expression):
             if predicates:
                 predicates = [ predicate.select for predicate in predicates ]
             # create the node iterator for this step
-            step = _paths.stepiter(axis.select, axis.reverse, node_filter, 
+            step = _paths.stepiter(axis.select, axis.reverse, node_filter,
                                    predicates)
             # add the opcodes for calling `step.select(context, nodes)`
             emit('LOAD_CONST', step.select,

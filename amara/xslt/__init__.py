@@ -9,6 +9,7 @@ from amara import Error
 __all__ = ['XsltError', 'transform']
 
 class XsltError(Error):
+
     INTERNAL_ERROR = 1
     # xsl:stylesheet
     NO_STYLESHEET = 20
@@ -101,7 +102,7 @@ class XsltError(Error):
     # xsl:apply-template
     #ILLEGAL_APPLYTEMPLATE_CHILD = 210
     #ILLEGAL_APPLYTEMPLATE_MODE = 211
-    ILLEGAL_APPLYTEMPLATE_NODESET = 212
+    INVALID_APPLY_TEMPLATES_SELECT = 'XTTE0520'
 
     # xsl:attribute-set
     #ILLEGAL_ATTRIBUTESET_CHILD = 220
@@ -334,8 +335,7 @@ class XsltError(Error):
 
             # xsl:for-each
             XsltError.INVALID_FOREACH_SELECT: _(
-                "'select' attribute of 'xsl:for-each' must evaluate to a "
-                "node-set (see XSLT 1.0 sec. 8)"),
+                "'select' expression must evaluate to a node-set."),
 
             # xsl:value-of
             #XsltError.VALUEOF_MISSING_SELECT: _('Empty "value-of" requires "select" attribute (see XSLT 1.0 sec. 7.6.1)'),
@@ -349,7 +349,8 @@ class XsltError(Error):
             # xsl:apply-templates
             #XsltError.ILLEGAL_APPLYTEMPLATE_CHILD: _('apply-templates child must be with-param or sort. (see XSLT Spec 5.4)'),
             #XsltError.ILLEGAL_APPLYTEMPLATE_MODE: _('apply-templates mode must be a QName. (see XSLT Spec 5.4)'),
-            XsltError.ILLEGAL_APPLYTEMPLATE_NODESET: _('apply-templates must apply to a node-set.'),
+            XsltError.INVALID_APPLY_TEMPLATES_SELECT: _(
+                "'select' expression must evaluate to a node-set."),
 
             # xsl:attribute-set
             #XsltError.ILLEGAL_ATTRIBUTESET_CHILD: _('xsl:attribute-set child must be "attribute" (see XSLT 1.0 sec. 7.1.4)'),
@@ -416,6 +417,39 @@ class XsltError(Error):
 
             #XsltError.FEATURE_NOT_SUPPORTED: _('4XSLT does not yet support this feature.'),
         }
+
+
+class XsltTypeError(XsltError, TypeError):
+    def __init__(self, code, xslt_element, **kwords):
+        XsltError.__init__(self, code, **kwords)
+        # Just save the information needed from `xslt_element`
+        self.uri = xslt_element.baseUri
+        self.lineno = xslt_element.lineNumber
+        self.offset = xslt_element.columnNumber
+        self.tagname = xslt_element.nodeName
+
+    def __str__(self):
+        from gettext import gettext as _
+        return _("Stylesheet '%s', line %s, column %s, in '%s': %s") % (
+            self.uri, self.lineno, self.offset, self.tagname, self.message)
+
+
+class XsltRuntimeError(XsltError, RuntimeError):
+    def __init__(self, code, xslt_element, **kwords):
+        XsltError.__init__(self, code, **kwords)
+        # Just save the information needed from `xslt_element`
+        self.uri = xslt_element.baseUri
+        self.lineno = xslt_element.lineNumber
+        self.offset = xslt_element.columnNumber
+        self.tagname = xslt_element.nodeName
+
+    def __str__(self):
+        from gettext import gettext as _
+        return _("Stylesheet '%s', line %s, column %s, in '%s': %s") % (
+            self.uri, self.lineno, self.offset, self.tagname, self.message)
+
+
+
 
 def transform(source, transforms, params=None, output=None):
     """

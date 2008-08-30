@@ -136,6 +136,8 @@ extern "C" {
 #define Element_AddAttribute Domlette->Element_AddAttribute
 #define Element_InscopeNamespaces Domlette->Element_InscopeNamespaces
 
+#define Attr_Check(op) PyObject_TypeCheck((op), DomletteAttr_Type)
+
 #define Text_Check(op) PyObject_TypeCheck((op), DomletteText_Type)
 #define Text_CheckExact(op) ((op)->ob_type == DomletteText_Type)
 #define Text_New Domlette->Text_New
@@ -149,6 +151,8 @@ extern "C" {
 #define ProcessingInstruction_CheckExact(op) \
   ((op)->ob_type == DomletteProcessingInstruction_Type)
 #define ProcessingInstruction_New Domlette->ProcessingInstruction_New
+
+#define Namespace_Check(op) PyObject_TypeCheck((op), DomletteNamespace_Type)
 
 #define Namespace_New Domlette->Namespace_New
 

@@ -45,7 +45,7 @@ static PyObject *filter_call(PyObject *self, PyObject *args, PyObject *kwds)
   PyObject *context, *nodes = Py_None;
   static char *kwlist[] = { "context", "nodes", NULL };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:select", kwlist,
                                    &context, &nodes)) {
     context = NULL; /* silence GCC warning */
     return NULL;
@@ -97,7 +97,7 @@ static PyTypeObject Filter_Type = {
   /* tp_as_sequence    */ (PySequenceMethods *) 0,
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
   /* tp_hash           */ (hashfunc) 0,
-  /* tp_call           */ (ternaryfunc) filter_call,
+  /* tp_call           */ (ternaryfunc) 0,
   /* tp_str            */ (reprfunc) 0,
   /* tp_getattro       */ (getattrofunc) 0,
   /* tp_setattro       */ (setattrofunc) 0,
@@ -127,128 +127,187 @@ static PyTypeObject Filter_Type = {
 };
 
 
-/** namefilter object ************************************************/
+/** nodefilter objects ***********************************************/
 
-typedef struct {
+typedef struct NodeFilterObject {
   FilterObject_HEAD
-  int nodeType;
-  PyObject *namespaceURI;
-  PyObject *localName;
-} NameFilterObject;
+  PyTypeObject *node_type;
+  int (*nametest)(struct NodeFilterObject *, PyObject *);
+  PyObject *name;
+  PyObject *namespace;
+} NodeFilterObject;
 
-static PyObject *namefilter_new(PyTypeObject *type, PyObject *args,
+Py_LOCAL_INLINE(int)
+node_nametest(NodeFilterObject *self, PyObject *namespace, PyObject *name)
+{
+  int rv;
+  if (self->namespace == NULL) {
+    if (namespace != Py_None)
+      return 0;
+  } else {
+    rv = PyObject_RichCompareBool(self->namespace, namespace, Py_EQ);
+    if (rv != 1)
+      return rv;
+  }
+  /* if `name` wasn't supplied, we're done */
+  if (self->name == NULL)
+    return 1;
+  /* otherwise, compare it with the node's local name */
+  return PyObject_RichCompareBool(self->name, name, Py_EQ);
+}
+
+static int element_nametest(NodeFilterObject *self, PyObject *node)
+{
+  return node_nametest(self, Element_GET_NAMESPACE_URI(node),
+                       Element_GET_LOCAL_NAME(node));
+}
+
+static int attr_nametest(NodeFilterObject *self, PyObject *node)
+{
+  return node_nametest(self, Attr_GET_NAMESPACE_URI(node),
+                       Attr_GET_LOCAL_NAME(node));
+}
+
+static int namespace_nametest(NodeFilterObject *self, PyObject *node)
+{
+  return node_nametest(self, Py_None, Namespace_GET_NAME(node));
+}
+
+static int pi_nametest(NodeFilterObject *self, PyObject *node)
+{
+  return node_nametest(self, Py_None, ProcessingInstruction_GET_TARGET(node));
+}
+
+static PyObject *nodefilter_new(PyTypeObject *type, PyObject *args,
                                 PyObject *kwds)
 {
-  PyObject *namespaceURI, *localName;
-  int typeCode;
-  NameFilterObject *filter;
-  static char *kwlist[] = { "nodeType", "namespaceURI", "localName", NULL };
+  PyTypeObject *node_type;
+  PyObject *namespace=NULL, *name=NULL;
+  int (*nametest)(NodeFilterObject *, PyObject *) = NULL;
+  NodeFilterObject *filter;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "iOO:namefilter", kwlist,
-                                   &typeCode, &namespaceURI, &localName)) {
+  /* validate the arguments */
+  if (!_PyArg_NoKeywords("nodefilter", kwds))
+    return NULL;
+  if (!PyArg_ParseTuple(args, "O!|OO:nodefilter", &PyType_Type, &node_type,
+                        &namespace, &name))
+    return NULL;
+  if (node_type == DomletteElement_Type) {
+    if (namespace) {
+      nametest = element_nametest;
+      if (namespace == Py_None)
+        namespace = NULL;
+      if (name == Py_None)
+        name = NULL;
+    }
+  } else if (node_type == DomletteAttr_Type) {
+    if (namespace) {
+      nametest = attr_nametest;
+      if (namespace == Py_None)
+        namespace = NULL;
+      if (name == Py_None)
+        name = NULL;
+    }
+  } else if (node_type == DomletteNamespace_Type) {
+    if (namespace) {
+      nametest = namespace_nametest;
+      if (namespace == Py_None)
+        namespace = NULL;
+      if (name == Py_None)
+        name = NULL;
+    }
+  } else if (node_type == DomletteProcessingInstruction_Type) {
+    if (namespace) {
+      nametest = pi_nametest;
+      if (name) {
+        PyErr_Format(PyExc_TypeError, 
+                     "nodefilter(%s) takes an optional name argument",
+                     node_type->tp_name);
+        return NULL;
+      }
+      if (namespace == Py_None)
+        name = NULL;
+      else
+        name = namespace;
+      namespace = NULL;
+    }
+  } else if (PyType_IsSubtype(node_type, DomletteNode_Type)) {
+    if (namespace) {
+      PyErr_Format(PyExc_TypeError, "nodefilter(%s) takes no arguments",
+                   node_type->tp_name);
+      return NULL;
+    }
+  } else {
+    PyErr_Format(PyExc_TypeError, 
+                 "nodefilter() argument 1 must be a subclass of %s, not %s",
+                 DomletteNode_Type->tp_name, node_type->tp_name);
     return NULL;
   }
 
-  switch (typeCode) {
-  case ELEMENT_NODE:
-  case ATTRIBUTE_NODE:
-  case PROCESSING_INSTRUCTION_NODE:
-  case XPATH_NAMESPACE_NODE:
-    break;
-  default:
-    PyErr_Format(PyExc_ValueError, "invalid node type: %d", typeCode);
-    return NULL;
-  }
-
-  filter = (NameFilterObject *)type->tp_alloc(type, 0);
+  filter = (NodeFilterObject *)type->tp_alloc(type, 0);
   if (filter == NULL) {
     return NULL;
   }
-  filter->nodeType = typeCode;
-  Py_INCREF(namespaceURI);
-  filter->namespaceURI = namespaceURI;
-  Py_INCREF(localName);
-  filter->localName = localName;
+  filter->nametest = nametest;
+  Py_INCREF(node_type);
+  filter->node_type = node_type;
+  Py_XINCREF(name);
+  filter->name = name;
+  Py_XINCREF(namespace);
+  filter->namespace = namespace;
 
   return (PyObject *)filter;
 }
 
-static void namefilter_dealloc(NameFilterObject *self)
+static void nodefilter_dealloc(NodeFilterObject *self)
 {
   PyObject_GC_UnTrack(self);
-  Py_DECREF(self->namespaceURI);
-  Py_DECREF(self->localName);
+  Py_XDECREF(self->name);
+  Py_XDECREF(self->namespace);
   filter_dealloc((FilterObject *)self);
 }
 
-static PyObject *namefilter_next(NameFilterObject *self)
+static PyObject *nodefilter_repr(NodeFilterObject *self)
 {
+  return PyString_FromFormat("<nodefilter at %p: type '%s'>",
+                            self, self->node_type->tp_name);
+}
+
+static int nodefilter_traverse(NodeFilterObject *self, visitproc visit,
+                               void *arg)
+{
+  Py_VISIT(self->node_type);
+  return filter_traverse((FilterObject *)self, visit, arg);
+}
+
+static PyObject *nodefilter_next(NodeFilterObject *self)
+{
+  PyTypeObject *node_type = self->node_type;
+  int (*nametest)(NodeFilterObject *, PyObject *) = self->nametest;
   PyObject *nodes = self->nodes;
   PyObject *(*iternext)(PyObject *);
-  PyTypeObject *nodeType;
-  PyObject *node, *namespaceURI, *localName;
+  PyObject *node;
 
-  switch (self->nodeType) {
-  case ELEMENT_NODE:
-    nodeType = Domlette->Element_Type;
-    break;
-  case ATTRIBUTE_NODE:
-    nodeType = Domlette->Attr_Type;
-    break;
-  case PROCESSING_INSTRUCTION_NODE:
-    nodeType = Domlette->ProcessingInstruction_Type;
-    break;
-  case XPATH_NAMESPACE_NODE:
-    nodeType = Domlette->Namespace_Type;
-    break;
-  default:
-    PyErr_BadInternalCall();
+  /* check if exhausted */
+  if (nodes == NULL) 
     return NULL;
-  }
-
-  if (nodes == NULL) return NULL;
 
   assert(PyIter_Check(nodes));
   iternext = *nodes->ob_type->tp_iternext;
   while ((node = iternext(nodes))) {
-    int ok;
-    if (PyObject_TypeCheck(node, nodeType)) {
-      switch (self->nodeType) {
-      case ELEMENT_NODE:
-        namespaceURI = Element_GET_NAMESPACE_URI(node);
-        localName = Element_GET_LOCAL_NAME(node);
-        break;
-      case ATTRIBUTE_NODE:
-        namespaceURI = Attr_GET_NAMESPACE_URI(node);
-        localName = Attr_GET_LOCAL_NAME(node);
-        break;
-      case PROCESSING_INSTRUCTION_NODE:
-        namespaceURI = Py_None;
-        localName = ProcessingInstruction_GET_TARGET(node);
-        break;
-      case XPATH_NAMESPACE_NODE:
-        namespaceURI = Py_None;
-        localName = Namespace_GET_NAME(node);
-        break;
-      default: /* not reached */
-        PyErr_BadInternalCall();
-      error:
-        Py_DECREF(node);
-        return NULL;
-      }
-      if (self->namespaceURI == Py_None) {
-        ok = namespaceURI == Py_None;
-      } else {
-        ok = PyObject_RichCompareBool(self->namespaceURI, namespaceURI, Py_EQ);
-        if (ok < 0) goto error;
-      }
-      if (ok) {
-        if (self->localName == Py_None) return node;
-        switch (PyObject_RichCompareBool(self->localName, localName, Py_EQ)) {
-        case 1: return node;
-        case 0: break;
-        default: goto error;
+    if (PyObject_TypeCheck(node, node_type)) {
+      if (nametest != NULL) {
+        switch (nametest(self, node)) {
+        case 1: 
+          return node;
+        case 0: 
+          break;
+        default:
+          Py_DECREF(node);
+          return NULL;
         }
+      } else {
+        return node;
       }
     }
     Py_DECREF(node);
@@ -259,28 +318,28 @@ static PyObject *namefilter_next(NameFilterObject *self)
   return NULL;
 }
 
-#define NameFilter_MEMBER(NAME, TYPE) \
-  { #NAME, TYPE, offsetof(NameFilterObject, NAME), RO }
+#define NodeFilter_MEMBER(NAME, TYPE) \
+  { #NAME, TYPE, offsetof(NodeFilterObject, NAME), RO }
 
-static PyMemberDef namefilter_members[] = {
-  NameFilter_MEMBER(nodeType, T_INT),
-  NameFilter_MEMBER(namespaceURI, T_OBJECT),
-  NameFilter_MEMBER(localName, T_OBJECT),
+static PyMemberDef nodefilter_members[] = {
+  NodeFilter_MEMBER(node_type, T_OBJECT),
+  NodeFilter_MEMBER(name, T_OBJECT),
+  NodeFilter_MEMBER(namespace, T_OBJECT),
   { NULL }
 };
 
-static PyTypeObject NameFilter_Type = {
+static PyTypeObject NodeFilter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".namefilter",
-  /* tp_basicsize      */ sizeof(NameFilterObject),
+  /* tp_name           */ MODULE_NAME ".nodefilter",
+  /* tp_basicsize      */ sizeof(NodeFilterObject),
   /* tp_itemsize       */ 0,
-  /* tp_dealloc        */ (destructor) namefilter_dealloc,
+  /* tp_dealloc        */ (destructor) nodefilter_dealloc,
   /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
-  /* tp_repr           */ (reprfunc) 0,
+  /* tp_repr           */ (reprfunc) nodefilter_repr,
   /* tp_as_number      */ (PyNumberMethods *) 0,
   /* tp_as_sequence    */ (PySequenceMethods *) 0,
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
@@ -292,14 +351,14 @@ static PyTypeObject NameFilter_Type = {
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
   /* tp_flags          */ Py_TPFLAGS_DEFAULT,
   /* tp_doc            */ (char *) 0,
-  /* tp_traverse       */ (traverseproc) 0,
+  /* tp_traverse       */ (traverseproc) nodefilter_traverse,
   /* tp_clear          */ (inquiry) 0,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,
-  /* tp_iternext       */ (iternextfunc) namefilter_next,
+  /* tp_iternext       */ (iternextfunc) nodefilter_next,
   /* tp_methods        */ (PyMethodDef *) 0,
-  /* tp_members        */ (PyMemberDef *) namefilter_members,
+  /* tp_members        */ (PyMemberDef *) nodefilter_members,
   /* tp_getset         */ (PyGetSetDef *) 0,
   /* tp_base           */ (PyTypeObject *) &Filter_Type,
   /* tp_dict           */ (PyObject *) 0,
@@ -308,140 +367,7 @@ static PyTypeObject NameFilter_Type = {
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) namefilter_new,
-  /* tp_free           */ 0,
-};
-
-
-/** typefilter object ************************************************/
-
-typedef struct {
-  FilterObject_HEAD
-  PyTypeObject *nodeType;
-} TypeFilterObject;
-
-static PyObject *typefilter_new(PyTypeObject *type, PyObject *args,
-                                PyObject *kwds)
-{
-  int typeCode;
-  PyTypeObject *nodeType;
-  TypeFilterObject *filter;
-
-  if (!PyArg_ParseTuple(args, "i:typefilter", &typeCode)) {
-    return NULL;
-  }
-
-  switch (typeCode) {
-  case ELEMENT_NODE:
-    nodeType = Domlette->Element_Type;
-    break;
-  case ATTRIBUTE_NODE:
-    nodeType = Domlette->Attr_Type;
-    break;
-  case TEXT_NODE:
-    nodeType = Domlette->Text_Type;
-    break;
-  case PROCESSING_INSTRUCTION_NODE:
-    nodeType = Domlette->ProcessingInstruction_Type;
-    break;
-  case COMMENT_NODE:
-    nodeType = Domlette->Comment_Type;
-    break;
-  case XPATH_NAMESPACE_NODE:
-    nodeType = Domlette->Namespace_Type;
-    break;
-  default:
-    PyErr_Format(PyExc_ValueError, "invalid node type: %d", typeCode);
-    return NULL;
-  }
-  filter = (TypeFilterObject *)type->tp_alloc(type, 0);
-  if (filter == NULL) {
-    return NULL;
-  }
-  Py_INCREF(nodeType);
-  filter->nodeType = nodeType;
-
-  return (PyObject *)filter;
-}
-
-static void typefilter_dealloc(TypeFilterObject *self)
-{
-  PyObject_GC_UnTrack(self);
-  Py_DECREF((PyObject *)(self->nodeType));
-  filter_dealloc((FilterObject *)self);
-}
-
-static int typefilter_traverse(TypeFilterObject *self, visitproc visit,
-                               void *arg)
-{
-  Py_VISIT(self->nodeType);
-  return filter_traverse((FilterObject *)self, visit, arg);
-}
-
-static PyObject *typefilter_next(TypeFilterObject *self)
-{
-  PyObject *nodes = self->nodes;
-  PyTypeObject *nodeType = self->nodeType;
-  PyObject *(*iternext)(PyObject *);
-  PyObject *node;
-
-  if (nodes == NULL) return NULL;
-
-  assert(PyIter_Check(nodes));
-  iternext = *nodes->ob_type->tp_iternext;
-  while ((node = iternext(nodes))) {
-    if (PyObject_TypeCheck(node, nodeType)) {
-      return node;
-    }
-    Py_DECREF(node);
-  }
-  /* iterator exhausted */
-  self->nodes = NULL;
-  Py_DECREF(nodes);
-  return NULL;
-}
-
-static PyTypeObject TypeFilter_Type = {
-  /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
-  /* ob_size           */ 0,
-  /* tp_name           */ MODULE_NAME ".typefilter",
-  /* tp_basicsize      */ sizeof(TypeFilterObject),
-  /* tp_itemsize       */ 0,
-  /* tp_dealloc        */ (destructor) typefilter_dealloc,
-  /* tp_print          */ (printfunc) 0,
-  /* tp_getattr        */ (getattrfunc) 0,
-  /* tp_setattr        */ (setattrfunc) 0,
-  /* tp_compare        */ (cmpfunc) 0,
-  /* tp_repr           */ (reprfunc) 0,
-  /* tp_as_number      */ (PyNumberMethods *) 0,
-  /* tp_as_sequence    */ (PySequenceMethods *) 0,
-  /* tp_as_mapping     */ (PyMappingMethods *) 0,
-  /* tp_hash           */ (hashfunc) 0,
-  /* tp_call           */ (ternaryfunc) 0,
-  /* tp_str            */ (reprfunc) 0,
-  /* tp_getattro       */ (getattrofunc) 0,
-  /* tp_setattro       */ (setattrofunc) 0,
-  /* tp_as_buffer      */ (PyBufferProcs *) 0,
-  /* tp_flags          */ (Py_TPFLAGS_DEFAULT |
-                           Py_TPFLAGS_HAVE_GC),
-  /* tp_doc            */ (char *) 0,
-  /* tp_traverse       */ (traverseproc) typefilter_traverse,
-  /* tp_clear          */ (inquiry) 0,
-  /* tp_richcompare    */ (richcmpfunc) 0,
-  /* tp_weaklistoffset */ 0,
-  /* tp_iter           */ (getiterfunc) 0,
-  /* tp_iternext       */ (iternextfunc) typefilter_next,
-  /* tp_methods        */ (PyMethodDef *) 0,
-  /* tp_members        */ (PyMemberDef *) 0,
-  /* tp_getset         */ (PyGetSetDef *) 0,
-  /* tp_base           */ (PyTypeObject *) &Filter_Type,
-  /* tp_dict           */ (PyObject *) 0,
-  /* tp_descr_get      */ (descrgetfunc) 0,
-  /* tp_descr_set      */ (descrsetfunc) 0,
-  /* tp_dictoffset     */ 0,
-  /* tp_init           */ (initproc) 0,
-  /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) typefilter_new,
+  /* tp_new            */ (newfunc) nodefilter_new,
   /* tp_free           */ 0,
 };
 
@@ -555,8 +481,7 @@ PyMODINIT_FUNC MODULE_INITFUNC(void)
   PyObject *module;
   PyTypeObject *typelist[] = {
     &Filter_Type,
-    &NameFilter_Type,
-    &TypeFilter_Type,
+    &NodeFilter_Type,
     &PositionFilter_Type,
     NULL
   };

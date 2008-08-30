@@ -293,6 +293,12 @@ static PyMemberDef element_members[] = {
 
 /** Python Computed Members *******************************************/
 
+static PyObject *get_name(PyObject *self, void* arg)
+{
+  return PyTuple_Pack(2, Element_GET_NAMESPACE_URI(self), 
+                      Element_GET_LOCAL_NAME(self));
+}
+
 static PyObject *get_prefix(ElementObject *self, void *arg)
 {
   Py_UNICODE *p;
@@ -370,17 +376,17 @@ get_xmlns_attributes(ElementObject *self, void *arg)
 }
 
 static PyObject *
-get_xml_namespaces(ElementObject *self, void *arg)
+get_xml_namespaces(PyObject *self, void *arg)
 {
-  return Element_InscopeNamespaces(self);
+  return Element_InscopeNamespaces(Element(self));
 }
 
 static PyGetSetDef element_getset[] = {
+  { "xml_name", get_name },
   { "xml_prefix", (getter)get_prefix, (setter)set_prefix},
   { "xml_attributes", (getter)get_xml_attributes },
   { "xmlns_attributes", (getter)get_xmlns_attributes },
-  /* XPath-specific accessors */
-  { "xml_namespaces", (getter)get_xml_namespaces },
+  { "xml_namespaces", get_xml_namespaces },
   { NULL }
 };
 
@@ -400,16 +406,20 @@ static void element_dealloc(ElementObject *self)
 static PyObject *element_repr(ElementObject *self)
 {
   PyObject *repr, *name;
+  Py_ssize_t num_namespaces=0, num_attributes=0;
   name = PyObject_Repr(self->nodeName);
   if (name == NULL)
     return NULL;
+  if (Element_GET_NAMESPACES(self))
+    num_namespaces = NamespaceMap_GET_SIZE(Element_GET_NAMESPACES(self));
+  if (Element_GET_ATTRIBUTES(self))
+    num_attributes = AttributeMap_GET_SIZE(Element_GET_ATTRIBUTES(self));
   repr = PyString_FromFormat("<Element at %p: name %s, "
                              "%" PY_FORMAT_SIZE_T "d namespaces, "
                              "%" PY_FORMAT_SIZE_T "d attributes, "
                              "%" PY_FORMAT_SIZE_T "d children>",
                              self, PyString_AsString(name),
-                             NamespaceMap_GET_SIZE(self->namespaces),
-                             AttributeMap_GET_SIZE(self->attributes),
+                             num_namespaces, num_attributes,
                              ContainerNode_GET_COUNT(self));
   Py_DECREF(name);
   return repr;

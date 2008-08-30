@@ -9,7 +9,8 @@ import operator
 import itertools
 import collections
 from gettext import gettext as _
-from amara.tree import Element, Document, Text, Attr
+
+from amara.tree import Node, Element, Document, Text, Attr
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import xpath
 from amara.writers import outputparameters
@@ -40,11 +41,11 @@ def _fixup_aliases(node, aliases):
 # element type, it is further keyed by the name test.
 def _dispatch_table():
     class type_dispatch_table(collections.defaultdict):
-        def __missing__(self, node_type):
-            if node_type and issubclass(node_type, Element):
-                value = self[node_type] = collections.defaultdict(list)
+        def __missing__(self, type_key):
+            if type_key == Element.xml_type:
+                value = self[type_key] = collections.defaultdict(list)
             else:
-                value = self[node_type] = []
+                value = self[type_key] = []
             return value
     return collections.defaultdict(type_dispatch_table)
 
@@ -279,7 +280,6 @@ class transform_element(xslt_element):
                 mode_table = match_templates[element._mode]
                 for pattern in match:
                     node_test, axis_type, node_type = getter(pattern)
-                    print node_type, pattern
                     if template_priority is None:
                         priority = node_test.priority
                     else:
@@ -287,7 +287,8 @@ class transform_element(xslt_element):
                     info = ((precedence, template_priority, position),
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
-                    if node_type and issubclass(node_type, Element):
+                    type_key = node_type.xml_type
+                    if issubclass(node_type, Element):
                         # Element types are further keyed by the name test.
                         name_key = node_test.name_key
                         if name_key:
@@ -299,12 +300,12 @@ class transform_element(xslt_element):
                                 raise XPathError(XPathError.UNDEFINED_PREFIX,
                                                  prefix=prefix)
                             else:
-                                name_key = namespace, prefix
-                        mode_table[node_type][name_key].append(info)
+                                name_key = namespace, local
+                        mode_table[type_key][name_key].append(info)
                     else:
                         # Every other node type gets lumped into a single list
                         # for that node type
-                        mode_table[node_type].append(info)
+                        mode_table[type_key].append(info)
             if name:
                 # XSLT 1.0, Section 6, Paragraph 3:
                 # It is an error if a stylesheet contains more than one
@@ -323,43 +324,43 @@ class transform_element(xslt_element):
         for mode, type_table in match_templates.iteritems():
             # Add those patterns that don't have a distinct type:
             #   node(), id() and key() patterns
-            any_patterns = type_table[None]
+            any_patterns = type_table[Node.xml_type]
             type_table = match_templates[mode] = dict(type_table)
-            for node_type, patterns in type_table.iteritems():
-                if node_type:
-                    if issubclass(node_type, Element):
-                        # Add those that are wildcard tests ('*' and 'prefix:*')
-                        wildcard_names = patterns[None]
-                        name_table = type_table[node_type] = dict(patterns)
-                        for name_key, patterns in name_table.iteritems():
-                            if name_key is not None:
-                                patterns.extend(wildcard_names)
-                            patterns.extend(any_patterns)
-                            patterns.sort(reverse=True)
-                    else:
+            for type_key, patterns in type_table.iteritems():
+                if type_key == Element.xml_type:
+                    # Add those that are wildcard tests ('*' and 'prefix:*')
+                    wildcard_names = patterns[None]
+                    name_table = type_table[type_key] = dict(patterns)
+                    for name_key, patterns in name_table.iteritems():
+                        if name_key is not None:
+                            patterns.extend(wildcard_names)
                         patterns.extend(any_patterns)
                         patterns.sort(reverse=True)
+                        name_table[name_key] = tuple(patterns)
+                else:
+                    patterns.extend(any_patterns)
+                    patterns.sort(reverse=True)
+                    type_table[type_key] = tuple(patterns)
+        #self._dump_match_templates(match_templates)
         return
 
-    #def _printMatchTemplates(self):
-    #    print "=" * 50
-    #    print "match_templates:"
-    #    templates = {}
-    #    for mode in self.match_templates:
-    #        print "-" * 50
-    #        print "mode:",mode
-    #        for nodetype in self.match_templates[mode]:
-    #            print "  node type:",nodetype
-    #            for patterninfo in self.match_templates[mode][nodetype]:
-    #                pat, axistype, template = patterninfo
-    #                print "    template matching pattern  %r  for axis type %s" % (pat, axistype)
-    #                templates[template] = 1
-    #
-    #    print
-    #    for template in templates.keys():
-    #        template._printTemplateInfo()
-    #
-    #    return
+    def _dump_match_templates(self, match_templates=None):
+        from pprint import pprint
+        if match_templates is None:
+            match_templates = self.match_templates
+        print "=" * 50
+        for mode, type_table in match_templates.iteritems():
+            print "mode:", mode
+            for node_type, patterns in type_table.iteritems():
+                print "  node type:", node_type
+                print "  patterns: ",
+                pprint(patterns)
+                #for patterninfo in self.match_templates[mode][nodetype]:
+                #    pat, axistype, template = patterninfo
+                #    print "    template matching pattern  %r  for axis type %s" % (pat, axistype)
+                #    templates[template] = 1
+                print '-'*30
+        return
 
     ############################# Prime Routines #############################
 
@@ -512,7 +513,7 @@ class transform_element(xslt_element):
                     else:
                         template_rules = type_table[node_type]
                 else:
-                    template_rules = type_table[None]
+                    template_rules = type_table[Node.xml_type]
             else:
                 template_rules = ()
 

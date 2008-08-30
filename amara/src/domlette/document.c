@@ -8,7 +8,7 @@ static PyObject *creation_counter, *counter_inc;
 Py_LOCAL_INLINE(int)
 document_init(DocumentObject *self, PyObject *documentURI)
 {
-  PyObject *creationIndex, *unparsedEntities;
+  PyObject *creationIndex, *unparsed_entities;
 
   if (documentURI == NULL || !XmlString_NullCheck(documentURI)) {
     PyErr_BadInternalCall();
@@ -20,8 +20,8 @@ document_init(DocumentObject *self, PyObject *documentURI)
     return -1;
   }
 
-  unparsedEntities = PyDict_New();
-  if (unparsedEntities == NULL) {
+  unparsed_entities = PyDict_New();
+  if (unparsed_entities == NULL) {
     Py_DECREF(creationIndex);
     return -1;
   }
@@ -30,7 +30,7 @@ document_init(DocumentObject *self, PyObject *documentURI)
     documentURI = PyUnicode_FromUnicode(NULL, (Py_ssize_t)0);
     if (documentURI == NULL) {
       Py_DECREF(creationIndex);
-      Py_DECREF(unparsedEntities);
+      Py_DECREF(unparsed_entities);
       return -1;
     }
   } else {
@@ -38,12 +38,12 @@ document_init(DocumentObject *self, PyObject *documentURI)
   }
 
   self->creationIndex = creationIndex;
-  self->unparsedEntities = unparsedEntities;
-  self->documentURI = documentURI;
+  self->unparsed_entities = unparsed_entities;
+  Document_SET_DOCUMENT_URI(self, documentURI);
+  Document_SET_PUBLIC_ID(self, Py_None);
   Py_INCREF(Py_None);
-  self->publicId = Py_None;
+  Document_SET_SYSTEM_ID(self, Py_None);
   Py_INCREF(Py_None);
-  self->systemId = Py_None;
 
   /* update creation counter */
   Py_INCREF(creationIndex);
@@ -110,26 +110,27 @@ DocumentObject *Document_New(PyObject *documentURI)
 /** Python Methods ****************************************************/
 
 static char document_lookup_doc[] =
-"xml_lookup(elementId) -> Element\n\
+"xml_lookup(idref) -> Element\n\
 \n\
-Returns the Element whose ID is given by `elementId`. If no such element\n\
+Returns the Element whose ID is given by `idref`. If no such element\n\
 exists, returns None. If more than one element has this ID, the first in\n\
 the document is returned.";
 
 static PyObject *document_lookup(PyObject *self, PyObject *args)
 {
-  PyObject *elementId, *element;
-  int i;
+  PyObject *idref, *element;
+  Py_ssize_t i;
 
-  if (!PyArg_ParseTuple(args, "O:xml_lookup", &elementId))
+  if (!PyArg_ParseTuple(args, "O:xml_lookup", &idref))
     return NULL;
 
   /* our "document" can have multiple element children */
   for (i = 0; i < ContainerNode_GET_COUNT(self); i++) {
     NodeObject *node = ContainerNode_GET_CHILD(self, i);
     if (Element_Check(node)) {
-      element = get_element_by_id(node, elementId);
-      if (element == NULL) return NULL;
+      element = get_element_by_id(node, idref);
+      if (element == NULL) 
+        return NULL;
       else if (element != Py_None) {
         Py_INCREF(element);
         return element;
@@ -141,11 +142,72 @@ static PyObject *document_lookup(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+static PyObject *entity_getnewargs(PyObject *self, PyObject *noarg)
+{
+  return PyTuple_Pack(1, Document_GET_DOCUMENT_URI(self));
+}
+
+static PyObject *entity_getstate(PyObject *self, PyObject *args)
+{
+  PyObject *deep=Py_True, *unparsed_entities, *children;
+
+  if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
+    return NULL;
+
+  switch (PyObject_IsTrue(deep)) {
+    case 1:
+      unparsed_entities = Document_GET_UNPARSED_ENTITIES(self);
+      children = PyObject_GetAttrString(self, "xml_children");
+      break;
+    case 0:
+      unparsed_entities = Py_None;
+      Py_INCREF(Py_None);
+      children = Py_None;
+      break;
+    default:
+      return NULL;
+  }
+  return Py_BuildValue("OOON", 
+                       Document_GET_PUBLIC_ID(self),
+                       Document_GET_SYSTEM_ID(self),
+                       unparsed_entities, children);
+}
+
+static PyObject *entity_setstate(PyObject *self, PyObject *state)
+{
+  PyObject *public_id, *system_id, *unparsed_entities, *children, *temp;
+
+  if (!PyArg_ParseTuple(state, "OOOO", &public_id, &system_id,
+                        &unparsed_entities, &children))
+    return NULL;
+
+  temp = Document_GET_PUBLIC_ID(self);
+  Document_SET_PUBLIC_ID(self, public_id);
+  Py_INCREF(public_id);
+  Py_DECREF(temp);
+
+  temp = Document_GET_SYSTEM_ID(self);
+  Document_SET_SYSTEM_ID(self, system_id);
+  Py_INCREF(system_id);
+  Py_DECREF(temp);
+
+  PyDict_Clear(Document_GET_UNPARSED_ENTITIES(self));
+  if (unparsed_entities != Py_None)
+    if (PyDict_Update(Document_GET_UNPARSED_ENTITIES(self), unparsed_entities))
+      return NULL;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 #define Document_METHOD(name) \
   { "xml_" #name, document_##name, METH_VARARGS, document_##name##_doc }
 
 static PyMethodDef document_methods[] = {
   Document_METHOD(lookup),
+  { "__getnewargs__", entity_getnewargs, METH_NOARGS,  "helper for pickle" },
+  { "__getstate__",   entity_getstate,   METH_VARARGS, "helper for pickle" },
+  { "__setstate__",   entity_setstate,   METH_O,       "helper for pickle" },
   { NULL }
 };
 
@@ -155,7 +217,7 @@ static PyMethodDef document_methods[] = {
   { name, T_OBJECT, offsetof(DocumentObject, member), RO }
 
 static PyMemberDef document_members[] = {
-  Document_MEMBER("unparsedEntities", unparsedEntities),
+  Document_MEMBER("xml_unparsed_entities", unparsed_entities),
   { NULL }
 };
 
@@ -175,7 +237,7 @@ static PyObject *get_public_id(DocumentObject *self, void *arg)
 
 static int set_public_id(DocumentObject *self, PyObject *v, void *arg)
 {
-  if ((v = XmlString_ConvertArgument(v, "publicId", 1)) == NULL)
+  if ((v = XmlString_ConvertArgument(v, "xml_public_id", 1)) == NULL)
     return -1;
   Py_DECREF(self->publicId);
   self->publicId = v;
@@ -190,7 +252,7 @@ static PyObject *get_system_id(DocumentObject *self, void *arg)
 
 static int set_system_id(DocumentObject *self, PyObject *v, void *arg)
 {
-  if ((v = XmlString_ConvertArgument(v, "systemId", 1)) == NULL)
+  if ((v = XmlString_ConvertArgument(v, "xml_system_id", 1)) == NULL)
     return -1;
   Py_DECREF(self->systemId);
   self->systemId = v;
@@ -212,7 +274,7 @@ static void document_dealloc(DocumentObject *self)
   Py_CLEAR(self->documentURI);
   Py_CLEAR(self->publicId);
   Py_CLEAR(self->systemId);
-  Py_CLEAR(self->unparsedEntities);
+  Py_CLEAR(self->unparsed_entities);
   Py_CLEAR(self->creationIndex);
   Node_Del(self);
 }
@@ -226,13 +288,13 @@ static PyObject *document_repr(DocumentObject *self)
 
 static int document_traverse(DocumentObject *self, visitproc visit, void *arg)
 {
-  Py_VISIT(self->unparsedEntities);
+  Py_VISIT(self->unparsed_entities);
   return DomletteNode_Type.tp_traverse((PyObject *)self, visit, arg);
 }
 
 static int document_clear(DocumentObject *self)
 {
-  Py_CLEAR(self->unparsedEntities);
+  Py_CLEAR(self->unparsed_entities);
   return DomletteNode_Type.tp_clear((PyObject *)self);
 }
 

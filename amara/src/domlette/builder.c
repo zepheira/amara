@@ -635,7 +635,8 @@ builder_UnparsedEntityDecl(void *userState, PyObject *name, PyObject *publicId,
   fprintf(stderr, ")\n");
 #endif
 
-  if (PyDict_SetItem(state->owner_document->unparsedEntities, name, systemId))
+  if (PyDict_SetItem(Document_GET_UNPARSED_ENTITIES(state->owner_document),
+                     name, systemId))
     return EXPAT_STATUS_ERROR;
 
   return EXPAT_STATUS_OK;

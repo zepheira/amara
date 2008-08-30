@@ -4,12 +4,11 @@
 Implement Patterns according to the XSLT spec
 """
 
-from xml.dom import Node
-from amara.tree import Document, Element, Attr
+from amara import tree
 from amara.xpath.locationpaths import nodetests
 
-child_axis = Element
-attribute_axis = Attr
+child_axis = tree.Element
+attribute_axis = tree.Attr
 
 class patterns(tuple):
 
@@ -39,7 +38,7 @@ class pattern(nodetests.node_test):
         self.priority = 0.5
         axis_type, node_test, ancestor = steps[0]
         if axis_type == attribute_axis:
-            node_type = Attr
+            node_type = axis_type
         else:
             node_type = node_test.node_type
         self.node_type = node_type
@@ -76,7 +75,7 @@ class pattern(nodetests.node_test):
     def __str__(self):
         result = ''
         for (axis, test, ancestor) in self.steps:
-            if axis == Node.ATTRIBUTE_NODE:
+            if axis == attribute_axis:
                 step = '@' + str(test)
             else:
                 step = str(test)
@@ -120,7 +119,7 @@ class predicated_test(nodetests.node_test):
 class document_test(nodetests.node_test):
 
     priority = 0.5
-    node_type = Document
+    node_type = tree.Document
 
     def match(self, context, node, principal_type):
         return isinstance(node, self.node_type)
@@ -132,6 +131,7 @@ class document_test(nodetests.node_test):
 class id_key_test(nodetests.node_test):
 
     priority = 0.5
+    node_type = tree.Node
 
     def __init__(self, function):
         self._function = function

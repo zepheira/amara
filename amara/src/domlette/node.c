@@ -1479,7 +1479,7 @@ static PyMethodDef newobj_meth = {
 
 int DomletteNode_Init(PyObject *module)
 {
-  PyObject *node_class, *import, *bases, *dict;
+  PyObject *import, *dict, *value;
 
   dict = PyModule_GetDict(module);
   newobj_function = PyCFunction_NewEx(&newobj_meth, NULL,
@@ -1505,22 +1505,6 @@ int DomletteNode_Init(PyObject *module)
   }
   Py_DECREF(import);
 
-  /* Get the xml.dom.Node class */
-  import = PyImport_ImportModule("xml.dom");
-  if (import == NULL) return -1;
-  node_class = PyObject_GetAttrString(import, "Node");
-  if (node_class == NULL) {
-    Py_DECREF(import);
-    return -1;
-  }
-  Py_DECREF(import);
-
-  /* Setup the type's base classes */
-  DomletteNode_Type.tp_base = &PyBaseObject_Type;
-  bases = Py_BuildValue("(ON)", &PyBaseObject_Type, node_class);
-  if (bases == NULL) return -1;
-  DomletteNode_Type.tp_bases = bases;
-
   /* Initialize type objects */
   if (PyType_Ready(&DomletteNode_Type) < 0)
     return -1;
@@ -1535,17 +1519,24 @@ int DomletteNode_Init(PyObject *module)
 
   /* Assign "class" constants */
   dict = DomletteNode_Type.tp_dict;
-  if (PyDict_SetItemString(dict, "xml_type", Py_None)) return -1;
+  value = PyString_FromString("node");
+  if (value == NULL)
+    return -1;
+  if (PyDict_SetItemString(dict, "xml_type", value) < 0)
+    return -1;
+  Py_DECREF(value);
 
-  shared_empty_nodelist = PyList_New((Py_ssize_t)0);
-  if (shared_empty_nodelist == NULL) return -1;
+  shared_empty_nodelist = PyList_New(0);
+  if (shared_empty_nodelist == NULL)
+    return -1;
 
   xml_base_key = Py_BuildValue("(ss)", 
                                "http://www.w3.org/XML/1998/namespace", "base");
-  if (xml_base_key == NULL) return -1;
+  if (xml_base_key == NULL)
+    return -1;
 
   Py_INCREF(&DomletteNode_Type);
-  return PyModule_AddObject(module, "Node", (PyObject*) &DomletteNode_Type);
+  return PyModule_AddObject(module, "Node", (PyObject*)&DomletteNode_Type);
 }
 
 void DomletteNode_Fini(void)

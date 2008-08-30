@@ -59,7 +59,6 @@ AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
   return self;
 }
 
-
 /** Python Methods ****************************************************/
 
 static PyObject *attr_getnewargs(PyObject *self, PyObject *noargs)
@@ -123,6 +122,11 @@ static PyMemberDef attr_members[] = {
 };
 
 /** Python Computed Members *******************************************/
+
+static PyObject *get_name(AttrObject *self, void *arg)
+{
+  return PyTuple_Pack(2, self->namespaceURI, self->localName);
+}
 
 static PyObject *get_prefix(AttrObject *self, void *arg)
 {
@@ -198,8 +202,9 @@ static int set_value(AttrObject *self, PyObject *v, char *arg)
 }
 
 static PyGetSetDef attr_getset[] = {
-  { "xml_prefix", (getter)get_prefix, (setter)set_prefix},
-  { "xml_value",  (getter)get_value,  (setter)set_value},
+  { "xml_name",   (getter)get_name },
+  { "xml_prefix", (getter)get_prefix, (setter)set_prefix },
+  { "xml_value",  (getter)get_value,  (setter)set_value },
   { NULL }
 };
 
@@ -295,7 +300,7 @@ The Attr interface represents an attribute in an Element object.";
 PyTypeObject DomletteAttr_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "Attr",
+  /* tp_name           */ Domlette_MODULE_NAME ".Attr",
   /* tp_basicsize      */ sizeof(AttrObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attr_dealloc,

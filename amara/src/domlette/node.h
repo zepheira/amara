@@ -39,6 +39,7 @@ extern "C" {
 #define Node_SET_PARENT(op, v) (Node_GET_PARENT(op) = (v))
 
 #define ContainerNode_GET_COUNT(op) (((ContainerNodeObject *)(op))->count)
+#define ContainerNode_GET_NODES(op) (((ContainerNodeObject *)(op))->nodes)
 #define ContainerNode_GET_CHILD(op, i)          \
   (((ContainerNodeObject *)(op))->nodes[i])
 
