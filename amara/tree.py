@@ -10,6 +10,19 @@ from amara._domlette import *
 from amara._domlette import parse as _parse
 from amara.lib import inputsource
 
+node = Node
+#document = Document
+entity = Document
+element = Element
+namespace = XPathNamespace
+attribute = Attr
+comment = Comment
+processing_instruction = ProcessingInstruction
+text = Text
+#character_data = CharacterData
+
+#FiXME: and so on
+
 def parse(obj, uri=None, node_factories=None, standalone=False, validate=False):
     if standalone:
         flags = PARSE_FLAGS_STANDALONE
