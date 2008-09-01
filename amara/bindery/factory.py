@@ -5,6 +5,9 @@
 Factory functions for bindery nodes
 """
 
+import re
+from xml.dom import Node
+
 from amara.lib.xmlstring import *
 import nodes
 
@@ -12,7 +15,7 @@ class factory(object):
     '''
     Manager class for the process of serializing XML to a binding
     '''
-    self.PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
+    PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
     
     def __init__(self):
         self._eclasses = {}
@@ -44,7 +47,7 @@ class factory(object):
         prefix, local = splitqname(qname)
         if not pname: pname = self.pyname(ns, qname)
         if (ns, local) not in self._eclasses:
-            unique = False:
+            unique = False
             while not unique:
                 class_name = self.PY_REPLACE_PAT.sub('_', local)
                 if class_name in RESERVED_NAMES: class_name += '_'
@@ -55,4 +58,12 @@ class factory(object):
         e = eclass(ns, qname)
         return e
 
+    def entity(self, document_uri=None):
+        return nodes.entity_base(document_uri=document_uri)
+
+
+DEFAULT_FACTORIES = {
+    Node.DOCUMENT_NODE: factory.entity,
+    Node.ELEMENT_NODE: factory.element,
+}
 

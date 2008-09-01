@@ -1,11 +1,17 @@
+########################################################################
+# amara/bindery/nodes.py
+
+"""
+Bindery node implementations
+"""
+
 __all__ = [
-'binder', 'TOP', 'ANY_NAMESPACE', 'REMOVE_RULE',
-'PY_REPLACE_PAT', 'RESERVED_NAMES'
+'entity_base', 'element_base', 'element_base',
+'ANY_NAMESPACE',
+'PY_ID_ENCODING', 'RESERVED_NAMES'
 ]
 
-from xml import Node
 from functools import *
-from amara import _domlette
 from amara import tree
 import re
 import sets
@@ -14,6 +20,8 @@ import keyword
 import warnings
 import cStringIO
 import bisect
+
+import factory
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
 RESERVED_NAMES = [
@@ -26,6 +34,7 @@ RESERVED_NAMES = [
 RESERVED_NAMES = frozenset(itertools.chain(keyword.kwlist, RESERVED_NAMES))
 
 ANY_NAMESPACE = 'http://purl.xml3k.org/amara/reserved/any-namespace'
+PY_ID_ENCODING = 'iso-8859-1'
 
 #Uses the following neat pattern for partial function invokation in a property
 #def a(x, instance):
@@ -91,6 +100,7 @@ def elem_getter(pname, parent):
     return element_iterator(parent, ns, local)
 
 #Note: one of the better explanations of descriptor magic is here: http://gnosis.cx/publish/programming/charming_python_b26.html
+#Also: http://users.rcn.com/python/download/Descriptor.htm
 #See also official docs here: http://docs.python.org/ref/descriptors.html
 
 class bound_element(object):
@@ -191,8 +201,6 @@ class container_mixin(object):
         return
 
 
-PY_ID_ENCODING = 'iso-8859-1'
-
 class element_base(tree.element, container_mixin):
     xml_model = None
     def __init__(self, name):
@@ -248,13 +256,10 @@ class entity_base(tree.entity, container_mixin):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
-    def __init__(self):
+    def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
         #self.xml_iter_next = None
-        tree.entity.__init__(self, ns, qname)
+        tree.entity.__init__(self, document_uri=document_uri)
         return
-
-
-FACTORIES = {Node.ELEMENT_NODE_TYPE: element_factory}
 

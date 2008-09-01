@@ -1,8 +1,8 @@
 ########################################################################
-# amara/bindery/__init__.py
+# amara/dom/__init__.py
 
 """
-Extra friendly XML node API for Python
+Old school W3C DOM...mostly
 """
 
 def parse(obj, uri=None, node_factories=None, standalone=False, validate=False):

@@ -4,7 +4,7 @@
 A very fast tree (node API) library for XML processing with sensible conventions.
 """
 
-__all__ = ["_parse"]
+__all__ = ["_parse", 'node', 'entity', 'element', 'attribute', 'comment', 'processing_instruction', 'text']
 
 from amara._domlette import *
 from amara._domlette import parse as _parse
@@ -14,7 +14,7 @@ node = Node
 #document = Document
 entity = Document
 element = Element
-namespace = XPathNamespace
+#namespace = XPathNamespace
 attribute = Attr
 comment = Comment
 processing_instruction = ProcessingInstruction

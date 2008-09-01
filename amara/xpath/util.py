@@ -9,6 +9,7 @@ import cStringIO
 import traceback
 
 from amara import tree
+from amara.xpath import context
 from amara.xpath import XPathError, datatypes
 from amara.xpath.parser import xpathparser
 
@@ -22,7 +23,7 @@ __all__ = [# XPath expression processing:
 # -- Core XPath API ---------------------------------------------------------
 
 
-def SimpleEvaluate(expr, node, explicitNss=None):
+def simple_evaluate(expr, node, prefixes=None):
     """
     Designed to be the most simple/brain-dead interface to using XPath
     Usually invoked through Node objects using:
@@ -30,30 +31,23 @@ def SimpleEvaluate(expr, node, explicitNss=None):
 
     expr - XPath expression in string or compiled form
     node - the node to be used as core of the context for evaluating the XPath
-    explicitNss - (optional) any additional or overriding namespace mappings
+    prefixes - (optional) any additional or overriding namespace mappings
                   in the form of a dictionary of prefix: namespace
                   the base namespace mappings are taken from in-scope
                   declarations on the given node.  This explicit dictionary
                   is superimposed on the base mappings
     """
-    if 'EXTMODULES' in os.environ:
-        ext_modules = os.environ["EXTMODULES"].split(':')
-    else:
-        ext_modules = []
-    explicitNss = explicitNss or {}
+    #Note: context.__init__(self, node, position=1, size=1, variables=None, namespaces=None, extmodules=(), extfunctions=None, output_parameters=None)
+    
+    if prefixes:
+        p = dict([(n.xml_local, n.xml_value) for n in doc.xml_namespaces])
+        p.update(prefixes)
+        prefixes = p
+    ctx = context(node, 0, 0, namespaces=prefixes)#,
+                              #extmodules=ext_modules)
+    return ctx.evaluate(expr)
 
-    nss = dict((ns.nodeValue or None, ns.nodeName) 
-               for ns in node.xml_namespaces)
-    nss.update(explicitNss)
-    context = Context.Context(node, 0, 0, processorNss=nss,
-                              extModuleList=ext_modules)
-
-    if hasattr(expr, "evaluate"):
-        retval = expr.evaluate(context)
-    else:
-        retval = XPathParser.Parse(expr).evaluate(context)
-    return retval
-
+SimpleEvaluate = simple_evaluate
 
 def Evaluate(expr, contextNode=None, context=None):
     """
