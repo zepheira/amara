@@ -54,8 +54,8 @@ class test_child_axis(test_axisspecifier):
 class test_following_axis(test_axisspecifier):
     test_cases = [
         (['following'],
-         [CHILD3.nextSibling, LANG] + list(LANG) + [LANG.nextSibling, PI2],
-         CHILD3),
+         [CHILD3.xml_next_sibling, LANG] + list(LANG) +
+         [LANG.xml_next_sibling, PI2], CHILD3),
         ]
 
 
