@@ -15,15 +15,19 @@ from test_expressions import (
     )
 
 EGG1 = tree.Element(None, 'egg1')
-EGG1.appendChild(tree.Text('egg1'))
+EGG1.xml_append_child(tree.Text('egg1'))
 EGG2 = tree.Element(None, 'egg2')
-EGG2.appendChild(tree.Text('egg2'))
+EGG2.xml_append_child(tree.Text('egg2'))
 
 NUM = tree.Element(None, 'num')
-NUM0 = NUM.setAttributeNS(None, 'num0', '0')
-NUM2 = NUM.setAttributeNS(None, 'num2', '2')
-NUM4 = NUM.setAttributeNS(None, 'num4', '4')
-NUM31 = NUM.setAttributeNS(None, 'num31', '31')
+NUM0 = tree.Attr(None, 'num0', '0')
+NUM.xml_attributes.setnode(NUM0)
+NUM2 = tree.Attr(None, 'num2', '2')
+NUM.xml_attributes.setnode(NUM0)
+NUM4 = tree.Attr(None, 'num4', '4')
+NUM.xml_attributes.setnode(NUM0)
+NUM31 = tree.Attr(None, 'num31', '31')
+NUM.xml_attributes.setnode(NUM0)
 
 
 class test_boolean_expr(test_expression):

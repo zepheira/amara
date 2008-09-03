@@ -79,12 +79,11 @@ class lang_function(builtin_function):
         arg, = self._args
         lang = arg.evaluate_as_string(context).lower()
         node = context.node
-        while node.parentNode:
+        while node.xml_parent:
             for attr in node.xml_attributes.nodes():
                 # Search for xml:lang attribute
-                if (attr.localName == 'lang' and
-                    attr.namespaceURI == XML_NAMESPACE):
-                    value = attr.nodeValue.lower()
+                if attr.xml_name == (XML_NAMESPACE, 'lang'):
+                    value = attr.xml_value.lower()
                     # Exact match (PrimaryPart and possible SubPart)
                     if value == lang:
                         return datatypes.TRUE
@@ -99,7 +98,7 @@ class lang_function(builtin_function):
                     return datatypes.FALSE
 
             # Continue to next ancestor
-            node = node.parentNode
+            node = node.xml_parent
 
         # No xml:lang declarations found
         return datatypes.FALSE

@@ -353,7 +353,7 @@ static PyObject *namednodemap_setnode(PyObject *self, PyObject *args)
 {
   AttrObject *attr;
 
-  if (!PyArg_ParseTuple(args, "O!:setnode", &attr, &DomletteAttr_Type))
+  if (!PyArg_ParseTuple(args, "O!:setnode", &DomletteAttr_Type, &attr))
     return NULL;
 
   if (AttributeMap_SetNode(self, attr) < 0)
@@ -1016,7 +1016,7 @@ static PyMethodDef iter_methods[] = {
 static PyTypeObject Iter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "namednodemap-iterator",
+  /* tp_name           */ "attributemap-iterator",
   /* tp_basicsize      */ sizeof(IterObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) iter_dealloc,
@@ -1059,7 +1059,7 @@ static PyTypeObject Iter_Type = {
 static PyTypeObject KeyIter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "namednodemap-keyiterator",
+  /* tp_name           */ "attributemap-keyiterator",
   /* tp_basicsize      */ 0,
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -1102,7 +1102,7 @@ static PyTypeObject KeyIter_Type = {
 static PyTypeObject ValueIter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "namednodemap-valueiterator",
+  /* tp_name           */ "attributemap-valueiterator",
   /* tp_basicsize      */ 0,
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -1145,7 +1145,7 @@ static PyTypeObject ValueIter_Type = {
 static PyTypeObject ItemIter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "namednodemap-itemiterator",
+  /* tp_name           */ "attributemap-itemiterator",
   /* tp_basicsize      */ 0,
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -1188,7 +1188,7 @@ static PyTypeObject ItemIter_Type = {
 static PyTypeObject NodeIter_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "namednodemap-nodeiterator",
+  /* tp_name           */ "attributemap-nodeiterator",
   /* tp_basicsize      */ 0,
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -1232,6 +1232,16 @@ static PyTypeObject NodeIter_Type = {
 
 int DomletteAttributeMap_Init(PyObject *module)
 {
+  if (PyType_Ready(&Iter_Type) < 0)
+    return -1;
+  if (PyType_Ready(&KeyIter_Type) < 0)
+    return -1;
+  if (PyType_Ready(&ValueIter_Type) < 0)
+    return -1;
+  if (PyType_Ready(&ItemIter_Type) < 0)
+    return -1;
+  if (PyType_Ready(&NodeIter_Type) < 0)
+    return -1;
   if (PyType_Ready(&AttributeMap_Type) < 0)
     return -1;
 

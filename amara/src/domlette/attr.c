@@ -240,13 +240,13 @@ static PyObject *attr_repr(AttrObject *self)
 
 static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-  PyObject *namespaceURI, *qualifiedName, *prefix, *localName;
-  static char *kwlist[] = { "namespace", "qname",
+  PyObject *namespaceURI, *qualifiedName, *prefix, *localName, *value=NULL;
+  static char *kwlist[] = { "namespace", "qname", "value",
                             NULL };
   AttrObject *attr;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:Attr", kwlist,
-                                   &namespaceURI, &qualifiedName)) {
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:Attr", kwlist,
+                                   &namespaceURI, &qualifiedName, &value)) {
     return NULL;
   }
 
@@ -273,21 +273,32 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   }
   Py_DECREF(prefix);
 
+  if (value) {
+    value = XmlString_ConvertArgument(qualifiedName, "value", 0);
+    if (value == NULL) {
+      Py_DECREF(namespaceURI);
+      Py_DECREF(qualifiedName);
+      Py_DECREF(localName);
+      return NULL;
+    }
+  }
+
   if (type != &DomletteAttr_Type) {
     attr = (AttrObject *) type->tp_alloc(type, 0);
     if (attr != NULL) {
       _Node_INIT(attr);
-      if (attr_init(attr, namespaceURI, qualifiedName, localName, NULL) < 0) {
+      if (attr_init(attr, namespaceURI, qualifiedName, localName, value) < 0) {
         Py_DECREF(attr);
         attr = NULL;
       }
     }
   } else {
-    attr = Attr_New(namespaceURI, qualifiedName, localName, NULL);
+    attr = Attr_New(namespaceURI, qualifiedName, localName, value);
   }
   Py_DECREF(namespaceURI);
   Py_DECREF(qualifiedName);
   Py_DECREF(localName);
+  Py_XDECREF(value);
 
   return (PyObject *) attr;
 }

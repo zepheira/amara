@@ -3,8 +3,7 @@
 """
 The implementation of the core node-set functions from XPath 1.0.
 """
-from xml.dom import Node
-from amara.tree import Namespace
+from amara.tree import Element, Attr, ProcessingInstruction, Namespace
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
 from amara.xpath.locationpaths import relative_location_path
@@ -64,7 +63,7 @@ class id_function(builtin_function):
             ids = set(arg0.split())
 
         doc = context.node.xml_root
-        nodeset = filter(None, (doc.getElementById(id) for id in ids))
+        nodeset = filter(None, (doc.xml_lookup(id) for id in ids))
         nodeset.sort()
         return datatypes.nodeset(nodeset)
     evaluate = evaluate_as_nodeset

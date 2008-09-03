@@ -80,11 +80,11 @@ class nodeset_literal(test_literal):
                 data = node.nodeValue
                 if len(data) > 20:
                     data = data[:15] + '...' + data[-3:]
-                return '(%s: %s)' % (node.nodeName, data)
+                return '(#%s: %s)' % (node.xml_type, data)
             if isinstance(node, tree.Element):
-                return '<%s>' % node.tagName
+                return '<%s>' % node.xml_qname
             if isinstance(node, tree.Attr):
-                return '@%s' % node.name
+                return '@%s' % node.xml_qname
         nodes = ', '.join(map(nodestr, self._literal))
         return '{%s}' % (nodes,)
 EMPTY_NODESET = nodeset_literal([])
@@ -145,13 +145,13 @@ CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')
 ATTR31 = CHILD1.xml_attributes.getnode(None, 'attr31')
 GCHILDREN1 = GCHILD11, GCHILD12 = children(CHILD1)
-TEXT1 = CHILD1.lastChild
+TEXT1 = CHILD1.xml_last_child
 # `CHILD2` nodes
-ATTR2 = CHILD2.getAttributeNodeNS(None, 'attr1')
-IDATTR2 = CHILD2.getAttributeNodeNS(None, 'CODE')
+ATTR2 = CHILD2.xml_attributes.getnode(None, 'attr1')
+IDATTR2 = CHILD2.xml_attributes.getnode(None, 'CODE')
 GCHILDREN2 = GCHILD21, GCHILD22 = children(CHILD2)
 # `CHILD3` nodes
-ATTR3 = CHILD3.getAttributeNodeNS('http://foo.com', 'name')
+ATTR3 = CHILD3.xml_attributes.getnode('http://foo.com', 'name')
 # `lang` nodes
 LCHILDREN = LCHILD1, LCHILD2, NONASCIIQNAME = children(LANG)
 

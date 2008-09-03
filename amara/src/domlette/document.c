@@ -57,32 +57,37 @@ document_init(DocumentObject *self, PyObject *documentURI)
 Py_LOCAL(PyObject *) /* not inlined as its recursive */
 get_element_by_id(NodeObject *node, PyObject *elementId)
 {
+  PyObject *result;
   int i;
 
   for (i = 0; i < ContainerNode_GET_COUNT(node); i++) {
     NodeObject *child = ContainerNode_GET_CHILD(node, i);
     if (Element_Check(child)) {
-      PyObject *tmp, *attr;
-      Py_ssize_t pos = 0;
       /* Searth the attributes for an ID attr */
-      while (PyDict_Next(Element_GET_ATTRIBUTES(child), &pos, &tmp, &attr)) {
-        if (Attr_GET_TYPE(attr) == ATTRIBUTE_TYPE_ID) {
-          tmp = Attr_GET_NODE_VALUE(attr);
-          switch (PyObject_RichCompareBool(tmp, elementId, Py_EQ)) {
-          case 1:
-            /* Found matching element, return it. */
-            return (PyObject *) child;
-          case 0:
-            break;
-          default:
-            return NULL;
+      PyObject *attributes = Element_GET_ATTRIBUTES(child);
+      if (attributes != NULL) {
+        AttrObject *attr;
+        Py_ssize_t pos = 0;
+        while ((attr = AttributeMap_Next(attributes, &pos)) != NULL) {
+          if (Attr_GET_TYPE(attr) == ATTRIBUTE_TYPE_ID) {
+            switch (PyObject_RichCompareBool(Attr_GET_VALUE(attr),
+                                             elementId, Py_EQ)) {
+            case 1:
+              /* Found matching element, return it. */
+              return (PyObject *) child;
+            case 0:
+              break;
+            default:
+              return NULL;
+            }
           }
         }
       }
       /* Continue on with the children */
-      tmp = get_element_by_id(child, elementId);
-      /* either NULL (an error) or a node (element found) */
-      if (tmp != Py_None) return tmp;
+      result = get_element_by_id(child, elementId);
+      if (result != Py_None) 
+        /* either NULL (an error) or a node (element found) */
+        return result;
     }
   }
   return Py_None;

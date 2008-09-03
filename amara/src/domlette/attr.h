@@ -23,6 +23,7 @@ extern "C" {
 #define Attr_GET_LOCAL_NAME(op) (Attr(op)->localName)
 #define Attr_GET_NODE_NAME(op) (Attr(op)->nodeName)
 #define Attr_GET_NODE_VALUE(op) (Attr(op)->nodeValue)
+#define Attr_GET_VALUE(op) (Attr(op)->nodeValue)
 #define Attr_GET_TYPE(op) (Attr(op)->type)
 
 #ifdef Domlette_BUILDING_MODULE

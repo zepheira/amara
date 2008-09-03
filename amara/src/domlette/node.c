@@ -557,15 +557,16 @@ static PyObject *node_normalize(NodeObject *self, PyObject *args)
   return Py_None;
 }
 
-static char removeChild_doc[] = "\
+static char remove_child_doc[] = "\
 Removes the child node indicated by oldChild from the list of children, and\n\
 returns it.";
 
-static PyObject *node_removeChild(NodeObject *self, PyObject *args)
+static PyObject *node_remove_child(NodeObject *self, PyObject *args)
 {
   NodeObject *oldChild;
 
-  if (!PyArg_ParseTuple(args, "O!:xml_remove_child", &DomletteNode_Type, &oldChild))
+  if (!PyArg_ParseTuple(args, "O!:xml_remove_child", 
+                        &DomletteNode_Type, &oldChild))
     return NULL;
 
   if (Node_RemoveChild(self, oldChild) == -1)
@@ -575,14 +576,15 @@ static PyObject *node_removeChild(NodeObject *self, PyObject *args)
   return (PyObject *) oldChild;
 }
 
-static char appendChild_doc[] = "\
+static char append_child_doc[] = "\
 Adds the node newChild to the end of the list of children of this node.";
 
-static PyObject *node_appendChild(NodeObject *self, PyObject *args)
+static PyObject *node_append_child(NodeObject *self, PyObject *args)
 {
   NodeObject *newChild;
 
-  if (!PyArg_ParseTuple(args,"O!:xml_append_child", &DomletteNode_Type, &newChild))
+  if (!PyArg_ParseTuple(args,"O!:xml_append_child", 
+                        &DomletteNode_Type, &newChild))
     return NULL;
 
   if (Node_AppendChild(self, newChild) == -1)
@@ -592,10 +594,10 @@ static PyObject *node_appendChild(NodeObject *self, PyObject *args)
   return (PyObject *) newChild;
 }
 
-static char insertBefore_doc[] = "\
+static char insert_before_doc[] = "\
 Inserts the node newChild before the existing child node refChild.";
 
-static PyObject *node_insertBefore(NodeObject *self, PyObject *args)
+static PyObject *node_insert_before(NodeObject *self, PyObject *args)
 {
   NodeObject *newChild;
   PyObject *refChild;
@@ -616,11 +618,11 @@ static PyObject *node_insertBefore(NodeObject *self, PyObject *args)
   return (PyObject *) newChild;
 }
 
-static char replaceChild_doc[] = "\
+static char replace_child_doc[] = "\
 Replaces the child node oldChild with newChild in the list of children, and\n\
 returns the oldChild node.";
 
-static PyObject *node_replaceChild(NodeObject *self, PyObject *args)
+static PyObject *node_replace_child(NodeObject *self, PyObject *args)
 {
   NodeObject *newChild, *oldChild;
 
@@ -832,14 +834,14 @@ static PyObject *node_setstate(PyObject *self, PyObject *state)
 }
 
 #define Node_METHOD(NAME, ARGSPEC) \
-  { "xml_" #NAME, (PyCFunction) node_##NAME, ARGSPEC, NAME##_doc }
+  { "xml_" #NAME, (PyCFunction)node_##NAME, ARGSPEC, NAME##_doc }
 
 static PyMethodDef node_methods[] = {
-  Node_METHOD(normalize,     METH_VARARGS),
-  //Node_METHOD(removeChild,   METH_VARARGS),
-  //Node_METHOD(appendChild,   METH_VARARGS),
-  //Node_METHOD(insertBefore,  METH_VARARGS),
-  //Node_METHOD(replaceChild,  METH_VARARGS),
+  Node_METHOD(normalize,      METH_VARARGS),
+  Node_METHOD(remove_child,   METH_VARARGS),
+  Node_METHOD(append_child,   METH_VARARGS),
+  Node_METHOD(insert_before,  METH_VARARGS),
+  Node_METHOD(replace_child,  METH_VARARGS),
   Node_METHOD(select,         METH_KEYWORDS),
   { "__copy__",       node_copy,       METH_NOARGS,  "helper for copy" },
   { "__deepcopy__",   node_deepcopy,   METH_O,       "helper for deepcopy" },
@@ -852,13 +854,29 @@ static PyMethodDef node_methods[] = {
 
 /** Python Members ****************************************************/
 
-#define Node_MEMBER(NAME) \
-  { #NAME, T_OBJECT, offsetof(NodeObject, NAME), RO }
+#define Node_MEMBER(NAME, MEMBER) \
+  { #NAME, T_OBJECT, offsetof(NodeObject, MEMBER), RO }
 
 static PyMemberDef node_members[] = {
-  Node_MEMBER(parentNode),
+  Node_MEMBER(xml_parent, parentNode),
   { NULL }
 };
+
+/** Python Computed Members ********************************************/
+
+static PyObject *get_root(NodeObject *self, void *arg)
+{
+  PyObject *node = (PyObject *)self;
+  while (!Document_Check(node)) {
+    node = (PyObject *) Node_GET_PARENT(node);
+    if (node == NULL) {
+      Py_INCREF(Py_None);
+      return Py_None;
+    }
+  }
+  Py_INCREF(node);
+  return node;
+}
 
 static PyObject *get_child_nodes(NodeObject *self, void *arg)
 {
@@ -1052,14 +1070,15 @@ static PyObject *get_empty_list(NodeObject *self, void *arg)
 }
 
 static PyGetSetDef node_getset[] = {
-  { "xml_children",      (getter)get_child_nodes },
-  { "xml_base",         (getter)get_base_uri },
+  { "xml_root",             (getter)get_root },
+  { "xml_children",         (getter)get_child_nodes },
+  { "xml_base",             (getter)get_base_uri },
   { "xml_first_child",      (getter)get_first_child },
   { "xml_last_child",       (getter)get_last_child },
   { "xml_next_sibling",     (getter)get_next_sibling },
   { "xml_previous_sibling", (getter)get_previous_sibling },
-  { "xml_attributes",  (getter)get_empty_list },
-  { "xml_namespaces",  (getter)get_empty_list },
+  //{ "xml_attributes",  (getter)get_empty_list },
+  //{ "xml_namespaces",  (getter)get_empty_list },
   { NULL }
 };
 

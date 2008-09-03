@@ -286,8 +286,6 @@ static PyMemberDef element_members[] = {
   Element_MEMBER("xml_qname", nodeName),
   Element_MEMBER("xml_local", localName),
   Element_MEMBER("xml_namespace", namespaceURI),
-  Element_MEMBER("xml_attributes", attributes),
-  Element_MEMBER("xmlns_attributes", namespaces),
   { NULL }
 };
 
