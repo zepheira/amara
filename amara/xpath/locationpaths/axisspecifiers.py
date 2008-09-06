@@ -142,11 +142,11 @@ class following_axis(descendant_axis):
         """
         descendants = self._descendants
         while node:
-            sibling = node.xml_next_sibling
+            sibling = node.xml_following_sibling
             while sibling:
                 yield sibling
                 for x in descendants(sibling): yield x
-                sibling = sibling.xml_next_sibling
+                sibling = sibling.xml_following_sibling
             node = node.xml_parent
         return
 
@@ -155,10 +155,10 @@ class following_sibling_axis(axis_specifier):
     name = 'following-sibling'
     def select(self, node):
         """Select all of the siblings that follow the context node"""
-        sibling = node.xml_next_sibling
+        sibling = node.xml_following_sibling
         while sibling:
             yield sibling
-            sibling = sibling.xml_next_sibling
+            sibling = sibling.xml_following_sibling
         return
     try:
         from _axes import following_sibling_axis as select
@@ -200,14 +200,15 @@ class preceding_axis(axis_specifier):
         """
         def preceding(node):
             while node:
-                if node.xml_last_child:
-                    for x in preceding(current_node.xml_last_child): yield x
+                child = node.xml_last_child
+                if child:
+                    for x in preceding(child): yield x
                 yield node
-                node = node.xml_previous_sibling
+                node = node.xml_preceding_sibling
             return
 
         while node:
-            for x in preceding(node.xml_previous_sibling): yield x
+            for x in preceding(node.xml_preceding_sibling): yield x
             node = node.xml_parent
         return
 
@@ -217,10 +218,10 @@ class preceding_sibling_axis(axis_specifier):
     reverse = True
     def select(self, node):
         """Select all of the siblings that precede the context node"""
-        sibling = node.xml_previous_sibling
+        sibling = node.xml_preceding_sibling
         while sibling:
             yield sibling
-            sibling = sibling.xml_previous_sibling
+            sibling = sibling.xml_preceding_sibling
         return
 
 

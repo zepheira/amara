@@ -8,14 +8,15 @@
 #define ProcessingInstruction_SET_DATA(op, v) \
   (ProcessingInstruction_GET_DATA(op) = (v))
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(ProcessingInstructionObject *)
 pi_init(ProcessingInstructionObject *self, PyObject *target, PyObject *data)
 {
-  if ((self == NULL || !ProcessingInstruction_Check(self)) ||
-      (target == NULL || !XmlString_Check(target)) ||
+  assert(self && ProcessingInstruction_Check(self));
+  if ((target == NULL || !XmlString_Check(target)) ||
       (data == NULL || !XmlString_Check(data))) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   ProcessingInstruction_SET_TARGET(self, target);
@@ -23,7 +24,7 @@ pi_init(ProcessingInstructionObject *self, PyObject *target, PyObject *data)
   ProcessingInstruction_SET_DATA(self, data);
   Py_INCREF(data);
 
-  return 0;
+  return self;
 }
 
 /** Public C API ******************************************************/
@@ -36,14 +37,8 @@ ProcessingInstructionObject *ProcessingInstruction_New(PyObject *target,
   self = Node_New(ProcessingInstructionObject,
                   &DomletteProcessingInstruction_Type);
   if (self != NULL) {
-    if (pi_init(self, target, data) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = pi_init(self, target, data);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -148,11 +143,7 @@ static PyObject *pi_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (type != &DomletteProcessingInstruction_Type) {
     self = ProcessingInstruction(type->tp_alloc(type, 0));
     if (self != NULL) {
-      _Node_INIT(self);
-      if (pi_init(self, target, data) < 0) {
-        Py_DECREF(self);
-        self = NULL;
-      }
+      self =  pi_init(self, target, data);
     }
   } else {
     self = ProcessingInstruction_New(target, data);
@@ -224,11 +215,11 @@ int DomletteProcessingInstruction_Init(PyObject *module)
   if (PyType_Ready(&DomletteProcessingInstruction_Type) < 0)
     return -1;
 
-  value = PyInt_FromLong(PROCESSING_INSTRUCTION_NODE);
+  value = PyString_FromString("processing-instruction");
   if (value == NULL)
     return -1;
   if (PyDict_SetItemString(DomletteProcessingInstruction_Type.tp_dict,
-                           "xml_node_type", value))
+                           "xml_type", value))
     return -1;
   Py_DECREF(value);
 

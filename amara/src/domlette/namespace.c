@@ -3,21 +3,25 @@
 
 /** Private Routines **************************************************/
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(NamespaceObject *)
 namespace_init(NamespaceObject *self, ElementObject *parentNode,
                PyObject *prefix, PyObject *namespaceURI)
 {
-  if ((self == NULL || !Namespace_Check(self)) ||
-      (parentNode == NULL || !Element_Check(parentNode)) ||
+  assert(self && Namespace_Check(self));
+  if ((parentNode == NULL || !Element_Check(parentNode)) ||
       (prefix == NULL || !XmlString_NullCheck(prefix)) ||
       (namespaceURI == NULL || !XmlString_Check(namespaceURI))) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   if (prefix == Py_None) {
     prefix = PyUnicode_FromUnicode(NULL, 0);
-    if (prefix == NULL) return -1;
+    if (prefix == NULL) {
+      Py_DECREF(self);
+      return NULL;
+    }
   } else {
     Py_INCREF(prefix);
   }
@@ -30,7 +34,7 @@ namespace_init(NamespaceObject *self, ElementObject *parentNode,
   Py_INCREF(parentNode);
   Node_SET_PARENT(self, (NodeObject *)parentNode);
 
-  return 0;
+  return self;
 }
 
 /** C API *************************************************************/
@@ -48,14 +52,8 @@ NamespaceObject *Namespace_New(ElementObject *parentNode,
 
   self = Node_New(NamespaceObject, &DomletteNamespace_Type);
   if (self != NULL) {
-    if (namespace_init(self, parentNode, prefix, namespaceURI) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = namespace_init(self, parentNode, prefix, namespaceURI);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -139,11 +137,7 @@ namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (type != &DomletteNamespace_Type) {
     self = Namespace(type->tp_alloc(type, 0));
     if (self != NULL) {
-      _Node_INIT(self);
-      if (namespace_init(self, parentNode, prefix, namespaceURI) < 0) {
-        Py_DECREF(self);
-        self = NULL;
-      }
+      self = namespace_init(self, parentNode, prefix, namespaceURI);
     }
   } else {
     self = Namespace_New(parentNode, prefix, namespaceURI);

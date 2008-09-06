@@ -20,16 +20,17 @@ static PyObject *empty_string;
 static PyObject *xml_namespace;
 static PyObject *xmlns_namespace;
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(ElementObject *)
 element_init(ElementObject *self, PyObject *namespaceURI, 
              PyObject *qualifiedName, PyObject *localName)
 {
-  if ((self == NULL || !Element_Check(self)) ||
-      (namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
+  assert(self && Element_Check(self));
+  if ((namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
       (qualifiedName == NULL || !XmlString_Check(qualifiedName)) ||
       (localName == NULL || !XmlString_Check(localName))) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
   Py_INCREF(namespaceURI);
   self->namespaceURI = namespaceURI;
@@ -39,7 +40,7 @@ element_init(ElementObject *self, PyObject *namespaceURI,
   self->nodeName = qualifiedName;
   self->namespaces = NULL;
   self->attributes = NULL;
-  return 0;
+  return self;
 }
 
 /** Public C API ******************************************************/
@@ -50,16 +51,10 @@ ElementObject *Element_New(PyObject *namespaceURI,
 {
   ElementObject *self;
 
-  self = Node_NewContainer(ElementObject, &DomletteElement_Type);
+  self = Container_New(ElementObject, &DomletteElement_Type);
   if (self != NULL) {
-    if (element_init(self, namespaceURI, qualifiedName, localName) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = element_init(self, namespaceURI, qualifiedName, localName);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -418,7 +413,7 @@ static PyObject *element_repr(ElementObject *self)
                              "%" PY_FORMAT_SIZE_T "d children>",
                              self, PyString_AsString(name),
                              num_namespaces, num_attributes,
-                             ContainerNode_GET_COUNT(self));
+                             Container_GET_COUNT(self));
   Py_DECREF(name);
   return repr;
 }
@@ -427,14 +422,14 @@ static int element_traverse(ElementObject *self, visitproc visit, void *arg)
 {
   Py_VISIT(self->attributes);
   Py_VISIT(self->namespaces);
-  return DomletteNode_Type.tp_traverse((PyObject *)self, visit, arg);
+  return DomletteContainer_Type.tp_traverse((PyObject *)self, visit, arg);
 }
 
 static int element_clear(ElementObject *self)
 {
   Py_CLEAR(self->attributes);
   Py_CLEAR(self->namespaces);
-  return DomletteNode_Type.tp_clear((PyObject *)self);
+  return DomletteContainer_Type.tp_clear((PyObject *)self);
 }
 
 static PyObject *element_new(PyTypeObject *type, PyObject *args,
@@ -475,11 +470,7 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
   if (type != &DomletteElement_Type) {
     self = Element(type->tp_alloc(type, 0));
     if (self != NULL) {
-      _Node_INIT_CONTAINER(self);
-      if (element_init(self, namespaceURI, qualifiedName, localName) < 0) {
-        Py_DECREF(self);
-        self = NULL;
-      }
+      self = element_init(self, namespaceURI, qualifiedName, localName);
     }
   } else {
     self = Element_New(namespaceURI, qualifiedName, localName);
@@ -569,7 +560,7 @@ int DomletteElement_Init(PyObject *module)
     return -1;
   Py_DECREF(import);
 
-  DomletteElement_Type.tp_base = &DomletteNode_Type;
+  DomletteElement_Type.tp_base = &DomletteContainer_Type;
   if (PyType_Ready(&DomletteElement_Type) < 0)
     return -1;
 

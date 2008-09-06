@@ -5,33 +5,37 @@
 
 static PyObject *creation_counter, *counter_inc;
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(DocumentObject *)
 document_init(DocumentObject *self, PyObject *documentURI)
 {
   PyObject *creationIndex, *unparsed_entities;
 
   if (documentURI == NULL || !XmlString_NullCheck(documentURI)) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   creationIndex = PyNumber_Add(creation_counter, counter_inc);
   if (creationIndex == NULL) {
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   unparsed_entities = PyDict_New();
   if (unparsed_entities == NULL) {
     Py_DECREF(creationIndex);
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   if (documentURI == Py_None) {
-    documentURI = PyUnicode_FromUnicode(NULL, (Py_ssize_t)0);
+    documentURI = PyUnicode_FromUnicode(NULL, 0);
     if (documentURI == NULL) {
       Py_DECREF(creationIndex);
       Py_DECREF(unparsed_entities);
-      return -1;
+      Py_DECREF(self);
+      return NULL;
     }
   } else {
     Py_INCREF(documentURI);
@@ -50,7 +54,7 @@ document_init(DocumentObject *self, PyObject *documentURI)
   Py_DECREF(creation_counter);
   creation_counter = creationIndex;
 
-  return 0;
+  return self;
 }
 
 /* returns borrowed reference */
@@ -58,10 +62,10 @@ Py_LOCAL(PyObject *) /* not inlined as its recursive */
 get_element_by_id(NodeObject *node, PyObject *elementId)
 {
   PyObject *result;
-  int i;
+  Py_ssize_t i;
 
-  for (i = 0; i < ContainerNode_GET_COUNT(node); i++) {
-    NodeObject *child = ContainerNode_GET_CHILD(node, i);
+  for (i = 0; i < Container_GET_COUNT(node); i++) {
+    NodeObject *child = Container_GET_CHILD(node, i);
     if (Element_Check(child)) {
       /* Searth the attributes for an ID attr */
       PyObject *attributes = Element_GET_ATTRIBUTES(child);
@@ -99,16 +103,10 @@ DocumentObject *Document_New(PyObject *documentURI)
 {
   DocumentObject *self;
 
-  self = Node_NewContainer(DocumentObject, &DomletteDocument_Type);
+  self = Container_New(DocumentObject, &DomletteDocument_Type);
   if (self != NULL) {
-    if (document_init(self, documentURI) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = document_init(self, documentURI);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -130,8 +128,8 @@ static PyObject *document_lookup(PyObject *self, PyObject *args)
     return NULL;
 
   /* our "document" can have multiple element children */
-  for (i = 0; i < ContainerNode_GET_COUNT(self); i++) {
-    NodeObject *node = ContainerNode_GET_CHILD(self, i);
+  for (i = 0; i < Container_GET_COUNT(self); i++) {
+    NodeObject *node = Container_GET_CHILD(self, i);
     if (Element_Check(node)) {
       element = get_element_by_id(node, idref);
       if (element == NULL) 
@@ -288,19 +286,19 @@ static PyObject *document_repr(DocumentObject *self)
 {
   return PyString_FromFormat("<Document at %p: "
                              "%" PY_FORMAT_SIZE_T "d children>",
-                             self, ContainerNode_GET_COUNT(self));
+                             self, Container_GET_COUNT(self));
 }
 
 static int document_traverse(DocumentObject *self, visitproc visit, void *arg)
 {
   Py_VISIT(self->unparsed_entities);
-  return DomletteNode_Type.tp_traverse((PyObject *)self, visit, arg);
+  return DomletteContainer_Type.tp_traverse((PyObject *)self, visit, arg);
 }
 
 static int document_clear(DocumentObject *self)
 {
   Py_CLEAR(self->unparsed_entities);
-  return DomletteNode_Type.tp_clear((PyObject *)self);
+  return DomletteContainer_Type.tp_clear((PyObject *)self);
 }
 
 static PyObject *document_new(PyTypeObject *type, PyObject *args,
@@ -323,11 +321,7 @@ static PyObject *document_new(PyTypeObject *type, PyObject *args,
   if (type != &DomletteDocument_Type) {
     self = Document(type->tp_alloc(type, 0));
     if (self != NULL) {
-      _Node_INIT_CONTAINER(self);
-      if (document_init(self, documentURI) < 0) {
-        Py_DECREF(self);
-        self = NULL;
-      }
+      self = document_init(self, documentURI);
     }
   } else {
     self = Document_New(documentURI);
@@ -396,7 +390,7 @@ int DomletteDocument_Init(PyObject *module)
 {
   PyObject *dict, *value;
 
-  DomletteDocument_Type.tp_base = &DomletteNode_Type;
+  DomletteDocument_Type.tp_base = &DomletteContainer_Type;
   if (PyType_Ready(&DomletteDocument_Type) < 0)
     return -1;
 

@@ -274,6 +274,17 @@ typedef struct {
   int index;
 } child_axis;
 
+Py_LOCAL_INLINE(PyObject *)
+child_axis_init(child_axis *axis, NodeObject *node)
+{
+  if (Element_Check(node) || Document_Check(node))
+    Py_INCREF(node);
+  else
+    node = NULL; /* mark iterator as done */
+  axis->node = node;
+  return (PyObject *)axis;
+}
+
 static PyObject *child_axis_new(PyTypeObject *type, PyObject *args,
                                 PyObject *kwds)
 {
@@ -289,12 +300,7 @@ static PyObject *child_axis_new(PyTypeObject *type, PyObject *args,
   if (axis == NULL) {
     return NULL;
   }
-  if (Node_HasFlag(node, Node_FLAGS_CONTAINER))
-    Py_INCREF(node);
-  else
-    node = NULL; /* mark iterator as done */
-  axis->node = node;
-  return (PyObject *)axis;
+  return child_axis_init(axis, node);
 }
 
 static void child_axis_dealloc(child_axis *self)
@@ -309,8 +315,8 @@ static PyObject *child_axis_next(child_axis *self)
   int index = self->index;
   if (node == NULL) return NULL;
 
-  if (index < ContainerNode_GET_COUNT(node)) {
-    node = ContainerNode_GET_CHILD(node, index);
+  if (index < Container_GET_COUNT(node)) {
+    node = Container_GET_CHILD(node, index);
     self->index++;
     Py_INCREF(node);
     return (PyObject *)node;
@@ -325,7 +331,7 @@ static PyTypeObject child_axis_type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
   /* tp_name           */ MODULE_NAME "." "child_axis",
-  /* tp_basicsize      */ sizeof(attribute_axis),
+  /* tp_basicsize      */ sizeof(child_axis),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) child_axis_dealloc,
   /* tp_print          */ (printfunc) 0,
@@ -364,6 +370,15 @@ static PyTypeObject child_axis_type = {
   /* tp_free           */ 0,
 };
 
+static PyObject *get_child_axis(NodeObject *node)
+{
+  child_axis *axis = PyObject_New(child_axis, &child_axis_type);
+  if (axis == NULL)
+    return NULL;
+  axis->index = 0;
+  return child_axis_init(axis, node);
+}
+
 /** DescendantAxis object ********************************************/
 
 typedef struct {
@@ -375,7 +390,8 @@ typedef struct {
 static PyObject *descendant_axis_new(PyTypeObject *type, PyObject *args,
                                     PyObject *kwds)
 {
-  PyObject *node, *stack;
+  PyObject *stack;
+  NodeObject *node;
   descendant_axis *axis;
 
   if (!PyArg_ParseTuple(args, "O!:descendant_axis",
@@ -387,7 +403,7 @@ static PyObject *descendant_axis_new(PyTypeObject *type, PyObject *args,
   if (stack == NULL) {
     return NULL;
   }
-  if (PyList_SET_ITEM(stack, 0, PyObject_GetIter(node)) == NULL) {
+  if (PyList_SET_ITEM(stack, 0, get_child_axis(node)) == NULL) {
     Py_DECREF(stack);
     return NULL;
   }
@@ -422,7 +438,7 @@ static PyObject *descendant_axis_next(descendant_axis *self)
       /* If `node` is an Element, add its iterator to our stack for the
        * iteration. */
       if (Element_Check(node)) {
-        nodeiter = PyObject_GetIter(node);
+        nodeiter = get_child_axis((NodeObject *)node);
         if (nodeiter == NULL) {
           Py_DECREF(node);
           return NULL;
@@ -520,10 +536,10 @@ static PyObject *descendant_self_axis_next(descendant_axis *self)
     return descendant_axis_next(self);
   }
 
-  assert(Node_Chek(node));
+  assert(Node_Check(node));
   stack = PyList_New(1);
   if (stack == NULL) return NULL;
-  if (PyList_SET_ITEM(stack, 0, PyObject_GetIter(node)) == NULL) {
+  if (PyList_SET_ITEM(stack, 0, get_child_axis((NodeObject *)node)) == NULL) {
     Py_DECREF(stack);
     return NULL;
   }
@@ -600,10 +616,11 @@ static PyObject *followingsibling_axis_new(PyTypeObject *type, PyObject *args,
   }
   axis->parent = Node_GET_PARENT(node);
   Py_XINCREF(axis->parent);
-  if (axis->parent && Node_HasFlag(axis->parent, Node_FLAGS_CONTAINER)) {
-    axis->count = ContainerNode_GET_COUNT(axis->parent);
+  if (axis->parent) {
+    assert(Element_Check(axis->parent) || Document_Check(axis->parent));
+    axis->count = Container_GET_COUNT(axis->parent);
     for (axis->index = 0; axis->index < axis->count; axis->index++) {
-      if (ContainerNode_GET_CHILD(axis->parent, axis->index) == node) {
+      if (Container_GET_CHILD(axis->parent, axis->index) == node) {
         /* advance to the following node */
         axis->index++;
         break;
@@ -626,7 +643,7 @@ static PyObject *followingsibling_axis_next(followingsibling_axis *self)
   PyObject *node;
 
   if (self->index < self->count) {
-    node = (PyObject *) ContainerNode_GET_CHILD(self->parent, self->index++);
+    node = (PyObject *)Container_GET_CHILD(self->parent, self->index++);
     Py_INCREF(node);
     return node;
   }

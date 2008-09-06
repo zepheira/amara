@@ -112,14 +112,14 @@ class number_element(xslt_element):
             else:
                 # 'single' without count or from attributes
                 value = 1
-                prev = node.xml_previous_sibling
+                prev = node.xml_preceding_sibling
                 type_ = node.xml_node_type
                 expanded = (node.xml_namespace, node.xml_local)
                 while prev:
                     if prev.xml_node_type == type_ and \
                        (prev.xml_namespace, prev.xml_local) == expanded:
                         value += 1
-                    prev = prev.xml_previous_sibling
+                    prev = prev.xml_preceding_sibling
                 result = formatter.format(value, grouping_size, separator)
         # add the resulting formatted value(s) to the result tree
         context.text(result)
@@ -148,9 +148,9 @@ class number_element(xslt_element):
         value = 0
         while node:
             value += 1
-            node = node.xml_previous_sibling
+            node = node.xml_preceding_sibling
             while node and not countPattern.match(context, node):
-                node = node.xml_previous_sibling
+                node = node.xml_preceding_sibling
         return value
 
     def _multiple_values(self, context, node):
@@ -189,10 +189,10 @@ class number_element(xslt_element):
                 break
             if count.match(context, node):
                 value += 1
-            if not node.xml_previous_sibling:
+            if not node.xml_preceding_sibling:
                 node = node.xml_parent
             else:
-                node = node.xml_previous_sibling
+                node = node.xml_preceding_sibling
                 while node.xml_last_child:
                     node = node.xml_last_child
         return value

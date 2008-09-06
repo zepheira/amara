@@ -110,7 +110,7 @@ static int complete_text(TreeWriterObject *self)
   }
   Py_DECREF(data);
   if (node == NULL) return -1;
-  if (Node_AppendChild(self->current_node, (NodeObject *)node) < 0) {
+  if (Container_Append(self->current_node, (NodeObject *)node) < 0) {
     Py_DECREF(node);
     return -1;
   }
@@ -221,7 +221,7 @@ static PyObject *treewriter_start_element(TreeWriterObject *self,
   Py_DECREF(namespace);
   Py_DECREF(localName);
   if (element == NULL) return NULL;
-  if (Node_AppendChild(self->current_node, (NodeObject *)element) < 0) {
+  if (Container_Append(self->current_node, (NodeObject *)element) < 0) {
     Py_DECREF(element);
     return NULL;
   }
@@ -334,8 +334,8 @@ static PyObject *treewriter_attribute(TreeWriterObject *self,
    * - Adding an attribute to a node that is not an element;
    *   implementations may either signal the error or ignore the
    *   attribute. */
-  if (PyObject_TypeCheck(self->current_node, Domlette->Element_Type) &&
-      ContainerNode_GET_COUNT(self->current_node) == 0) {
+  if (Element_Check(self->current_node) &&
+      Container_GET_COUNT(self->current_node) == 0) {
     PyObject *prefix, *localName;
     AttrObject *attr;
 
@@ -486,7 +486,7 @@ static PyObject *treewriter_processing_instruction(TreeWriterObject *self,
   Py_DECREF(target);
   Py_DECREF(data);
   if (node == NULL) return NULL;
-  if (Node_AppendChild(self->current_node, (NodeObject *)node) < 0) {
+  if (Container_Append(self->current_node, (NodeObject *)node) < 0) {
     Py_DECREF(node);
     return NULL;
   }
@@ -523,7 +523,7 @@ static PyObject *treewriter_comment(TreeWriterObject *self, PyObject *args,
   node = Comment_New(data);
   Py_DECREF(data);
   if (node == NULL) return NULL;
-  if (Node_AppendChild(self->current_node, (NodeObject *)node) < 0) {
+  if (Container_Append(self->current_node, (NodeObject *)node) < 0) {
     Py_DECREF(node);
     return NULL;
   }

@@ -35,12 +35,12 @@ CONTEXT_LANG = context(LANG, 1, 1)
 #     </x>
 #   </element>
 # </elements>
-ELEMENTS = tree.Document().xml_append_child(tree.Element(None, 'elements'))
+ELEMENTS = tree.Document().xml_append(tree.Element(None, 'elements'))
 for cdata in ('a', 'z'):
-    node = ELEMENTS.xml_append_child(tree.Element(None, 'element'))
-    node = node.xml_append_child(tree.Element(None, 'x'))
-    node = node.xml_append_child(tree.Element(None, 'y'))
-    node.xml_append_child(tree.Text(cdata))
+    node = ELEMENTS.xml_append(tree.Element(None, 'element'))
+    node = node.xml_append(tree.Element(None, 'x'))
+    node = node.xml_append(tree.Element(None, 'y'))
+    node.xml_append(tree.Text(cdata))
 del node, cdata
 CONTEXT_ELEMENT = context(ELEMENTS, 1, 1)
 ELEMENT1, ELEMENT2 = ELEMENTS

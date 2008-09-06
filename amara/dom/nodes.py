@@ -81,16 +81,18 @@ class _container(Node):
     @property
     def lastChild(self): return self.xml_last_child
     @property
-    def previousSibling(self): return self.xml_previous_sibling
+    def previousSibling(self): return self.xml_preceding_sibling
     @property
-    def nextSibling(self): return self.xml_next_sibling
+    def nextSibling(self): return self.xml_following_sibling
 
     def hasChildNodes(self): return bool(self.xml_children)
     #Don't just assign the functions since there are subtle differences we'll need to fix up
-    def appendChild(self, node): return self.xml_append_child(node)
-    def replaceChild(self, newChild, oldChild): return self.xml_replace_child(newChild, oldChild)
-    def removeChild(self, node): return self.xml_remove_child(node)
-    def appendChild(self, node): return self.xml_append_child(node)
+    def appendChild(self, node): return self.xml_append(node)
+    def replaceChild(self, newChild, oldChild): return self.xml_replace(oldChild, newChild)
+    def removeChild(self, node): return self.xml_remove(node)
+    def insertBefore(self, newChild, refNode):
+        index = self.xml_index(refChild)
+        return self.xml_insert(index, newChild)
 
 
 class DocumentFragment(tree.entity, _container):

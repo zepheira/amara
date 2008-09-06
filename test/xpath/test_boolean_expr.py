@@ -15,9 +15,9 @@ from test_expressions import (
     )
 
 EGG1 = tree.Element(None, 'egg1')
-EGG1.xml_append_child(tree.Text('egg1'))
+EGG1.xml_append(tree.Text('egg1'))
 EGG2 = tree.Element(None, 'egg2')
-EGG2.xml_append_child(tree.Text('egg2'))
+EGG2.xml_append(tree.Text('egg2'))
 
 NUM = tree.Element(None, 'num')
 NUM0 = tree.Attr(None, 'num0', '0')

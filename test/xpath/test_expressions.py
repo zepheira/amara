@@ -145,7 +145,7 @@ CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')
 ATTR31 = CHILD1.xml_attributes.getnode(None, 'attr31')
 GCHILDREN1 = GCHILD11, GCHILD12 = children(CHILD1)
-TEXT1 = CHILD1.xml_last_child
+TEXT1 = CHILD1.xml_children[-1]
 # `CHILD2` nodes
 ATTR2 = CHILD2.xml_attributes.getnode(None, 'attr1')
 IDATTR2 = CHILD2.xml_attributes.getnode(None, 'CODE')

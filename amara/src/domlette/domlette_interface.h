@@ -43,12 +43,12 @@ extern "C" {
     PyTypeObject *Namespace_Type;
 
     /* Node Methods */
-    int (*Node_RemoveChild)(NodeObject *parent, NodeObject *oldChild);
-    int (*Node_AppendChild)(NodeObject *parent, NodeObject *newChild);
-    int (*Node_InsertBefore)(NodeObject *parent, NodeObject *newChild,
-                             NodeObject *refChild);
-    int (*Node_ReplaceChild)(NodeObject *parent, NodeObject *newChild,
-                             NodeObject *oldChild);
+    int (*Container_Remove)(NodeObject *parent, NodeObject *child);
+    int (*Container_Append)(NodeObject *parent, NodeObject *child);
+    int (*Container_Insert)(NodeObject *parent, Py_ssize_t where,
+                            NodeObject *child);
+    int (*Container_Replace)(NodeObject *parent, NodeObject *oldChild,
+                             NodeObject *newChild);
 
     /* Document Methods */
     DocumentObject *(*Document_New)(PyObject *documentURI);
@@ -120,10 +120,11 @@ extern "C" {
 
 #define Node_Check(op) PyObject_TypeCheck((op), DomletteNode_Type)
 #define Node_CheckExact(op) ((op)->ob_type == DomletteNode_Type)
-#define Node_RemoveChild Domlette->Node_RemoveChild
-#define Node_AppendChild Domlette->Node_AppendChild
-#define Node_InsertBefore Domlette->Node_InsertBefore
-#define Node_ReplaceChild Domlette->Node_ReplaceChild
+
+#define Container_Remove Domlette->Container_Remove
+#define Container_Append Domlette->Container_Append
+#define Container_Insert Domlette->Container_Insert
+#define Container_Replace Domlette->Container_Replace
 
 #define Document_Check(op) PyObject_TypeCheck((op), DomletteDocument_Type)
 #define Document_CheckExact(op) ((op)->ob_type == DomletteDocument_Type)

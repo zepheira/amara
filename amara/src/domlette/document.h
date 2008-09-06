@@ -9,7 +9,7 @@ extern "C" {
 #include "node.h"
 
   typedef struct {
-    ContainerNode_HEAD
+    Container_HEAD
     PyObject *documentURI;
     PyObject *publicId;
     PyObject *systemId;

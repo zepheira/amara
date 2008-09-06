@@ -80,7 +80,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)doc, (NodeObject *)pi) < 0) {
+  if (Container_Append((NodeObject *)doc, (NodeObject *)pi) < 0) {
     Py_DECREF(pi);
     Py_DECREF(doc);
     return NULL;
@@ -103,7 +103,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)doc, (NodeObject *)documentElement) < 0) {
+  if (Container_Append((NodeObject *)doc, (NodeObject *)documentElement) < 0) {
     Py_DECREF(documentElement);
     Py_DECREF(doc);
     return NULL;
@@ -147,7 +147,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
@@ -172,7 +172,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)element) < 0) {
     Py_DECREF(element);
     Py_DECREF(doc);
@@ -220,7 +220,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)element, (NodeObject *)text) < 0) {
+  if (Container_Append((NodeObject *)element, (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
     return NULL;
@@ -243,7 +243,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
@@ -267,7 +267,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)comment) < 0) {
     Py_DECREF(comment);
     Py_DECREF(doc);
@@ -291,7 +291,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
@@ -322,7 +322,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)element) < 0) {
     Py_DECREF(element);
     Py_DECREF(doc);
@@ -377,7 +377,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)element, (NodeObject *)text) < 0) {
+  if (Container_Append((NodeObject *)element, (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
     return NULL;
@@ -400,7 +400,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
@@ -425,7 +425,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)element) < 0) {
     Py_DECREF(element);
     Py_DECREF(doc);
@@ -449,7 +449,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
     Py_DECREF(doc);
     return NULL;
   }
-  if (Node_AppendChild((NodeObject *)documentElement,
+  if (Container_Append((NodeObject *)documentElement,
                        (NodeObject *)text) < 0) {
     Py_DECREF(text);
     Py_DECREF(doc);
@@ -499,10 +499,10 @@ static Domlette_APIObject Domlette_API = {
   &DomletteProcessingInstruction_Type,
   &DomletteNamespace_Type,
 
-  Node_RemoveChild,
-  Node_AppendChild,
-  Node_InsertBefore,
-  Node_ReplaceChild,
+  Container_Remove,
+  Container_Append,
+  Container_Insert,
+  Container_Replace,
 
   Document_New,
 
@@ -534,6 +534,7 @@ struct submodule_t submodules[] = {
   SUBMODULE(Exceptions),
   SUBMODULE(Builder),
   SUBMODULE(Node),
+  SUBMODULE(Container),
   SUBMODULE(NamespaceMap),
   SUBMODULE(AttributeMap),
   SUBMODULE(Element),

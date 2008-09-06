@@ -1079,8 +1079,8 @@ static int domwalker_visit(XMLParserObject *parser,
 //                                   Element_GET_LOCAL_NAME(node));
 
     /* process the children */
-    for (i = 0; i < ContainerNode_GET_COUNT(node); i++) {
-      NodeObject *child = ContainerNode_GET_CHILD(node, i);
+    for (i = 0; i < Container_GET_COUNT(node); i++) {
+      NodeObject *child = Container_GET_CHILD(node, i);
       if (domwalker_visit(parser, child, current_namespaces,
                           preserve_whitespace) == 0) {
         Py_DECREF(current_namespaces);
@@ -1139,7 +1139,7 @@ static int domwalker_visit(XMLParserObject *parser,
 static ExpatStatus ParseDOM(XMLParserObject *parser)
 {
   PyObject *namespaces;
-  int i;
+  Py_ssize_t i;
 
   sax_StartDocument(parser);
   if (PyErr_Occurred()) return EXPAT_STATUS_ERROR;
@@ -1147,8 +1147,8 @@ static ExpatStatus ParseDOM(XMLParserObject *parser)
   namespaces = PyDict_New();
   if (namespaces == NULL) return EXPAT_STATUS_ERROR;
 
-  for (i = 0; i < ContainerNode_GET_COUNT(parser->dom_node); i++) {
-    NodeObject *node = ContainerNode_GET_CHILD(parser->dom_node, i);
+  for (i = 0; i < Container_GET_COUNT(parser->dom_node); i++) {
+    NodeObject *node = Container_GET_CHILD(parser->dom_node, i);
     if (domwalker_visit(parser, node, namespaces, 1) == 0) {
       Py_DECREF(namespaces);
       return EXPAT_STATUS_ERROR;

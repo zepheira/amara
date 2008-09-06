@@ -278,7 +278,7 @@ class ReaderError(Error):
 class XIncludeError(ReaderError):
     pass
 
-from amara.domlette import parse
+from amara.tree import parse
 from amara.lib import xmlstring as string
 
 import sys

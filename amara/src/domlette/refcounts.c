@@ -45,8 +45,8 @@ static int node_refcounts(PyObject *tester, NodeObject *node,
     PyObject *k, *v;
 
     /* test element's children */
-    for (i = 0; i < ContainerNode_GET_COUNT(node); i++) {
-      v = (PyObject *) ContainerNode_GET_CHILD(node, i);
+    for (i = 0; i < Container_GET_COUNT(node); i++) {
+      v = (PyObject *) Container_GET_CHILD(node, i);
       if (node_refcounts(tester, (NodeObject *)v, counter) == 0) return 0;
     }
 
@@ -94,8 +94,8 @@ int test_refcounts(PyObject *tester, PyObject *doc)
   /* refcount = 2  + counter (ownerDocument) */
   expected = 2;
 
-  for (i = 0; i < ContainerNode_GET_COUNT(doc); i++) {
-    NodeObject *node = ContainerNode_GET_CHILD(doc, i);
+  for (i = 0; i < Container_GET_COUNT(doc); i++) {
+    NodeObject *node = Container_GET_CHILD(doc, i);
     if (node_refcounts(tester, node, &expected) == 0) return 0;
   }
 

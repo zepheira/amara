@@ -3,22 +3,26 @@
 
 /** Private Routines **************************************************/
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(AttrObject *)
 attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
           PyObject *localName, PyObject *value)
 {
-  if ((self == NULL || !Attr_Check(self)) ||
-      (namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
+  assert(self && Attr_Check(self));
+  if ((namespaceURI == NULL || !XmlString_NullCheck(namespaceURI)) ||
       (qualifiedName == NULL || !XmlString_Check(qualifiedName)) ||
       (localName == NULL || !XmlString_Check(localName)) ||
       (value != NULL && !XmlString_Check(value))) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   if (value == NULL) {
     value = PyUnicode_FromUnicode(NULL, 0);
-    if (value == NULL) return -1;
+    if (value == NULL) {
+      Py_DECREF(self);
+      return NULL;
+    }
   } else {
     Py_INCREF(value);
   }
@@ -36,7 +40,7 @@ attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
 
   self->type = ATTRIBUTE_TYPE_CDATA;
 
-  return 0;
+  return self;
 }
 
 /** Public C API ******************************************************/
@@ -48,14 +52,8 @@ AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
 
   self = Node_New(AttrObject, &DomletteAttr_Type);
   if (self != NULL) {
-    if (attr_init(self, namespaceURI, qualifiedName, localName, value) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = attr_init(self, namespaceURI, qualifiedName, localName, value);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -117,7 +115,6 @@ static PyMemberDef attr_members[] = {
   { "xml_qname",     T_OBJECT, offsetof(AttrObject, nodeName),     RO },
   { "xml_namespace", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
   { "xml_local",     T_OBJECT, offsetof(AttrObject, localName),    RO },
-  { "xml_parent",    T_OBJECT, offsetof(AttrObject, parentNode),   RO },
   { NULL }
 };
 
@@ -286,11 +283,7 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (type != &DomletteAttr_Type) {
     attr = (AttrObject *) type->tp_alloc(type, 0);
     if (attr != NULL) {
-      _Node_INIT(attr);
-      if (attr_init(attr, namespaceURI, qualifiedName, localName, value) < 0) {
-        Py_DECREF(attr);
-        attr = NULL;
-      }
+      attr = attr_init(attr, namespaceURI, qualifiedName, localName, value);
     }
   } else {
     attr = Attr_New(namespaceURI, qualifiedName, localName, value);

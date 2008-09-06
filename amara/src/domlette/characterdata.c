@@ -8,19 +8,20 @@
 */
 #define CHARACTERDATA_REPR_LIMIT 20
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(CharacterDataObject *)
 characterdata_init(CharacterDataObject *self, PyObject *data)
 {
-  if ((self == NULL || !CharacterData_Check(self)) ||
-      (data == NULL || !XmlString_Check(data))) {
+  assert(self && CharacterData_Check(self));
+  if (data == NULL || !XmlString_Check(data)) {
     PyErr_BadInternalCall();
-    return -1;
+    Py_DECREF(self);
+    return NULL;
   }
 
   Py_INCREF(data);
   self->nodeValue = data;
 
-  return 0;
+  return self;
 }
 
 /** Public C API ******************************************************/
@@ -31,14 +32,8 @@ CharacterDataObject *_CharacterData_New(PyTypeObject *type, PyObject *data)
 
   self = Node_New(CharacterDataObject, type);
   if (self != NULL) {
-    if (characterdata_init(self, data) < 0) {
-      Node_Del(self);
-      return NULL;
-    }
+    self = characterdata_init(self, data);
   }
-
-  PyObject_GC_Track(self);
-
   return self;
 }
 
@@ -171,11 +166,7 @@ static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
 
   self = CharacterData(type->tp_alloc(type, 0));
   if (self != NULL) {
-    _Node_INIT(self);
-    if (characterdata_init(self, data) < 0) {
-      Py_DECREF(self);
-      self = NULL;
-    }
+    self = characterdata_init(self, data);
   }
   Py_DECREF(data);
 
@@ -239,9 +230,7 @@ int DomletteCharacterData_Init(PyObject *module)
   if (PyType_Ready(&DomletteCharacterData_Type) < 0)
     return -1;
 
-  Py_INCREF(&DomletteCharacterData_Type);
-  return PyModule_AddObject(module, "CharacterData",
-                            (PyObject*) &DomletteCharacterData_Type);
+  return 0;
 }
 
 void DomletteCharacterData_Fini(void)

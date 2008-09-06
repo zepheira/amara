@@ -77,10 +77,10 @@ static int join_descendants(NodeObject *node, PyObject **result,
 {
   Py_ssize_t i, n;
 
-  assert(Node_HasFlag(node, Node_FLAGS_CONTAINER));
-  n = ContainerNode_GET_COUNT(node);
+  assert(Element_Check(node) || Document_Check(node));
+  n = Container_GET_COUNT(node);
   for (i = 0; i < n; i++) {
-    NodeObject *child = ContainerNode_GET_CHILD(node, i);
+    NodeObject *child = Container_GET_CHILD(node, i);
     if (Element_Check(child)) {
       if (join_descendants(child, result, used) < 0)
         return -1;

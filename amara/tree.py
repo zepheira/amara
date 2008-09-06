@@ -23,14 +23,14 @@ text = Text
 
 #FiXME: and so on
 
-def parse(obj, uri=None, node_factories=None, standalone=False, validate=False):
+def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False):
     if standalone:
         flags = PARSE_FLAGS_STANDALONE
     elif validate:
         flags = PARSE_FLAGS_VALIDATE
     else:
         flags = PARSE_FLAGS_EXTERNAL_ENTITIES
-    return _parse(inputsource(obj, uri), flags, node_factories=node_factories)
+    return _parse(inputsource(obj, uri), flags, entity_factory=entity_factory)
 
 
 def NonvalParse(isrc, readExtDtd=True, nodeFactories=None):
