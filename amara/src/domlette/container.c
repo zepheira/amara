@@ -121,6 +121,7 @@ dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
     Py_DECREF(callable);
     return -1;
   }
+  Py_INCREF(target);
   PyTuple_SET_ITEM(args, 0, (PyObject *)target);
 
   result = PyObject_Call(callable, args, NULL);
@@ -178,7 +179,7 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
     PyErr_NoMemory();
     return -1;
   }
-  memcpy(nodes, array, sizeof(NodeObject *) * size);
+  memcpy(nodes, array, sizeof(NodeObject *)*size);
 
   /* Set the parent relationship */
   for (i = 0; i < size; i++) {
@@ -649,10 +650,8 @@ static int container_traverse(PyObject *self, visitproc visit, void *arg)
 {
   register NodeObject **nodes = Container_GET_NODES(self);
   register Py_ssize_t i = Container_GET_COUNT(self);
-  while (--i >= 0) {
-    int rt = visit((PyObject *)nodes[i], arg);
-    if (rt) return rt;
-  }
+  while (--i >= 0)
+    Py_VISIT(nodes[i]);
   return DomletteNode_Type.tp_traverse(self, visit, arg);
 }
 
