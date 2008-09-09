@@ -21,7 +21,9 @@ import warnings
 import cStringIO
 import bisect
 
-import factory
+from xml.dom import Node
+
+from amara.lib.xmlstring import *
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
 RESERVED_NAMES = [
@@ -164,6 +166,7 @@ class container_mixin(object):
         """
         called after the node has been added to `self.xml_children`
         """
+        print "xml_child_inserted"
         if isinstance(child, tree.element):
             pname = self.xml_factory.pyname(child.xml_namespace, child.xml_name, dir(self))
             setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
@@ -182,6 +185,7 @@ class container_mixin(object):
         """
         called after the node has been removed from `self.xml_children` (i.e. child.xml_parent is now None)
         """
+        print "xml_child_removed"
         #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
@@ -189,6 +193,7 @@ class container_mixin(object):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
+        print "xml_attribute_added"
         pname = self.xml_factory.pyname(attr_node.xml_namespace, attr_node.xml_name, dir(self))
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
@@ -197,21 +202,24 @@ class container_mixin(object):
         """
         called after the attribute has been removed `self.xml_attributes`
         """
+        print "xml_attribute_removed"
         #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
 
 class element_base(tree.element, container_mixin):
+    xml_attribute_factory = tree.attribute #factory callable for attributes
+
     xml_model = None
-    def __init__(self, name):
+    def __init__(self, ns, qname):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
         self.xml_extra_attributes = None
         #self.xml_iter_next = None
-        if isinstance(name, tuple):
-            ns, qname = name
-        else:
-            ns, qname = None, name #FIXME: Actually name must not have a prefix.  Should probably error check here
+        #if isinstance(name, tuple):
+        #    ns, qname = name
+        #else:
+        #    ns, qname = None, name #FIXME: Actually name must not have a prefix.  Should probably error check here
         tree.element.__init__(self, ns, qname)
         return
 
@@ -251,15 +259,70 @@ class element_base(tree.element, container_mixin):
         return unicode(self).encode('utf-8')
 
 
+#This class also serves as the factory for specializing the core Amara tree parse
 
 class entity_base(tree.entity, container_mixin):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
+    PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
+    xml_comment_factory = tree.comment
+    xml_processing_instruction_factory = tree.processing_instruction
+    xml_text_factory = tree.text
+
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
         #self.xml_iter_next = None
         tree.entity.__init__(self, document_uri=document_uri)
+        #Should we share the following across documents, perhaps by using an auxilliary class,
+        #Of which one global, default instance is created/used
+        #Answer: probably yes
+        self._eclasses = {}
+        self._class_names = {}
+        self._names = {}
         return
+
+    def pyname(self, ns, local, exclude=None):
+        '''
+        generate a Python ID (as a *string*) from an XML universal name
+
+        ns - the XML namespace
+        local - the XML local name
+        exclude - iterator of names not to use (e.g. to avoid clashes)
+        '''
+        python_id = self._names.get((local, ns))
+        if not python_id:
+            python_id = self.PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
+            if python_id in RESERVED_NAMES:
+                python_id = python_id + '_'
+            self._names[(local, ns)] = python_id
+        if exclude:
+            while python_id in exclude:
+                python_id += '_'
+        return python_id
+
+    def xname(self, python_id):
+        #XML NMTOKENS are a superset of Python IDs
+        return python_id
+
+    def element_factory(self, ns, qname, pname=None):
+        prefix, local = splitqname(qname)
+        if not pname: pname = self.pyname(ns, local)
+        if (ns, local) not in self._eclasses:
+            class_name = pname
+            eclass = type(class_name, (element_base,), {})
+            self._eclasses[(ns, local)] = eclass
+        else:
+            eclass = self._eclasses[(ns, local)]
+        print eclass
+        e = eclass(ns, qname)
+        return e
+
+    xml_element_factory = element_factory
+
+#class myattribute(tree.attribute)
+#    #Specialize any aspects of attribute here
+#    pass
+
 
