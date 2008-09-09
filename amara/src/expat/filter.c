@@ -656,6 +656,6 @@ int _Expat_Filter_Init(PyObject *module)
 
 void _Expat_Filter_Fini(void)
 {
-  PyType_CLEAR(&Handler_Type);
   PyType_CLEAR(&Filter_Type);
+  PyType_CLEAR(&Handler_Type);
 }
