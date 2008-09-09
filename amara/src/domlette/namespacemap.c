@@ -184,13 +184,15 @@ parse_key(PyObject *key, int node_allowed)
 /** Public C API ******************************************************/
 
 PyObject *
-NamespaceMap_New(void)
+NamespaceMap_New(ElementObject *owner)
 {
   register NamespaceMapObject *self;
 
   self = PyObject_GC_New(NamespaceMapObject, &NamespaceMap_Type);
   if (self != NULL) {
     INIT_MINSIZE(self);
+    self->nm_owner = owner;
+    Py_INCREF(owner);
     PyObject_GC_Track(self);
   }
   return (PyObject *)self;
@@ -326,7 +328,7 @@ notfound:
 }
 
 static char namednodemap_keys_doc[] =
-"M.keys() -> list of expanded name 2-tuples";
+"M.keys() -> list of prefixes";
 
 static PyObject *namednodemap_keys(NamespaceMapObject *self)
 {
@@ -340,13 +342,9 @@ static PyObject *namednodemap_keys(NamespaceMapObject *self)
     return NULL;
   for (i = 0, table = self->nm_table; i < n; table++) {
     if (table->ne_node != NULL) {
-      PyObject *key = PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(table->ne_node),
-                                   Attr_GET_LOCAL_NAME(table->ne_node));
-      if (key == NULL) {
-        Py_DECREF(keys);
-        return NULL;
-      }
+      PyObject *key = Namespace_GET_NAME(table->ne_node);
       PyList_SET_ITEM(keys, i, key);
+      Py_INCREF(key);
       i++;
     }
   }
@@ -368,7 +366,7 @@ static PyObject *namednodemap_values(NamespaceMapObject *self)
     return NULL;
   for (i = 0, table = self->nm_table; i < n; table++) {
     if (table->ne_node != NULL) {
-      PyObject *value = Attr_GET_NODE_VALUE(table->ne_node);
+      PyObject *value = Namespace_GET_VALUE(table->ne_node);
       Py_INCREF(value);
       PyList_SET_ITEM(values, i, value);
       i++;
@@ -378,14 +376,13 @@ static PyObject *namednodemap_values(NamespaceMapObject *self)
 }
 
 static char namednodemap_items_doc[] =
-"M.items() -> list of M's (expanded name, value) pairs, as 2-tuples";
+"M.items() -> list of M's (prefix, uri) pairs, as 2-tuples";
 
 static PyObject *namednodemap_items(NamespaceMapObject *self)
 {
   register PyObject *items;
   register Py_ssize_t i, n;
   register NamespaceEntry *table;
-  PyObject *key, *value, *item;
 
   n = self->nm_used;
   items = PyList_New(n);
@@ -393,22 +390,12 @@ static PyObject *namednodemap_items(NamespaceMapObject *self)
     return NULL;
   for (i = 0, table = self->nm_table; i < n; table++) {
     if (table->ne_node != NULL) {
-      key = PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(table->ne_node),
-                         Attr_GET_LOCAL_NAME(table->ne_node));
-      if (key == NULL) {
-        Py_DECREF(items);
-        return NULL;
-      }
-      value = Attr_GET_NODE_VALUE(table->ne_node);
-      item = PyTuple_New(2);
+      PyObject *item = PyTuple_Pack(2, Namespace_GET_NAME(table->ne_node),
+                                    Namespace_GET_VALUE(table->ne_node));
       if (item == NULL) {
-        Py_DECREF(key);
         Py_DECREF(items);
         return NULL;
       }
-      PyTuple_SET_ITEM(item, 0, key);
-      PyTuple_SET_ITEM(item, 1, value);
-      Py_INCREF(value);
       PyList_SET_ITEM(items, i, item);
       i++;
     }
@@ -432,19 +419,10 @@ static PyObject *namednodemap_copy(NamespaceMapObject *self)
 
   for (i = 0, n = self->nm_used, table = self->nm_table; i < n; table++) {
     if (table->ne_node != NULL) {
-      key = PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(table->ne_node),
-                         Attr_GET_LOCAL_NAME(table->ne_node));
-      if (key == NULL) {
-        Py_DECREF(copy);
+      key = Namespace_GET_NAME(table->ne_node);
+      value = Namespace_GET_VALUE(table->ne_node);
+      if (PyDict_SetItem(copy, key, value) < 0)
         return NULL;
-      }
-      value = Attr_GET_NODE_VALUE(table->ne_node);
-      if (PyDict_SetItem(copy, key, value) < 0) {
-        Py_DECREF(key);
-        Py_DECREF(copy);
-        return NULL;
-      }
-      Py_DECREF(key);
       i++;
     }
   }
@@ -649,6 +627,7 @@ static void namednodemap_dealloc(NamespaceMapObject *self)
   register Py_ssize_t used;
 
   PyObject_GC_UnTrack(self);
+  Py_XDECREF(self->nm_owner);
   Py_TRASHCAN_SAFE_BEGIN(self);
   for (entry = self->nm_table, used = self->nm_used; used > 0; entry++) {
     if (entry->ne_node != NULL) {
@@ -675,6 +654,7 @@ static int namednodemap_traverse(NamespaceMapObject *self, visitproc visit,
   Py_ssize_t i = 0;
   NamespaceObject *node;
 
+  Py_VISIT(self->nm_owner);
   while ((node = next_entry(self, &i)))
     Py_VISIT(node);
 
@@ -689,6 +669,7 @@ static int namednodemap_clear(NamespaceMapObject *self)
   NamespaceEntry smallcopy[NamespaceMap_MINSIZE];
   int malloced_table;
 
+  Py_CLEAR(self->nm_owner);
   table = self->nm_table;
   malloced_table = (table != self->nm_smalltable);
 
@@ -812,7 +793,6 @@ static PyObject *iter_self(PyObject *op)
 static PyObject *iter_nextkey(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   NamespaceObject *node;
 
   if (nodemap == NULL)
@@ -825,23 +805,22 @@ static PyObject *iter_nextkey(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = next_entry(nodemap, &pos))) {
-    PyObject *result = Namespace_GET_NAME(node);
-    Py_INCREF(result);
-    self->it_length--;
-    return result;
+  node = next_entry(nodemap, &self->it_pos);
+  if (node == NULL) {
+    /* iterated over all items, indicate exhausted */
+    Py_DECREF(nodemap);
+    self->it_map = NULL;
+    return NULL;
   }
-  /* iterated over all items, indicate exhausted */
-  Py_DECREF(nodemap);
-  self->it_map = NULL;
-  return NULL;
+
+  self->it_length--;
+  Py_INCREF(Namespace_GET_NAME(node));
+  return Namespace_GET_NAME(node);
 }
 
 static PyObject *iter_nextvalue(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   NamespaceObject *node;
 
   if (nodemap == NULL)
@@ -854,23 +833,22 @@ static PyObject *iter_nextvalue(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = next_entry(nodemap, &pos))) {
-    PyObject *result = Namespace_GET_VALUE(node);
-    Py_INCREF(result);
-    self->it_length--;
-    return result;
+  node = next_entry(nodemap, &self->it_pos);
+  if (node == NULL) {
+    /* iterated over all items, indicate exhausted */
+    Py_DECREF(nodemap);
+    self->it_map = NULL;
+    return NULL;
   }
-  /* iterated over all items, indicate exhausted */
-  Py_DECREF(nodemap);
-  self->it_map = NULL;
-  return NULL;
+
+  self->it_length--;
+  Py_INCREF(Namespace_GET_VALUE(node));
+  return Namespace_GET_VALUE(node);
 }
 
 static PyObject *iter_nextitem(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   NamespaceObject *node;
 
   if (nodemap == NULL)
@@ -883,23 +861,21 @@ static PyObject *iter_nextitem(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = next_entry(nodemap, &pos))) {
-    PyObject *result = PyTuple_Pack(2, Namespace_GET_NAME(node),
-                                    Namespace_GET_VALUE(node));
-    self->it_length--;
-    return result;
+  node = next_entry(nodemap, &self->it_pos);
+  if (node == NULL) {
+    /* iterated over all items, indicate exhausted */
+    Py_DECREF(nodemap);
+    self->it_map = NULL;
+    return NULL;
   }
-  /* iterated over all items, indicate exhausted */
-  Py_DECREF(nodemap);
-  self->it_map = NULL;
-  return NULL;
+
+  self->it_length--;
+  return PyTuple_Pack(2, Namespace_GET_NAME(node), Namespace_GET_VALUE(node));
 }
 
 static PyObject *iter_nextnode(IterObject *self)
 {
   NamespaceMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   NamespaceObject *node;
 
   if (nodemap == NULL)
@@ -912,16 +888,17 @@ static PyObject *iter_nextnode(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = next_entry(nodemap, &pos))) {
-    Py_INCREF(node);
-    self->it_length--;
-    return (PyObject *)node;
+  node = next_entry(nodemap, &self->it_pos);
+  if (node == NULL) {
+    /* iterated over all items, indicate exhausted */
+    Py_DECREF(nodemap);
+    self->it_map = NULL;
+    return NULL;
   }
-  /* iterated over all items, indicate exhausted */
-  Py_DECREF(nodemap);
-  self->it_map = NULL;
-  return NULL;
+
+  self->it_length--;
+  Py_INCREF(node);
+  return (PyObject *)node;
 }
 
 static PyObject *iter_length_hint(PyObject *op, PyObject *noarg)

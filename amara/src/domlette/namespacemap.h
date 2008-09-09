@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "Python.h"
+#include "element.h"
 #include "namespace.h"
 
 /* NamespaceMap_MINSIZE is the minimum size of a dictionary.  This many slots
@@ -41,6 +42,7 @@ extern "C" {
      * setitem calls.
      */
     NamespaceEntry *nm_table;
+    ElementObject *nm_owner;
     NamespaceEntry nm_smalltable[NamespaceMap_MINSIZE];
   } NamespaceMapObject;
 
@@ -48,7 +50,7 @@ extern "C" {
 
 #ifdef Domlette_BUILDING_MODULE
 
-  PyObject *NamespaceMap_New(void);
+  PyObject *NamespaceMap_New(ElementObject *owner);
 
   NamespaceObject *NamespaceMap_GetNode(PyObject *self, PyObject *prefix);
 

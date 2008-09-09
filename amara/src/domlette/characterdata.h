@@ -10,11 +10,11 @@ extern "C" {
 
   typedef struct {
     Node_HEAD
-    PyObject *nodeValue;
+    PyObject *value;
   } CharacterDataObject;
 
 #define CharacterData(op) ((CharacterDataObject *)(op))
-#define CharacterData_GET_NODE_VALUE(op) (CharacterData(op)->nodeValue)
+#define CharacterData_GET_VALUE(op) (CharacterData(op)->value)
 
 #ifdef Domlette_BUILDING_MODULE
 
@@ -24,6 +24,7 @@ extern "C" {
   PyObject_TypeCheck((op), &DomletteCharacterData_Type)
 #define CharacterData_CheckExact(op) \
   ((op)->ob_type, &DomletteCharacterData_Type)
+#define CharacterData_SET_VALUE(op, v) (CharacterData_GET_VALUE(op) = (v))
 
   /* Module Methods */
   int DomletteCharacterData_Init(PyObject *module);

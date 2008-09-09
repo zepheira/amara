@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "Python.h"
+#include "element.h"
 #include "attr.h"
 
 /* AttributeMap_MINSIZE is the minimum size of a dictionary.  This many slots
@@ -41,13 +42,15 @@ extern "C" {
      * setitem calls.
      */
     AttributeEntry *nm_table;
+    ElementObject *nm_owner;
     AttributeEntry nm_smalltable[AttributeMap_MINSIZE];
   } AttributeMapObject;
 
 #define AttributeMap_GET_SIZE(op) (((AttributeMapObject *)(op))->nm_used)
 
 #ifdef Domlette_BUILDING_MODULE
-  PyObject *AttributeMap_New(void);
+
+  PyObject *AttributeMap_New(ElementObject *owner);
 
   AttrObject *AttributeMap_GetNode(PyObject *self, PyObject *namespace,
                                    PyObject *name);

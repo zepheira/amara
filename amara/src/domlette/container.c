@@ -422,8 +422,8 @@ static PyObject *xml_normalize(NodeObject *self, PyObject *args)
         /* Adjacent Text nodes; merge their data. */
         PyObject *current_value, *next_value, *new_value;
         Py_UNICODE *raw_value;
-        current_value = Text_GET_DATA(current);
-        next_value = Text_GET_DATA(next);
+        current_value = Text_GET_VALUE(current);
+        next_value = Text_GET_VALUE(next);
         new_value = PyUnicode_FromUnicode(NULL,
                                           PyUnicode_GET_SIZE(current_value) +
                                           PyUnicode_GET_SIZE(next_value));
@@ -434,7 +434,7 @@ static PyObject *xml_normalize(NodeObject *self, PyObject *args)
         raw_value += PyUnicode_GET_SIZE(current_value);
         Py_UNICODE_COPY(raw_value, PyUnicode_AS_UNICODE(next_value),
                         PyUnicode_GET_SIZE(next_value));
-        Text_SET_DATA(current, new_value);
+        Text_SET_VALUE(current, new_value);
         Py_DECREF(current_value);
 
         /* Remove the sibling. */

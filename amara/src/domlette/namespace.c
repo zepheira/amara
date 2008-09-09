@@ -25,10 +25,10 @@ namespace_init(NamespaceObject *self, ElementObject *parentNode,
   } else {
     Py_INCREF(prefix);
   }
-  self->nodeName = prefix;
+  self->name = prefix;
 
   Py_INCREF(namespaceURI);
-  self->nodeValue = namespaceURI;
+  self->value = namespaceURI;
 
   assert(Node_GET_PARENT(self) == NULL);
   Py_INCREF(parentNode);
@@ -69,10 +69,10 @@ static PyMethodDef namespace_methods[] = {
   { #name, T_OBJECT, offsetof(NamespaceObject, member), RO }
 
 static PyMemberDef namespace_members[] = {
-  Namespace_MEMBER(nodeName, nodeName),
-  Namespace_MEMBER(localName, nodeName),
-  Namespace_MEMBER(nodeValue, nodeValue),
-  Namespace_MEMBER(value, nodeValue),
+  Namespace_MEMBER(nodeName, name),
+  Namespace_MEMBER(localName, name),
+  Namespace_MEMBER(nodeValue, value),
+  Namespace_MEMBER(value, value),
   { NULL }
 };
 
@@ -87,16 +87,16 @@ static PyGetSetDef namespace_getset[] = {
 static void namespace_dealloc(NamespaceObject *self)
 {
   PyObject_GC_UnTrack((PyObject *) self);
-  Py_CLEAR(self->nodeValue);
-  Py_CLEAR(self->nodeName);
+  Py_CLEAR(self->value);
+  Py_CLEAR(self->name);
   Node_Del(self);
 }
 
 static PyObject *namespace_repr(NamespaceObject *self)
 {
   PyObject *repr;
-  PyObject *name = PyObject_Repr(self->nodeName);
-  PyObject *value = PyObject_Repr(self->nodeValue);
+  PyObject *name = PyObject_Repr(self->name);
+  PyObject *value = PyObject_Repr(self->value);
   if (name == NULL || value == NULL) {
     Py_XDECREF(name);
     Py_XDECREF(value);

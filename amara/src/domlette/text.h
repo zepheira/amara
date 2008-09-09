@@ -11,8 +11,7 @@ extern "C" {
   typedef CharacterDataObject TextObject;
 
 #define Text(op) ((TextObject *)(op))
-#define Text_GET_DATA(op) CharacterData_GET_NODE_VALUE(op)
-#define Text_SET_DATA(op, v) (Text_GET_DATA(op) = (v))
+#define Text_GET_VALUE CharacterData_GET_VALUE
 
 #ifdef Domlette_BUILDING_MODULE
 
@@ -20,6 +19,7 @@ extern "C" {
 
 #define Text_Check(op) PyObject_TypeCheck((op), &DomletteText_Type)
 #define Text_CheckExact(op) ((op)->ob_type == &DomletteText_Type)
+#define Text_SET_VALUE CharacterData_SET_VALUE
 
   /* Module Methods */
   int DomletteText_Init(PyObject *module);

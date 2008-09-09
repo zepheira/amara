@@ -936,9 +936,9 @@ static int domwalker_visit(XMLParserObject *parser,
     while (PyDict_Next(Element_GET_ATTRIBUTES(node), &i, &key, &value)) {
       PyObject *nodeName, *localName, *nodeValue;
       namespaceURI = Attr_GET_NAMESPACE_URI(value);
-      nodeName = Attr_GET_NODE_NAME(value);
+      nodeName = Attr_GET_QNAME(value);
       localName = Attr_GET_LOCAL_NAME(value);
-      nodeValue = Attr_GET_NODE_VALUE(value);
+      nodeValue = Attr_GET_VALUE(value);
 
       /* get the prefix/namespaceURI pair to add */
       switch (PyObject_RichCompareBool(namespaceURI, xmlns_namespace_string,
@@ -989,7 +989,7 @@ static int domwalker_visit(XMLParserObject *parser,
 
     /* DOM doesn't need separate namespace declarations */
     namespaceURI = Element_GET_NAMESPACE_URI(node);
-    prefix = get_prefix(Element_GET_NODE_NAME(node));
+    prefix = get_prefix(Element_GET_QNAME(node));
     if (prefix == NULL) {
       Py_DECREF(new_namespaces);
       Py_DECREF(attrs);
@@ -1052,7 +1052,7 @@ static int domwalker_visit(XMLParserObject *parser,
       args = Py_BuildValue("(OO)OO",
                            Element_GET_NAMESPACE_URI(node),
                            Element_GET_LOCAL_NAME(node),
-                           Element_GET_NODE_NAME(node),
+                           Element_GET_QNAME(node),
                            attrs);
       if (args == NULL) {
         Py_DECREF(current_namespaces);
@@ -1095,7 +1095,7 @@ static int domwalker_visit(XMLParserObject *parser,
       args = Py_BuildValue("(OO)O",
                            Element_GET_NAMESPACE_URI(node),
                            Element_GET_LOCAL_NAME(node),
-                           Element_GET_NODE_NAME(node));
+                           Element_GET_QNAME(node));
       if (args == NULL) {
         Py_DECREF(current_namespaces);
         Py_DECREF(prefixes);
@@ -1123,7 +1123,7 @@ static int domwalker_visit(XMLParserObject *parser,
     Py_DECREF(prefixes);
   }
   else if (Text_Check(node)) {
-    PyObject *data = Text_GET_DATA(node);
+    PyObject *data = Text_GET_VALUE(node);
     if (preserve_whitespace)
       sax_CharacterData(parser, data);
     else if (XmlString_IsSpace(data))

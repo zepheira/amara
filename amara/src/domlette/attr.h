@@ -13,17 +13,16 @@ extern "C" {
     Node_HEAD
     PyObject *namespaceURI;
     PyObject *localName;
-    PyObject *nodeName;
-    PyObject *nodeValue;
+    PyObject *qname;
+    PyObject *value;
     AttributeType type;
   } AttrObject;
 
 #define Attr(op) ((AttrObject *)(op))
 #define Attr_GET_NAMESPACE_URI(op) (Attr(op)->namespaceURI)
 #define Attr_GET_LOCAL_NAME(op) (Attr(op)->localName)
-#define Attr_GET_NODE_NAME(op) (Attr(op)->nodeName)
-#define Attr_GET_NODE_VALUE(op) (Attr(op)->nodeValue)
-#define Attr_GET_VALUE(op) (Attr(op)->nodeValue)
+#define Attr_GET_QNAME(op) (Attr(op)->qname)
+#define Attr_GET_VALUE(op) (Attr(op)->value)
 #define Attr_GET_TYPE(op) (Attr(op)->type)
 
 #ifdef Domlette_BUILDING_MODULE
@@ -32,7 +31,7 @@ extern "C" {
 
 #define Attr_Check(op) PyObject_TypeCheck((op), &DomletteAttr_Type)
 #define Attr_CheckExact(op) ((op)->ob_type == &DomletteAttr_Type)
-#define Attr_SET_VALUE(op, v) (Attr_GET_NODE_VALUE(op) = (v))
+#define Attr_SET_VALUE(op, v) (Attr_GET_VALUE(op) = (v))
 #define Attr_SET_TYPE(op, v) (Attr_GET_TYPE(op) = (v))
 
   /* Module Methods */

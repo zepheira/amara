@@ -3,20 +3,8 @@
 
 /** Private Routines **************************************************/
 
-#define Element_VerifyState(ob)                                     \
-  if (!Element_Check(ob) ||                                         \
-      Element_GET_NAMESPACE_URI(ob) == NULL ||                      \
-      Element_GET_LOCAL_NAME(ob) == NULL ||                         \
-      Element_GET_NODE_NAME(ob) == NULL ||                          \
-      Element_GET_ATTRIBUTES(ob) == NULL ||                         \
-      Element_GET_NAMESPACES(ob) == NULL) {                         \
-     DOMException_InvalidStateErr("Element in inconsistent state"); \
-     return NULL;                                                   \
-  }
-
 static PyObject *xml_string;
 static PyObject *xmlns_string;
-static PyObject *empty_string;
 static PyObject *xml_namespace;
 static PyObject *xmlns_namespace;
 
@@ -37,7 +25,7 @@ element_init(ElementObject *self, PyObject *namespaceURI,
   Py_INCREF(localName);
   self->localName = localName;
   Py_INCREF(qualifiedName);
-  self->nodeName = qualifiedName;
+  self->qname = qualifiedName;
   self->namespaces = NULL;
   self->attributes = NULL;
   return self;
@@ -68,7 +56,7 @@ Element_AddNamespace(ElementObject *self, PyObject *prefix, PyObject *namespace)
   /* OPT: ensure the NamespaceMap exists */
   namespaces = self->namespaces;
   if (namespaces == NULL) {
-    namespaces = self->namespaces = NamespaceMap_New();
+    namespaces = self->namespaces = NamespaceMap_New(self);
     if (namespaces == NULL) 
       return NULL;
   }
@@ -93,7 +81,7 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
   /* OPT: ensure the AttributeMap exists */
   attributes = self->attributes;
   if (attributes == NULL) {
-    attributes = self->attributes = AttributeMap_New();
+    attributes = self->attributes = AttributeMap_New(self);
     if (attributes == NULL) return NULL;
   }
   /* new reference */
@@ -119,7 +107,7 @@ Element_GetAttribute(ElementObject *self, PyObject *namespaceURI,
   /* OPT: ensure the AttributeMap exists */
   attributes = self->attributes;
   if (attributes == NULL) {
-    attributes = self->attributes = AttributeMap_New();
+    attributes = self->attributes = AttributeMap_New(self);
     if (attributes == NULL) return NULL;
   }
   /* new reference */
@@ -132,12 +120,13 @@ int
 Element_SetAttribute(ElementObject *self, AttrObject *attr)
 {
   PyObject *attributes, *namespace, *name;
+  NodeObject *temp;
   AttrObject *node;
 
   /* OPT: ensure the AttributeMap exists */
   attributes = self->attributes;
   if (attributes == NULL) {
-    attributes = self->attributes = AttributeMap_New();
+    attributes = self->attributes = AttributeMap_New(self);
     if (attributes == NULL)
       return -1;
   }
@@ -151,9 +140,10 @@ Element_SetAttribute(ElementObject *self, AttrObject *attr)
   if (AttributeMap_SetNode(attributes, attr) < 0)
     return -1;
   /* Update the attribute's owner */
-  Py_CLEAR(Node_GET_PARENT(attr));
+  temp = Node_GET_PARENT(attr);
   Node_SET_PARENT(attr, (NodeObject *)self);
   Py_INCREF(self);
+  Py_XDECREF(temp);
 
   /* Reset the removed attributes owner */
   if (node != NULL)
@@ -171,7 +161,7 @@ Element_InscopeNamespaces(ElementObject *self)
   Py_ssize_t pos;
   NamespaceObject *node;
 
-  namespaces = NamespaceMap_New();
+  namespaces = NamespaceMap_New(self);
   if (namespaces == NULL) 
     return NULL;
 
@@ -224,7 +214,7 @@ Element_InscopeNamespaces(ElementObject *self)
 static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
 {
   return PyTuple_Pack(2, Element_GET_NAMESPACE_URI(self),
-                      Element_GET_NODE_NAME(self));
+                      Element_GET_QNAME(self));
 }
 
 static PyObject *element_getstate(PyObject *self, PyObject *args)
@@ -278,7 +268,7 @@ static PyMethodDef element_methods[] = {
   { name, T_OBJECT, offsetof(ElementObject, member), RO }
 
 static PyMemberDef element_members[] = {
-  Element_MEMBER("xml_qname", nodeName),
+  Element_MEMBER("xml_qname", qname),
   Element_MEMBER("xml_local", localName),
   Element_MEMBER("xml_namespace", namespaceURI),
   { NULL }
@@ -297,8 +287,8 @@ static PyObject *get_prefix(ElementObject *self, void *arg)
   Py_UNICODE *p;
   Py_ssize_t size, i;
 
-  p = PyUnicode_AS_UNICODE(self->nodeName);
-  size = PyUnicode_GET_SIZE(self->nodeName);
+  p = PyUnicode_AS_UNICODE(self->qname);
+  size = PyUnicode_GET_SIZE(self->qname);
   for (i = 0; i < size; i++) {
     if (p[i] == ':') {
       return PyUnicode_FromUnicode(p, i);
@@ -317,9 +307,9 @@ static int set_prefix(ElementObject *self, PyObject *v, void *arg)
   if (prefix == NULL) {
     return -1;
   } else if (prefix == Py_None) {
-    Py_DECREF(self->nodeName);
+    Py_DECREF(self->qname);
     Py_INCREF(self->localName);
-    self->nodeName = self->localName;
+    self->qname = self->localName;
     return 0;
   }
 
@@ -345,8 +335,8 @@ static int set_prefix(ElementObject *self, PyObject *v, void *arg)
                   PyUnicode_AS_UNICODE(self->localName),
                   PyUnicode_GET_SIZE(self->localName));
 
-  Py_DECREF(self->nodeName);
-  self->nodeName = qualifiedName;
+  Py_DECREF(self->qname);
+  self->qname = qualifiedName;
   return 0;
 }
 
@@ -354,7 +344,7 @@ static PyObject *
 get_xml_attributes(ElementObject *self, void *arg)
 {
   if (self->attributes == NULL)
-    self->attributes = AttributeMap_New();
+    self->attributes = AttributeMap_New(self);
   Py_XINCREF(self->attributes);
   return self->attributes;
 }
@@ -363,7 +353,7 @@ static PyObject *
 get_xmlns_attributes(ElementObject *self, void *arg)
 {
   if (self->namespaces == NULL)
-    self->namespaces = NamespaceMap_New();
+    self->namespaces = NamespaceMap_New(self);
   Py_XINCREF(self->namespaces);
   return self->namespaces;
 }
@@ -390,7 +380,7 @@ static void element_dealloc(ElementObject *self)
   PyObject_GC_UnTrack((PyObject *) self);
   Py_CLEAR(self->namespaceURI);
   Py_CLEAR(self->localName);
-  Py_CLEAR(self->nodeName);
+  Py_CLEAR(self->qname);
   Py_CLEAR(self->attributes);
   Py_CLEAR(self->namespaces);
   Node_Del(self);
@@ -400,7 +390,7 @@ static PyObject *element_repr(ElementObject *self)
 {
   PyObject *repr, *name;
   Py_ssize_t num_namespaces=0, num_attributes=0;
-  name = PyObject_Repr(self->nodeName);
+  name = PyObject_Repr(self->qname);
   if (name == NULL)
     return NULL;
   if (Element_GET_NAMESPACES(self))
@@ -483,14 +473,14 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
 }
 
 static char element_doc[] = "\
-Element(namespaceURI, qualifiedName) -> Element object\n\
+element(namespaceURI, qualifiedName) -> element object\n\
 \n\
-The Element interface represents an element in an XML document.";
+The `element` interface represents an element in an XML document.";
 
 PyTypeObject DomletteElement_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Element",
+  /* tp_name           */ Domlette_MODULE_NAME "." "element",
   /* tp_basicsize      */ sizeof(ElementObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) element_dealloc,
@@ -536,16 +526,13 @@ PyTypeObject DomletteElement_Type = {
 
 int DomletteElement_Init(PyObject *module)
 {
-  PyObject *import, *value;
+  PyObject *import, *dict, *value;
 
   xml_string = XmlString_FromASCII("xml");
   if (xml_string == NULL)
     return -1;
   xmlns_string = XmlString_FromASCII("xmlns");
   if (xmlns_string == NULL)
-    return -1;
-  empty_string = XmlString_FromASCII("");
-  if (empty_string == NULL)
     return -1;
   import = PyImport_ImportModule("amara.namespaces");
   if (import == NULL)
@@ -563,13 +550,16 @@ int DomletteElement_Init(PyObject *module)
   DomletteElement_Type.tp_base = &DomletteContainer_Type;
   if (PyType_Ready(&DomletteElement_Type) < 0)
     return -1;
-
+  dict = DomletteElement_Type.tp_dict;
   value = PyString_FromString("element");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(DomletteElement_Type.tp_dict, "xml_type", value))
+  if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
+  value = (PyObject *)&DomletteAttr_Type;
+  if (PyDict_SetItemString(dict, "xml_attribute_factory", value))
+    return -1;
 
   Py_INCREF(&DomletteElement_Type);
   return PyModule_AddObject(module, "Element",
@@ -581,7 +571,6 @@ void DomletteElement_Fini(void)
 {
   Py_DECREF(xml_string);
   Py_DECREF(xmlns_string);
-  Py_DECREF(empty_string);
   Py_DECREF(xml_namespace);
   Py_DECREF(xmlns_namespace);
 

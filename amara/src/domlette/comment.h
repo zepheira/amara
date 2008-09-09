@@ -10,8 +10,7 @@ extern "C" {
 
   typedef CharacterDataObject CommentObject;
 
-#define Comment_GET_DATA(op) CharacterData_NODE_VALUE(op)
-#define Comment_SET_DATA(op, v) (Comment_GET_DATA(op) = (v))
+#define Comment_GET_VALUE CharacterData_GET_VALUE
 
 #ifdef Domlette_BUILDING_MODULE
 
@@ -19,6 +18,7 @@ extern "C" {
 
 #define Comment_Check(op) PyObject_TypeCheck((op), &DomletteComment_Type)
 #define Comment_CheckExact(op) ((op)->ob_type == &DomletteComment_Type)
+#define Comment_SET_VALUE CharacterData_SET_VALUE
 
   /* Module Methods */
   int DomletteComment_Init(PyObject *module);

@@ -208,13 +208,15 @@ parse_key(PyObject *key, PyObject **pnamespace, PyObject **pname,
 /** Public C API ******************************************************/
 
 PyObject *
-AttributeMap_New(void)
+AttributeMap_New(ElementObject *owner)
 {
   register AttributeMapObject *self;
 
   self = PyObject_GC_New(AttributeMapObject, &AttributeMap_Type);
   if (self != NULL) {
     INIT_MINSIZE(self);
+    self->nm_owner = owner;
+    Py_INCREF(owner);
     PyObject_GC_Track(self);
   }
   return (PyObject *)self;
@@ -325,13 +327,13 @@ AttributeMap_Next(PyObject *self, Py_ssize_t *ppos)
 
 static PyObject *iter_new(AttributeMapObject *self, PyTypeObject *type);
 
-static char namednodemap_getnode_doc[] = "\
+static char attributemap_getnode_doc[] = "\
 getnode(namespace, localname) -> Node or None\n\
 \n\
 Retrieves a node specified by local name and namespace URI or None \
 if they do not identify a node in this map.";
 
-static PyObject *namednodemap_getnode(PyObject *self, PyObject *args)
+static PyObject *attributemap_getnode(PyObject *self, PyObject *args)
 {
   PyObject *namespace, *name;
   AttrObject *attr;
@@ -346,10 +348,10 @@ static PyObject *namednodemap_getnode(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static char namednodemap_setnode_doc[] = "\
+static char attributemap_setnode_doc[] = "\
 setnode(node) -> M[node.xml_namespace, node.xml_local] = node.xml_value";
 
-static PyObject *namednodemap_setnode(PyObject *self, PyObject *args)
+static PyObject *attributemap_setnode(PyObject *self, PyObject *args)
 {
   AttrObject *attr;
 
@@ -363,10 +365,10 @@ static PyObject *namednodemap_setnode(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static char namednodemap_get_doc[] =
+static char attributemap_get_doc[] =
 "M.get(k[,d]) -> M[k] if k in M, else d.  d defaults to None.";
 
-static PyObject *namednodemap_get(PyObject *self, PyObject *args)
+static PyObject *attributemap_get(PyObject *self, PyObject *args)
 {
   PyObject *key, *def=Py_None;
   PyObject *namespace, *name;
@@ -385,18 +387,18 @@ static PyObject *namednodemap_get(PyObject *self, PyObject *args)
   Py_DECREF(namespace);
   Py_DECREF(name);
   if (node) {
-    Py_INCREF(Attr_GET_NODE_VALUE(node));
-    return Attr_GET_NODE_VALUE(node);
+    Py_INCREF(Attr_GET_VALUE(node));
+    return Attr_GET_VALUE(node);
   }
 notfound:
   Py_INCREF(def);
   return def;
 }
 
-static char namednodemap_keys_doc[] =
+static char attributemap_keys_doc[] =
 "M.keys() -> list of expanded name 2-tuples";
 
-static PyObject *namednodemap_keys(AttributeMapObject *self)
+static PyObject *attributemap_keys(AttributeMapObject *self)
 {
   register PyObject *keys;
   register Py_ssize_t i, n;
@@ -421,10 +423,10 @@ static PyObject *namednodemap_keys(AttributeMapObject *self)
   return keys;
 }
 
-static char namednodemap_values_doc[] =
+static char attributemap_values_doc[] =
 "M.values() -> list of node values";
 
-static PyObject *namednodemap_values(AttributeMapObject *self)
+static PyObject *attributemap_values(AttributeMapObject *self)
 {
   register PyObject *values;
   register Py_ssize_t i, n;
@@ -436,7 +438,7 @@ static PyObject *namednodemap_values(AttributeMapObject *self)
     return NULL;
   for (i = 0, table = self->nm_table; i < n; table++) {
     if (table->ne_node != NULL) {
-      PyObject *value = Attr_GET_NODE_VALUE(table->ne_node);
+      PyObject *value = Attr_GET_VALUE(table->ne_node);
       Py_INCREF(value);
       PyList_SET_ITEM(values, i, value);
       i++;
@@ -445,10 +447,10 @@ static PyObject *namednodemap_values(AttributeMapObject *self)
   return values;
 }
 
-static char namednodemap_items_doc[] =
+static char attributemap_items_doc[] =
 "M.items() -> list of M's (expanded name, value) pairs, as 2-tuples";
 
-static PyObject *namednodemap_items(AttributeMapObject *self)
+static PyObject *attributemap_items(AttributeMapObject *self)
 {
   register PyObject *items;
   register Py_ssize_t i, n;
@@ -467,7 +469,7 @@ static PyObject *namednodemap_items(AttributeMapObject *self)
         Py_DECREF(items);
         return NULL;
       }
-      value = Attr_GET_NODE_VALUE(table->ne_node);
+      value = Attr_GET_VALUE(table->ne_node);
       item = PyTuple_New(2);
       if (item == NULL) {
         Py_DECREF(key);
@@ -484,10 +486,10 @@ static PyObject *namednodemap_items(AttributeMapObject *self)
   return items;
 }
 
-static char namednodemap_copy_doc[] =
+static char attributemap_copy_doc[] =
 "M.copy() -> a copy of M as a dictionary";
 
-static PyObject *namednodemap_copy(AttributeMapObject *self)
+static PyObject *attributemap_copy(AttributeMapObject *self)
 {
   register PyObject *copy;
   register Py_ssize_t i, n;
@@ -506,7 +508,7 @@ static PyObject *namednodemap_copy(AttributeMapObject *self)
         Py_DECREF(copy);
         return NULL;
       }
-      value = Attr_GET_NODE_VALUE(table->ne_node);
+      value = Attr_GET_VALUE(table->ne_node);
       if (PyDict_SetItem(copy, key, value) < 0) {
         Py_DECREF(key);
         Py_DECREF(copy);
@@ -519,43 +521,43 @@ static PyObject *namednodemap_copy(AttributeMapObject *self)
   return copy;
 }
 
-static char namednodemap_iterkeys_doc[] =
+static char attributemap_iterkeys_doc[] =
 "M.iterkeys() -> an iterator over the expanded name 2-tuples of M";
 
-static PyObject *namednodemap_iterkeys(AttributeMapObject *self)
+static PyObject *attributemap_iterkeys(AttributeMapObject *self)
 {
   return iter_new(self, &KeyIter_Type);
 }
 
-static char namednodemap_itervalues_doc[] =
+static char attributemap_itervalues_doc[] =
 "M.itervalues() -> an iterator over the node values of M";
 
-static PyObject *namednodemap_itervalues(AttributeMapObject *self)
+static PyObject *attributemap_itervalues(AttributeMapObject *self)
 {
   return iter_new(self, &ValueIter_Type);
 }
 
-static char namednodemap_iteritems_doc[] =
+static char attributemap_iteritems_doc[] =
 "M.iteritems() -> an iterator over the (expanded name, value) items of M";
 
-static PyObject *namednodemap_iteritems(AttributeMapObject *self)
+static PyObject *attributemap_iteritems(AttributeMapObject *self)
 {
   return iter_new(self, &ItemIter_Type);
 }
 
-static char namednodemap_nodes_doc[] =
+static char attributemap_nodes_doc[] =
 "M.nodes() -> an iterator over the attribute nodes of M";
 
-static PyObject *namednodemap_nodes(AttributeMapObject *self)
+static PyObject *attributemap_nodes(AttributeMapObject *self)
 {
   return iter_new(self, &NodeIter_Type);
 }
 
 #define AttributeMap_METHOD(NAME, FLAGS)             \
-  { #NAME, (PyCFunction) namednodemap_##NAME, FLAGS, \
-      namednodemap_##NAME##_doc }
+  { #NAME, (PyCFunction) attributemap_##NAME, FLAGS, \
+      attributemap_##NAME##_doc }
 
-static PyMethodDef namednodemap_methods[] = {
+static PyMethodDef attributemap_methods[] = {
   AttributeMap_METHOD(getnode, METH_VARARGS),
   AttributeMap_METHOD(setnode, METH_VARARGS),
   /* Python Mapping Interface */
@@ -572,13 +574,13 @@ static PyMethodDef namednodemap_methods[] = {
 };
 
 static Py_ssize_t
-namednodemap_length(AttributeMapObject *self)
+attributemap_length(AttributeMapObject *self)
 {
   return self->nm_used;
 }
 
 static PyObject *
-namednodemap_subscript(PyObject *op, PyObject *key)
+attributemap_subscript(PyObject *op, PyObject *key)
 {
   PyObject *namespace, *name;
   AttrObject *node;
@@ -597,7 +599,7 @@ namednodemap_subscript(PyObject *op, PyObject *key)
 }
 
 static int
-namednodemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
+attributemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
 {
   PyObject *namespace, *name;
   int result;
@@ -629,9 +631,9 @@ namednodemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
       result = AttributeMap_SetNode(op, attr);
     } else {
       /* just update the node value */
-     Py_DECREF(Attr_GET_NODE_VALUE(attr));
-     Attr_GET_NODE_VALUE(attr) = value;
-     result = 0;
+      Py_DECREF(Attr_GET_VALUE(attr));
+      Attr_SET_VALUE(attr, value);
+      result = 0;
     }
   }
   Py_DECREF(namespace);
@@ -639,13 +641,13 @@ namednodemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
   return result;
 }
 
-static PyMappingMethods namednodemap_as_mapping = {
-  /* mp_length        */ (lenfunc) namednodemap_length,
-  /* mp_subscript     */ (binaryfunc) namednodemap_subscript,
-  /* mp_ass_subscript */ (objobjargproc) namednodemap_ass_subscript,
+static PyMappingMethods attributemap_as_mapping = {
+  /* mp_length        */ (lenfunc) attributemap_length,
+  /* mp_subscript     */ (binaryfunc) attributemap_subscript,
+  /* mp_ass_subscript */ (objobjargproc) attributemap_ass_subscript,
 };
 
-static int namednodemap_contains(AttributeMapObject *self, PyObject *key)
+static int attributemap_contains(AttributeMapObject *self, PyObject *key)
 {
   if (Attr_Check(key)) {
     Py_ssize_t pos = 0;
@@ -676,7 +678,7 @@ static int namednodemap_contains(AttributeMapObject *self, PyObject *key)
   return 0;
 }
 
-static PySequenceMethods namednodemap_as_sequence = {
+static PySequenceMethods attributemap_as_sequence = {
   /* sq_length         */ 0,
   /* sq_concat         */ 0,
   /* sq_repeat         */ 0,
@@ -684,31 +686,33 @@ static PySequenceMethods namednodemap_as_sequence = {
   /* sq_slice          */ 0,
   /* sq_ass_item       */ 0,
   /* sq_ass_slice      */ 0,
-  /* sq_contains       */ (objobjproc) namednodemap_contains,
+  /* sq_contains       */ (objobjproc) attributemap_contains,
   /* sq_inplace_concat */ 0,
   /* sq_inplace_repeat */ 0,
 };
 
 /** Python Members ****************************************************/
 
-static PyMemberDef namednodemap_members[] = {
+static PyMemberDef attributemap_members[] = {
   { NULL }
 };
 
 /** Python Computed Members *******************************************/
 
-static PyGetSetDef namednodemap_getset[] = {
+static PyGetSetDef attributemap_getset[] = {
   { NULL }
 };
 
 /** Type Object ********************************************************/
 
-static void namednodemap_dealloc(AttributeMapObject *self)
+static void attributemap_dealloc(AttributeMapObject *self)
 {
   register AttributeEntry *entry;
   register Py_ssize_t used;
 
   PyObject_GC_UnTrack(self);
+  Py_XDECREF(self->nm_owner);
+  /* clear attribute nodes */
   Py_TRASHCAN_SAFE_BEGIN(self);
   for (entry = self->nm_table, used = self->nm_used; used > 0; entry++) {
     if (entry->ne_node != NULL) {
@@ -717,37 +721,41 @@ static void namednodemap_dealloc(AttributeMapObject *self)
     }
   }
   Py_TRASHCAN_SAFE_END(self);
+  /* dealloc node table */
   if (self->nm_table != self->nm_smalltable)
     PyMem_Free(self->nm_table);
   ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }
 
-static PyObject *namednodemap_repr(AttributeMapObject *self)
+static PyObject *attributemap_repr(AttributeMapObject *self)
 {
   return PyString_FromFormat("<AttributeMap at %p: "
                              "%" PY_FORMAT_SIZE_T "d nodes>",
                              self, self->nm_used);
 }
 
-static int namednodemap_traverse(AttributeMapObject *self, visitproc visit,
+static int attributemap_traverse(AttributeMapObject *self, visitproc visit,
                                  void *arg)
 {
   Py_ssize_t i = 0;
   AttrObject *node;
 
+  Py_VISIT(self->nm_owner);
   while ((node = AttributeMap_Next((PyObject *)self, &i)))
     Py_VISIT(node);
 
   return 0;
 }
 
-static int namednodemap_clear(AttributeMapObject *self)
+static int attributemap_clear(AttributeMapObject *self)
 {
   register Py_ssize_t used = self->nm_used;
   register AttributeEntry *entry;
   AttributeEntry *table;
   AttributeEntry smallcopy[AttributeMap_MINSIZE];
   int malloced_table;
+
+  Py_CLEAR(self->nm_owner);
 
   table = self->nm_table;
   malloced_table = (table != self->nm_smalltable);
@@ -777,12 +785,12 @@ static int namednodemap_clear(AttributeMapObject *self)
   return 0;
 }
 
-static PyObject *namednodemap_iter(AttributeMapObject *self)
+static PyObject *attributemap_iter(AttributeMapObject *self)
 {
   return iter_new(self, &KeyIter_Type);
 }
 
-static char namednodemap_doc[] = "\
+static char attributemap_doc[] = "\
 Objects implementing the AttributeMap interface are used to \
 represent collections of nodes that can be accessed by name. \
 Note that AttributeMaps are not maintained in any particular order. \
@@ -797,15 +805,15 @@ static PyTypeObject AttributeMap_Type = {
   /* tp_name           */ Domlette_MODULE_NAME "." "AttributeMap",
   /* tp_basicsize      */ sizeof(AttributeMapObject),
   /* tp_itemsize       */ 0,
-  /* tp_dealloc        */ (destructor) namednodemap_dealloc,
+  /* tp_dealloc        */ (destructor) attributemap_dealloc,
   /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
-  /* tp_repr           */ (reprfunc) namednodemap_repr,
+  /* tp_repr           */ (reprfunc) attributemap_repr,
   /* tp_as_number      */ (PyNumberMethods *) 0,
-  /* tp_as_sequence    */ (PySequenceMethods *) &namednodemap_as_sequence,
-  /* tp_as_mapping     */ (PyMappingMethods *) &namednodemap_as_mapping,
+  /* tp_as_sequence    */ (PySequenceMethods *) &attributemap_as_sequence,
+  /* tp_as_mapping     */ (PyMappingMethods *) &attributemap_as_mapping,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
   /* tp_str            */ (reprfunc) 0,
@@ -813,16 +821,16 @@ static PyTypeObject AttributeMap_Type = {
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
   /* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-  /* tp_doc            */ (char *) namednodemap_doc,
-  /* tp_traverse       */ (traverseproc) namednodemap_traverse,
-  /* tp_clear          */ (inquiry) namednodemap_clear,
+  /* tp_doc            */ (char *) attributemap_doc,
+  /* tp_traverse       */ (traverseproc) attributemap_traverse,
+  /* tp_clear          */ (inquiry) attributemap_clear,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
-  /* tp_iter           */ (getiterfunc) namednodemap_iter,
+  /* tp_iter           */ (getiterfunc) attributemap_iter,
   /* tp_iternext       */ (iternextfunc) 0,
-  /* tp_methods        */ (PyMethodDef *) namednodemap_methods,
-  /* tp_members        */ (PyMemberDef *) namednodemap_members,
-  /* tp_getset         */ (PyGetSetDef *) namednodemap_getset,
+  /* tp_methods        */ (PyMethodDef *) attributemap_methods,
+  /* tp_members        */ (PyMemberDef *) attributemap_members,
+  /* tp_getset         */ (PyGetSetDef *) attributemap_getset,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
   /* tp_descr_get      */ (descrgetfunc) 0,
@@ -872,7 +880,6 @@ static PyObject *iter_self(PyObject *op)
 static PyObject *iter_nextkey(IterObject *self)
 {
   AttributeMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   AttrObject *node;
 
   if (nodemap == NULL)
@@ -885,8 +892,7 @@ static PyObject *iter_nextkey(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = AttributeMap_Next((PyObject *)nodemap, &pos))) {
+  while ((node = AttributeMap_Next((PyObject *)nodemap, &self->it_pos))) {
     PyObject *result = PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(node),
                                     Attr_GET_LOCAL_NAME(node));
     if (result == NULL)
@@ -903,7 +909,6 @@ static PyObject *iter_nextkey(IterObject *self)
 static PyObject *iter_nextvalue(IterObject *self)
 {
   AttributeMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   AttrObject *node;
 
   if (nodemap == NULL)
@@ -916,9 +921,8 @@ static PyObject *iter_nextvalue(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = AttributeMap_Next((PyObject *)nodemap, &pos))) {
-    PyObject *result = Attr_GET_NODE_VALUE(node);
+  while ((node = AttributeMap_Next((PyObject *)nodemap, &self->it_pos))) {
+    PyObject *result = Attr_GET_VALUE(node);
     Py_INCREF(result);
     self->it_length--;
     return result;
@@ -932,7 +936,6 @@ static PyObject *iter_nextvalue(IterObject *self)
 static PyObject *iter_nextitem(IterObject *self)
 {
   AttributeMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   AttrObject *node;
 
   if (nodemap == NULL)
@@ -945,14 +948,13 @@ static PyObject *iter_nextitem(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = AttributeMap_Next((PyObject *)nodemap, &pos))) {
+  while ((node = AttributeMap_Next((PyObject *)nodemap, &self->it_pos))) {
     PyObject *key, *value, *result;
     key = PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(node),
                        Attr_GET_LOCAL_NAME(node));
     if (key == NULL)
         return NULL;
-    value = Attr_GET_NODE_VALUE(node);
+    value = Attr_GET_VALUE(node);
     result = PyTuple_New(2);
     if (result == NULL) {
       Py_DECREF(key);
@@ -973,7 +975,6 @@ static PyObject *iter_nextitem(IterObject *self)
 static PyObject *iter_nextnode(IterObject *self)
 {
   AttributeMapObject *nodemap = self->it_map;
-  Py_ssize_t pos;
   AttrObject *node;
 
   if (nodemap == NULL)
@@ -986,8 +987,7 @@ static PyObject *iter_nextnode(IterObject *self)
     return NULL;
   }
 
-  pos = self->it_pos;
-  while ((node = AttributeMap_Next((PyObject *)nodemap, &pos))) {
+  while ((node = AttributeMap_Next((PyObject *)nodemap, &self->it_pos))) {
     Py_INCREF(node);
     self->it_length--;
     return (PyObject *)node;

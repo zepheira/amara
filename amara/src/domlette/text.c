@@ -107,7 +107,7 @@ int DomletteText_Init(PyObject *module)
     return -1;
 
   Py_INCREF(&DomletteText_Type);
-  return PyModule_AddObject(module, "Text", (PyObject*) &DomletteText_Type);
+  return PyModule_AddObject(module, "Text", (PyObject*)&DomletteText_Type);
 }
 
 void DomletteText_Fini(void)

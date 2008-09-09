@@ -85,12 +85,12 @@ static int join_descendants(NodeObject *node, PyObject **result,
       if (join_descendants(child, result, used) < 0)
         return -1;
     } else if (Text_Check(child)) {
-      Py_ssize_t data_len, new_used, allocated;
-      PyObject *data = Text_GET_DATA(child);
-      assert(PyUnicode_Check(data));
+      Py_ssize_t count, new_used, allocated;
+      PyObject *value = Text_GET_VALUE(child);
+      assert(PyUnicode_Check(value));
 
-      data_len = PyUnicode_GET_SIZE(data);
-      new_used = *used + data_len;
+      count = PyUnicode_GET_SIZE(value);
+      new_used = *used + count;
       if (new_used < 0)
         goto overflow;
       allocated = PyUnicode_GET_SIZE(*result);
@@ -105,7 +105,7 @@ static int join_descendants(NodeObject *node, PyObject **result,
           goto error;
       }
       Py_UNICODE_COPY(PyUnicode_AS_UNICODE(*result) + *used,
-                      PyUnicode_AS_UNICODE(data), data_len);
+                      PyUnicode_AS_UNICODE(value), count);
       *used = new_used;
     }
   }
@@ -114,7 +114,6 @@ static int join_descendants(NodeObject *node, PyObject **result,
  overflow:
   PyErr_NoMemory();
  error:
-  Py_DECREF(*result);
   return -1;
 }
 
@@ -140,12 +139,12 @@ static PyObject *node_to_string(PyObject *node)
     return result;
   }
   if (Attr_Check(node)) {
-    result = Attr_GET_NODE_VALUE(node);
+    result = Attr_GET_VALUE(node);
     Py_INCREF(result);
     return result;
   }
   if (Text_Check(node) || Comment_Check(node)) {
-    result = CharacterData_GET_NODE_VALUE(node);
+    result = CharacterData_GET_VALUE(node);
     Py_INCREF(result);
     return result;
   }

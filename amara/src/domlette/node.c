@@ -31,6 +31,8 @@ NodeObject *_Node_New(PyTypeObject *type)
 
 void _Node_Del(NodeObject *node)
 {
+  PyObject_GC_UnTrack(node);
+
   Py_CLEAR(node->parent);
   PyObject_GC_Del((PyObject *) node);
 }
@@ -295,7 +297,7 @@ static PyObject *get_base_uri(PyObject *self, void *arg)
     if (Element_Check(node)) {
       base = PyDict_GetItem(Element_GET_ATTRIBUTES(node), xml_base_key);
       if (base) {
-        base = Attr_GET_NODE_VALUE(base);
+        base = Attr_GET_VALUE(base);
         /* If the xml:base in scope for the current node is not absolute, we find
          * the element where that xml:base was declared, then Absolutize our
          * relative xml:base against the base URI of the parent of declaring

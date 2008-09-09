@@ -10,14 +10,13 @@ extern "C" {
 
   typedef struct {
     Node_HEAD
-    PyObject *nodeName;
-    PyObject *nodeValue;
+    PyObject *name;
+    PyObject *value;
   } NamespaceObject;
 
 #define Namespace(op) ((NamespaceObject *)(op))
-#define Namespace_GET_NAME(op) (Namespace(op)->nodeName)
-#define Namespace_GET_VALUE(op) (Namespace(op)->nodeValue)
-#define Namespace_SET_VALUE(op, v) ((Namespace(op)->nodeValue) = (v))
+#define Namespace_GET_NAME(op) (Namespace(op)->name)
+#define Namespace_GET_VALUE(op) (Namespace(op)->value)
 
 #ifdef Domlette_BUILDING_MODULE
 #include "element.h"
@@ -26,6 +25,7 @@ extern "C" {
 
 #define Namespace_Check(op) PyObject_TypeCheck(op, &DomletteNamespace_Type)
 #define Namespace_CheckExact(op) ((op)->ob_type == &DomletteNamespace_Type)
+#define Namespace_SET_VALUE(op, v) (Namespace_GET_VALUE(op) = (v))
 
   /* Module Methods */
   int DomletteNamespace_Init(PyObject *module);

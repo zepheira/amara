@@ -12,7 +12,6 @@ __all__ = [
 ]
 
 from functools import *
-from amara import tree
 import re
 import sets
 import itertools
@@ -23,7 +22,9 @@ import bisect
 
 from xml.dom import Node
 
+from amara import tree
 from amara.lib.xmlstring import *
+from amara.xpath import datatypes
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
 RESERVED_NAMES = [
@@ -220,7 +221,7 @@ class element_base(tree.element, container_mixin):
         #    ns, qname = name
         #else:
         #    ns, qname = None, name #FIXME: Actually name must not have a prefix.  Should probably error check here
-        tree.element.__init__(self, ns, qname)
+        #tree.element.__init__(self, ns, qname)
         return
 
     @property
@@ -251,7 +252,8 @@ class element_base(tree.element, container_mixin):
         its descendants, if any.
         Equivalent to XPath string() conversion
         '''
-        return self.xml_select(u'string(.)')
+        #return self.xml_select(u'string(.)')
+        return datatypes.string(self)
 
     def __str__(self):
         #Amara 1 note: Should we make the encoding configurable? (self.defencoding?)
@@ -266,15 +268,15 @@ class entity_base(tree.entity, container_mixin):
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
     PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
-    xml_comment_factory = tree.comment
-    xml_processing_instruction_factory = tree.processing_instruction
-    xml_text_factory = tree.text
+    #xml_comment_factory = tree.comment
+    #xml_processing_instruction_factory = tree.processing_instruction
+    #xml_text_factory = tree.text
 
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
         #self.xml_iter_next = None
-        tree.entity.__init__(self, document_uri=document_uri)
+        #tree.entity.__init__(self, document_uri=document_uri)
         #Should we share the following across documents, perhaps by using an auxilliary class,
         #Of which one global, default instance is created/used
         #Answer: probably yes
@@ -306,7 +308,7 @@ class entity_base(tree.entity, container_mixin):
         #XML NMTOKENS are a superset of Python IDs
         return python_id
 
-    def element_factory(self, ns, qname, pname=None):
+    def xml_element_factory(self, ns, qname, pname=None):
         prefix, local = splitqname(qname)
         if not pname: pname = self.pyname(ns, local)
         if (ns, local) not in self._eclasses:
@@ -319,7 +321,6 @@ class entity_base(tree.entity, container_mixin):
         e = eclass(ns, qname)
         return e
 
-    xml_element_factory = element_factory
 
 #class myattribute(tree.attribute)
 #    #Specialize any aspects of attribute here

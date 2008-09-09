@@ -12,7 +12,7 @@ extern "C" {
     Container_HEAD
     PyObject *namespaceURI;
     PyObject *localName;
-    PyObject *nodeName;
+    PyObject *qname;
     PyObject *attributes;
     PyObject *namespaces;
   } ElementObject;
@@ -20,7 +20,7 @@ extern "C" {
 #define Element(op) ((ElementObject *)(op))
 #define Element_GET_NAMESPACE_URI(op) (Element(op)->namespaceURI)
 #define Element_GET_LOCAL_NAME(op) (Element(op)->localName)
-#define Element_GET_NODE_NAME(op) (Element(op)->nodeName)
+#define Element_GET_QNAME(op) (Element(op)->qname)
 #define Element_GET_ATTRIBUTES(op) (Element(op)->attributes)
 #define Element_GET_NAMESPACES(op) (Element(op)->namespaces)
 

@@ -3,6 +3,8 @@
 
 /** Private Routines **************************************************/
 
+static PyObject *empty_string;
+
 Py_LOCAL_INLINE(AttrObject *)
 attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
           PyObject *localName, PyObject *value)
@@ -17,15 +19,8 @@ attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
     return NULL;
   }
 
-  if (value == NULL) {
-    value = PyUnicode_FromUnicode(NULL, 0);
-    if (value == NULL) {
-      Py_DECREF(self);
-      return NULL;
-    }
-  } else {
-    Py_INCREF(value);
-  }
+  if (value == NULL)
+    value = empty_string;
 
   Py_INCREF(namespaceURI);
   self->namespaceURI = namespaceURI;
@@ -34,9 +29,10 @@ attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
   self->localName = localName;
 
   Py_INCREF(qualifiedName);
-  self->nodeName = qualifiedName;
+  self->qname = qualifiedName;
 
-  self->nodeValue = value;
+  Py_INCREF(value);
+  self->value = value;
 
   self->type = ATTRIBUTE_TYPE_CDATA;
 
@@ -61,8 +57,7 @@ AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
 
 static PyObject *attr_getnewargs(PyObject *self, PyObject *noargs)
 {
-  return PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(self),
-                      Attr_GET_NODE_NAME(self));
+  return PyTuple_Pack(2, Attr_GET_NAMESPACE_URI(self), Attr_GET_QNAME(self));
 }
 
 static PyObject *attr_getstate(PyObject *self, PyObject *args)
@@ -72,7 +67,7 @@ static PyObject *attr_getstate(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
 
-  return Py_BuildValue("OOi", Node_GET_PARENT(self), Attr_GET_NODE_VALUE(self),
+  return Py_BuildValue("OOi", Node_GET_PARENT(self), Attr_GET_VALUE(self),
                        Attr_GET_TYPE(self));
 }
 
@@ -91,7 +86,7 @@ static PyObject *attr_setstate(PyObject *self, PyObject *state)
   Py_INCREF(parent);
   Py_XDECREF(node);
 
-  temp = Attr_GET_NODE_VALUE(self);
+  temp = Attr_GET_VALUE(self);
   Attr_SET_VALUE(self, value);
   Py_INCREF(value);
   Py_XDECREF(temp);
@@ -112,7 +107,7 @@ static PyMethodDef attr_methods[] = {
 /** Python Members ****************************************************/
 
 static PyMemberDef attr_members[] = {
-  { "xml_qname",     T_OBJECT, offsetof(AttrObject, nodeName),     RO },
+  { "xml_qname",     T_OBJECT, offsetof(AttrObject, qname),        RO },
   { "xml_namespace", T_OBJECT, offsetof(AttrObject, namespaceURI), RO },
   { "xml_local",     T_OBJECT, offsetof(AttrObject, localName),    RO },
   { NULL }
@@ -127,10 +122,10 @@ static PyObject *get_name(AttrObject *self, void *arg)
 
 static PyObject *get_prefix(AttrObject *self, void *arg)
 {
-  Py_UNICODE *p = PyUnicode_AS_UNICODE(self->nodeName);
+  Py_UNICODE *p = PyUnicode_AS_UNICODE(self->qname);
   Py_ssize_t i, size;
 
-  size = PyUnicode_GET_SIZE(self->nodeName);
+  size = PyUnicode_GET_SIZE(self->qname);
   for (i = 0; i < size; i++) {
     if (p[i] == ':') {
       return PyUnicode_FromUnicode(p, i);
@@ -149,9 +144,9 @@ static int set_prefix(AttrObject *self, PyObject *v, char *arg)
   if (prefix == NULL) {
     return -1;
   } else if (prefix == Py_None) {
-    Py_DECREF(self->nodeName);
+    Py_DECREF(self->qname);
     Py_INCREF(self->localName);
-    self->nodeName = self->localName;
+    self->qname = self->localName;
     return 0;
   }
 
@@ -177,24 +172,24 @@ static int set_prefix(AttrObject *self, PyObject *v, char *arg)
                   PyUnicode_AS_UNICODE(self->localName),
                   PyUnicode_GET_SIZE(self->localName));
 
-  Py_DECREF(self->nodeName);
-  self->nodeName = qualifiedName;
+  Py_DECREF(self->qname);
+  self->qname = qualifiedName;
   return 0;
 }
 
 static PyObject *get_value(AttrObject *self, char *arg)
 {
-  Py_INCREF(self->nodeValue);
-  return self->nodeValue;
+  Py_INCREF(self->value);
+  return self->value;
 }
 
 static int set_value(AttrObject *self, PyObject *v, char *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
-  if (nodeValue == NULL) return -1;
+  PyObject *value = XmlString_ConvertArgument(v, "xml_value", 0);
+  if (value == NULL) return -1;
 
-  Py_DECREF(self->nodeValue);
-  self->nodeValue = nodeValue;
+  Py_DECREF(self->value);
+  self->value = value;
   return 0;
 }
 
@@ -212,16 +207,16 @@ static void attr_dealloc(AttrObject *self)
   PyObject_GC_UnTrack((PyObject *)self);
   Py_CLEAR(self->namespaceURI);
   Py_CLEAR(self->localName);
-  Py_CLEAR(self->nodeName);
-  Py_CLEAR(self->nodeValue);
+  Py_CLEAR(self->qname);
+  Py_CLEAR(self->value);
   Node_Del(self);
 }
 
 static PyObject *attr_repr(AttrObject *self)
 {
   PyObject *repr;
-  PyObject *name = PyObject_Repr(self->nodeName);
-  PyObject *value = PyObject_Repr(self->nodeValue);
+  PyObject *name = PyObject_Repr(self->qname);
+  PyObject *value = PyObject_Repr(self->value);
   if (name == NULL || value == NULL) {
     Py_XDECREF(name);
     Py_XDECREF(value);
@@ -297,14 +292,14 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char attr_doc[] = "\
-Attr(namespace, qname) -> Attr object\n\
+attribute(namespace, qname[, value]) -> attribute object\n\
 \n\
-The Attr interface represents an attribute in an Element object.";
+The `attribute` interface represents an attribute in an `element` object.";
 
 PyTypeObject DomletteAttr_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME ".Attr",
+  /* tp_name           */ Domlette_MODULE_NAME ".attribute",
   /* tp_basicsize      */ sizeof(AttrObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attr_dealloc,
@@ -355,6 +350,10 @@ int DomletteAttr_Init(PyObject *module)
   if (PyType_Ready(&DomletteAttr_Type) < 0)
     return -1;
 
+  empty_string = XmlString_FromASCII("");
+  if (empty_string == NULL)
+    return -1;
+
   dict = DomletteAttr_Type.tp_dict;
 
   value = PyString_FromString("attribute");
@@ -378,5 +377,6 @@ int DomletteAttr_Init(PyObject *module)
 
 void DomletteAttr_Fini(void)
 {
+  Py_DECREF(empty_string);
   PyType_CLEAR(&DomletteAttr_Type);
 }

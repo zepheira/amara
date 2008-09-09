@@ -402,6 +402,18 @@ int DomletteDocument_Init(PyObject *module)
   if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
+  value = (PyObject *)&DomletteElement_Type;
+  if (PyDict_SetItemString(dict, "xml_element_factory", value))
+    return -1;
+  value = (PyObject *)&DomletteText_Type;
+  if (PyDict_SetItemString(dict, "xml_text_factory", value))
+    return -1;
+  value = (PyObject *)&DomletteProcessingInstruction_Type;
+  if (PyDict_SetItemString(dict, "xml_processing_instruction_factory", value))
+    return -1;
+  value = (PyObject *)&DomletteComment_Type;
+  if (PyDict_SetItemString(dict, "xml_comment_factory", value))
+    return -1;
 
   creation_counter = PyLong_FromLong(0L);
   if (creation_counter == NULL) return -1;

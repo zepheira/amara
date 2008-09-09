@@ -3,7 +3,7 @@
 
 /** Private Routines **************************************************/
 
-/* The maximum number of characters of the nodeValue to use when
+/* The maximum number of characters of the value to use when
    creating the repr string.
 */
 #define CHARACTERDATA_REPR_LIMIT 20
@@ -17,10 +17,9 @@ characterdata_init(CharacterDataObject *self, PyObject *data)
     Py_DECREF(self);
     return NULL;
   }
-
+  assert(CharacterData_GET_VALUE(self) == NULL);
+  CharacterData_SET_VALUE(self, data);
   Py_INCREF(data);
-  self->nodeValue = data;
-
   return self;
 }
 
@@ -41,7 +40,7 @@ CharacterDataObject *_CharacterData_New(PyTypeObject *type, PyObject *data)
 
 static PyObject *characterdata_getnewargs(PyObject *self, PyObject *noargs)
 {
-  return PyTuple_Pack(1, CharacterData_GET_NODE_VALUE(self));
+  return PyTuple_Pack(1, CharacterData_GET_VALUE(self));
 }
 
 static PyMethodDef characterdata_methods[] = {
@@ -60,17 +59,20 @@ static PyMemberDef characterdata_members[] = {
 
 static PyObject *get_value(CharacterDataObject *self, void *arg)
 {
-  Py_INCREF(self->nodeValue);
-  return self->nodeValue;
+  Py_INCREF(CharacterData_GET_VALUE(self));
+  return CharacterData_GET_VALUE(self);
 }
 
 static int set_value(CharacterDataObject *self, PyObject *v, void *arg)
 {
-  PyObject *nodeValue = XmlString_ConvertArgument(v, "xml_value", 0);
-  if (nodeValue == NULL) return -1;
+  PyObject *temp, *value;
 
-  Py_DECREF(self->nodeValue);
-  self->nodeValue = nodeValue;
+  value = XmlString_ConvertArgument(v, "xml_value", 0);
+  if (value == NULL)
+    return -1;
+  temp = CharacterData_GET_VALUE(self);
+  CharacterData_SET_VALUE(self, value);
+  Py_DECREF(temp);
   return 0;
 }
 
@@ -84,17 +86,16 @@ static PyGetSetDef characterdata_getset[] = {
 static void characterdata_dealloc(CharacterDataObject *self)
 {
   PyObject_GC_UnTrack((PyObject *) self);
-
-  Py_XDECREF(self->nodeValue);
-  self->nodeValue = NULL;
+  Py_CLEAR(CharacterData_GET_VALUE(self));
   Node_Del(self);
 }
 
 static PyObject *characterdata_repr(CharacterDataObject *self)
 {
-  PyObject *obj, *repr, *name;
+  PyObject *value, *obj, *repr, *name;
 
-  if (PyUnicode_GET_SIZE(self->nodeValue) > CHARACTERDATA_REPR_LIMIT) {
+  value = CharacterData_GET_VALUE(self);
+  if (PyUnicode_GET_SIZE(value) > CHARACTERDATA_REPR_LIMIT) {
     Py_UNICODE *src, *dst;
 
     obj = PyUnicode_FromUnicode(NULL, CHARACTERDATA_REPR_LIMIT + 3);
@@ -102,7 +103,7 @@ static PyObject *characterdata_repr(CharacterDataObject *self)
       return NULL;
     }
     /* copy the first part of the node value */
-    src = PyUnicode_AS_UNICODE(self->nodeValue);
+    src = PyUnicode_AS_UNICODE(value);
     dst = PyUnicode_AS_UNICODE(obj);
     Py_UNICODE_COPY(dst, src, (CHARACTERDATA_REPR_LIMIT / 2));
     dst += (CHARACTERDATA_REPR_LIMIT / 2);
@@ -113,11 +114,11 @@ static PyObject *characterdata_repr(CharacterDataObject *self)
     *dst++ = '.';
 
     /* copy the last part of the node value */
-    src += PyUnicode_GET_SIZE(self->nodeValue);
+    src += PyUnicode_GET_SIZE(value);
     src -= (CHARACTERDATA_REPR_LIMIT / 2);
     Py_UNICODE_COPY(dst, src, (CHARACTERDATA_REPR_LIMIT / 2));
   } else {
-    obj = self->nodeValue;
+    obj = value;
     Py_INCREF(obj);
   }
 
