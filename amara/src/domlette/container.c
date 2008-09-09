@@ -14,6 +14,9 @@
 #define Container_GET_CHILD(op, i) (((ContainerObject *)(op))->nodes[i])
 #define Container_SET_CHILD(op, i, v) (Container_GET_CHILD((op), (i)) = (v))
 
+static PyObject *inserted_event;
+static PyObject *removed_event;
+
 /* Ensure `nodes` has room for at least `newsize` elements, and set
  * `count` to `newsize`.  If `newsize` > `count` on entry, the content
  * of the new slots at exit is undefined heap trash; it's the caller's
@@ -105,15 +108,36 @@ ensure_hierarchy(NodeObject *self, NodeObject *child)
 }
 
 Py_LOCAL_INLINE(int)
-dispatch_event(NodeObject *self, const char *event, NodeObject *child)
+dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
 {
-  PyObject *result;
+  PyObject *callable, *args, *result;
+
+  callable = PyObject_GetAttr((PyObject *)self, event);
+  if (callable == NULL)
+    return -1;
+
+  args = PyTuple_New(1);
+  if (args == NULL) {
+    Py_DECREF(callable);
+    return -1;
+  }
+  PyTuple_SET_ITEM(args, 0, (PyObject *)target);
+
+  result = PyObject_Call(callable, args, NULL);
+  Py_DECREF(args);
+  Py_DECREF(callable);
+  if (result == NULL)
+    return -1;
+
+  Py_DECREF(result);
+  return 0;
+}
+
+Py_LOCAL_INLINE(int)
+try_dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
+{
   if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
-    result = PyObject_CallMethod((PyObject *)self, (char *)event, "O", child);
-    if (result == NULL)
-      return -1;
-    else
-      Py_DECREF(result);
+    return dispatch_event(self, event, target);
   }
   return 0;
 }
@@ -167,6 +191,13 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
   Container_SET_NODES(self, nodes);
   Container_SET_COUNT(self, size);
   Container_SET_ALLOCATED(self, size);
+
+  if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
+    for (i = 0; i < size; i++) {
+      if (dispatch_event(self, inserted_event, nodes[i]) < 0)
+        return -1;
+    }
+  }
   return 0;
 }
 
@@ -191,7 +222,7 @@ int Container_Remove(NodeObject *self, NodeObject *child)
   }
 
   /* Announce the removal of the child. */
-  if (dispatch_event(self, "xml_child_removed", child) < 0)
+  if (try_dispatch_event(self, removed_event, child) < 0)
     return -1;
 
   /* Set the parent to NULL, indicating no parent */
@@ -241,7 +272,7 @@ int Container_Append(NodeObject *self, NodeObject *child)
   Node_SET_PARENT(child, self);
 
   /* Almost done; announce the addition of the child. */
-  return dispatch_event(self, "xml_child_inserted", child);
+  return try_dispatch_event(self, inserted_event, child);
 }
 
 int Container_Insert(NodeObject *self, Py_ssize_t where, NodeObject *child)
@@ -295,7 +326,7 @@ int Container_Insert(NodeObject *self, Py_ssize_t where, NodeObject *child)
   Node_SET_PARENT(child, self);
 
   /* Almost done; announce the addition of the child. */
-  return dispatch_event(self, "xml_child_inserted", child);
+  return try_dispatch_event(self, inserted_event, child);
 }
 
 int Container_Replace(NodeObject *self, NodeObject *oldChild,
@@ -322,7 +353,7 @@ int Container_Replace(NodeObject *self, NodeObject *oldChild,
     return 0;
 
   /* Announce the removal of `oldChild`. */
-  if (dispatch_event(self, "xml_child_removed", oldChild) < 0)
+  if (try_dispatch_event(self, removed_event, oldChild) < 0)
     return -1;
 
   /* If `newChild` has a previous parent, remove it from that parent */
@@ -350,7 +381,7 @@ int Container_Replace(NodeObject *self, NodeObject *oldChild,
   Node_SET_PARENT(newChild, self);
 
   /* Almost done; announce the insertion of `newChild`. */
-  return dispatch_event(self, "xml_child_inserted", newChild);
+  return try_dispatch_event(self, inserted_event, newChild);
 }
 
 /** Python Methods ****************************************************/
@@ -520,6 +551,26 @@ static PyObject *xml_index(NodeObject *self, PyObject *args)
   return PyErr_Format(PyExc_ValueError, "child not in children");
 }
 
+static char xml_child_inserted_doc[] = "xml_child_inserted(target)\n\n\
+A node has been added as a child of another node. This event is dispatched\n\
+after the insertion has taken place. The `target` node of this event is the\n\
+node being inserted.";
+
+static PyObject *xml_child_inserted(PyObject *self, PyObject *child)
+{
+  Py_RETURN_NONE;
+}
+
+static char xml_child_removed_doc[] = "xml_child_inserted(target)\n\n\
+A node is being removed from its parent node. This event is dispatched\n\
+before the node is removed from the tree. The `target` node of this event is\n\
+the node being removed.";
+
+static PyObject *xml_child_removed(PyObject *self, PyObject *child)
+{
+  Py_RETURN_NONE;
+}
+
 #define PyMethod_INIT(NAME, FLAGS) \
   { #NAME, (PyCFunction)NAME, FLAGS, NAME##_doc }
 
@@ -530,6 +581,9 @@ static PyMethodDef container_methods[] = {
   PyMethod_INIT(xml_insert,    METH_VARARGS),
   PyMethod_INIT(xml_replace,   METH_VARARGS),
   PyMethod_INIT(xml_index,     METH_VARARGS),
+  /* mutation events */
+  PyMethod_INIT(xml_child_inserted, METH_O),
+  PyMethod_INIT(xml_child_removed,  METH_O),
   { NULL }
 };
 
@@ -769,11 +823,20 @@ int DomletteContainer_Init(PyObject *module)
   if (PyType_Ready(&NodeIter_Type) < 0)
     return -1;
 
+  inserted_event = PyString_FromString("xml_child_inserted");
+  if (inserted_event == NULL)
+    return -1;
+  removed_event = PyString_FromString("xml_child_removed");
+  if (removed_event == NULL)
+    return -1;
+
   return 0;
 }
 
 void DomletteContainer_Fini(void)
 {
+  Py_DECREF(inserted_event);
+  Py_DECREF(removed_event);
   PyType_CLEAR(&DomletteContainer_Type);
   PyType_CLEAR(&NodeIter_Type);
 }
