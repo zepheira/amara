@@ -208,7 +208,7 @@ class container_mixin(object):
         return
 
 
-class element_base(tree.element, container_mixin):
+class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
 
     xml_model = None
@@ -263,7 +263,7 @@ class element_base(tree.element, container_mixin):
 
 #This class also serves as the factory for specializing the core Amara tree parse
 
-class entity_base(tree.entity, container_mixin):
+class entity_base(container_mixin, tree.entity):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
