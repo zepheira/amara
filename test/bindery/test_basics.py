@@ -1,6 +1,7 @@
 import unittest
 from amara.lib import testsupport
 from amara.bindery import parse
+from amara import tree
 from xml.dom import Node
 import os
 
@@ -32,7 +33,7 @@ class Test_parse_functions_1(unittest.TestCase):
         print dir(doc.xml_children[0])
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)
-        self.assertEqual(doc.xml_children[0].xml_node_type, Node.ELEMENT_NODE)
+        self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
         self.assertEqual(doc.xml_children[0].xml_qname, 'monty')
         self.assertEqual(doc.xml_children[0].xml_namespace, None)
         self.assertEqual(doc.xml_children[0].xml_prefix, None,)
@@ -42,21 +43,21 @@ class Test_parse_functions_1(unittest.TestCase):
         stream = open(TEST_FILE)
         doc = Parse(stream)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
     
     def Xtest_parse_with_file_path(self):
         """Parse with file path"""
         doc = Parse(TEST_FILE)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
         
 
 class Test_parse_functions_2(unittest.TestCase):
@@ -66,11 +67,11 @@ class Test_parse_functions_2(unittest.TestCase):
     def Xtest_parse_with_url(self):
         doc = parse(TEST_URL)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
 
 if __name__ == '__main__':
     testsupport.test_main()

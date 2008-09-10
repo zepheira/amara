@@ -167,9 +167,9 @@ class container_mixin(object):
         """
         called after the node has been added to `self.xml_children`
         """
-        print "xml_child_inserted"
         if isinstance(child, tree.element):
-            pname = self.xml_factory.pyname(child.xml_namespace, child.xml_name, dir(self))
+            fe = getattr(self, 'factory_entity', self)
+            pname = fe.pyname(child.xml_namespace, child.xml_qname, dir(self))
             setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
 #            if isinstance(child, tree.element):
 #                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
@@ -186,7 +186,6 @@ class container_mixin(object):
         """
         called after the node has been removed from `self.xml_children` (i.e. child.xml_parent is now None)
         """
-        print "xml_child_removed"
         #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
@@ -194,7 +193,6 @@ class container_mixin(object):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        print "xml_attribute_added"
         pname = self.xml_factory.pyname(attr_node.xml_namespace, attr_node.xml_name, dir(self))
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
@@ -203,7 +201,6 @@ class container_mixin(object):
         """
         called after the attribute has been removed `self.xml_attributes`
         """
-        print "xml_attribute_removed"
         #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
@@ -317,8 +314,8 @@ class entity_base(container_mixin, tree.entity):
             self._eclasses[(ns, local)] = eclass
         else:
             eclass = self._eclasses[(ns, local)]
-        print eclass
         e = eclass(ns, qname)
+        e.factory_entity = self
         return e
 
 
