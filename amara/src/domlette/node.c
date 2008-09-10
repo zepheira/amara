@@ -49,9 +49,11 @@ void _Node_Dump(char *msg, NodeObject *self)
     fprintf(stderr, "\n"
             "  type    : %s\n"
             "  refcount: %" PY_FORMAT_SIZE_T "d\n"
+            "  GC refs:  %" PY_FORMAT_SIZE_T "d\n"
             "  parent  : %p\n",
             self->ob_type == NULL ? "NULL" : self->ob_type->tp_name,
-            self->ob_refcnt,
+            self->ob_refcnt, 
+            PyObject_IS_GC((PyObject *)self) ? _Py_AS_GC(self)->gc.gc_refs : 0,
             Node_GET_PARENT(self));
     if (Container_Check(self)) {
       fprintf(stderr, "  children: %" PY_FORMAT_SIZE_T "d\n",

@@ -285,9 +285,14 @@ builder_EndDocument(void *userState)
 #endif
 
   /* Set the document's children */
-  if (_Container_SetChildren(context->node, context->children,
-                             context->children_size)) {
-    return EXPAT_STATUS_ERROR;
+  switch (_Container_SetChildren(context->node, context->children,
+                                 context->children_size)) {
+    case 0:
+      break;
+    case -1:
+      ParserState_FreeContext(state);
+    default:
+      return EXPAT_STATUS_ERROR;
   }
 
   /* Mark the current context as free */
@@ -457,8 +462,15 @@ builder_EndElement(void *userState, ExpatName *name)
   node = context->node;
 
   /* Set the element's children */
-  if (_Container_SetChildren(node, context->children, context->children_size))
-    return EXPAT_STATUS_ERROR;
+  switch (_Container_SetChildren(node, context->children, 
+                                 context->children_size)) {
+    case 0:
+      break;
+    case -1:
+      ParserState_FreeContext(state);
+    default:
+      return EXPAT_STATUS_ERROR;
+  }
 
   /* Mark the current context as free */
   ParserState_FreeContext(state);

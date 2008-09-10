@@ -170,14 +170,14 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
 
   if (!Container_Check(self) || Container_GET_NODES(self) != NULL) {
     PyErr_BadInternalCall();
-    return -1;
+    return -2;
   }
 
   /* Create a copy of the array */
   nodes = PyMem_New(NodeObject *, size);
   if (nodes == NULL) {
     PyErr_NoMemory();
-    return -1;
+    return -2;
   }
   memcpy(nodes, array, sizeof(NodeObject *)*size);
 
