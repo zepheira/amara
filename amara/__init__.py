@@ -280,6 +280,7 @@ class XIncludeError(ReaderError):
 
 from amara.tree import parse
 from amara.lib import xmlstring as string
+from amara.writers._treevisitor import xml_print
 
 import sys
 

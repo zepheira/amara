@@ -11,6 +11,7 @@ MONTY_XML = """<monty>
 
 NS_XML = """<doc xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b">
   <a:monty/>
+  <b:python/>
 </doc>"""
 
 #TEST_FILE = "Xml/Core/disclaimer.xml"
