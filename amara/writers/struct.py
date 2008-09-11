@@ -16,7 +16,7 @@ from amara.writers import WriterError
 from amara import XML_NAMESPACE
 from amara.lib.xmlstring import *
 
-__all__ = ['structwriter', 'E', 'ROOT', 'RAW']
+__all__ = ['structwriter', 'E', 'NS', 'ROOT', 'RAW']
 
 class StructWriterError(WriterError):
 
@@ -43,8 +43,19 @@ class structwriter(object):
                 self.feed(subobj)
             self.writer.end_document()
             return
+        if isinstance(obj, NS):
+            return
         if isinstance(obj, E):
-            self.writer.start_element(obj.qname, obj.ns, obj.attributes)
+            sniffer, content = tee(obj.content)
+            obj.namespaces = {}
+            for subobj in sniffer:
+                if isinstance(subobj, NS):
+                    #Consume it from the twin, too
+                    content.next()
+                    obj.namespaces[subobj.prefix] = subobj.namespace
+                else:
+                    break
+            self.writer.start_element(obj.qname, obj.ns, namespaces=obj.namespaces, attributes=obj.attributes or {})
             for subobj in obj.content:
                 self.feed(subobj)
             self.writer.end_element(obj.qname, obj.ns)
@@ -53,25 +64,42 @@ class structwriter(object):
             self.writer.text(U(obj))
             return
         try:
-            obj = iter(obj)
             for subobj in obj:
                 self.feed(subobj)
         except TypeError:
             if callable(obj):
                 self.feed(obj())
-    
+            else:
+                #Just try to make it text, i.e. punt
+                self.feed(unicode(obj))
+
 class E(object):
     def __init__(self, name, *items):
         if items and isinstance(items[0], dict):
-            self.attributes = items[0]
+            attributes = items[0]
             self.content = items[1:]
         else:
             self.content = items
-            self.attributes = None
+            attributes = {}
+        #if len(self.content) > 1:
+        #    self.content = chain(*(( i if (hasattr(i, 'next') and hasattr(i, '__iter__')) else [i] ) for i in self.content))
         if isinstance(name, tuple):
-            self.qname, self.ns = imap(U, name)
+            self.ns, self.qname = imap(U, name)
         else:
-            self.qname, self.ns = U(name), None
+            self.ns, self.qname = None, U(name)
+        #XXX: Move to dictionary set expr in 2.6 or 3.0
+        self.attributes = {} if attributes else None
+        for name, value in attributes.iteritems():
+            if isinstance(name, tuple):
+                ns, qname = imap(U, name)
+            else:
+                ns, qname = None, U(name)
+            self.attributes[qname, ns] = value
+
+class NS(object):
+    def __init__(self, prefix, namespace):
+        self.prefix = prefix
+        self.namespace = namespace
 
 class RAW(object):
     def __init__(self, *content):

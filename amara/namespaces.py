@@ -4,22 +4,36 @@
 
 """
 
+COMMON_PREFIXES = {}
+
 XML_NAMESPACE = u"http://www.w3.org/XML/1998/namespace"
 XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
 
-HTML_NAMESPACE = u"http://www.w3.org/TR/REC-html40" #HTML4.0
-XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"
-XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'
+XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_PREFIXES[XHTML_NAMESPACE] = u'xhtml'
+XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_PREFIXES[XSL_NAMESPACE] = u'xsl'
 
-#etc
+#XML Linking Language: http://www.w3.org/TR/xlink/
+XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_PREFIXES[XLINK_NAMESPACE] = u'xlink'
+XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_PREFIXES[XINCLUDE_NAMESPACE] = u'xinclude'
+
+#RDF
+
+RDF_NAMESPACE = u"http://www.w3.org/1999/02/22-rdf-syntax-ns#"; COMMON_PREFIXES[RDF_NAMESPACE] = u'rdf'
+RDFS_NAMESPACE = u"http://www.w3.org/2000/01/rdf-schema#"; COMMON_PREFIXES[RDFS_NAMESPACE] = u'rdfs'
+DC_NAMESPACE = u"http://purl.org/dc/elements/1.1/"; COMMON_PREFIXES[DC_NAMESPACE] = u'dc'
+SKOS_NAMESPACE = u"http://www.w3.org/2008/05/skos#"; COMMON_PREFIXES[SKOS_NAMESPACE] = u'skos'
+OWL_NAMESPACE = u"http://www.w3.org/2002/07/owl#"; COMMON_PREFIXES[OWL_NAMESPACE] = u'owl'
+
+RDF_GROUP = [RDF_NAMESPACE, RDFS_NAMESPACE, DC_NAMESPACE, OWL_NAMESPACE, SKOS_NAMESPACE]
+
+
+#obsolete
 EXTENSION_NAMESPACE = u'http://xmlns.4suite.org/ext'
 
-XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink" #XML Linking Language: http://www.w3.org/TR/xlink/
-XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'
 
 
 """
-Probably out of data (from pyxml)
+Probably out of date (from pyxml)
 
 #DSIG, XML-Signature Syntax and Processing: http://www.w3.org/TR/xmldsig-core/
 

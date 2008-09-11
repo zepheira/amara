@@ -141,11 +141,11 @@ class _userwriter(object):
         name = U(name)
         normalized_attrs = {}
         if attributes is not None:
-            normalized_attrs = dict(*zip((
-                ((U(aname[0]), U(aname[1]), U(value))
+            normalized_attrs = dict((
+                (((U(aname[0]), U(aname[1])), U(value))
                     if isinstance(aname, tuple) else ((U(aname), None), U(value)))
                 for (aname, value) in attributes.iteritems()
-            )))
+            ))
         #Be careful, viz. http://fuhm.net/super-harmful/ but should be safe here
         super(_userwriter, self).start_element(name, namespace, namespaces, normalized_attrs)
         return

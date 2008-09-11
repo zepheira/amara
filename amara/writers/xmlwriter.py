@@ -157,7 +157,7 @@ class xmlwriter(streamwriter):
             #
             # - If the prefix exists, but with a different namespace, generate
             #   a new (and probably rather ugly) prefix.
-            namespaces = self.namespaces[-1]
+            namespaces = self._namespaces[-1]
             if prefix is None:
                 # Find an existing namespace/prefix pair
                 for prefix, inscope_namespace in namespaces.iteritems():
