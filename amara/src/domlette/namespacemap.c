@@ -643,8 +643,7 @@ static void namednodemap_dealloc(NamespaceMapObject *self)
 
 static PyObject *namednodemap_repr(NamespaceMapObject *self)
 {
-  return PyString_FromFormat("<NamespaceMap at %p: "
-                             "%" PY_FORMAT_SIZE_T "d nodes>",
+  return PyString_FromFormat("<NamespaceMap at %p: %zd nodes>",
                              self, self->nm_used);
 }
 

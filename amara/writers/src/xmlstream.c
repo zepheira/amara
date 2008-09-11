@@ -10,12 +10,6 @@ and unencodable characters.";
 #include "structmember.h"
 #include "cStringIO.h"
 
-/* Backward compat code recommended in PEP 353 */
-#if PY_VERSION_HEX < 0x02050000
-  typedef int Py_ssize_t;
-#define PY_FORMAT_SIZE_T ""
-#endif
-
 #if defined(_WIN32) || defined(__WIN32__) && !defined(__CYGWIN__)
 #  define strcasecmp stricmp
 #endif
@@ -690,8 +684,8 @@ entitymap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         ord = (Py_UNICODE)((unsigned char)*PyString_AS_STRING(key));
       } else {
         PyErr_Format(PyExc_TypeError,
-                     "expected a character, but string of length "
-                     "%" PY_FORMAT_SIZE_T "d found", PyString_GET_SIZE(key));
+                     "expected a character, but string of length %zd found",
+                     PyString_GET_SIZE(key));
         Py_DECREF(self);
         return NULL;
       }
@@ -700,8 +694,8 @@ entitymap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         ord = *PyUnicode_AS_UNICODE(key);
       } else {
         PyErr_Format(PyExc_TypeError,
-                     "expected a character, but string of length "
-                     "%" PY_FORMAT_SIZE_T "d found", PyUnicode_GET_SIZE(key));
+                     "expected a character, but string of length %zd found",
+                     PyUnicode_GET_SIZE(key));
         Py_DECREF(self);
         return NULL;
       }

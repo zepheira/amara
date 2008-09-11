@@ -284,8 +284,7 @@ static void document_dealloc(DocumentObject *self)
 
 static PyObject *document_repr(DocumentObject *self)
 {
-  return PyString_FromFormat("<Document at %p: "
-                             "%" PY_FORMAT_SIZE_T "d children>",
+  return PyString_FromFormat("<Document at %p: %zd children>",
                              self, Container_GET_COUNT(self));
 }
 

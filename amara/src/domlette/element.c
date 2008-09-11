@@ -397,10 +397,8 @@ static PyObject *element_repr(ElementObject *self)
     num_namespaces = NamespaceMap_GET_SIZE(Element_GET_NAMESPACES(self));
   if (Element_GET_ATTRIBUTES(self))
     num_attributes = AttributeMap_GET_SIZE(Element_GET_ATTRIBUTES(self));
-  repr = PyString_FromFormat("<%s at %p: name %s, "
-                             "%" PY_FORMAT_SIZE_T "d namespaces, "
-                             "%" PY_FORMAT_SIZE_T "d attributes, "
-                             "%" PY_FORMAT_SIZE_T "d children>",
+  repr = PyString_FromFormat("<%s at %p: name %s, %zd namespaces, "
+                             "%zd attributes, %zd children>",
                              self->ob_type->tp_name, self, 
                              PyString_AsString(name),
                              num_namespaces, num_attributes,

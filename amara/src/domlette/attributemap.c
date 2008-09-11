@@ -729,8 +729,7 @@ static void attributemap_dealloc(AttributeMapObject *self)
 
 static PyObject *attributemap_repr(AttributeMapObject *self)
 {
-  return PyString_FromFormat("<AttributeMap at %p: "
-                             "%" PY_FORMAT_SIZE_T "d nodes>",
+  return PyString_FromFormat("<AttributeMap at %p: %zd nodes>",
                              self, self->nm_used);
 }
 

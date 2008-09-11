@@ -333,8 +333,7 @@ PyObject *ContentModel_Compile(PyObject *model)
     Py_DECREF(new_state);
     if (state_set == NULL) {
       /* this should not happen, but just in case... */
-      PyErr_Format(PyExc_SystemError,
-                   "state %" PY_FORMAT_SIZE_T "d not mapped to old states", i);
+      PyErr_Format(PyExc_SystemError, "state %zd not mapped to old states", i);
       goto error;
     }
 

@@ -26,9 +26,7 @@ Project home, documentation, distributions: http://4suite.org/\n\
   Py_ssize_t compared = (op)->ob_refcnt;                  \
   if (expected != compared) {                             \
     PyErr_Format(PyExc_MemoryError,                       \
-                 "%s:%d: refcount mismatch: "             \
-                 "expected %" PY_FORMAT_SIZE_T "d "       \
-                 "compared %" PY_FORMAT_SIZE_T "d",       \
+                 "%s:%d: refcount mismatch: expected %zd, compared %zd", \
                  __FILE__, __LINE__, expected, compared); \
     return NULL;                                          \
   }                                                       \
