@@ -16,6 +16,8 @@ from amara.writers import WriterError
 from amara import XML_NAMESPACE
 from amara.lib.xmlstring import *
 
+UNSPECIFIED_NAMESPACE = u""
+
 __all__ = ['structwriter', 'E', 'NS', 'ROOT', 'RAW']
 
 class StructWriterError(WriterError):
@@ -33,10 +35,11 @@ class structwriter(object):
         from amara import writer
         self.writer = writer(stream, **kwargs)
 
-    def feed(self, obj):
+    def feed(self, obj, prefixes=None):
         """
         obj - an object or iterator of objects matching the structwriter's specifications
         """
+        prefixes = prefixes.copy() if prefixes else {}
         if isinstance(obj, ROOT):
             self.writer.start_document()
             for subobj in obj.content:
@@ -47,17 +50,23 @@ class structwriter(object):
             return
         if isinstance(obj, E):
             sniffer, content = tee(obj.content)
-            obj.namespaces = {}
+            #obj.namespaces = {}
             for subobj in sniffer:
                 if isinstance(subobj, NS):
                     #Consume it from the twin, too
                     content.next()
-                    obj.namespaces[subobj.prefix] = subobj.namespace
+                    #obj.namespaces[subobj.prefix] = subobj.namespace
+                    prefixes[subobj.prefix] = subobj.namespace
                 else:
                     break
-            self.writer.start_element(obj.qname, obj.ns, namespaces=obj.namespaces, attributes=obj.attributes or {})
+
+            prefix, local = splitqname(obj.qname)
+            if obj.ns == UNSPECIFIED_NAMESPACE: obj.ns = prefixes.get(prefix, None)
+            prefixes[prefix] = obj.ns
+            #self.writer.start_element(obj.qname, obj.ns, namespaces=obj.namespaces, attributes=obj.attributes or {})
+            self.writer.start_element(obj.qname, obj.ns, namespaces=prefixes, attributes=obj.attributes or {})
             for subobj in obj.content:
-                self.feed(subobj)
+                self.feed(subobj, prefixes)
             self.writer.end_element(obj.qname, obj.ns)
             return
         if isinstance(obj, basestring):
@@ -65,13 +74,13 @@ class structwriter(object):
             return
         try:
             for subobj in obj:
-                self.feed(subobj)
+                self.feed(subobj, prefixes)
         except TypeError:
             if callable(obj):
-                self.feed(obj())
+                self.feed(obj(), prefixes)
             else:
                 #Just try to make it text, i.e. punt
-                self.feed(unicode(obj))
+                self.feed(unicode(obj), prefixes)
 
 class E(object):
     def __init__(self, name, *items):
@@ -86,7 +95,7 @@ class E(object):
         if isinstance(name, tuple):
             self.ns, self.qname = imap(U, name)
         else:
-            self.ns, self.qname = None, U(name)
+            self.ns, self.qname = UNSPECIFIED_NAMESPACE, U(name)
         #XXX: Move to dictionary set expr in 2.6 or 3.0
         self.attributes = {} if attributes else None
         for name, value in attributes.iteritems():

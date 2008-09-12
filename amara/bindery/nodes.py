@@ -275,6 +275,28 @@ class element_base(container_mixin, tree.element):
     def __len__(self):
         return len(list(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)))
 
+    def __getitem__(self, key):
+        #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
+        # => [((None, u'b'), u'3')]
+        if isinstance(key, int):
+            result = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+        else:
+            force_type = None
+            if isinstance(key, tuple):
+                if len(key) == 3:
+                    force_type, key = key[0], key[1:]
+            elif isinstance(key, basestring):
+                key = (None, key)
+            else:
+                raise TypeError('Inappropriate key (%s)'%(key))
+            if force_type in (None, tree.attribute.xml_type) and key in self.xml_attributes:
+                return self.xml_attributes[key]
+            if force_type in (None, tree.element.xml_type):
+                return self.xml_find_named_child(self, key[0], key[1])
+            else:
+                raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
+        return result
+
 
 #This class also serves as the factory for specializing the core Amara tree parse
 
