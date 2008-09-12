@@ -78,29 +78,24 @@ PY_ID_ENCODING = 'iso-8859-1'
 
 class element_iterator:
     def __init__(self, parent, ns, local):
-        self.children = parent.xml_children
+        self.children = iter(parent.xml_children)
         self.parent = parent
-        self.name = (ns, local)
+        self.ns, self.local = ns, local
         return
 
     def __iter__(self):
         return self
 
     def next(self):
-        if not self.curr:
-            raise StopIteration()
-        found = False
-        #could use dropwhile (with negation)...
-        #self.children = dropwhile(lambda c, n=self.name: (c.xml_namespace, c.xml_name) != n, self.children)
-        while not found:
-            child = self.children.next() #Will raise StopIteration when siblings are exhausted
-            found = (child.xml_namespace, child.xml_name) == self.name
-        return child
+        #if not self.curr:
+        #    raise StopIteration()
+        return self.parent.xml_find_named_child(self.ns, self.local, self.children)
 
 
 def elem_getter(pname, parent):
     ns, local = parent.xml_model.element_types[pname]
-    return element_iterator(parent, ns, local)
+    return parent.xml_find_named_child(ns, local)
+
 
 #Note: one of the better explanations of descriptor magic is here: http://gnosis.cx/publish/programming/charming_python_b26.html
 #Also: http://users.rcn.com/python/download/Descriptor.htm
@@ -116,7 +111,7 @@ class bound_element(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        return element_iterator(obj, self.ns, self.local)
+        return obj.xml_find_named_child(self.ns, self.local)
 
     def __set__(self, obj, value):
         #replicate old __delattr__ effects here
@@ -169,8 +164,15 @@ class container_mixin(object):
         """
         if isinstance(child, tree.element):
             fe = getattr(self, 'factory_entity', self)
-            pname = fe.pyname(child.xml_namespace, child.xml_qname, dir(self))
-            setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
+            name_chosen = False
+            exclusions = []
+            while not name_chosen:
+                pname = fe.pyname(child.xml_namespace, child.xml_qname, exclusions)
+                existing = getattr(self, pname, None)
+                if existing is None or existing.xml_name == child.xml_name:
+                    name_chosen = True
+            if existing is None:
+                setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
 #            if isinstance(child, tree.element):
 #                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
 #                #Need to treat it using element binding rules
@@ -189,20 +191,15 @@ class container_mixin(object):
         #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
-    def xml_attribute_added(self, attr_node):
-        """
-        called after the attribute has been added to `self.xml_attributes`
-        """
-        pname = self.xml_factory.pyname(attr_node.xml_namespace, attr_node.xml_name, dir(self))
-        setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
-        return
-
-    def xml_attribute_removed(self, attr_node):
-        """
-        called after the attribute has been removed `self.xml_attributes`
-        """
-        #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
-        return
+    def xml_find_named_child(self, ns, local, childiter=None):
+        found = False
+        #could use dropwhile (with negation)...
+        #self.children = dropwhile(lambda c, n=self.name: (c.xml_namespace, c.xml_name) != n, self.children)
+        childiter = iter(self.xml_children) if childiter is None else childiter
+        while not found:
+            child = childiter.next() #Will raise StopIteration when siblings are exhausted
+            found = child.xml_type == tree.element.xml_type and child.xml_name == (ns, local)
+        return child
 
 
 class element_base(container_mixin, tree.element):
@@ -219,6 +216,21 @@ class element_base(container_mixin, tree.element):
         #else:
         #    ns, qname = None, name #FIXME: Actually name must not have a prefix.  Should probably error check here
         #tree.element.__init__(self, ns, qname)
+        return
+
+    def xml_attribute_added(self, attr_node):
+        """
+        called after the attribute has been added to `self.xml_attributes`
+        """
+        pname = self.xml_factory.pyname(attr_node.xml_namespace, attr_node.xml_name, dir(self))
+        setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
+        return
+
+    def xml_attribute_removed(self, attr_node):
+        """
+        called after the attribute has been removed `self.xml_attributes`
+        """
+        #Nothing really to do: we don't want to remove the descriptor from the class, since other instances might be using it
         return
 
     @property
@@ -256,6 +268,12 @@ class element_base(container_mixin, tree.element):
         #Amara 1 note: Should we make the encoding configurable? (self.defencoding?)
         #For Amara 2, consider using the document node encoding property
         return unicode(self).encode('utf-8')
+
+    def __iter__(self):
+        return element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)
+
+    def __len__(self):
+        return len(list(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)))
 
 
 #This class also serves as the factory for specializing the core Amara tree parse

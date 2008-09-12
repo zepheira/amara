@@ -26,17 +26,19 @@ class Test_parse_functions_1(unittest.TestCase):
     def test_parse_with_string(self):
         """Parse with string"""
         doc = parse(MONTY_XML)
-        print doc
-        print doc.xml_children[0]
-        print doc.xml_children[0].xml_qname
-        print doc.monty
-        print dir(doc.xml_children[0])
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)
         self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
         self.assertEqual(doc.xml_children[0].xml_qname, 'monty')
         self.assertEqual(doc.xml_children[0].xml_namespace, None)
-        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None)
+        self.assertEqual(len(doc.monty.xml_children), 2)
+        self.assertEqual(doc.monty.xml_children[0].xml_type, tree.element.xml_type)
+        self.assertEqual(doc.monty.xml_children[0].xml_qname, 'python')
+        self.assertEqual(doc.monty.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.monty.xml_children[0].xml_prefix, None)
+        self.assertEqual(len(doc.monty.python), 2)
+        self.assertEqual(';'.join([ e.xml_qname for e in doc.monty.python ]), u'python;python')
         
     def Xtest_parse_with_stream(self):
         """Parse with stream"""
