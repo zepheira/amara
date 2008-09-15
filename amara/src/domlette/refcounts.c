@@ -42,18 +42,26 @@ static int node_refcounts(PyObject *tester, NodeObject *node,
 
   if (Element_Check(node)) {
     Py_ssize_t i;
-    PyObject *k, *v;
+    NodeObject *child;
+    NamespaceObject *ns;
+    AttrObject *attr;
 
     /* test element's children */
     for (i = 0; i < Container_GET_COUNT(node); i++) {
-      v = (PyObject *) Container_GET_CHILD(node, i);
-      if (node_refcounts(tester, (NodeObject *)v, counter) == 0) return 0;
+      child = Container_GET_CHILD(node, i);
+      if (node_refcounts(tester, child, counter) == 0) return 0;
     }
 
     /* test element's attributes */
     i = 0;
-    while (PyDict_Next(Element_GET_ATTRIBUTES(node), &i, &k, &v)) {
-      if (node_refcounts(tester, (NodeObject *)v, counter) == 0) return 0;
+    while ((ns = NamespaceMap_Next(Element_GET_NAMESPACES(node), &i))) {
+      if (node_refcounts(tester, (NodeObject *)ns, counter) == 0) return 0;
+    }
+
+    /* test element's attributes */
+    i = 0;
+    while ((attr = AttributeMap_Next(Element_GET_ATTRIBUTES(node), &i))) {
+      if (node_refcounts(tester, (NodeObject *)attr, counter) == 0) return 0;
     }
 
     /* refcount = this */

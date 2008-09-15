@@ -25,8 +25,8 @@ extern "C" {
 #define Element_GET_NAMESPACES(op) (Element(op)->namespaces)
 
 #ifdef Domlette_BUILDING_MODULE
-#include "attr.h"
-#include "namespace.h"
+#include "attributemap.h"
+#include "namespacemap.h"
 
   extern PyTypeObject DomletteElement_Type;
 

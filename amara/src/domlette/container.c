@@ -108,37 +108,10 @@ ensure_hierarchy(NodeObject *self, NodeObject *child)
 }
 
 Py_LOCAL_INLINE(int)
-dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
-{
-  PyObject *callable, *args, *result;
-
-  callable = PyObject_GetAttr((PyObject *)self, event);
-  if (callable == NULL)
-    return -1;
-
-  args = PyTuple_New(1);
-  if (args == NULL) {
-    Py_DECREF(callable);
-    return -1;
-  }
-  Py_INCREF(target);
-  PyTuple_SET_ITEM(args, 0, (PyObject *)target);
-
-  result = PyObject_Call(callable, args, NULL);
-  Py_DECREF(args);
-  Py_DECREF(callable);
-  if (result == NULL)
-    return -1;
-
-  Py_DECREF(result);
-  return 0;
-}
-
-Py_LOCAL_INLINE(int)
 try_dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
 {
   if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
-    return dispatch_event(self, event, target);
+    return Node_DispatchEvent(self, event, target);
   }
   return 0;
 }
@@ -195,7 +168,7 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
 
   if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
     for (i = 0; i < size; i++) {
-      if (dispatch_event(self, inserted_event, nodes[i]) < 0)
+      if (Node_DispatchEvent(self, inserted_event, nodes[i]) < 0)
         return -1;
     }
   }

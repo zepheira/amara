@@ -10,6 +10,7 @@ extern "C" {
 
   typedef struct {
     Node_HEAD
+    Py_ssize_t hash;
     PyObject *name;
     PyObject *value;
   } NamespaceObject;

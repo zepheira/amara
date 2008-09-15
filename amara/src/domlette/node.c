@@ -4,8 +4,8 @@
 /** Private Routines **************************************************/
 
 static PyObject *newobj_function;
-static PyObject *shared_empty_nodelist;
-static PyObject *xml_base_key;
+static PyObject *xml_namespace_string;
+static PyObject *base_string;
 static PyObject *is_absolute_function;
 static PyObject *absolutize_function;
 static PyObject *deepcopy_function;
@@ -61,6 +61,32 @@ void _Node_Dump(char *msg, NodeObject *self)
     }
   }
   fprintf(stderr, "----------------------\n");
+}
+
+int Node_DispatchEvent(NodeObject *self, PyObject *event, NodeObject *target)
+{
+  PyObject *callable, *args, *result;
+
+  callable = PyObject_GetAttr((PyObject *)self, event);
+  if (callable == NULL)
+    return -1;
+
+  args = PyTuple_New(1);
+  if (args == NULL) {
+    Py_DECREF(callable);
+    return -1;
+  }
+  Py_INCREF(target);
+  PyTuple_SET_ITEM(args, 0, (PyObject *)target);
+
+  result = PyObject_Call(callable, args, NULL);
+  Py_DECREF(args);
+  Py_DECREF(callable);
+  if (result == NULL)
+    return -1;
+
+  Py_DECREF(result);
+  return 0;
 }
 
 /** Python Methods *****************************************************/
@@ -297,7 +323,9 @@ static PyObject *get_base_uri(PyObject *self, void *arg)
      *    if one exists, otherwise
      */
     if (Element_Check(node)) {
-      base = PyDict_GetItem(Element_GET_ATTRIBUTES(node), xml_base_key);
+      base = (PyObject *)AttributeMap_GetNode(Element_GET_ATTRIBUTES(node),
+                                              xml_namespace_string,
+                                              base_string);
       if (base) {
         base = Attr_GET_VALUE(base);
         /* If the xml:base in scope for the current node is not absolute, we find
@@ -759,13 +787,15 @@ int DomletteNode_Init(PyObject *module)
     return -1;
   Py_DECREF(value);
 
-  shared_empty_nodelist = PyList_New(0);
-  if (shared_empty_nodelist == NULL)
+  import = PyImport_ImportModule("amara.namespaces");
+  if (import == NULL) return -1;
+  xml_namespace_string = PyObject_GetAttrString(import, "XML_NAMESPACE");
+  xml_namespace_string = XmlString_FromObjectInPlace(xml_namespace_string);
+  Py_DECREF(import);
+  if (xml_namespace_string == NULL)
     return -1;
-
-  xml_base_key = Py_BuildValue("(ss)", 
-                               "http://www.w3.org/XML/1998/namespace", "base");
-  if (xml_base_key == NULL)
+  base_string = XmlString_FromASCII("base");
+  if (base_string == NULL)
     return -1;
 
   Py_INCREF(&DomletteNode_Type);
@@ -775,8 +805,8 @@ int DomletteNode_Init(PyObject *module)
 void DomletteNode_Fini(void)
 {
   Py_DECREF(newobj_function);
-  Py_DECREF(shared_empty_nodelist);
-  Py_DECREF(xml_base_key);
+  Py_DECREF(xml_namespace_string);
+  Py_DECREF(base_string);
   Py_DECREF(is_absolute_function);
   Py_DECREF(absolutize_function);
   Py_DECREF(deepcopy_function);

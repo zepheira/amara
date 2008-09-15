@@ -40,6 +40,8 @@ extern "C" {
   void _Node_Del(NodeObject *node);
 #define Node_Del(obj) _Node_Del((NodeObject *)(obj))
 
+  int Node_DispatchEvent(NodeObject *self, PyObject *event, NodeObject *target);
+
 #endif /* Domlette_BUILDING_MODULE */
 
 #include "container.h"

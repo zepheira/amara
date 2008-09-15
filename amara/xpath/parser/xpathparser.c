@@ -60,32 +60,13 @@ typedef int Py_ssize_t;
 #ifdef Py_DEBUG
 #define PyType_CLEAR(op)                                          \
   do {                                                            \
-    PyTypeObject *base, *type = (PyTypeObject *)(op);             \
-    PyObject *ref;                                                \
-    Py_ssize_t i, j;                                              \
-    assert(PyTuple_Check(type->tp_bases));                        \
-    i = PyTuple_GET_SIZE(type->tp_bases);                         \
-    while (--i >= 0) {                                            \
-      base = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, i); \
-      if (PyType_Check(base) && base->tp_subclasses) {            \
-        assert(PyList_Check(base->tp_subclasses));                \
-        j = PyList_GET_SIZE(base->tp_subclasses);                 \
-        while (--j >= 0) {                                        \
-          ref = PyList_GET_ITEM(base->tp_subclasses, j);          \
-          assert(PyWeakref_CheckRef(ref));                        \
-          if (PyWeakref_GET_OBJECT(ref) == (PyObject *)type) {    \
-            PySequence_DelItem(base->tp_subclasses, j);           \
-            break;                                                \
-          }                                                       \
-        }                                                         \
-      }                                                           \
-    }                                                             \
-    PyObject_ClearWeakRefs((PyObject *)type);                     \
-    Py_CLEAR(type->tp_dict);                                      \
-    Py_CLEAR(type->tp_bases);                                     \
-    Py_CLEAR(type->tp_mro);                                       \
-    Py_CLEAR(type->tp_cache);                                     \
-    Py_CLEAR(type->tp_subclasses);                                \
+    PyObject_ClearWeakRefs((PyObject *)(op));                     \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_dict);                  \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_bases);                 \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_mro);                   \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_cache);                 \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_subclasses);            \
+    Py_XDECREF(((PyTypeObject *)(op))->tp_weaklist);              \
   } while(0)
 #else
 #define PyType_CLEAR(op)
@@ -4940,13 +4921,13 @@ static void module_dealloc(void *module)
   for (yyimp = yymodule_imports; yyimp->yymodule; yyimp++) {
     Py_CLEAR(*yyimp->yyptr);
   }
-  PyType_CLEAR(&Parser_Type);
-  PyType_CLEAR(&Console_Type);
 #if PY_VERSION_HEX < 0x02050000
   Py_CLEAR(YY_ErrorObject);
 #else
   PyType_CLEAR(&YY_Error_Type);
 #endif
+  PyType_CLEAR(&Console_Type);
+  PyType_CLEAR(&Parser_Type);
 }
 
 PyMODINIT_FUNC MODULE_INITFUNC(void) {

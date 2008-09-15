@@ -3,6 +3,7 @@
 
 /** Private Routines **************************************************/
 
+static PyObject *attribute_factory_string;
 static PyObject *xml_string;
 static PyObject *xmlns_string;
 static PyObject *xml_namespace;
@@ -75,7 +76,7 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
                      PyObject *qualifiedName, PyObject *localName, 
                      PyObject *value)
 {
-  PyObject *attributes;
+  PyObject *attributes, *factory;
   AttrObject *node;
 
   /* OPT: ensure the AttributeMap exists */
@@ -84,14 +85,35 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
     attributes = self->attributes = AttributeMap_New(self);
     if (attributes == NULL) return NULL;
   }
-  /* new reference */
-  node = Attr_New(namespaceURI, qualifiedName, localName, value);
+  if (!Element_CheckExact(self)) {
+    factory = PyObject_GetAttr((PyObject *)self, attribute_factory_string);
+    if (factory == NULL)
+      return NULL;
+    if (factory == (PyObject *)&DomletteAttr_Type)
+      Py_CLEAR(factory);
+  } else {
+    factory = NULL;
+  }
+  if (factory == NULL) {
+    node = Attr_New(namespaceURI, qualifiedName, localName, value);
+  } else {
+    node = (AttrObject *)PyObject_CallFunctionObjArgs(factory, namespaceURI,
+                                                      qualifiedName, value,
+                                                      NULL);
+    Py_DECREF(factory);
+    if (node && !Attr_Check(node)) {
+      PyErr_Format(PyExc_TypeError,
+                    "xml_attribute_factory should return attribute, not %s",
+                    node->ob_type->tp_name);
+      Py_DECREF(node);
+      return NULL;
+    }
+  }
   if (node != NULL) {
-    assert(Node_GET_PARENT(node) == NULL);
-    Node_SET_PARENT(node, (NodeObject *)self);
-    Py_INCREF(self);
-    if (AttributeMap_SetNode(attributes, node) < 0)
-      Py_CLEAR(node);
+    if (AttributeMap_SetNode(attributes, node) < 0) {
+      Py_DECREF(node);
+      return NULL;
+    }
   }
   return node;
 }
@@ -120,7 +142,6 @@ int
 Element_SetAttribute(ElementObject *self, AttrObject *attr)
 {
   PyObject *attributes, *namespace, *name;
-  NodeObject *temp;
   AttrObject *node;
 
   /* OPT: ensure the AttributeMap exists */
@@ -139,12 +160,6 @@ Element_SetAttribute(ElementObject *self, AttrObject *attr)
   /* Add the new attribute */
   if (AttributeMap_SetNode(attributes, attr) < 0)
     return -1;
-  /* Update the attribute's owner */
-  temp = Node_GET_PARENT(attr);
-  Node_SET_PARENT(attr, (NodeObject *)self);
-  Py_INCREF(self);
-  Py_XDECREF(temp);
-
   /* Reset the removed attributes owner */
   if (node != NULL)
     Py_CLEAR(Node_GET_PARENT(node));
@@ -233,7 +248,13 @@ static PyObject *element_getstate(PyObject *self, PyObject *args)
     default:
       return NULL;
   }
-  return Py_BuildValue("ONNN", Node_GET_PARENT(self), namespaces, attributes,
+  namespaces = Element_GET_NAMESPACES(self);
+  if (namespaces == NULL)
+    namespaces = Py_None;
+  attributes = Element_GET_ATTRIBUTES(self);
+  if (attributes == NULL)
+    attributes = Py_None;
+  return Py_BuildValue("OOON", Node_GET_PARENT(self), namespaces, attributes,
                        children);
 }
 
@@ -527,6 +548,9 @@ int DomletteElement_Init(PyObject *module)
 {
   PyObject *import, *dict, *value;
 
+  attribute_factory_string = PyString_FromString("xml_attribute_factory");
+  if (attribute_factory_string == NULL)
+    return -1;
   xml_string = XmlString_FromASCII("xml");
   if (xml_string == NULL)
     return -1;
@@ -568,6 +592,7 @@ int DomletteElement_Init(PyObject *module)
 
 void DomletteElement_Fini(void)
 {
+  Py_DECREF(attribute_factory_string);
   Py_DECREF(xml_string);
   Py_DECREF(xmlns_string);
   Py_DECREF(xml_namespace);

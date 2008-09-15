@@ -20,14 +20,6 @@ extern "C" {
 #define AttributeMap_MINSIZE 8
 
   typedef struct {
-    Py_ssize_t ne_hash;
-    AttrObject *ne_node;
-  } AttributeEntry;
-
-#define AttributeEntry_HASH(op) (((AttributeEntry *)(op))->ne_hash)
-#define AttributeEntry_NODE(op) (((AttributeEntry *)(op))->ne_node)
-
-  typedef struct {
     PyObject_HEAD
     /* The number of inuse entries in the table. */
     Py_ssize_t nm_used;
@@ -41,9 +33,9 @@ extern "C" {
      * saves repeated runtime null-tests in the workhorse getitem and
      * setitem calls.
      */
-    AttributeEntry *nm_table;
+    AttrObject **nm_table;
     ElementObject *nm_owner;
-    AttributeEntry nm_smalltable[AttributeMap_MINSIZE];
+    AttrObject *nm_smalltable[AttributeMap_MINSIZE];
   } AttributeMapObject;
 
 #define AttributeMap_GET_SIZE(op) (((AttributeMapObject *)(op))->nm_used)
@@ -51,6 +43,8 @@ extern "C" {
 #ifdef Domlette_BUILDING_MODULE
 
   PyObject *AttributeMap_New(ElementObject *owner);
+
+  Py_ssize_t AttributeMap_GetHash(PyObject *namespace, PyObject *name);
 
   AttrObject *AttributeMap_GetNode(PyObject *self, PyObject *namespace,
                                    PyObject *name);

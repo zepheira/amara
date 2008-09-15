@@ -4,6 +4,7 @@
 /** Private Routines **************************************************/
 
 static PyObject *empty_string;
+static PyObject *modified_event;
 
 Py_LOCAL_INLINE(AttrObject *)
 attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
@@ -18,9 +19,14 @@ attr_init(AttrObject *self, PyObject *namespaceURI, PyObject *qualifiedName,
     Py_DECREF(self);
     return NULL;
   }
-
   if (value == NULL)
     value = empty_string;
+
+  self->hash = AttributeMap_GetHash(namespaceURI, localName);
+  if (self->hash == -1) {
+    Py_DECREF(self);
+    return NULL;
+  }
 
   Py_INCREF(namespaceURI);
   self->namespaceURI = namespaceURI;
@@ -51,6 +57,34 @@ AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
     self = attr_init(self, namespaceURI, qualifiedName, localName, value);
   }
   return self;
+}
+
+int Attr_SetValue(AttrObject *self, PyObject *value)
+{
+  NodeObject *owner;
+  if (self == NULL || !Attr_Check(self)) {
+    PyErr_BadInternalCall();
+    return -1;
+  }
+
+  if (value == NULL) {
+    value = empty_string;
+    Py_INCREF(value);
+  } else if (PyUnicode_Check(value)) {
+    Py_INCREF(value);
+  } else {
+    value = XmlString_ConvertArgument(value, "value", 0);
+    if (value == NULL)
+      return -1;
+  }
+  Py_DECREF(Attr_GET_VALUE(self));
+  Attr_SET_VALUE(self, value);
+
+  owner = Node_GET_PARENT(self);
+  if (owner == NULL || Element_CheckExact(owner))
+    return 0;
+
+  return Node_DispatchEvent(owner, modified_event, (NodeObject *)self);
 }
 
 /** Python Methods ****************************************************/
@@ -186,11 +220,9 @@ static PyObject *get_value(AttrObject *self, char *arg)
 static int set_value(AttrObject *self, PyObject *v, char *arg)
 {
   PyObject *value = XmlString_ConvertArgument(v, "xml_value", 0);
-  if (value == NULL) return -1;
-
-  Py_DECREF(self->value);
-  self->value = value;
-  return 0;
+  if (value == NULL)
+    return -1;
+  return Attr_SetValue(self, value);
 }
 
 static PyGetSetDef attr_getset[] = {
@@ -354,6 +386,10 @@ int DomletteAttr_Init(PyObject *module)
   if (empty_string == NULL)
     return -1;
 
+  modified_event = PyString_FromString("xml_attribute_modified");
+  if (modified_event == NULL)
+    return -1;
+
   dict = DomletteAttr_Type.tp_dict;
 
   value = PyString_FromString("attribute");
@@ -364,12 +400,8 @@ int DomletteAttr_Init(PyObject *module)
   Py_DECREF(value);
 
   /* Until the DTD information is used, assume it was from the document */
-  value = PyInt_FromLong(1);
-  if (value == NULL)
+  if (PyDict_SetItemString(dict, "xml_specified", Py_True))
     return -1;
-  if (PyDict_SetItemString(dict, "xml_specified", value))
-    return -1;
-  Py_DECREF(value);
 
   Py_INCREF(&DomletteAttr_Type);
   return PyModule_AddObject(module, "Attr", (PyObject*) &DomletteAttr_Type);
@@ -378,5 +410,6 @@ int DomletteAttr_Init(PyObject *module)
 void DomletteAttr_Fini(void)
 {
   Py_DECREF(empty_string);
+  Py_DECREF(modified_event);
   PyType_CLEAR(&DomletteAttr_Type);
 }

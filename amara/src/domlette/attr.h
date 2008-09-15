@@ -11,6 +11,7 @@ extern "C" {
 
   typedef struct {
     Node_HEAD
+    Py_ssize_t hash;
     PyObject *namespaceURI;
     PyObject *localName;
     PyObject *qname;
@@ -19,6 +20,7 @@ extern "C" {
   } AttrObject;
 
 #define Attr(op) ((AttrObject *)(op))
+#define Attr_GET_HASH(op) (Attr(op)->hash)
 #define Attr_GET_NAMESPACE_URI(op) (Attr(op)->namespaceURI)
 #define Attr_GET_LOCAL_NAME(op) (Attr(op)->localName)
 #define Attr_GET_QNAME(op) (Attr(op)->qname)
@@ -42,7 +44,7 @@ extern "C" {
   AttrObject *Attr_New(PyObject *namespaceURI, PyObject *qualifiedName,
                        PyObject *localName, PyObject *value);
 
-  AttrObject *Attr_Copy(PyObject *self, int deep);
+  int Attr_SetValue(AttrObject *self, PyObject *value);
 
 #endif
 

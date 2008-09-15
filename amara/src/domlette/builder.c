@@ -357,11 +357,6 @@ builder_StartElement(void *userState, ExpatName *name,
       Py_DECREF(elem);
       return EXPAT_STATUS_ERROR;
     }
-    if (!load_factory((PyObject *)elem, "xml_attribute_factory",
-                      &DomletteAttr_Type, &attribute_factory)) {
-      Py_DECREF(elem);
-      return EXPAT_STATUS_ERROR;
-    }
   } else {
     elem = Element_New(name->namespaceURI, name->qualifiedName,
                        name->localName);
@@ -391,50 +386,17 @@ builder_StartElement(void *userState, ExpatName *name,
 
   /** attributes *******************************************************/
 
-  if (attribute_factory) {
-    for (i = 0; i < natts; i++) {
-      PyObject *attr = PyObject_CallFunctionObjArgs(attribute_factory,
-                                                    atts[i].namespaceURI,
-                                                    atts[i].qualifiedName,
-                                                    atts[i].value, NULL);
-      if (attr == NULL) {
-        Py_DECREF(elem);
-        Py_DECREF(attribute_factory);
-        return EXPAT_STATUS_ERROR;
-      }
-      if (!Attr_Check(attr)) {
-        PyErr_Format(PyExc_TypeError, 
-                     "xml_attribute_factory should return attribute, not %s",
-                     attr->ob_type->tp_name);
-        Py_DECREF(attr);
-        Py_DECREF(elem);
-        Py_DECREF(attribute_factory);
-        return EXPAT_STATUS_ERROR;
-      }
-      if (Element_SetAttribute(elem, Attr(attr)) < 0) {
-        Py_DECREF(attr);
-        Py_DECREF(elem);
-        Py_DECREF(attribute_factory);
-        return EXPAT_STATUS_ERROR;
-      }
-      /* save the attribute type as well (for getElementById) */
-      Attr_SET_TYPE(attr, atts[i].type);
-      Py_DECREF(attr);
+  for (i = 0; i < natts; i++) {
+    AttrObject *attr = Element_AddAttribute(elem, atts[i].namespaceURI,
+                                            atts[i].qualifiedName,
+                                            atts[i].localName, atts[i].value);
+    if (attr == NULL) {
+      Py_DECREF(elem);
+      return EXPAT_STATUS_ERROR;
     }
-    Py_DECREF(attribute_factory);
-  } else {
-    for (i = 0; i < natts; i++) {
-      AttrObject *attr = Element_AddAttribute(elem, atts[i].namespaceURI, 
-                                              atts[i].qualifiedName, 
-                                              atts[i].localName, atts[i].value);
-      if (attr == NULL) {
-        Py_DECREF(elem);
-        return EXPAT_STATUS_ERROR;
-      }
-      /* save the attribute type as well (for getElementById) */
-      Attr_SET_TYPE(attr, atts[i].type);
-      Py_DECREF(attr);
-    }
+    /* save the attribute type as well (for getElementById) */
+    Attr_SET_TYPE(attr, atts[i].type);
+    Py_DECREF(attr);
   }
 
   /* save states on the context */
