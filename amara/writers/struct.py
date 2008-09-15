@@ -12,11 +12,11 @@ for considered reasons of clarity in use
 import sys
 from itertools import *
 from amara.writers import WriterError
-#from amara.writers.xmlwriter import *
 from amara import XML_NAMESPACE
 from amara.lib.xmlstring import *
+import _xmlprinters, _htmlprinters
 
-UNSPECIFIED_NAMESPACE = u""
+UNSPECIFIED_NAMESPACE = u":"
 
 __all__ = ['structwriter', 'E', 'NS', 'ROOT', 'RAW']
 
@@ -25,27 +25,47 @@ class StructWriterError(WriterError):
     ATTRIBUTE_ADDED_TOO_LATE = 1
     ATTRIBUTE_ADDED_TO_NON_ELEMENT = 2
 
-#ecount = 0
+
+def get_printer(stream, encoding='utf-8', ns_hints=None, is_html=False,
+             indent=False, canonical=False, added_attributes=None,
+             removed_ns_decls=None):
+    """
+    Initializes an instance of the class, selecting the appropriate
+    printer to use, depending on the isHtml and indent flags.
+    ns_hints, if given, is a dictionary of namespace mappings that
+    help determine if namespace declarations need to be emitted when
+    visiting the first Element node.
+    """
+    if indent and is_html:
+        printer = _htmlprinters.htmlprettyprinter(stream, encoding)
+    elif indent:
+        printer = _xmlprinters.xmlprettyprinter(stream, encoding)
+    elif is_html:
+        printer = _htmlprinters.htmlprinters(stream, encoding)
+    elif canonical:
+        printer = _xmlprinters.CanonicalXmlPrinter(stream, encoding)
+    else:
+        printer = _xmlprinters.xmlprinter(stream, encoding)
+    return printer
 
 class structwriter(object):
     def __init__(self, stream=sys.stdout, **kwargs):
         #writer - instance of `amara.writers.writer`, or None to create a default instance
         """
         """
-        #self.writer = writer or xmlwriter()
-        from amara import writer
-        self.writer = writer(stream, **kwargs)
+        #self.printer = writer or xmlwriter()
+        self.printer = get_printer(stream, **kwargs)
 
     def feed(self, obj, prefixes=None):
         """
         obj - an object or iterator of objects matching the structwriter's specifications
         """
-        prefixes = prefixes.copy() if prefixes else {}
+        prefixes = prefixes or {}
         if isinstance(obj, ROOT):
-            self.writer.start_document()
+            self.printer.start_document()
             for subobj in obj.content:
                 self.feed(subobj)
-            self.writer.end_document()
+            self.printer.end_document()
             return
         if isinstance(obj, NS):
             return
@@ -53,30 +73,35 @@ class structwriter(object):
             #First attempt used tee.  Seems we ran into the warning at http://www.python.org/doc/2.4.3/whatsnew/node13.html
             #"Note that tee() has to keep copies of the values returned by the iterator; in the worst case, it may need to keep all of them. This should therefore be used carefully if the leading iterator can run far ahead of the trailing iterator in a long stream of inputs. If the separation is large, then you might as well use list() instead. When the iterators track closely with one another, tee()" is ideal. Possible applications include bookmarking, windowing, or lookahead iterators. (Contributed by Raymond Hettinger.)"
             #obj.namespaces = {}
+            new_prefixes = []
             lead = None
-            for subobj in obj.content:
+            content = iter(obj.content)
+            for subobj in content:
                 if isinstance(subobj, NS):
-                    prefixes[subobj.prefix] = subobj.namespace
+                    new_prefixes.append((subobj.prefix, subobj.namespace))
                 else:
                     lead = subobj
                     break
 
             prefix, local = splitqname(obj.qname)
-            #global ecount
-            #ecount += 1
-            #print >> sys.stderr, ecount, obj.ns, obj.qname
-            if obj.ns == UNSPECIFIED_NAMESPACE: obj.ns = prefixes.get(prefix, None)
-            prefixes[prefix] = obj.ns
-            #self.writer.start_element(obj.qname, obj.ns, namespaces=obj.namespaces, attributes=obj.attributes or {})
-            self.writer.start_element(obj.qname, obj.ns, namespaces=prefixes, attributes=obj.attributes or {})
+            prefix = prefix or u''
+            if obj.ns == UNSPECIFIED_NAMESPACE:
+                obj.ns = prefixes.get(prefix, u'')
+            elif prefix not in prefixes or prefixes[prefix] != obj.ns:
+                new_prefixes.append((prefix, obj.ns or u''))
+            attrs = [ a for a in obj.attributes.itervalues() ] if obj.attributes else ()
+            if new_prefixes:
+                prefixes = prefixes.copy()
+                prefixes.update(dict(new_prefixes))
+            self.printer.start_element(obj.ns, obj.qname, new_prefixes, attrs)
             if lead:
                 self.feed(lead, prefixes)
-                for subobj in obj.content:
+                for subobj in content:
                     self.feed(subobj, prefixes)
-            self.writer.end_element(obj.qname, obj.ns)
+            self.printer.end_element(obj.ns, obj.qname)
             return
         if isinstance(obj, basestring):
-            self.writer.text(U(obj))
+            self.printer.text(U(obj))
             return
         try:
             for subobj in obj:
@@ -90,26 +115,26 @@ class structwriter(object):
 
 class E(object):
     def __init__(self, name, *items):
+        if isinstance(name, tuple):
+            self.ns, self.qname = imap(U, name)
+        else:
+            self.ns, self.qname = UNSPECIFIED_NAMESPACE, U(name)
         if items and isinstance(items[0], dict):
             attributes = items[0]
             self.content = items[1:]
         else:
             self.content = items
-            attributes = {}
-        #if len(self.content) > 1:
-        #    self.content = chain(*(( i if (hasattr(i, 'next') and hasattr(i, '__iter__')) else [i] ) for i in self.content))
-        if isinstance(name, tuple):
-            self.ns, self.qname = imap(U, name)
-        else:
-            self.ns, self.qname = UNSPECIFIED_NAMESPACE, U(name)
+            attributes = None
         #XXX: Move to dictionary set expr in 2.6 or 3.0
-        self.attributes = {} if attributes else None
-        for name, value in attributes.iteritems():
-            if isinstance(name, tuple):
-                ns, qname = imap(U, name)
-            else:
-                ns, qname = None, U(name)
-            self.attributes[qname, ns] = value
+        self.attributes = None
+        if attributes:
+            self.attributes = {}
+            for name, value in attributes.iteritems():
+                if isinstance(name, tuple):
+                    ns, qname = imap(U, name)
+                else:
+                    ns, qname = None, U(name)
+                self.attributes[ns, qname] = qname, value
 
 class NS(object):
     def __init__(self, prefix, namespace):
