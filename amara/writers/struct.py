@@ -25,6 +25,7 @@ class StructWriterError(WriterError):
     ATTRIBUTE_ADDED_TOO_LATE = 1
     ATTRIBUTE_ADDED_TO_NON_ELEMENT = 2
 
+#ecount = 0
 
 class structwriter(object):
     def __init__(self, stream=sys.stdout, **kwargs):
@@ -49,24 +50,29 @@ class structwriter(object):
         if isinstance(obj, NS):
             return
         if isinstance(obj, E):
-            sniffer, content = tee(obj.content)
+            #First attempt used tee.  Seems we ran into the warning at http://www.python.org/doc/2.4.3/whatsnew/node13.html
+            #"Note that tee() has to keep copies of the values returned by the iterator; in the worst case, it may need to keep all of them. This should therefore be used carefully if the leading iterator can run far ahead of the trailing iterator in a long stream of inputs. If the separation is large, then you might as well use list() instead. When the iterators track closely with one another, tee()" is ideal. Possible applications include bookmarking, windowing, or lookahead iterators. (Contributed by Raymond Hettinger.)"
             #obj.namespaces = {}
-            for subobj in sniffer:
+            lead = None
+            for subobj in obj.content:
                 if isinstance(subobj, NS):
-                    #Consume it from the twin, too
-                    content.next()
-                    #obj.namespaces[subobj.prefix] = subobj.namespace
                     prefixes[subobj.prefix] = subobj.namespace
                 else:
+                    lead = subobj
                     break
 
             prefix, local = splitqname(obj.qname)
+            #global ecount
+            #ecount += 1
+            #print >> sys.stderr, ecount, obj.ns, obj.qname
             if obj.ns == UNSPECIFIED_NAMESPACE: obj.ns = prefixes.get(prefix, None)
             prefixes[prefix] = obj.ns
             #self.writer.start_element(obj.qname, obj.ns, namespaces=obj.namespaces, attributes=obj.attributes or {})
             self.writer.start_element(obj.qname, obj.ns, namespaces=prefixes, attributes=obj.attributes or {})
-            for subobj in obj.content:
-                self.feed(subobj, prefixes)
+            if lead:
+                self.feed(lead, prefixes)
+                for subobj in obj.content:
+                    self.feed(subobj, prefixes)
             self.writer.end_element(obj.qname, obj.ns)
             return
         if isinstance(obj, basestring):

@@ -222,7 +222,8 @@ class element_base(container_mixin, tree.element):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        pname = self.xml_factory.pyname(attr_node.xml_namespace, attr_node.xml_name, dir(self))
+        fe = getattr(self, 'factory_entity', self)
+        pname = fe.pyname(attr_node.xml_namespace, attr_node.xml_local, dir(self))
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
