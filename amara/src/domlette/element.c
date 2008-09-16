@@ -276,7 +276,34 @@ static PyObject *element_setstate(PyObject *self, PyObject *state)
   return Py_None;
 }
 
+static char xml_attribute_added_doc[] = "xml_attribute_added(target)\n\n\
+An attribute has been added to this element. This event is dispatched\n\
+after the addition has taken place. The `target` node of this event is the\n\
+attribute being added.";
+
+static PyObject *xml_attribute_added(PyObject *self, PyObject *child)
+{
+  Py_RETURN_NONE;
+}
+
+static char xml_attribute_removed_doc[] = "xml_attribute_removed(target)\n\n\
+An attribute is being removed from this element. This event is dispatched\n\
+before the attribute is removed from the tree. The `target` node of this\n\
+event is the attribute being removed.";
+
+static PyObject *xml_attribute_removed(PyObject *self, PyObject *child)
+{
+  Py_RETURN_NONE;
+}
+
+#define PyMethod_INIT(NAME, FLAGS) \
+  { #NAME, (PyCFunction)NAME, FLAGS, NAME##_doc }
+
 static PyMethodDef element_methods[] = {
+  /* mutation events */
+  PyMethod_INIT(xml_attribute_added,   METH_O),
+  PyMethod_INIT(xml_attribute_removed, METH_O),
+  /* copy/deepcopy/pickle support */
   { "__getnewargs__", element_getnewargs, METH_NOARGS,  "helper for pickle" },
   { "__getstate__",   element_getstate,   METH_VARARGS, "helper for pickle" },
   { "__setstate__",   element_setstate,   METH_O,       "helper for pickle" },
