@@ -29,10 +29,13 @@ class Node(object):
     lastChild = None
     previousSibling = None
     nextSibling = None
+    _ownerDocument = None
 
-    def __init__(self, ownerDocument):
-        self.ownerDocument = ownerDocument
+    def _set_ownerdoc(self, owner):
+        self._ownerDocument = owner
 
+    @property
+    def ownerDocument(self): return self._ownerDocument
     @property
     def localName(self): return self.xml_local
     @property
@@ -93,14 +96,15 @@ class _container(Node):
     def insertBefore(self, newChild, refNode):
         index = self.xml_index(refChild)
         return self.xml_insert(index, newChild)
+    def getElementsByTagNameNS(self, namespaceURI, localName): return ( e for e in self.xml_select(u'//*') if (e.xml_namespace, e.xml_local) == (namespaceURI, localName))
 
 
-class DocumentFragment(tree.entity, _container):
+class DocumentFragment(_container, tree.entity):
     nodeType = stdlib_node.DOCUMENT_FRAGMENT_NODE
     nodeName = "#document-fragment"
 
 
-class ProcessingInstruction(tree.processing_instruction, Node):
+class ProcessingInstruction(Node, tree.processing_instruction):
     @property
     def nodeName(self): return self.xml_target
     @property
@@ -109,7 +113,18 @@ class ProcessingInstruction(tree.processing_instruction, Node):
     def data(self): return self.xml_data
 
 
-class Element(tree.element, _container):
+class Attr(Node, tree.attribute):
+    specified = False
+    @property
+    def nodeName(self): return self.xml_qname
+
+
+class Element(_container, tree.element):
+    def xml_attribute_factory(self, ns, local, value=u''):
+        node = Attr(ns, local, value)
+        node._set_ownerdoc(self)
+        return node
+
     @property
     def nodeName(self): return self.xml_qname
     tagName = nodeName
@@ -123,20 +138,9 @@ class Element(tree.element, _container):
     def getAttributeNodeNS(self, namespaceURI, localName): return self.xml_attributes.get(namespaceURI, localName)
     def setAttributeNodeNS(self, node): self.xml_attributes[node.xml_namespace, node.xml_local] = node
     def removeAttributeNodeNS(self, node): del self.xml_attributes[node.xml_namespace, node.xml_local]
-    #FIXME: implement
-    def getElementsByTagNameNS(self, namespaceURI, localName): return []
-
-
-class Attr(tree.attribute, Node):
-    specified = False
-    @property
-    def nodeName(self): return self.xml_qname
 
 
 class CharacterData(Node):
-    def __init__(self, data):
-        self.xml_value = data
-
     @property
     def nodeValue(self): return self.xml_value
     data = nodeValue
@@ -194,17 +198,20 @@ class CharacterData(Node):
                 self.xml_value[:offset], repl, self.xml_value[offset+count:])
 
 
-class Text(tree.text, CharacterData):
+class Text(CharacterData, tree.text):
     nodeName = "#text"
 
-class Comment(tree.comment, CharacterData):
+
+class Comment(CharacterData, tree.comment):
     nodeName = "#comment"
+
 
 class CDATASection(Text):
     nodeType = stdlib_node.CDATA_SECTION_NODE
     nodeName = "#cdata-section"
 
-class DocumentType(tree.node, Node):
+
+class DocumentType(Node, tree.node):
     nodeType = stdlib_node.DOCUMENT_TYPE_NODE
     name = None
     publicId = None
@@ -219,7 +226,8 @@ class DocumentType(tree.node, Node):
             self.name = localname
         self.nodeName = self.name
 
-class Entity(tree.node, Node):
+
+class Entity(Node, tree.node):
     attributes = None
     nodeType = stdlib_node.ENTITY_NODE
     nodeValue = None
@@ -232,9 +240,11 @@ class Entity(tree.node, Node):
         self.nodeName = name
         self.notationName = notation
 
-class Notation(tree.node, Node):
+
+class Notation(Node, tree.node):
     nodeType = stdlib_node.NOTATION_NODE
     nodeValue = None
+
 
 class DOMImplementation(object):
     _features = [("core", "1.0"),
@@ -312,7 +322,7 @@ class DOMImplementation(object):
             return None
 
 
-class Document(tree.entity, Node):
+class Document(_container, tree.entity):
     _child_node_types = (stdlib_node.ELEMENT_NODE, stdlib_node.PROCESSING_INSTRUCTION_NODE,
                          stdlib_node.COMMENT_NODE, stdlib_node.DOCUMENT_TYPE_NODE)
 
@@ -328,6 +338,26 @@ class Document(tree.entity, Node):
     strictErrorChecking = False
     errorHandler = None
     documentURI = None
+
+    def xml_comment_factory(self, data):
+        node = Comment(data)
+        node._set_ownerdoc(self)
+        return node
+
+    def xml_processing_instruction_factory(self, target, data):
+        node = ProcessingInstruction(target, data)
+        node._set_ownerdoc(self)
+        return node
+
+    def xml_text_factory(self, data):
+        node = Text(data)
+        node._set_ownerdoc(self)
+        return node
+
+    def xml_element_factory(self, ns, local):
+        node = Element(ns, local)
+        node._set_ownerdoc(self)
+        return node
 
     def createDocumentFragment(self):
         d = DocumentFragment()
@@ -397,6 +427,11 @@ class Document(tree.entity, Node):
         n.ownerDocument = self
         return n
 
+    @property
+    def documentElement(self):
+        child_elements = [ ch for ch in self.xml_children if isinstance(ch, tree.element) ]
+        return child_elements[0] if child_elements else None
+
     def importNode(self, node, deep):
         if node.nodeType == stdlib_node.DOCUMENT_NODE:
             raise NotSupportedErr("cannot import document nodes")
@@ -411,6 +446,7 @@ class Document(tree.entity, Node):
                 for attr in node.xml_attributes:
                     set_owner(attr)
         return new_tree
+
 
 def getDOMImplementation(features=None):
     if features:
