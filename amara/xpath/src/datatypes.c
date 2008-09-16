@@ -686,29 +686,43 @@ static void number_dealloc(PyObject *v)
   v->ob_type->tp_free(v);
 }
 
+Py_LOCAL_INLINE(void)
+format_number(char *buf, size_t size, PyObject *v, int flags)
+{
+  if (v == Number_NaN)
+    strncpy(buf, "Number.NaN", size);
+  else if (v == Number_PosInf)
+    strncpy(buf, "Number.POSITIVE_INFINITY", size);
+  else if (v == Number_NegInf)
+    strncpy(buf, "Number.NEGATIVE_INFINITY", size);
+  else if (flags & Py_PRINT_RAW)
+    PyOS_snprintf(buf, size, "%0.12g", PyFloat_AS_DOUBLE(v));
+  else
+    PyOS_snprintf(buf, size, "Number(%0.12g)", PyFloat_AS_DOUBLE(v));
+}
+
+static int number_print(PyObject *v, FILE *fp, int flags)
+{
+  char buf[100];
+  format_number(buf, sizeof(buf), v, flags);
+  Py_BEGIN_ALLOW_THREADS
+  fputs(buf, fp);
+  Py_END_ALLOW_THREADS
+  return 0;
+}
+
 static PyObject *number_repr(PyObject *v)
 {
   char buf[100];
-  int len;
-  if (v == Number_NaN)
-    return PyString_FromString("Number.NaN");
-  if (v == Number_PosInf)
-    return PyString_FromString("Number.POSITIVE_INFINITY");
-  if (v == Number_NegInf)
-    return PyString_FromString("Number.NEGATIVE_INFINITY");
-  len = PyOS_snprintf(buf, 100, "Number(%0.12g)", PyFloat_AS_DOUBLE(v));
-  return PyString_FromStringAndSize(buf, len);
+  format_number(buf, sizeof(buf), v, 0);
+  return PyString_FromString(buf);
 }
 
 static PyObject *number_str(PyObject *v)
 {
-  if (v == Number_NaN)
-    return PyString_FromString("Number.NaN");
-  if (v == Number_PosInf)
-    return PyString_FromString("Number.POSITIVE_INFINITY");
-  if (v == Number_NegInf)
-    return PyString_FromString("Number.NEGATIVE_INFINITY");
-  return PyFloat_Type.tp_str(v);
+  char buf[100];
+  format_number(buf, sizeof(buf), v, Py_PRINT_RAW);
+  return PyString_FromString(buf);
 }
 
 static PyObject *handle_fpe(PyObject *v)
@@ -1052,7 +1066,7 @@ static PyTypeObject XPathNumber_Type = {
   /* tp_basicsize      */ sizeof(XPathNumberObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) number_dealloc,
-  /* tp_print          */ (printfunc) 0,
+  /* tp_print          */ (printfunc) number_print,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
@@ -1108,38 +1122,33 @@ static PyFloatObject _Number_Constants[] = {
 
 /** XPathBoolean *****************************************************/
 
+Py_LOCAL_INLINE(char *)
+format_boolean(PyObject *v, int flags)
+{
+  if (PyInt_AS_LONG(v)) {
+    return (flags & Py_PRINT_RAW) ? "True" : "boolean.TRUE";
+  } else {
+    return (flags & Py_PRINT_RAW) ? "False" : "boolean.FALSE";
+  }
+}
+
+static int boolean_print(PyObject *self, FILE *fp, int flags)
+{
+  char *str = format_boolean(self, flags);
+  Py_BEGIN_ALLOW_THREADS
+  fputs(str, fp);
+  Py_END_ALLOW_THREADS
+  return 0;
+}
+
 static PyObject *boolean_repr(PyObject *self)
 {
-  static PyObject *true_str = NULL;
-  static PyObject *false_str = NULL;
-  PyObject *repr;
-
-  if (PyInt_AS_LONG(self))
-    repr = true_str ? true_str :
-      (true_str = PyString_InternFromString("Boolean.TRUE"));
-  else
-    repr = false_str ? false_str :
-      (false_str = PyString_InternFromString("Boolean.FALSE"));
-
-  Py_XINCREF(repr);
-  return repr;
+  return PyString_FromString(format_boolean(self, 0));
 }
 
 static PyObject *boolean_str(PyObject *self)
 {
-  static PyObject *true_str = NULL;
-  static PyObject *false_str = NULL;
-  PyObject *repr;
-
-  if (PyInt_AS_LONG(self))
-    repr = true_str ? true_str :
-      (true_str = PyString_InternFromString("True"));
-  else
-    repr = false_str ? false_str :
-      (false_str = PyString_InternFromString("False"));
-
-  Py_XINCREF(repr);
-  return repr;
+  return PyString_FromString(format_boolean(self, Py_PRINT_RAW));
 }
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
@@ -1247,7 +1256,7 @@ static PyTypeObject XPathBoolean_Type = {
   /* tp_basicsize      */ sizeof(XPathBooleanObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
-  /* tp_print          */ (printfunc) 0,
+  /* tp_print          */ (printfunc) boolean_print,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
