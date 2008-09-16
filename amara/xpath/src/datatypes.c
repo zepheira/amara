@@ -594,6 +594,11 @@ static PyObject *string_repr(PyObject *v)
   return NULL;
 }
 
+static PyObject *string_str(PyObject *v)
+{
+  return  PyUnicode_Type.tp_str(v);
+}
+
 static PyMethodDef string_methods[] = {
   { "asString", object_as_self, METH_NOARGS, NULL },
   { NULL }
@@ -633,7 +638,7 @@ static PyTypeObject XPathString_Type = {
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
-  /* tp_str            */ (reprfunc) string_repr,
+  /* tp_str            */ (reprfunc) string_str,
   /* tp_getattro       */ (getattrofunc) 0,
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
@@ -681,27 +686,29 @@ static void number_dealloc(PyObject *v)
   v->ob_type->tp_free(v);
 }
 
-static int number_print(PyObject *v, FILE *fp, int flags)
-{
-  char buf[100];
-  if (v == Number_NaN)
-    fputs("Number.NaN", fp);
-  else if (v == Number_PosInf)
-    fputs("Number.POSITIVE_INFINITY", fp);
-  else if (v == Number_NegInf)
-    fputs("Number.NEGATIVE_INFINITY", fp);
-  else {
-    PyOS_snprintf(buf, 100, "Number(%0.12g)", PyFloat_AS_DOUBLE(v));
-    fputs(buf, fp);
-  }
-  return 0;
-}
-
 static PyObject *number_repr(PyObject *v)
 {
   char buf[100];
-  int len = PyOS_snprintf(buf, 100, "Number(%0.12g)", PyFloat_AS_DOUBLE(v));
+  int len;
+  if (v == Number_NaN)
+    return PyString_FromString("Number.NaN");
+  if (v == Number_PosInf)
+    return PyString_FromString("Number.POSITIVE_INFINITY");
+  if (v == Number_NegInf)
+    return PyString_FromString("Number.NEGATIVE_INFINITY");
+  len = PyOS_snprintf(buf, 100, "Number(%0.12g)", PyFloat_AS_DOUBLE(v));
   return PyString_FromStringAndSize(buf, len);
+}
+
+static PyObject *number_str(PyObject *v)
+{
+  if (v == Number_NaN)
+    return PyString_FromString("Number.NaN");
+  if (v == Number_PosInf)
+    return PyString_FromString("Number.POSITIVE_INFINITY");
+  if (v == Number_NegInf)
+    return PyString_FromString("Number.NEGATIVE_INFINITY");
+  return PyFloat_Type.tp_str(v);
 }
 
 static PyObject *handle_fpe(PyObject *v)
@@ -1045,7 +1052,7 @@ static PyTypeObject XPathNumber_Type = {
   /* tp_basicsize      */ sizeof(XPathNumberObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) number_dealloc,
-  /* tp_print          */ (printfunc) number_print,
+  /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
@@ -1055,7 +1062,7 @@ static PyTypeObject XPathNumber_Type = {
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
-  /* tp_str            */ (reprfunc) number_repr,
+  /* tp_str            */ (reprfunc) number_str,
   /* tp_getattro       */ (getattrofunc) 0,
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
@@ -1101,12 +1108,6 @@ static PyFloatObject _Number_Constants[] = {
 
 /** XPathBoolean *****************************************************/
 
-static int boolean_print(PyObject *self, FILE *fp, int flags)
-{
-  fputs(PyInt_AS_LONG(self) ? "Boolean.TRUE" : "Boolean.FALSE", fp);
-  return 0;
-}
-
 static PyObject *boolean_repr(PyObject *self)
 {
   static PyObject *true_str = NULL;
@@ -1119,6 +1120,23 @@ static PyObject *boolean_repr(PyObject *self)
   else
     repr = false_str ? false_str :
       (false_str = PyString_InternFromString("Boolean.FALSE"));
+
+  Py_XINCREF(repr);
+  return repr;
+}
+
+static PyObject *boolean_str(PyObject *self)
+{
+  static PyObject *true_str = NULL;
+  static PyObject *false_str = NULL;
+  PyObject *repr;
+
+  if (PyInt_AS_LONG(self))
+    repr = true_str ? true_str :
+      (true_str = PyString_InternFromString("True"));
+  else
+    repr = false_str ? false_str :
+      (false_str = PyString_InternFromString("False"));
 
   Py_XINCREF(repr);
   return repr;
@@ -1229,7 +1247,7 @@ static PyTypeObject XPathBoolean_Type = {
   /* tp_basicsize      */ sizeof(XPathBooleanObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
-  /* tp_print          */ (printfunc) boolean_print,
+  /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
@@ -1239,7 +1257,7 @@ static PyTypeObject XPathBoolean_Type = {
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
-  /* tp_str            */ (reprfunc) boolean_repr,
+  /* tp_str            */ (reprfunc) boolean_str,
   /* tp_getattro       */ (getattrofunc) 0,
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
