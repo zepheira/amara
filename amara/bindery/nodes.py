@@ -309,6 +309,7 @@ class entity_base(container_mixin, tree.entity):
     #xml_comment_factory = tree.comment
     #xml_processing_instruction_factory = tree.processing_instruction
     #xml_text_factory = tree.text
+    xml_element_base = element_base
 
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
@@ -351,7 +352,7 @@ class entity_base(container_mixin, tree.entity):
         if not pname: pname = self.pyname(ns, local)
         if (ns, local) not in self._eclasses:
             class_name = pname
-            eclass = type(class_name, (element_base,), {})
+            eclass = type(class_name, (self.xml_element_base,), {})
             self._eclasses[(ns, local)] = eclass
         else:
             eclass = self._eclasses[(ns, local)]

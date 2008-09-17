@@ -112,7 +112,6 @@ def _(t): return t
 
 
 def run(source, xpattern, xpath, limit, sentinel, display, prefixes):
-    print (xpattern, xpath, limit, sentinel, display, prefixes)
     prefixes = prefixes or {}
     try:
         prefixes = dict([ p.split('=') for p in prefixes ])
