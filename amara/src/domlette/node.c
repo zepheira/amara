@@ -637,13 +637,38 @@ static PyObject *node_richcompare(NodeObject *a, NodeObject *b, int op)
   return result;
 }
 
+static PyObject *node_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  static char *kwlist[] = { "parent", NULL };
+  NodeObject *parent=NULL;
+  PyObject *self;
+
+  if (type == &DomletteNode_Type) {
+    PyErr_Format(PyExc_TypeError, "cannot create '%.100s' instances",
+                 type->tp_name);
+    return NULL;
+  }
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O!:Node", kwlist,
+                                   &DomletteContainer_Type, &parent)) {
+    return NULL;
+  }
+
+  self = type->tp_alloc(type, 0);
+  if (self != NULL && parent != NULL) {
+    Node_SET_PARENT(self, parent);
+    Py_INCREF(parent);
+  }
+  return self;
+}
+
 static char node_doc[] = "\
 The Node type is the primary datatype for the entire Document Object Model.";
 
 PyTypeObject DomletteNode_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Node",
+  /* tp_name           */ Domlette_MODULE_NAME "." "node",
   /* tp_basicsize      */ sizeof(NodeObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) _Node_Del,
@@ -681,7 +706,7 @@ PyTypeObject DomletteNode_Type = {
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) 0,
+  /* tp_new            */ (newfunc) node_new,
   /* tp_free           */ 0,
 };
 
