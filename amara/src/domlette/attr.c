@@ -298,7 +298,7 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   Py_DECREF(prefix);
 
   if (value) {
-    value = XmlString_ConvertArgument(qualifiedName, "value", 0);
+    value = XmlString_ConvertArgument(value, "value", 0);
     if (value == NULL) {
       Py_DECREF(namespaceURI);
       Py_DECREF(qualifiedName);
