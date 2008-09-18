@@ -66,8 +66,8 @@ get_hash(PyObject *namespace, PyObject *name)
 #define NAME_EQ(a, b) \
   (PyUnicode_GET_SIZE(a) == PyUnicode_GET_SIZE(b) && \
    *PyUnicode_AS_UNICODE(a) == *PyUnicode_AS_UNICODE(b) && \
-   memcmp(PyUnicode_AS_UNICODE(a), PyUnicode_AS_UNICODE(b), \
-          PyUnicode_GET_DATA_SIZE(a)))
+   !memcmp(PyUnicode_AS_UNICODE(a), PyUnicode_AS_UNICODE(b), \
+           PyUnicode_GET_DATA_SIZE(a)))
 
 #define NAMESPACE_EQ(a, b) \
   (((a) == Py_None || (b) == Py_None) ? (a) == (b) : NAME_EQ((a), (b)))
@@ -626,8 +626,8 @@ attributemap_subscript(PyObject *op, PyObject *key)
     PyErr_SetObject(PyExc_KeyError, key);
     return NULL;
   }
-  Py_INCREF(node);
-  return (PyObject *)node;
+  Py_INCREF(Attr_GET_VALUE(node));
+  return Attr_GET_VALUE(node);
 }
 
 static int
