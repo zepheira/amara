@@ -311,8 +311,6 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
   hash = Attr_GET_HASH(node);
   name = Attr_GET_LOCAL_NAME(node);
   namespace = Attr_GET_NAMESPACE_URI(node);
-  if (hash == -1)
-    return -1;
   entry = get_entry(nm, hash, name, namespace);
   old_node = nm->nm_table[entry];
   if (old_node == NULL) {
@@ -363,24 +361,26 @@ AttributeMap_Next(PyObject *self, Py_ssize_t *ppos)
 static PyObject *iter_new(AttributeMapObject *self, PyTypeObject *type);
 
 static char attributemap_getnode_doc[] = "\
-getnode(namespace, localname) -> Node or None\n\
+getnode(namespace, localname) -> attribute node or None\n\
 \n\
 Retrieves a node specified by local name and namespace URI or None \
 if they do not identify a node in this map.";
 
 static PyObject *attributemap_getnode(PyObject *self, PyObject *args)
 {
-  PyObject *namespace, *name;
-  AttrObject *attr;
+  PyObject *namespace, *name, *result;
 
   if (!PyArg_ParseTuple(args, "OO:getnode", &namespace, &name))
     return NULL;
 
-  attr = AttributeMap_GetNode(self, namespace, name);
-  if (attr != NULL)
-    return (PyObject *)attr;
-  Py_INCREF(Py_None);
-  return Py_None;
+  result = (PyObject *)AttributeMap_GetNode(self, namespace, name);
+  if (result == NULL) {
+    if (PyErr_Occurred())
+      return NULL;
+    result = Py_None;
+  }
+  Py_INCREF(result);
+  return result;
 }
 
 static char attributemap_setnode_doc[] = "\
@@ -405,29 +405,30 @@ static char attributemap_get_doc[] =
 
 static PyObject *attributemap_get(PyObject *self, PyObject *args)
 {
-  PyObject *key, *def=Py_None;
+  PyObject *key, *result=Py_None;
   PyObject *namespace, *name;
   AttrObject *node;
 
-  if (!PyArg_ParseTuple(args, "O|O:get", &key, &def))
+  if (!PyArg_ParseTuple(args, "O|O:get", &key, &result))
     return NULL;
   if (parse_key(key, &namespace, &name, 0) < 0) {
-    if (PyErr_ExceptionMatches(PyExc_KeyError)) {
-      PyErr_Clear();
-      goto notfound;
-    }
-    return NULL;
+    if (!PyErr_ExceptionMatches(PyExc_KeyError))
+      return NULL;
+    PyErr_Clear();
+    goto done;
   }
   node = AttributeMap_GetNode(self, namespace, name);
   Py_DECREF(namespace);
   Py_DECREF(name);
-  if (node) {
-    Py_INCREF(Attr_GET_VALUE(node));
-    return Attr_GET_VALUE(node);
+  if (node == NULL) {
+    if (PyErr_Occurred())
+      return NULL;
+  } else {
+    result = Attr_GET_VALUE(node);
   }
-notfound:
-  Py_INCREF(def);
-  return def;
+done:
+  Py_INCREF(result);
+  return result;
 }
 
 static char attributemap_keys_doc[] =
@@ -590,18 +591,18 @@ static PyObject *attributemap_nodes(AttributeMapObject *self)
       attributemap_##NAME##_doc }
 
 static PyMethodDef attributemap_methods[] = {
-  AttributeMap_METHOD(getnode, METH_VARARGS),
-  AttributeMap_METHOD(setnode, METH_VARARGS),
+  AttributeMap_METHOD(getnode,    METH_VARARGS),
+  AttributeMap_METHOD(setnode,    METH_VARARGS),
   /* Python Mapping Interface */
-  AttributeMap_METHOD(get, METH_VARARGS),
-  AttributeMap_METHOD(keys, METH_NOARGS),
-  AttributeMap_METHOD(values, METH_NOARGS),
-  AttributeMap_METHOD(items, METH_NOARGS),
-  AttributeMap_METHOD(copy, METH_NOARGS),
-  AttributeMap_METHOD(iterkeys, METH_NOARGS),
+  AttributeMap_METHOD(get,        METH_VARARGS),
+  AttributeMap_METHOD(keys,       METH_NOARGS),
+  AttributeMap_METHOD(values,     METH_NOARGS),
+  AttributeMap_METHOD(items,      METH_NOARGS),
+  AttributeMap_METHOD(copy,       METH_NOARGS),
+  AttributeMap_METHOD(iterkeys,   METH_NOARGS),
   AttributeMap_METHOD(itervalues, METH_NOARGS),
-  AttributeMap_METHOD(iteritems, METH_NOARGS),
-  AttributeMap_METHOD(nodes, METH_NOARGS),
+  AttributeMap_METHOD(iteritems,  METH_NOARGS),
+  AttributeMap_METHOD(nodes,      METH_NOARGS),
   { NULL }
 };
 
@@ -623,7 +624,8 @@ attributemap_subscript(PyObject *op, PyObject *key)
   Py_DECREF(namespace);
   Py_DECREF(name);
   if (node == NULL) {
-    PyErr_SetObject(PyExc_KeyError, key);
+    if (!PyErr_Occurred())
+      PyErr_SetObject(PyExc_KeyError, key);
     return NULL;
   }
   Py_INCREF(Attr_GET_VALUE(node));
@@ -651,7 +653,7 @@ attributemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
     if (parse_key(key, &namespace, &name, 0) < 0)
       return -1;
     /* FIXME: validate value */
-    value = XmlString_ConvertArgument(value, "", 0);
+    value = XmlString_ConvertArgument(value, "value", 0);
     if (value == NULL) {
       Py_DECREF(namespace);
       Py_DECREF(name);
@@ -659,19 +661,23 @@ attributemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
     }
     attr = (AttrObject *)AttributeMap_GetNode(op, namespace, name);
     if (attr == NULL) {
-      /* FIXME: create new attribute node */
-      attr = Element_AddAttribute(((AttributeMapObject *)op)->nm_owner,
-                                  namespace, NULL, name, value);
-      if (attr == NULL) {
+      if (PyErr_Occurred()) {
         result = -1;
       } else {
-        Py_DECREF(attr);
-        result = 0;
+        attr = Element_AddAttribute(((AttributeMapObject *)op)->nm_owner,
+                                    namespace, NULL, name, value);
+        if (attr == NULL) {
+          result = -1;
+        } else {
+          Py_DECREF(attr);
+          result = 0;
+        }
       }
     } else {
       /* just update the node value */
       result = Attr_SetValue(attr, value);
     }
+    Py_DECREF(value);
   }
   Py_DECREF(namespace);
   Py_DECREF(name);
@@ -769,14 +775,14 @@ static void attributemap_dealloc(AttributeMapObject *self)
   }
   Py_TRASHCAN_SAFE_END(self);
   /* dealloc node table */
-  if (self->nm_table != self->nm_smalltable)
-    PyMem_Free(self->nm_table);
+  if (table != self->nm_smalltable)
+    PyMem_Free(table);
   ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }
 
 static PyObject *attributemap_repr(AttributeMapObject *self)
 {
-  return PyString_FromFormat("<AttributeMap at %p: %zd nodes>",
+  return PyString_FromFormat("<attributemap at %p: %zd nodes>",
                              self, self->nm_used);
 }
 
@@ -803,12 +809,10 @@ static int attributemap_clear(AttributeMapObject *self)
 
   Py_CLEAR(self->nm_owner);
 
-  table = self->nm_table;
-  malloced_table = (table != self->nm_smalltable);
-
   /* If it is a small table with something that needs to be cleared, the
    * only safe way is to copy the entries into another small table first.
    */
+  malloced_table = (table != self->nm_smalltable);
   if (!malloced_table && used) {
     memcpy(smallcopy, table, sizeof(smallcopy));
     table = smallcopy;
@@ -838,17 +842,12 @@ static PyObject *attributemap_iter(AttributeMapObject *self)
 
 static char attributemap_doc[] = "\
 Objects implementing the AttributeMap interface are used to \
-represent collections of nodes that can be accessed by name. \
-Note that AttributeMaps are not maintained in any particular order. \
-Objects contained in an object implementing AttributeMap may \
-also be accessed by an ordinal index, but this is simply to allow \
-convenient enumeration of the contents of a AttributeMap, \
-and does not imply that the DOM specifies an order to these Nodes.";
+represent collections of nodes that can be accessed by name.";
 
 static PyTypeObject AttributeMap_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "AttributeMap",
+  /* tp_name           */ Domlette_MODULE_NAME "." "attributemap",
   /* tp_basicsize      */ sizeof(AttributeMapObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) attributemap_dealloc,

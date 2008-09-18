@@ -16,6 +16,7 @@ extern "C" {
   } NamespaceObject;
 
 #define Namespace(op) ((NamespaceObject *)(op))
+#define Namespace_GET_HASH(op) (Namespace(op)->hash)
 #define Namespace_GET_NAME(op) (Namespace(op)->name)
 #define Namespace_GET_VALUE(op) (Namespace(op)->value)
 

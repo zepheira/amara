@@ -20,14 +20,6 @@ extern "C" {
 #define NamespaceMap_MINSIZE 8
 
   typedef struct {
-    Py_ssize_t ne_hash;
-    NamespaceObject *ne_node;
-  } NamespaceEntry;
-
-#define NamespaceEntry_HASH(op) (((NamespaceEntry *)(op))->ne_hash)
-#define NamespaceEntry_NODE(op) (((NamespaceEntry *)(op))->ne_node)
-
-  typedef struct {
     PyObject_HEAD
     /* The number of inuse entries in the table. */
     Py_ssize_t nm_used;
@@ -41,9 +33,9 @@ extern "C" {
      * saves repeated runtime null-tests in the workhorse getitem and
      * setitem calls.
      */
-    NamespaceEntry *nm_table;
+    NamespaceObject **nm_table;
     ElementObject *nm_owner;
-    NamespaceEntry nm_smalltable[NamespaceMap_MINSIZE];
+    NamespaceObject *nm_smalltable[NamespaceMap_MINSIZE];
   } NamespaceMapObject;
 
 #define NamespaceMap_GET_SIZE(op) (((NamespaceMapObject *)(op))->nm_used)
