@@ -32,6 +32,71 @@ element_init(ElementObject *self, PyObject *namespaceURI,
   return self;
 }
 
+Py_LOCAL_INLINE(PyObject *)
+lookup_prefix(ElementObject *self, PyObject *namespace)
+{
+  NodeObject *current = (NodeObject *)self;
+  PyObject *nodemap, *name, *value;
+  Py_ssize_t pos;
+  NamespaceObject *node;
+
+  do {
+    nodemap = Element_GET_NAMESPACES(current);
+    if (nodemap != NULL) {
+      /* process the element's declared namespaces */
+      pos = 0;
+      while ((node = NamespaceMap_Next(nodemap, &pos))) {
+        /* namespace attribute */
+        name = Namespace_GET_NAME(node);
+        value = Namespace_GET_VALUE(node);
+        if (PyUnicode_GET_SIZE(value) == 0) {
+          /* empty string; remove prefix binding */
+          /* NOTE: in XML Namespaces 1.1 it would be possible to do this
+              for all prefixes, for now just the default namespace */
+          if (name == Py_None)
+            continue;
+        }
+        switch (PyObject_RichCompareBool(namespace, value, Py_EQ)) {
+        case 0:
+          break;
+        case 1:
+          return name;
+        default:
+          return NULL;
+        }
+      }
+    }
+    current = Node_GET_PARENT(current);
+  } while (current && Element_Check(current));
+
+  PyErr_SetString(PyExc_ValueError, "undeclared namespace uri");
+  return NULL;
+}
+
+Py_LOCAL_INLINE(PyObject *)
+build_qname(PyObject *prefix, PyObject *local)
+{
+  PyObject *qualifiedName;
+  Py_ssize_t size;
+
+  assert(PyUnicode_Check(prefix) && PyUnicode_Check(local));
+
+  size = PyUnicode_GET_SIZE(prefix) + 1 + PyUnicode_GET_SIZE(local);
+  qualifiedName = PyUnicode_FromUnicode(NULL, size);
+  if (qualifiedName) {
+    /* copy the prefix to the qualifiedName string */
+    size = PyUnicode_GET_SIZE(prefix);
+    Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qualifiedName),
+                    PyUnicode_AS_UNICODE(prefix), size);
+    /* add the ':' separator */
+    PyUnicode_AS_UNICODE(qualifiedName)[size++] = (Py_UNICODE) ':';
+    /* add the localName after the ':' to finish the qualifiedName */
+    Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qualifiedName) + size,
+                    PyUnicode_AS_UNICODE(local), PyUnicode_GET_SIZE(local));
+  }
+  return qualifiedName;
+}
+
 /** Public C API ******************************************************/
 
 ElementObject *Element_New(PyObject *namespaceURI,
@@ -79,12 +144,32 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
   PyObject *attributes, *factory;
   AttrObject *node;
 
+  if (qualifiedName == NULL) {
+    if (namespaceURI == Py_None) {
+      qualifiedName = localName;
+      Py_INCREF(localName);
+    } else {
+      PyObject *prefix = lookup_prefix(self, namespaceURI);
+      if (prefix == NULL)
+        return NULL;
+      if (prefix == Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot use default namespace for attributes");
+        return NULL;
+      }
+      qualifiedName = build_qname(prefix, localName);
+      if (qualifiedName == NULL)
+        return NULL;
+    }
+  }
+
   /* OPT: ensure the AttributeMap exists */
   attributes = self->attributes;
   if (attributes == NULL) {
     attributes = self->attributes = AttributeMap_New(self);
     if (attributes == NULL) return NULL;
   }
+  /* find the factory used to create the new attribute node */
   if (!Element_CheckExact(self)) {
     factory = PyObject_GetAttr((PyObject *)self, attribute_factory_string);
     if (factory == NULL)
@@ -94,6 +179,7 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
   } else {
     factory = NULL;
   }
+  /* create the attribute */
   if (factory == NULL) {
     node = Attr_New(namespaceURI, qualifiedName, localName, value);
   } else {
@@ -109,6 +195,7 @@ Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
       return NULL;
     }
   }
+  /* save the node in the attributemap */
   if (node != NULL) {
     if (AttributeMap_SetNode(attributes, node) < 0) {
       Py_DECREF(node);
@@ -360,40 +447,21 @@ static PyObject *get_prefix(ElementObject *self, void *arg)
 static int set_prefix(ElementObject *self, PyObject *v, void *arg)
 {
   PyObject *qualifiedName, *prefix;
-  Py_ssize_t size;
 
   prefix = XmlString_ConvertArgument(v, "xml_prefix", 1);
-  if (prefix == NULL) {
+  if (prefix == NULL)
     return -1;
-  } else if (prefix == Py_None) {
-    Py_DECREF(self->qname);
-    Py_INCREF(self->localName);
-    self->qname = self->localName;
-    return 0;
+  if (prefix == Py_None) {
+    qualifiedName = self->localName;
+    Py_INCREF(qualifiedName);
+  } else {
+    qualifiedName = build_qname(prefix, self->localName);
+    if (qualifiedName == NULL) {
+      Py_DECREF(prefix);
+      return -1;
+    }
   }
-
-  /* rebuild the qualifiedName */
-  size = PyUnicode_GET_SIZE(prefix) + 1 + PyUnicode_GET_SIZE(self->localName);
-  qualifiedName = PyUnicode_FromUnicode(NULL, size);
-  if (qualifiedName == NULL) {
-    Py_DECREF(prefix);
-    return -1;
-  }
-
-  /* copy the prefix to the qualifiedName string */
-  size = PyUnicode_GET_SIZE(prefix);
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qualifiedName),
-                  PyUnicode_AS_UNICODE(prefix), size);
   Py_DECREF(prefix);
-
-  /* add the ':' separator */
-  PyUnicode_AS_UNICODE(qualifiedName)[size++] = (Py_UNICODE) ':';
-
-  /* add the localName after the ':' to finish the qualifiedName */
-  Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qualifiedName) + size,
-                  PyUnicode_AS_UNICODE(self->localName),
-                  PyUnicode_GET_SIZE(self->localName));
-
   Py_DECREF(self->qname);
   self->qname = qualifiedName;
   return 0;
