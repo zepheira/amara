@@ -131,8 +131,7 @@ class Element(_container, tree.element):
     def hasAttributeNS(self, namespaceURI, localName): return bool(self.xml_attributes.get(namespaceURI, localName))
     def hasAttributes(self): return bool(self.xml_attributes)
     def getAttributeNS(self, namespaceURI, localName):
-        node = self.xml_attributes.get(namespaceURI, localName)
-        return node and node.xml_value
+        return self.xml_attributes.get((namespaceURI, localName))
     def setAttributeNS(self, namespaceURI, localName, value): self.xml_attributes[namespaceURI, localName] = value
     def removeAttributeNS(self, namespaceURI, localName): del self.xml_attributes[namespaceURI, localName]
     def getAttributeNodeNS(self, namespaceURI, localName): return self.xml_attributes.get(namespaceURI, localName)

@@ -132,14 +132,14 @@ class bound_attribute(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        return node.xml_attributes[self.ns, self.local]
+        return obj.xml_attributes[self.ns, self.local]
 
     def __set__(self, obj, value):
-        node.xml_attributes[self.ns, self.local].xml_value = value
+        obj.xml_attributes[self.ns, self.local].xml_value = value
         return
 
     def __delete__(self, obj):
-        del node.xml_attributes[self.ns, self.local]
+        del obj.xml_attributes[self.ns, self.local]
         return
 
 
@@ -157,6 +157,9 @@ class container_mixin(object):
     @property
     def xml_child_text(self):
         return u''.join([ ch for ch in self.xml_children if isinstance(ch, unicode)])
+        
+    def xml_element_children(self):
+        return ( ch for ch in self.xml_children if isinstance(ch, tree.element) )
 
     def xml_child_inserted(self, child):
         """

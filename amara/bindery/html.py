@@ -56,6 +56,16 @@ class element(nodes.element_base, node):
         nodes.element_base.__init__(self, ns, qname)
         return
 
+    def xml_set_attributes_(self, attrs):
+        for key, val in attrs.iteritems():
+            self.xml_attributes[None, key] = val
+        return
+
+    def xml_get_attributes_(self, attrs):
+        return self.xml_attributes
+
+    attributes = property(xml_get_attributes_, xml_set_attributes_, None, "html5lib uses this property to manage HTML element attrs")
+
 
 class entity(node, nodes.entity_base):
     """
@@ -106,7 +116,6 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         self.entity = entity()
         html5lib.treebuilders._base.TreeBuilder.__init__(self)
         def eclass(name):
-            #print attributes
             return self.entity.xml_element_factory(None, name)
         self.elementClass = eclass
     

@@ -11,6 +11,7 @@ for considered reasons of clarity in use
 
 import sys
 from itertools import *
+from amara import tree
 from amara.writers import WriterError
 from amara import XML_NAMESPACE
 from amara.lib.xmlstring import *
@@ -103,15 +104,21 @@ class structwriter(object):
         if isinstance(obj, basestring):
             self.printer.text(U(obj))
             return
+        if isinstance(obj, tree.element):
+            #Be smart about bindery nodes
+            self.printer.text(unicode(obj))
+            return
         try:
-            for subobj in obj:
-                self.feed(subobj, prefixes)
-        except TypeError:
+            obj = iter(obj)
+        except TypeError, e:
             if callable(obj):
                 self.feed(obj(), prefixes)
             else:
                 #Just try to make it text, i.e. punt
                 self.feed(unicode(obj), prefixes)
+        else:
+            for subobj in obj:
+                self.feed(subobj, prefixes)
 
 class E(object):
     def __init__(self, name, *items):
@@ -134,7 +141,8 @@ class E(object):
                     ns, qname = imap(U, name)
                 else:
                     ns, qname = None, U(name)
-                self.attributes[ns, qname] = qname, value
+                #Unicode value coercion to help make it a bit smarter
+                self.attributes[ns, qname] = qname, unicode(value)
 
 class NS(object):
     def __init__(self, prefix, namespace):
