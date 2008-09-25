@@ -15,6 +15,7 @@ from itertools import *
 
 import html5lib
 from amara import tree
+from amara.lib import inputsource
 from amara.bindery import nodes
 from amara.lib.xmlstring import *
 
@@ -116,8 +117,11 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         self.entity = entity()
         html5lib.treebuilders._base.TreeBuilder.__init__(self)
         def eclass(name):
-            return self.entity.xml_element_factory(None, name)
+            return self.entity.xml_element_factory(None, str(name))
         self.elementClass = eclass
     
-    
+
+def parse(source):
+    parser = html5lib.HTMLParser(tree=treebuilder)
+    return parser.parse(inputsource(source, None).stream)
 
