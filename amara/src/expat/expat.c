@@ -454,7 +454,6 @@ Py_LOCAL(Context *) Context_New(XML_Parser parser, PyObject *source)
 
   context->parser = parser;
   if (source == Py_None) {
-    Py_INCREF(source);
     context->source = source;
     context->uri = Py_None;
     context->stream = Py_None;
@@ -465,6 +464,7 @@ Py_LOCAL(Context *) Context_New(XML_Parser parser, PyObject *source)
     context->stream = InputSource_GET_BYTE_STREAM(source);
     context->encoding = InputSource_GET_ENCODING(source);
   }
+  Py_INCREF(source);
   Py_INCREF(context->uri);
   Py_INCREF(context->stream);
   Py_INCREF(context->encoding);
@@ -1501,12 +1501,9 @@ start_parsing(ExpatReader *reader, XML_Parser parser, PyObject *source)
 
   Debug_ParserFunctionCall(start_parsing, reader);
 
-  Py_INCREF(source);
   status = begin_context(reader, parser, source);
-  if (status == EXPAT_STATUS_ERROR) {
-    Py_DECREF(source);
+  if (status == EXPAT_STATUS_ERROR)
     goto finally;
-  }
   begin_handlers(reader, &expat_handlers);
 
   status = ExpatFilter_StartDocument(reader->context->filters);
@@ -3444,8 +3441,9 @@ static int expat_ExternalEntityRef(XML_Parser parser, const XML_Char *context,
     return result;
   }
 
-  if (begin_context(reader, new_parser, source) == EXPAT_STATUS_ERROR) {
-    Py_DECREF(source);
+  status = begin_context(reader, new_parser, source);
+  Py_DECREF(source);
+  if (status == EXPAT_STATUS_ERROR) {
     XML_ParserFree(new_parser);
     stop_parsing(reader);
     return result;

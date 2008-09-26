@@ -49,6 +49,7 @@ inputsource_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 inputsource_dealloc(InputSourceObject *self)
 {
+  PyObject_GC_UnTrack((PyObject *)self);
   Py_XDECREF(self->byte_stream);
   Py_XDECREF(self->char_stream);
   Py_XDECREF(self->string_data);
