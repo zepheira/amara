@@ -104,19 +104,19 @@ actually be smaller than the old one.
 Py_LOCAL(int)
 resize_table(NamespaceMapObject *self)
 {
-  NamespaceObject **oldtable, **newtable, *entry;
-  Py_ssize_t newsize, i;
+  NamespaceObject **oldtable, **newtable;
+  Py_ssize_t size, i;
 
   /* Get space for a new table. */
   oldtable = self->nm_table;
-  newsize = (self->nm_mask + 1) << 1;
-  if (newsize <= NamespaceMap_MINSIZE) {
-    newsize = NamespaceMap_MINSIZE;
+  size = (self->nm_mask + 1) << 1;
+  if (size <= NamespaceMap_MINSIZE) {
+    size = NamespaceMap_MINSIZE;
     newtable = self->nm_smalltable;
     if (oldtable == newtable)
       return 0;
   } else {
-    newtable = PyMem_New(NamespaceObject *, newsize);
+    newtable = PyMem_New(NamespaceObject *, size);
     if (newtable == NULL) {
       PyErr_NoMemory();
       return -1;
@@ -125,13 +125,14 @@ resize_table(NamespaceMapObject *self)
 
   /* Make the dict empty, using the new table. */
   self->nm_table = newtable;
-  self->nm_mask = newsize - 1;
-  memset(newtable, 0, sizeof(NamespaceObject *) * newsize);
+  self->nm_mask = size - 1;
+  memset(newtable, 0, sizeof(NamespaceObject *) * size);
 
   /* Copy the data over */
-  for (entry = *oldtable, i = self->nm_used; i > 0; entry++) {
+  for (i = 0, size = self->nm_used; size > 0; i++) {
+    NamespaceObject *entry = oldtable[i];
     if (entry != NULL) {
-      i--;
+      size--;
       set_entry(self, entry);
     }
   }
@@ -244,27 +245,26 @@ NamespaceMap_SetNode(PyObject *self, NamespaceObject *node)
   entry = get_entry(nm, hash, name);
   old_node = nm->nm_table[entry];
   if (old_node == NULL) {
+    /* adding the namespace to the table */
     nm->nm_used++;
-    /* If fill >= 2/3 size, adjust size.  Normally, this doubles or
-     * quaduples the size, but it's also possible for the dict to shrink
-     * (if ma_fill is much larger than ma_used, meaning a lot of dict
-     * keys have been * deleted).
-     */
-    if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
-      if (resize_table(nm) < 0)
-        return -1;
-    }
   } else {
+    /* replacing the old namespace in the table */
     Py_DECREF(old_node);
   }
-  /* store the attribute in the table */
+  /* store the namespace in the table */
   nm->nm_table[entry] = node;
   Py_INCREF(node);
-  /* update the attribute's owner */
+  /* update the naespace's owner */
   temp = Node_GET_PARENT(node);
   Node_SET_PARENT(node, (NodeObject *)nm->nm_owner);
   Py_INCREF(nm->nm_owner);
   Py_XDECREF(temp);
+  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size, but 
+   * it's also possible for the dict to shrink. */
+  if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
+    if (resize_table(nm) < 0)
+      return -1;
+  }
   /* success */
   return 0;
 }

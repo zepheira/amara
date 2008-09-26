@@ -142,19 +142,19 @@ actually be smaller than the old one.
 Py_LOCAL(int)
 resize_table(AttributeMapObject *self)
 {
-  AttrObject **oldtable, **newtable, *entry;
-  Py_ssize_t newsize, i;
+  AttrObject **oldtable, **newtable;
+  Py_ssize_t size, i;
 
   /* Get space for a new table. */
   oldtable = self->nm_table;
-  newsize = (self->nm_mask + 1) << 1;
-  if (newsize <= AttributeMap_MINSIZE) {
-    newsize = AttributeMap_MINSIZE;
+  size = (self->nm_mask + 1) << 1;
+  if (size <= AttributeMap_MINSIZE) {
+    size = AttributeMap_MINSIZE;
     newtable = self->nm_smalltable;
     if (oldtable == newtable)
       return 0;
   } else {
-    newtable = PyMem_New(AttrObject *, newsize);
+    newtable = PyMem_New(AttrObject *, size);
     if (newtable == NULL) {
       PyErr_NoMemory();
       return -1;
@@ -163,13 +163,14 @@ resize_table(AttributeMapObject *self)
 
   /* Make the dict empty, using the new table. */
   self->nm_table = newtable;
-  self->nm_mask = newsize - 1;
-  memset(newtable, 0, sizeof(AttrObject *) * newsize);
+  self->nm_mask = size - 1;
+  memset(newtable, 0, sizeof(AttrObject *) * size);
 
   /* Copy the data over */
-  for (entry = *oldtable, i = self->nm_used; i > 0; entry++) {
+  for (i = 0, size = self->nm_used; size > 0; i++) {
+    AttrObject *entry = oldtable[i];
     if (entry != NULL) {
-      i--;
+      size--;
       set_entry(self, entry);
     }
   }
@@ -314,17 +315,10 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
   entry = get_entry(nm, hash, name, namespace);
   old_node = nm->nm_table[entry];
   if (old_node == NULL) {
+    /* adding the attribute to the table */
     nm->nm_used++;
-    /* If fill >= 2/3 size, adjust size.  Normally, this doubles or
-     * quaduples the size, but it's also possible for the dict to shrink
-     * (if ma_fill is much larger than ma_used, meaning a lot of dict
-     * keys have been * deleted).
-     */
-    if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
-      if (resize_table(nm) < 0)
-        return -1;
-    }
   } else {
+    /* replacing the old attribute in the table */
     if (remove_attribute_node(old_node) < 0)
       return -1;
   }
@@ -337,9 +331,17 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
   Py_INCREF(nm->nm_owner);
   Py_XDECREF(temp);
   /* success */
-  if (!Element_CheckExact(nm->nm_owner))
-    return Node_DispatchEvent((NodeObject *)nm->nm_owner, added_event,
-                              (NodeObject *)node);
+  if (!Element_CheckExact(nm->nm_owner)) {
+    if (Node_DispatchEvent((NodeObject *)nm->nm_owner, added_event,
+                           (NodeObject *)node) < 0)
+      return -1;
+  }
+  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size, 
+   * but it's also possible for the dict to shrink. */
+  if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
+    if (resize_table(nm) < 0)
+      return -1;
+  }
   return 0;
 }
 
@@ -659,7 +661,7 @@ attributemap_ass_subscript(PyObject *op, PyObject *key, PyObject *value)
       Py_DECREF(name);
       return -1;
     }
-    attr = (AttrObject *)AttributeMap_GetNode(op, namespace, name);
+    attr = AttributeMap_GetNode(op, namespace, name);
     if (attr == NULL) {
       if (PyErr_Occurred()) {
         result = -1;
