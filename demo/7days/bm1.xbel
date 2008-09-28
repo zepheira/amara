@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!DOCTYPE xbel PUBLIC "+//IDN python.org//DTD XML Bookmark Exchange Language 1.0//EN//XML" "http://www.python.org/topics/xml/dtds/xbel-1.0.dtd">
+<!-- From http://www.cs.uu.nl/~joris/bookmarks/bookmark.xml -->
+<xbel> 
+  <title>Bookmarks of Joris Graaumans [excerpt]</title> 
+  <info><metadata owner="Joris Graaumans"/> 
+  </info>
+  <folder>
+	 <title>XML</title> 
+	 <bookmark href="http://www.zvon.org"
+	  visited="8/24/00 4:47:38 PM">
+		<title>ZVON.org</title>
+	 </bookmark> 
+	 <bookmark href="http://www.xml.org/" visited="8/25/00 10:31:51 AM">
+		<title>XML.ORG - The XML Industry Portal</title>
+	 </bookmark> 
+	 <bookmark href="http://www.oasis-open.org/cover/sgml-xml.html"
+	  visited="8/30/00 1:42:33 PM">
+		<title>The XML Cover Pages - Home Page</title>
+	 </bookmark> 
+	 <folder>
+		 <title>Software</title>
+		 <bookmark href="http://www.xmlsoftware.com">
+		 <title>xmlsoftware.com</title>
+		 </bookmark>
+		 <bookmark href="http://www.vbxml.com/"><title>VBXML</title>
+		 <desc>Xpath Visualiser</desc></bookmark>
+	 </folder>
+	 <folder>
+		<title>DOM</title> 
+		<bookmark href="http://www.mozilla.org/docs/dom/technote/tn-dom-table/">
+		  <title>JavaScript DOM level 1</title>
+		</bookmark> 
+		<bookmark
+		 href="http://www.w3c.rl.ac.uk/talks/lectures/06gdom/slide12-0.htm">
+		  <title>JavaScript DOM examples</title>
+		</bookmark> 
+	 </folder> 
+	 <folder>
+		<title>DTDs</title>
+		<folder>
+		<title>TEI</title> 
+		<bookmark href="http://www.hcu.ox.ac.uk/TEI/pizza.html"><title>TEI pizza chef</title></bookmark>
+		 <bookmark href="http://www.tei-c.org/" visited="7/3/00 3:02:43 PM">
+		<title>TEI Consortium</title></bookmark> 
+		</folder>
+		<folder><title>Xbel</title> 
+		<bookmark href="http://www.python.org/topics/xml/xbel/"
+		visited="8/29/00 3:48:40 PM">
+		  <title>Xbel homepage</title>
+		</bookmark>
+		</folder>
+		<folder><title>Misc</title> 
+		<bookmark
+		href="http://www.xmlephant.com/pages/Technologies/DTDs_and_Examples/"
+		visited="8/24/00 4:00:30 PM">
+		  <title>XMLephant: Technologies/DTDs_and_Examples</title>
+		</bookmark> 
+		</folder>
+		<folder>
+		  <title>DocBook DTD</title> 
+		  <bookmark
+		  href="http://www.oreilly.com/catalog/docbook/chapter/book/refchar.html"
+		  visited="8/30/00 4:48:45 PM">
+			 <title>DocBook Character Entity Reference</title>
+		  </bookmark> 
+		  <bookmark
+		  href="http://www.oreilly.com/catalog/docbook/chapter/book/docbook.html">
+			 <title>Docbook reference guide</title>
+		 </bookmark> 
+		</folder> 
+  </folder> 
+</folder>
+</xbel>

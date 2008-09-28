@@ -198,7 +198,7 @@ class visitor:
         Called when a Comment node is encountered. Generates a comment
         event for the printer.
         """
-        self.printer.comment(node.xml_data)
+        self.printer.comment(node.xml_value)
         return
     _dispatch[tree.comment.xml_type] = visit_comment
 
@@ -212,7 +212,7 @@ class visitor:
     _dispatch[tree.processing_instruction.xml_type] = visit_processing_instruction
 
 
-def xml_print(root, stream=sys.stdout, encoding='UTF-8', as_html=None):
+def xml_print(root, stream=sys.stdout, encoding='UTF-8', **kwargs):
     """
     Given a Node instance assumed to be the root of a DOM or Domlette
     tree, this function serializes the document to the given stream or
@@ -232,7 +232,7 @@ def xml_print(root, stream=sys.stdout, encoding='UTF-8', as_html=None):
     # of document node (getElementsByName is an HTML DOM only method)
     #if as_html is None:
     #    as_html = hasattr(root.ownerDocument or root, 'getElementsByName')
-    v = visitor(stream, encoding, ns_hints, as_html, 0)
+    v = visitor(stream, encoding, **kwargs)
     v.visit(root)
     return
 

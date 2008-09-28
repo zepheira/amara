@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!DOCTYPE xbel PUBLIC "+//IDN python.org//DTD XML Bookmark Exchange Language 1.0//EN//XML" "http://www.python.org/topics/xml/dtds/xbel-1.0.dtd">
+<!-- From http://www.cs.uu.nl/~joris/bookmarks/bookmark.xml -->
+<xbel> 
+  <title>Bookmarks of Joris Graaumans [excerpt]</title> 
+  <info><metadata owner="Joris Graaumans"/> 
+  </info>
+  <folder>
+	 <title>Dictionaries</title> 
+	 <bookmark
+	  href="http://web.psych.ualberta.ca/~mike/Pearl_Street/Dictionary/dictionary.html"
+	  visited="8/24/00 4:40:17 PM">
+		<title>University of Alberta Cognitive Science Dictionary (Home
+		  Page)</title>
+		<desc>Cognitive science woordenboek</desc>
+	 </bookmark> 
+	 <bookmark href="http://www.dictionary.com" visited="8/25/00 11:44:32 AM">
+		<title>Dictionary.com</title>
+	 </bookmark> 
+	 <bookmark href="http://dictionary.cambridge.org/"
+	  visited="7/18/00 2:03:43 PM">
+		<title>Cambridge International Dictionaries</title>
+	 </bookmark> 
+	 <bookmark href="http://www.vandale.nl/current/"
+	  visited="8/29/00 3:10:17 PM">
+		<title>Het Van Dale Taalweb</title>
+	 </bookmark> 
+  </folder> 
+  <folder>
+	 <title>XML</title> 
+	 <bookmark href="http://www.oasis-open.org/cover/xml.html#discussionLists"
+	  visited="8/24/00 9:48:40 AM">
+		<title>XML discussion lists</title>
+	 </bookmark> 
+	 <bookmark href="http://www.w3.org/" visited="8/30/00 4:41:22 PM">
+		<title>The World Wide Web Consortium</title>
+	 </bookmark> 
+	 <folder>
+		<title>DOM</title> 
+		<bookmark href="http://www.w3.org/TR/DOM-Level-2-Core/">
+		  <title>DOM-Level-2-Core</title> 
+		 </bookmark>
+	 </folder> 
+	 <folder>
+	 <title>XSL</title> 
+	 <bookmark href="http://www.datapower.com/XSLTMark/">
+		<title>XSLT benchmark</title>
+	 </bookmark> 
+	 <bookmark href="http://xml.apache.org/fop/examples.html"
+	 visited="8/25/00 11:09:44 AM">
+		<title>xml.apache.org Examples</title>
+	 </bookmark> 
+	  <bookmark href="http://www.w3.org/TR/xsl/" visited="8/24/00 4:10:35 PM">
+		<title>XSL specs van W3c</title>
+		<desc>XSL working draft 1.0 van het W3c</desc>
+	 </bookmark> 
+	 <bookmark href="http://www.w3.org/Style/XSL/"><title>Extensible Stylesheet
+		Language (XSL)</title>
+	 </bookmark> 
+	 <folder><title>Discussion lists</title>
+	 <bookmark
+	 href="http://www.mulberrytech.com/xsl/xsl-list/index.html#subscribing"
+	 visited="8/10/00 11:04:02 AM">
+		<title>Mulberry Technologies, Inc.: XSL-List -- Open Forum on XSL</title>
+	 </bookmark> 
+	 <bookmark href="http://www.mulberrytech.com/xsl/index.html"
+	 visited="8/10/00 11:06:40 AM">
+		<title>Mulberry Technologies, Inc.: XSL</title>
+	 </bookmark> 
+	 </folder>
+  </folder> 
+</folder>
+</xbel>

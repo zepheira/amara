@@ -1,0 +1,96 @@
+import sys
+
+print '---------' 'Grouping'
+
+import itertools
+import operator
+import amara
+from amara.writers.struct import *
+
+XML="""\
+<env>
+  <a id="1"/>
+  <b id="1.1"/>
+  <c id="1.2"/>
+  <a id="2"/>
+  <b id="2.1"/>
+  <c id="2.2"/>
+  <a id="3"/>
+  <b id="3.1"/>
+  <c id="3.2"/>
+</env>
+"""
+
+doc = amara.parse(XML)
+
+leaves = sorted(doc.xml_select(u'/env/*'), key=operator.attrgetter('xml_name'))
+
+w = structwriter(indent=u"yes")
+w.feed(
+ROOT(
+    E(u'env',
+        ( E(ename + u'-wrapper',
+            ( E(ename, e.xml_attributes.copy(), e.xml_children) for e in elems )
+        ) for ename, elems in itertools.groupby(leaves, lambda x: x.xml_qname) ),
+    )
+))
+
+print
+print '---------' 'Bindery and operator'
+
+RSS = 'http://feeds.feedburner.com/ClevelandClinicHealthTalkPodcast'
+ATOM1 = 'http://uche.ogbuji.net/tech/publications.atom'
+
+import operator
+import itertools
+from amara import bindery
+
+ATOM1 = 'http://zepheira.com/news/atom/entries/'
+ATOM2 = 'http://ma.gnolia.com/atom/full/people/Uche'
+
+doc1 = bindery.parse(ATOM1)
+doc2 = bindery.parse(ATOM2)
+combined = itertools.chain(*[doc.feed.entry for doc in (doc1, doc2)])
+for node in sorted(combined, key=operator.attrgetter('updated')):
+    print node.title
+
+print '---------' 'Merge XBEL'
+
+BM1 = 'bm1.xbel'
+BM2 = 'bm2.xbel'
+from amara import bindery, xml_print
+
+def merge_folders(folder1, folder2):
+    #Yes, the list must be copied to avoid mutate-while-iterate bugs
+    for child in folder2.xml_select('*'):
+        #No need to copy title element
+        if child.xml_qname == u'title': continue
+        elif child.xml_qname == u'folder':
+            for a_folder in folder1.folder:
+                if unicode(child.title) == unicode(a_folder.title):
+                    merge_folders(a_folder, child)
+                    break
+            else:
+                folder1.xml_append(child)
+        else:
+            folder1.xml_append(child)
+    return
+
+def xbel_merge(xbel1, xbel2):
+    for child in xbel2.xml_select('*'):
+        if child.xml_qname == u'folder':
+            for a_folder in xbel1.folder:
+                if unicode(child.title) == unicode(a_folder.title):
+                    merge_folders(a_folder, child)
+                    break
+            else:
+                xbel1.xml_append(child)
+        elif child.xml_qname == u'bookmark':
+            xbel1.xml_append(child)
+    return
+
+doc1 = bindery.parse(BM1)
+doc2 = bindery.parse(BM2)
+xbel_merge(doc1.xbel, doc2.xbel)
+xml_print(doc1, indent=True)
+
