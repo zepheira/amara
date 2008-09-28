@@ -94,3 +94,36 @@ doc2 = bindery.parse(BM2)
 xbel_merge(doc1.xbel, doc2.xbel)
 xml_print(doc1, indent=True)
 
+print
+print '---------' 'Merge XBEL by grouping iterators'
+
+BM1 = 'bm1.xbel'
+BM2 = 'bm2.xbel'
+import itertools
+import functools
+from amara import bindery, xml_print
+from amara.bindery.util import property_str_getter
+
+title_getter = functools.partial(property_str_getter, 'title')
+
+def merge(f1, f2):
+    folders = sorted(itertools.chain(f1.folder or [], f2.folder or []),
+                     key=title_getter)
+    folder_groups = itertools.groupby(folders, title_getter)
+    for ftitle, folders in folder_groups:
+        main = folders.next()
+        rest = list(folders)
+        for f in rest:
+            merge(main, f)
+        if main.xml_parent != f1:
+            f1.xml_append(main)
+    #All non-folder, non-title elements
+    for e in f2.xml_select(u'*[not(self::folder or self::title)]'):
+        f1.xml_append(e)
+    return
+
+doc1 = bindery.parse(BM1)
+doc2 = bindery.parse(BM2)
+merge(doc1.xbel, doc2.xbel)
+xml_print(doc1, indent=True)
+

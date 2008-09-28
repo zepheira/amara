@@ -111,7 +111,12 @@ class bound_element(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        return obj.xml_find_named_child(self.ns, self.local)
+        try:
+            return obj.xml_find_named_child(self.ns, self.local)
+        except StopIteration:
+            #This property is defined on this element class, but does not exist on this instance
+            #return obj.xml_model.default_value(self.ns, self.local)
+            return None
 
     def __set__(self, obj, value):
         #replicate old __delattr__ effects here
@@ -265,8 +270,7 @@ class element_base(container_mixin, tree.element):
         its descendants, if any.
         Equivalent to XPath string() conversion
         '''
-        #return self.xml_select(u'string(.)')
-        return datatypes.string(self)
+        return unicode(datatypes.string(self))
 
     def __str__(self):
         #Amara 1 note: Should we make the encoding configurable? (self.defencoding?)
