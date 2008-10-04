@@ -14,5 +14,5 @@ def U(s):
     if isinstance(s, unicode): return s
     if isinstance(s, str): return s.decode('utf-8')
     if s is None: return None
-    return unicode(s, 'utf-8')
+    return str(s).decode('utf-8')
 

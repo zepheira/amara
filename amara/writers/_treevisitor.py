@@ -159,7 +159,7 @@ class visitor:
 
         # The element's namespaceURI/prefix mapping takes precedence
         if node.xml_namespace or current_nss.get(None, 0):
-            if current_nss.get(node.prefix, 0) != node.xml_namespace:
+            if current_nss.get(node.xml_prefix, 0) != node.xml_namespace:
                 namespaces[node.xml_prefix] = node.xml_namespace or u""
 
         #The 

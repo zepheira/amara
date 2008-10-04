@@ -76,6 +76,51 @@ PY_ID_ENCODING = 'iso-8859-1'
 #t.c(2, 3)
 ##Prints: "1 2 3"
 
+class constraint:
+    '''
+    For now just a shallow wrapper around a constraint XPath
+    '''
+    def __init__(self, assertion):
+        self.assertion = assertion
+    
+    def validate(self, node):
+        from amara.bindery import BinderyError
+        result = datatypes.string(node.xml_select(self.assertion))
+        if not result:
+            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION)
+
+
+class content_model:
+    def __init__(self):
+        self.element_types = {}
+        self.attribute_types = {}
+        self.constraints = []
+        return
+
+    def add_constraint(self, constraint, validate=False):
+        self.constraints.append(constraint)
+        if validate:
+            #Make this more efficient?  How?  A list of applicable elements per model will take up a good bit of memory
+            #candidate_classmates = self.xml_select(u'//*')
+            for e in self.xml_select(u'//*'): #Should be less of a waste once XPath result node sets are lazy
+                #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
+                self.validate(e)
+        return
+
+    def validate(self, node):
+        for constraint in self.constraints:
+            constraint.validate(node)
+
+    def default_value(self, ns, local):
+        pass
+
+#        node.xml_model.constraints.append(u'@xml:id', validate=True)      #Make xml:id required.  Will throw a constraint violation right away if there is not one.  Affects all instances of this class.
+#        node.xml_model.validate(recurse=True)     #Recursively validate constraints on node and all children
+
+
+#No constraints by default
+DEFAULT_MODEL = content_model()
+
 class element_iterator:
     def __init__(self, parent, ns, local):
         self.children = iter(parent.xml_children)
@@ -162,8 +207,8 @@ class container_mixin(object):
     @property
     def xml_child_text(self):
         return u''.join([ ch for ch in self.xml_children if isinstance(ch, unicode)])
-        
-    def xml_element_children(self):
+
+    def xml_elements(self):
         return ( ch for ch in self.xml_children if isinstance(ch, tree.element) )
 
     def xml_child_inserted(self, child):
@@ -213,7 +258,7 @@ class container_mixin(object):
 class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
 
-    xml_model = None
+    xml_model = DEFAULT_MODEL
     def __init__(self, ns, qname):
         #These are the children that do not come from schema information
         self.xml_extra_children = None

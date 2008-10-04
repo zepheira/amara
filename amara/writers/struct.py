@@ -142,7 +142,7 @@ class E(object):
                 else:
                     ns, qname = None, U(name)
                 #Unicode value coercion to help make it a bit smarter
-                self.attributes[ns, qname] = qname, unicode(value)
+                self.attributes[ns, qname] = qname, U(value)
 
 class NS(object):
     def __init__(self, prefix, namespace):
@@ -156,91 +156,4 @@ class RAW(object):
 class ROOT(object):
     def __init__(self, *content):
         self.content = content
-
-"""
-test_input = \
-ROOT(
-  E(u'string-content', u'hello'),
-  #You can use string objects (UTF-8 assumed), though we strongly suggest always using Unicode
-  E('string-content', 'yuck'),
-  E('float-content', 3.14),
-  E(u'int-content', 5),
-  E(u'unicode-content', u'this is unicode: \u221e'),
-  E(u'list-content', [E('child', 'a'), RAW('<raw-node message="hello"/>'), E('child', 'b')]),
-  E(u'dict-content', {u'parrot': u'dead', u'spam': u'eggs'}),
-  #Again using string objects
-  E(u'dict-content', dict(parrot='dead', spam='eggs')),
-  E(u'gen-content', (('node', x) for x in range(6))),
-  E(u'monty', E('spam', 'eggs')),
-  E(u'empty'),
-  E(u'object-content', type('obj', (), dict(__repr__=lambda s: "object repr"))()),
-  E(u'func', lambda: u'this is a func'),
-  E(u'raw-xml-content', RAW('<a>b</a>', '<c>d</c>')) #The multiple raw text bits are just concatenated
-)
-
-
-<?xml version="1.0" encoding="ascii"?>
-<root>
-  <string>hello</string>
-  <float>3.14</float>
-  <int>5</int>
-  <unicode>this is unicode: &#8734;</unicode>
-  <list>
-    <node>hello</node>
-    <raw-node message="hello"/>
-  </list>
-  <dictionary>
-    <parrot>dead</parrot>
-    <spam>eggs</spam>
-  </dictionary>
-  <generator>
-    <node>0</node>
-    <node>1</node>
-    <node>2</node>
-    <node>3</node>
-    <node>4</node>
-    <node>5</node>
-  </generator>
-  <tuple>
-    <one>two</one>
-  </tuple>
-  <None/>
-  <int-zero>0</int-zero>
-  <float-zero>0.0</float-zero>
-  <empty-string/>
-  <object>object repr</object>
-  <func>this is a func</func>
-  <escaping> &gt; &lt; &amp; </escaping>
-</root>
-
-
-from Ft.Xml import MarkupWriter
-
-# Set the output doc type details (required by XSA)
-SYSID = u"http://www.garshol.priv.no/download/xsa/xsa.dtd"
-PUBID = u"-//LM Garshol//DTD XML Software Autoupdate 1.0//EN//XML"
-writer = MarkupWriter(indent=u"yes", doctypeSystem=SYSID,
-                      doctypePublic=PUBID)
-writer.startDocument()
-writer.startElement(u'xsa')
-writer.startElement(u'vendor')
-
-# Element with simple text (#PCDATA) content
-writer.simpleElement(u'name', content=u'Centigrade systems')
-writer.simpleElement(u'email', content=u"info@centigrade.bogus")
-writer.endElement(u'vendor')
-
-# Element with an attribute
-writer.startElement(u'product', attributes={u'id': u"100\u00B0"})
-writer.simpleElement(u'name', content=u"100\u00B0 Server")
-writer.simpleElement(u'version', content=u"1.0")
-writer.simpleElement(u'last-release')
-writer.text(u"20030401")
-
-# Empty element
-writer.simpleElement(u'changes')
-writer.endElement(u'product')
-writer.endElement(u'xsa')
-writer.endDocument()
-"""
 
