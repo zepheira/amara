@@ -87,7 +87,7 @@ class constraint:
         from amara.bindery import BinderyError
         result = datatypes.string(node.xml_select(self.assertion))
         if not result:
-            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION)
+            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION, constraint=self.assertion)
 
 
 class content_model:
@@ -95,6 +95,7 @@ class content_model:
         self.element_types = {}
         self.attribute_types = {}
         self.constraints = []
+        self.entities = set()
         return
 
     def add_constraint(self, constraint, validate=False):
@@ -102,9 +103,11 @@ class content_model:
         if validate:
             #Make this more efficient?  How?  A list of applicable elements per model will take up a good bit of memory
             #candidate_classmates = self.xml_select(u'//*')
-            for e in self.xml_select(u'//*'): #Should be less of a waste once XPath result node sets are lazy
-                #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
-                self.validate(e)
+            for d in self.entities:
+                for e in d.xml_select(u'//*'): #Should be less of a waste once XPath result node sets are lazy
+                    #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
+                    if e.xml_model == self:
+                        self.validate(e)
         return
 
     def validate(self, node):
@@ -119,7 +122,7 @@ class content_model:
 
 
 #No constraints by default
-DEFAULT_MODEL = content_model()
+#DEFAULT_MODEL = content_model()
 
 class element_iterator:
     def __init__(self, parent, ns, local):
@@ -194,6 +197,15 @@ class bound_attribute(object):
 
 
 class container_mixin(object):
+    xml_model_ = None
+
+    def xml_get_model(self): return self.xml_model_
+    def xml_set_model(self, model):
+        self.__class__.xml_model_ = model
+        model.entities.add(self.xml_select(u'/')[0])
+        return
+    xml_model = property(xml_get_model, xml_set_model, "XML model")
+
     @property
     def xml_element_pnames(self):
         return itertools.chain(self.xml_model.element_types.itervalues(),
@@ -254,11 +266,32 @@ class container_mixin(object):
             found = child.xml_type == tree.element.xml_type and child.xml_name == (ns, local)
         return child
 
+    def __getitem__(self, key):
+        #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
+        # => [((None, u'b'), u'3')]
+        if isinstance(key, int):
+            result = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+        else:
+            force_type = None
+            if isinstance(key, tuple):
+                if len(key) == 3:
+                    force_type, key = key[0], key[1:]
+            elif isinstance(key, basestring):
+                key = (None, key)
+            else:
+                raise TypeError('Inappropriate key (%s)'%(key))
+            if force_type in (None, tree.attribute.xml_type) and key in self.xml_attributes:
+                return self.xml_attributes[key]
+            if force_type in (None, tree.element.xml_type):
+                return self.xml_find_named_child(self, key[0], key[1])
+            else:
+                raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
+        return result
+
 
 class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
 
-    xml_model = DEFAULT_MODEL
     def __init__(self, ns, qname):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
@@ -328,28 +361,6 @@ class element_base(container_mixin, tree.element):
     def __len__(self):
         return len(list(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)))
 
-    def __getitem__(self, key):
-        #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
-        # => [((None, u'b'), u'3')]
-        if isinstance(key, int):
-            result = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
-        else:
-            force_type = None
-            if isinstance(key, tuple):
-                if len(key) == 3:
-                    force_type, key = key[0], key[1:]
-            elif isinstance(key, basestring):
-                key = (None, key)
-            else:
-                raise TypeError('Inappropriate key (%s)'%(key))
-            if force_type in (None, tree.attribute.xml_type) and key in self.xml_attributes:
-                return self.xml_attributes[key]
-            if force_type in (None, tree.element.xml_type):
-                return self.xml_find_named_child(self, key[0], key[1])
-            else:
-                raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
-        return result
-
 
 #This class also serves as the factory for specializing the core Amara tree parse
 
@@ -406,6 +417,8 @@ class entity_base(container_mixin, tree.entity):
             class_name = pname
             eclass = type(class_name, (self.xml_element_base,), {})
             self._eclasses[(ns, local)] = eclass
+            eclass.xml_model_ = content_model()
+            eclass.xml_model_.entities.add(self)
         else:
             eclass = self._eclasses[(ns, local)]
         e = eclass(ns, qname)

@@ -20,6 +20,15 @@ constraint = nodes.constraint
 class BinderyError(Error):
     CONSTRAINT_VIOLATION = 1
 
+    @classmethod
+    def _load_messages(cls):
+        from gettext import gettext as _
+        return {
+            # -- internal/unexpected errors --------------------------------
+            BinderyError.CONSTRAINT_VIOLATION: _(
+                'Failed constraint: %(constraint)s'),
+        }
+
 
 #FIXME: Use proper L10N (gettext)
 def _(t): return t
