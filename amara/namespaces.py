@@ -16,6 +16,8 @@ XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_PREFIXES[XSL_NAM
 XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_PREFIXES[XLINK_NAMESPACE] = u'xlink'
 XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_PREFIXES[XINCLUDE_NAMESPACE] = u'xinclude'
 
+SVG_NAMESPACE = u"http://www.w3.org/2000/svg"; COMMON_PREFIXES[SVG_NAMESPACE] = u'svg'
+
 #RDF
 
 RDF_NAMESPACE = u"http://www.w3.org/1999/02/22-rdf-syntax-ns#"; COMMON_PREFIXES[RDF_NAMESPACE] = u'rdf'

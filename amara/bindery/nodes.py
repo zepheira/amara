@@ -25,6 +25,7 @@ from xml.dom import Node
 from amara import tree
 from amara.lib.xmlstring import *
 from amara.xpath import datatypes
+import model
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
 RESERVED_NAMES = [
@@ -76,53 +77,6 @@ PY_ID_ENCODING = 'iso-8859-1'
 #t.c(2, 3)
 ##Prints: "1 2 3"
 
-class constraint:
-    '''
-    For now just a shallow wrapper around a constraint XPath
-    '''
-    def __init__(self, assertion):
-        self.assertion = assertion
-    
-    def validate(self, node):
-        from amara.bindery import BinderyError
-        result = datatypes.string(node.xml_select(self.assertion))
-        if not result:
-            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION, constraint=self.assertion)
-
-
-class content_model:
-    def __init__(self):
-        self.element_types = {}
-        self.attribute_types = {}
-        self.constraints = []
-        self.entities = set()
-        return
-
-    def add_constraint(self, constraint, validate=False):
-        self.constraints.append(constraint)
-        if validate:
-            #Make this more efficient?  How?  A list of applicable elements per model will take up a good bit of memory
-            #candidate_classmates = self.xml_select(u'//*')
-            for d in self.entities:
-                for e in d.xml_select(u'//*'): #Should be less of a waste once XPath result node sets are lazy
-                    #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
-                    if e.xml_model == self:
-                        self.validate(e)
-        return
-
-    def validate(self, node):
-        for constraint in self.constraints:
-            constraint.validate(node)
-
-    def default_value(self, ns, local):
-        pass
-
-#        node.xml_model.constraints.append(u'@xml:id', validate=True)      #Make xml:id required.  Will throw a constraint violation right away if there is not one.  Affects all instances of this class.
-#        node.xml_model.validate(recurse=True)     #Recursively validate constraints on node and all children
-
-
-#No constraints by default
-#DEFAULT_MODEL = content_model()
 
 class element_iterator:
     def __init__(self, parent, ns, local):
@@ -382,10 +336,19 @@ class entity_base(container_mixin, tree.entity):
         #Should we share the following across documents, perhaps by using an auxilliary class,
         #Of which one global, default instance is created/used
         #Answer: probably yes
+        self.xml_model_ = model.content_model()
         self._eclasses = {}
         self._class_names = {}
         self._names = {}
         return
+
+    #Defined for elements and not doc nodes in core tree.  Add as convenience.
+    @property
+    def xml_namespaces(self):
+        xml_namespaces = {}
+        for e in self.xml_elements():
+            xml_namespaces.update(dict(e.xml_namespaces.items()))
+        return xml_namespaces
 
     def pyname(self, ns, local, exclude=None):
         '''
@@ -417,13 +380,27 @@ class entity_base(container_mixin, tree.entity):
             class_name = pname
             eclass = type(class_name, (self.xml_element_base,), {})
             self._eclasses[(ns, local)] = eclass
-            eclass.xml_model_ = content_model()
+            eclass.xml_model_ = model.content_model()
             eclass.xml_model_.entities.add(self)
         else:
             eclass = self._eclasses[(ns, local)]
         e = eclass(ns, qname)
         e.factory_entity = self
         return e
+
+    def eclass(self, ns, qname, pname=None):
+        #FIXME: Really the same as the top part of xml_element_factory.  Extract common factor
+        prefix, local = splitqname(qname)
+        if not pname: pname = self.pyname(ns, local)
+        if (ns, local) not in self._eclasses:
+            class_name = pname
+            eclass = type(class_name, (self.xml_element_base,), {})
+            self._eclasses[(ns, local)] = eclass
+            eclass.xml_model_ = model.content_model()
+            eclass.xml_model_.entities.add(self)
+        else:
+            eclass = self._eclasses[(ns, local)]
+        return eclass
 
 
 #class myattribute(tree.attribute)
