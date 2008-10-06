@@ -160,6 +160,9 @@ class container_mixin(object):
         return
     xml_model = property(xml_get_model, xml_set_model, "XML model")
 
+    def xml_validate(self):
+        self.xml_model.validate(self)
+
     @property
     def xml_element_pnames(self):
         return itertools.chain(self.xml_model.element_types.itervalues(),
@@ -174,6 +177,7 @@ class container_mixin(object):
     def xml_child_text(self):
         return u''.join([ ch for ch in self.xml_children if isinstance(ch, unicode)])
 
+    @property
     def xml_elements(self):
         return ( ch for ch in self.xml_children if isinstance(ch, tree.element) )
 
@@ -182,11 +186,10 @@ class container_mixin(object):
         called after the node has been added to `self.xml_children`
         """
         if isinstance(child, tree.element):
-            fe = getattr(self, 'factory_entity', self)
             name_chosen = False
             exclusions = []
             while not name_chosen:
-                pname = fe.pyname(child.xml_namespace, child.xml_qname, exclusions)
+                pname = self.factory_entity.pyname(child.xml_namespace, child.xml_qname, exclusions)
                 existing = getattr(self, pname, None)
                 if existing is None or existing.xml_name == child.xml_name:
                     name_chosen = True
@@ -262,8 +265,7 @@ class element_base(container_mixin, tree.element):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        fe = getattr(self, 'factory_entity', self)
-        pname = fe.pyname(attr_node.xml_namespace, attr_node.xml_local, dir(self))
+        pname = self.factory_entity.pyname(attr_node.xml_namespace, attr_node.xml_local, self.__class__.__dict__)
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
@@ -340,17 +342,18 @@ class entity_base(container_mixin, tree.entity):
         self._eclasses = {}
         self._class_names = {}
         self._names = {}
+        self.factory_entity = self
         return
 
     #Defined for elements and not doc nodes in core tree.  Add as convenience.
     @property
     def xml_namespaces(self):
         xml_namespaces = {}
-        for e in self.xml_elements():
+        for e in self.xml_elements:
             xml_namespaces.update(dict(e.xml_namespaces.items()))
         return xml_namespaces
 
-    def pyname(self, ns, local, exclude=None):
+    def pyname(self, ns, local, exclude=()):
         '''
         generate a Python ID (as a *string*) from an XML universal name
 
@@ -358,15 +361,15 @@ class entity_base(container_mixin, tree.entity):
         local - the XML local name
         exclude - iterator of names not to use (e.g. to avoid clashes)
         '''
-        python_id = self._names.get((local, ns))
-        if not python_id:
-            python_id = self.PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
+        try:
+            python_id = self._names[(local, ns)]
+        except KeyError:
+            python_id = str(self.PY_REPLACE_PAT.sub('_', local))
             if python_id in RESERVED_NAMES:
                 python_id = python_id + '_'
             self._names[(local, ns)] = python_id
-        if exclude:
-            while python_id in exclude:
-                python_id += '_'
+        while python_id in exclude:
+            python_id += '_'
         return python_id
 
     def xname(self, python_id):

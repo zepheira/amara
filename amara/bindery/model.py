@@ -1,5 +1,5 @@
 ########################################################################
-# amara/bindery/nodes.py
+# amara/bindery/model.py
 
 """
 Bindery node XML model tools
@@ -205,7 +205,7 @@ class examplotron_model(document_model):
         '''
         parent = parent or self.model_document
         allowed_elements_test = []
-        for e in parent.xml_elements():
+        for e in parent.xml_elements:
             c = child_element_constraint(e.xml_namespace, e.xml_local)
             parent.xml_model.add_constraint(c)
             self.generate_constraints(parent=e)
