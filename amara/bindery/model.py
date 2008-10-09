@@ -135,11 +135,15 @@ class content_model:
         #print repr(node)
         #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
         if node:
+            #Check all constraints
             for constraint in self.constraints:
                 constraint.validate(node)
+            #Make sure all known element types have corresponding properties on the node class
+            for (ns, local), (pname, default) in self.element_types.iteritems():
+                if not hasattr(node, pname):
+                    from amara.bindery.nodes import *
+                    setattr(node.__class__, pname, bound_element(ns, local))
         else:
-            #Make this more efficient?  How?  A list of applicable elements per model will take up a good bit of memory
-            #candidate_classmates = self.xml_select(u'//*')
             for d in self.entities:
                 subtree = element_subtree_iter(d, include_root=True)
                 for e in subtree:
@@ -202,6 +206,8 @@ class examplotron_model(document_model):
         allowed_elements_test = []
         for e in parent.xml_elements:
             eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
+            if not (e.xml_namespace, e.xml_local) in parent.xml_model.element_types:
+                parent.xml_model.element_types[e.xml_namespace, e.xml_local] = (self.model_document.xml_pyname(e.xml_namespace, e.xml_local), None)
             if not eg_occurs in [u'?', u'*']:
                 c = child_element_constraint(e.xml_namespace, e.xml_local)
                 parent.xml_model.add_constraint(c)

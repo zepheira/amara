@@ -1,7 +1,7 @@
 ########################################################################
 # amara/namespaces.py
 """
-
+Common namespaces, for sake of convenience
 """
 
 COMMON_PREFIXES = {}

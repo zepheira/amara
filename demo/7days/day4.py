@@ -115,9 +115,54 @@ doc = bindery.parse(VALID_LABEL_XML, model=label_model)
 doc.xml_validate()
 
 doc = bindery.parse(INVALID_LABEL_XML, model=label_model)
-doc.xml_validate()
+try:
+    doc.xml_validate()
+except bindery.BinderyError, e:
+    print e
 
 xml_print(doc)
+
+print
+print '---------' 'Binding defaults'
+
+LABEL_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
+<labels>
+  <label>
+    <quote>What thou lovest well remains, the rest is dross</quote>
+    <name>Ezra Pound</name>
+    <address>
+      <street>45 Usura Place</street>
+      <city>Hailey</city>
+      <state>ID</state>
+    </address>
+  </label>
+</labels>
+'''
+
+TEST_LABEL_XML = '''<?xml version="1.0" encoding="utf-8"?>
+<labels>
+  <label>
+    <name>Thomas Eliot</name>
+    <address>
+      <street>3 Prufrock Lane</street>
+      <city>Stamford</city>
+      <state>CT</state>
+    </address>
+  </label>
+</labels>
+'''
+
+#An alternative to fixup that updates the binding object behavior without updating the XML itself
+#Note: you can choose to combine binding defaults with fixup, if you like, but many usage patterns will tend to use one or the other: either you want a mechnism to normalize the XML itself, or a mechanism for smooth handling of non-normalized XML
+
+#doc = bindery.parse(LABEL_XML)
+#doc.labels.label.xml_model.set_default_value(None, u'quote', None)
+
+from amara.bindery.model import *
+label_model = examplotron_model(LABEL_MODEL)
+doc = bindery.parse(TEST_LABEL_XML, model=label_model)
+print doc.labels.label.quote #None, rather than raising AttributeError
+#doc.xml_validate()
 
 
 

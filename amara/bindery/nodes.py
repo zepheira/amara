@@ -95,9 +95,9 @@ class element_iterator:
         return self.parent.xml_find_named_child(self.ns, self.local, self.children)
 
 
-def elem_getter(pname, parent):
-    ns, local = parent.xml_model.element_types[pname]
-    return parent.xml_find_named_child(ns, local)
+#def elem_getter(pname, parent):
+#    ns, local = parent.xml_model.element_types[pname]
+#    return parent.xml_find_named_child(ns, local)
 
 
 #Note: one of the better explanations of descriptor magic is here: http://gnosis.cx/publish/programming/charming_python_b26.html
@@ -118,8 +118,7 @@ class bound_element(object):
             return obj.xml_find_named_child(self.ns, self.local)
         except StopIteration:
             #This property is defined on this element class, but does not exist on this instance
-            #return obj.xml_model.default_value(self.ns, self.local)
-            return None
+            return obj.xml_model.element_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
         #replicate old __delattr__ effects here
@@ -169,7 +168,7 @@ class container_mixin(object):
 
     @property
     def xml_element_pnames(self):
-        return itertools.chain(self.xml_model.element_types.itervalues(),
+        return itertools.chain(itertools.imap(self.xml_model.element_types.itervalues(), operator.itemgetter(0)),
                                (self.xml_extra_children or {}).iterkeys())
 
     @property
@@ -193,7 +192,7 @@ class container_mixin(object):
             name_chosen = False
             exclusions = []
             while not name_chosen:
-                pname = self.factory_entity.pyname(child.xml_namespace, child.xml_qname, exclusions)
+                pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_qname, exclusions)
                 existing = getattr(self, pname, None)
                 if existing is None or existing.xml_name == child.xml_name:
                     name_chosen = True
@@ -269,7 +268,7 @@ class element_base(container_mixin, tree.element):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        pname = self.factory_entity.pyname(attr_node.xml_namespace, attr_node.xml_local, self.__class__.__dict__)
+        pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self.__class__.__dict__)
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
@@ -282,7 +281,7 @@ class element_base(container_mixin, tree.element):
 
     @property
     def xml_attribute_pnames(self):
-        return itertools.chain(self.xml_model.attribute_types.itervalues(),
+        return itertools.chain(itertools.imap(self.xml_model.attribute_types.itervalues(), operator.itemgetter(0)),
                                (self.xml_extra_attributes or {}).iterkeys())
 
     @property
@@ -357,7 +356,7 @@ class entity_base(container_mixin, tree.entity):
             xml_namespaces.update(dict(e.xml_namespaces.items()))
         return xml_namespaces
 
-    def pyname(self, ns, local, exclude=()):
+    def xml_pyname(self, ns, local, exclude=()):
         '''
         generate a Python ID (as a *string*) from an XML universal name
 
@@ -376,13 +375,13 @@ class entity_base(container_mixin, tree.entity):
             python_id += '_'
         return python_id
 
-    def xname(self, python_id):
+    def xml_xname(self, python_id):
         #XML NMTOKENS are a superset of Python IDs
         return python_id
 
     def xml_element_factory(self, ns, qname, pname=None):
         prefix, local = splitqname(qname)
-        if not pname: pname = self.pyname(ns, local)
+        if not pname: pname = self.xml_pyname(ns, local)
         if (ns, local) not in self._eclasses:
             class_name = pname
             eclass = type(class_name, (self.xml_element_base,), {})
@@ -398,7 +397,7 @@ class entity_base(container_mixin, tree.entity):
     def eclass(self, ns, qname, pname=None):
         #FIXME: Really the same as the top part of xml_element_factory.  Extract common factor
         prefix, local = splitqname(qname)
-        if not pname: pname = self.pyname(ns, local)
+        if not pname: pname = self.xml_pyname(ns, local)
         if (ns, local) not in self._eclasses:
             class_name = pname
             eclass = type(class_name, (self.xml_element_base,), {})
