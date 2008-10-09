@@ -25,6 +25,7 @@ from xml.dom import Node
 from amara import tree
 from amara.lib.xmlstring import *
 from amara.xpath import datatypes
+from amara.lib.util import *
 import model
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
@@ -161,7 +162,10 @@ class container_mixin(object):
     xml_model = property(xml_get_model, xml_set_model, "XML model")
 
     def xml_validate(self):
-        self.xml_model.validate(self)
+        subtree = element_subtree_iter(self, include_root=True)
+        for e in subtree:
+            e.xml_model.validate(e)
+        return
 
     @property
     def xml_element_pnames(self):

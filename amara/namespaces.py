@@ -12,6 +12,9 @@ XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
 XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_PREFIXES[XHTML_NAMESPACE] = u'xhtml'
 XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_PREFIXES[XSL_NAMESPACE] = u'xsl'
 
+RNG_NAMESPACE = u"http://relaxng.org/ns/structure/1.0"; COMMON_PREFIXES[RNG_NAMESPACE] = u'rng'
+EG_NAMESPACE = u"http://examplotron.org/0/"; COMMON_PREFIXES[EG_NAMESPACE] = u'eg'
+
 #XML Linking Language: http://www.w3.org/TR/xlink/
 XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_PREFIXES[XLINK_NAMESPACE] = u'xlink'
 XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_PREFIXES[XINCLUDE_NAMESPACE] = u'xinclude'

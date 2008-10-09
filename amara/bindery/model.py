@@ -8,7 +8,8 @@ Bindery node XML model tools
 __all__ = [
 'constraint', 'child_element_constraint', 'attribute_constraint',
 'content_model',
-'element_node_test', 'document_model', 'examplotron_model',
+'named_node_test', 'document_model', 'examplotron_model',
+'ATTIBUTE_AXIS',
 ]
 
 import sys
@@ -20,8 +21,12 @@ import copy
 from functools import *
 
 from amara import tree
+from amara.namespaces import *
 from amara.lib.xmlstring import *
+from amara.lib.util import *
 from amara.xpath import datatypes
+
+ATTIBUTE_AXIS = u'@'
 
 class constraint(object):
     '''
@@ -66,13 +71,7 @@ class attribute_constraint(constraint):
         node.xml_attributes[self.ns, self.local] = self.default
 
     def assertion(self, node):
-        for prefix, ns in node.xml_namespaces:
-            if ns == self.ns:
-                #Use this prefix, as long as it's not the default NS
-                if not prefix: break
-                return u'@' + prefix + u':' + self.local
-        #Probably better to just pass in a temp prefix mapping here
-        return u'@*[namespace-uri()="%s" and local-name()="%s"]'%(self.ns or u'', self.local)
+        return named_node_test(self.ns, self.local, node, axis=ATTIBUTE_AXIS)
 
 
 class child_element_constraint(constraint):
@@ -85,10 +84,11 @@ class child_element_constraint(constraint):
         self.ns = ns
         self.local = local
         self.default = default
-        assertion = partial(element_node_test, self.ns, self.local) if self.ns else self.local
+        assertion = partial(named_node_test, self.ns, self.local) if self.ns else self.local
         constraint.__init__(self, assertion, fixup=(self.set_default if default else None))
 
     def set_default(self, node):
+        #XXX: Should be able to reuse named_node_test function
         #What prefix to use
         for prefix, ns in node.xml_namespaces.items():
             if ns == self.ns and prefix:
@@ -105,7 +105,7 @@ class child_element_constraint(constraint):
         return
 
 
-def element_node_test(child_ns, child_local, node):
+def named_node_test(child_ns, child_local, node, axis=u''):
     '''
     Return an XPath node test for the given child element on the given node
     '''
@@ -113,9 +113,9 @@ def element_node_test(child_ns, child_local, node):
         if ns == child_ns:
             #Use this prefix, as long as it's not the default NS
             if not prefix: break
-            return prefix + u':' + child_local
+            return axis + prefix + u':' + child_local
     #Probably better to just pass in a temp prefix mapping here
-    return u'*[namespace-uri()="%s" and local-name()="%s"]'%(child_ns or u'', child_local)
+    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, child_ns or u'', child_local)
 
 
 class content_model:
@@ -132,6 +132,8 @@ class content_model:
         return
 
     def validate(self, node=None):
+        #print repr(node)
+        #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
         if node:
             for constraint in self.constraints:
                 constraint.validate(node)
@@ -139,8 +141,8 @@ class content_model:
             #Make this more efficient?  How?  A list of applicable elements per model will take up a good bit of memory
             #candidate_classmates = self.xml_select(u'//*')
             for d in self.entities:
-                for e in d.xml_select(u'//*'): #Should be less of a waste once XPath result node sets are lazy
-                    #re-validate all constraints, not just this one (interlocking constraints will likely be coming in future)
+                subtree = element_subtree_iter(d, include_root=True)
+                for e in subtree:
                     if e.xml_model == self:
                         self.validate(e)
         return
@@ -167,24 +169,6 @@ class document_model(object):
     #def __init__(self):
     #    self.model_document = None
     
-    def clone(self):
-        '''
-        Return a new, empty document incorporating the model information
-        '''
-        raise NotImplementedErr
-        from amara.bindery import BinderyError
-        assertion = self.assertion
-
-
-class examplotron_model(document_model):
-    '''
-    XML model information from an examplotron document
-    '''
-    def __init__(self, egdoc):
-        from amara import bindery
-        self.model_document = bindery.parse(egdoc)
-        self.generate_constraints()
-    
     def clone(self, document_uri=None):
         '''
         Return a new, empty document incorporating the model information
@@ -198,7 +182,18 @@ class examplotron_model(document_model):
         for c in doc._eclasses.values():
             c.xml_model_.entities.add(doc)
         return doc
+        #raise NotImplementedErr
 
+
+class examplotron_model(document_model):
+    '''
+    XML model information from an examplotron document
+    '''
+    def __init__(self, egdoc):
+        from amara import bindery
+        self.model_document = bindery.parse(egdoc)
+        self.generate_constraints()
+    
     def generate_constraints(self, parent=None):
         '''
         Process an examplotron document for constraints
@@ -206,12 +201,23 @@ class examplotron_model(document_model):
         parent = parent or self.model_document
         allowed_elements_test = []
         for e in parent.xml_elements:
-            c = child_element_constraint(e.xml_namespace, e.xml_local)
-            parent.xml_model.add_constraint(c)
+            eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
+            if not eg_occurs in [u'?', u'*']:
+                c = child_element_constraint(e.xml_namespace, e.xml_local)
+                parent.xml_model.add_constraint(c)
+            if not eg_occurs in [u'+', u'*']:
+                parent.xml_model.add_constraint(
+                    constraint(u'count(%s) = 1'%named_node_test(e.xml_namespace, e.xml_local, parent), msg=u'Only one instance of element allowed')
+                )
+            allowed_elements_test.append(named_node_test(e.xml_namespace, e.xml_local, parent))
             self.generate_constraints(parent=e)
-            allowed_elements_test.append(element_node_test(e.xml_namespace, e.xml_local, parent))
-        parent.xml_model.add_constraint(
-            constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Invalid elements present')
-        )
+        if allowed_elements_test:
+            parent.xml_model.add_constraint(
+                constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Invalid elements present')
+            )
+        else:
+            parent.xml_model.add_constraint(
+                constraint(u'not(*)', msg=u'Element should be empty')
+            )
 
 

@@ -5,6 +5,8 @@
 Some utilities for Amara bindery
 """
 
+from amara.lib.util import *
+
 def property_str_getter(propname, node):
     return unicode(getattr(node, propname))
 
