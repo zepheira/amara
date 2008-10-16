@@ -42,12 +42,13 @@ def get_printer(stream, encoding='utf-8', ns_hints=None, is_html=False,
     elif indent:
         printer = _xmlprinters.xmlprettyprinter(stream, encoding)
     elif is_html:
-        printer = _htmlprinters.htmlprinters(stream, encoding)
+        printer = _htmlprinters.htmlprinter(stream, encoding)
     elif canonical:
         printer = _xmlprinters.CanonicalXmlPrinter(stream, encoding)
     else:
         printer = _xmlprinters.xmlprinter(stream, encoding)
     return printer
+
 
 class structwriter(object):
     def __init__(self, stream=sys.stdout, **kwargs):

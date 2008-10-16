@@ -12,6 +12,7 @@ from amara import tree
 from amara.xpath import context
 from amara.xpath import XPathError, datatypes
 from amara.xpath.parser import xpathparser
+from amara.lib.util import *
 
 # NOTE: XPathParser and Context are imported last to avoid import errors
 
@@ -27,7 +28,7 @@ def simple_evaluate(expr, node, prefixes=None):
     """
     Designed to be the most simple/brain-dead interface to using XPath
     Usually invoked through Node objects using:
-      node.xpath(expr[, explicitNss])
+      node.xml_select(expr[, prefixes])
 
     expr - XPath expression in string or compiled form
     node - the node to be used as core of the context for evaluating the XPath
@@ -39,11 +40,13 @@ def simple_evaluate(expr, node, prefixes=None):
     """
     #Note: context.__init__(self, node, position=1, size=1, variables=None, namespaces=None, extmodules=(), extfunctions=None, output_parameters=None)
     
+    try:
+        prefixes_out = dict([(prefix, ns) for (prefix, ns) in node.xml_namespaces.iteritems()])
+    except AttributeError:
+        prefixes_out = top_namespaces(node)
     if prefixes:
-        p = dict([(n.xml_local, n.xml_value) for n in doc.xml_namespaces])
-        p.update(prefixes)
-        prefixes = p
-    ctx = context(node, 0, 0, namespaces=prefixes)#,
+        prefixes_out.update(prefixes)
+    ctx = context(node, 0, 0, namespaces=prefixes_out)
                               #extmodules=ext_modules)
     return ctx.evaluate(expr)
 
@@ -180,4 +183,57 @@ def parameterize(inputdict, defaultns=None):
             return None
 
     return resultdict
+
+from amara.xpath import datatypes
+
+XPATH_TYPES = {
+    datatypes.number: float,
+    datatypes.string: unicode,
+    datatypes.boolean: bool,
+    datatypes.nodeset: list,
+}
+
+def simplify(result):
+    '''
+    turn an XPath result into its equivalent simple types
+    
+    >>> import amara
+    >>> from amara.xpath.util import simplify
+    >>> doc = amara.parse('<a><b/></a>')
+    >>> repr(simplify(doc.xml_select(u'name(a)')))
+    >>> import amara; from amara.lib.util import simplify; doc = amara.parse('<a><b/></a>'); repr(simplify(doc.xml_select(u'name(a)')))
+    "u'a'"
+    >>> repr(simplify(doc.xml_select(u'count(a)')))
+    '1.0'
+    >>> simplify(doc.xml_select(u'a'))
+    [<amara._domlette.element at 0x6c5fb0: name u'a', 0 namespaces, 0 attributes, 1 children>]
+    >>> simplify(doc.xml_select(u'boolean(a)'))
+    True    
+    '''
+    return XPATH_TYPES[result.__class__](result)
+    #import amara; from amara.xpath.util import simplify; doc = amara.parse('<a><b/></a>'); repr(simplify(doc.xml_select(u'name(a)')))
+
+import amara
+def xpathmap(source, expressions):
+    '''
+    [u'count(//book)', {u'//book': [u'title', u'publisher']}]
+    '''
+    doc = amara.parse(source)
+    expressions
+    def submap(node, expr):
+        if isinstance(expr, dict):
+            #return dict([ [ submap(subnode, subexpr) for  ] for subnode in node.xml_select(expr)])
+            for expr in subexpr:
+                keylist = node.xml_select(expr)
+
+
+def indexer(source, expressions, output=None):
+    if output:
+        output.top()
+    for expr in expressions:
+        result = simplify(doc.xml_select(expr))
+        output.put(result)
+    if output:
+        output.bottom()
+        
 
