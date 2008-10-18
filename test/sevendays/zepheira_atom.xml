@@ -1,0 +1,1535 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Zepheira news</title>
+  <id>urn:uuid:69e45fb3-8e0b-5341-b19d-330e1ba837c2</id>
+  <entry>
+          <title>RDFa Reaches W3C Recommendation Status</title>
+          <id>b145ab19-2ea5-56fa-b9ec-baa9cfb1a116</id>
+          <updated>2008-10-17T18:58:03Z</updated>
+          <published>2008-10-17T18:58:03Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">The
+<a href="http://www.w3.org/2006/07/SWD/">
+ Semantic Web Deployment Working Group
+</a>
+and
+<a href="http://www.w3.org/MarkUp/">
+ XHTML2 Working Group
+</a>
+have announced that
+<a href="http://www.w3.org/TR/rdfa-syntax/">
+ RDFa in XHTML : Syntax and Processing
+</a>
+specification has reached
+<a href="http://www.w3.org/">
+ W3C
+</a>
+Recommendation status. This is an important step toward advancing the application of structured data and metadata to the Web publishing and browsing experiences.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">The
+<a href="http://www.w3.org/">
+ W3C
+</a>
+and its members have long sought the ability to mix extractable structured content with existing publishing processes to improve the machine-processability of the Web.
+<a href="http://microformats.org/">
+ Microformats
+</a>
+have been a successful step in this direction, but the models embraced by the domain-specific formats are not global or interoperable. The rich layers of the Semantic Web initiative have not easily been integrated until now allowing documents to indicate metadata that can be expressed in the
+<a href="http://www.w3.org/RDF/">
+ Resource Description Framework (RDF)
+</a>
+model. Publishers now have a low-effort semantic markup capability that client tools will begin to harvest as a natural part of the browsing process. No longer will "where on the Web" and "when" be the only extracted information from browsing sessions, but also "who authored the pages" and "where are they about" and "what content can be reused based on the license". The RDFa initiative grew out of the
+<a href="http://creativecommons.org/">
+ Creative Commons
+</a>
+efforts to express license metadata about published content but grew to support a wider set of use cases.
+
+For more information, see the
+<a href="http://www.w3.org/TR/rdfa-syntax/">
+ RDFa specification
+</a>
+or the
+<a href="http://www.w3.org/TR/xhtml-rdfa-primer/">
+ RDFa Primer
+</a>
+which has also been updated.
+</div>
+  </content>
+        
+
+  
+  
+<category term="rdfa w3c semanticweb" scheme="tags"/>
+<link href="2008/10/17/rdfa-w3c-recommendation.atom" rel="self" title="Atom"/>
+  <link href="2008/10/17/rdfa-w3c-recommendation.atom" rel="edit" title="Edit"/>
+  <link href="2008/10/17/rdfa-w3c-recommendation/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Free conference call series on semantic technology in the enterprise to feature Uche Ogbuji</title>
+          <id>c1085824-5822-56c7-a0de-6192f60c68e6</id>
+          <updated>2008-10-13T11:26:56Z</updated>
+          <published>2008-10-13T11:26:56Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">On November 20th Zepheira partner
+<a href="http://zepheira.com/team/uche/">
+ Uche Ogbuji
+</a>
+will be presenting "An enterprise roadmap for semantic technology" in a
+<a href="http://www.earley.com/Jumpstarts.asp">
+ free teleconference seminar series led by Earley and Associates
+</a>
+    </div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ On November 20th Uche Ogbuji will be presenting "An enterprise roadmap for semantic
+ <br/>
+ technology" in a
+ <a href="http://www.earley.com/Jumpstarts.asp">
+  free teleconference seminar series led by Earley and
+  <br/>
+  Associates
+ </a>
+ . Here is the abstract of the presentation:
+</p>
+<blockquote>
+ <p>
+  Industry experts have been awakening recently to the exceptional power of the Web to integrate information systems, and how it should be applied within the enterprise. You've heard of Enterprise 2.0, Enterprise Mashups and the like. These are generally shallow attempts to translate Web concepts to traditional IT. It is important not to miss the key ingredient for successfully harnessing the power of Web architecture--semantic technology. We all know the power of the Web comes with chaos--wide-ranging workflow conventions, malware and more. Semantic technology adapts traditional business analysis and enterprise architecture to temper the chaos without losing the power.
+ </p>
+ <p>
+  This session connects the prevailing industry trend towards Semantic technology to the characteristics of enterprises, giving you tools for assessing your organization's readiness, and determining the best launch points. It's a practical guide using specific case studies to help you get started using semantic technology to finally reconcile information technology with business imperatives, and to save costs and avoid failures in architecture and integration projects.
+ </p>
+</blockquote>
+<p>
+ You can find a
+ <a href="http://thecontentwrangler.ning.com/xn/detail/2008157:Event:33428">
+  little more information here on the series
+ </a>
+ , including how to attend.
+ 
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+<category term="Uche Ogbuji semantic technology presentation teleconference" scheme="tags"/>
+<link href="2008/10/13/Free_conference_call_series_on_semantic_technology_in_the_enterprise_to_feature_Uche_Ogbuji.atom" rel="self" title="Atom"/>
+  <link href="2008/10/13/Free_conference_call_series_on_semantic_technology_in_the_enterprise_to_feature_Uche_Ogbuji.atom" rel="edit" title="Edit"/>
+  <link href="2008/10/13/Free_conference_call_series_on_semantic_technology_in_the_enterprise_to_feature_Uche_Ogbuji/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Eric Miller to give keynote at XML Holland</title>
+          <id>121f58a6-2eaa-57d9-bad8-6bf0752e3fcb</id>
+          <updated>2008-09-28T17:01:08Z</updated>
+          <published>2008-09-28T17:01:08Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <a href="http://zepheira.com/team/eric/">
+ Zepheira's President
+</a>
+will be giving the keynote at
+<a href="http://www.xml-holland.nl/Default.aspx?tabid=269">
+ XML Holland 2008
+</a>
+on 20th November, 2008, with the theme of "Semantics and interoperability".
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Zepheira's President
+ <a href="http://zepheira.com/team/eric/">
+  Eric Miller
+ </a>
+ will be giving the keynote at
+ <a href="http://www.xml-holland.nl/Default.aspx?tabid=269">
+  XML Holland 2008
+ </a>
+ , with the theme of "Semantics and interoperability".  From the conference page:
+</p>
+<blockquote>
+ <p>
+  Many organizations needing to exchange information and knowledge with each other question how they can support such connectivity from the front end (between users) to the back end (between systems). The terminology of employees concerned with policy is not the language of the typical visitor or partner on the Web.... How can semantic modeling provide solutions to such problems?
+ </p>
+</blockquote>
+<p>
+ The conference is hosted by the SGML/XML Users Group, Holland, and will be held 20 November 2008 at Planetarium Amsterdam Zuidoost
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+<category term="ericmiller conference xml" scheme="tags"/>
+<link href="2008/09/28/xmlholland2008.atom" rel="self" title="Atom"/>
+  <link href="2008/09/28/xmlholland2008.atom" rel="edit" title="Edit"/>
+  <link href="2008/09/28/xmlholland2008/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Zepheira Partner Organizes Seminar Series</title>
+          <id>e5bea429-6e87-5d69-9c32-3d5e5f9cd9d6</id>
+          <updated>2008-09-19T12:24:13Z</updated>
+          <published>2008-09-19T12:24:13Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml"/>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">David Wood has organized this year's Computer Science Seminar Series on Next Generation Internet Technology and Business at the
+<a href="http://www.vmi.edu">
+ Virginia Military Institute
+</a>
+.
+<a href="http://people.umw.edu/~dhylandw/seminars/VMI_CS_Fall2008.html">
+ Abstracts
+</a>
+for the seminar's talks are online.  Zepheira team members Eric Miller, Brian Sletten and Bernadette Hyland will be joined by Internet entrepreneurs Peter Rodgers of
+<a href="http://www.1060research.com">
+ 1060 Research
+</a>
+, Andrew Glover of
+<a href="http://www.stelligent.com/">
+ Stelligent
+</a>
+and Ajay Sravanapudi of
+<a href="http://www.lucidmedia.com">
+ Lucid Media
+</a>
+.
+</div>
+  </content>
+        
+
+  
+  
+<category term="speaking" scheme="tags"/>
+<link href="2008/09/19/Zepheira_Partner_Organizes_Seminar_Series.atom" rel="self" title="Atom"/>
+  <link href="2008/09/19/Zepheira_Partner_Organizes_Seminar_Series.atom" rel="edit" title="Edit"/>
+  <link href="2008/09/19/Zepheira_Partner_Organizes_Seminar_Series/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>NetKernel Architects Conference 2008</title>
+          <id>c7286dbe-2fed-5178-98b7-35a2e73a7019</id>
+          <updated>2008-08-11T13:24:24Z</updated>
+          <published>2008-08-11T13:24:24Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml"/>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ This year's
+ <a href="http://1060research.com/netkernel/detail/architect-weekend/2008/announcement.html">
+  NetKernel Architects Conference
+ </a>
+ is being held 25-27 September 2008 at the
+ <a href="http://www.umw.edu">
+  University of Mary Washington
+ </a>
+ , in Fredericksburg, VA.  Zepheira partners
+ <a href="http://zepheira.com/team/dave/">
+  David Wood
+ </a>
+ and
+ <a href="http://zepheira.com/team/brian/">
+  Brian Sletten
+ </a>
+ are assisting
+ <a href="http://1060research.com/">
+  1060 Research
+ </a>
+ to organize the conference.
+
+1060 will be introducing NetKernel version 4.0 Pre-Release.  Each attendee will get a copy on the first day.  Those interested in resource-oriented computing should seriously contemplate attendance.  The Architects Conference is a great way to learn the concepts and get a jump on the competition.
+
+The
+ <a href="http://1060research.com/netkernel/detail/architect-weekend/2008/announcement.html">
+  conference schedule
+ </a>
+ and
+ <a href="http://1060research.com/netkernel/detail/architect-weekend/2008/register.html">
+  price list
+ </a>
+ are on the Web.
+</p>
+<p>
+ <center>
+  <img src="http://1060research.com/img/aw2008-banner.png" width="431" height="52"/>
+ </center>
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="NetKernel ROC davidwood briansletten" scheme="tags"/>
+<link href="2008/08/11/netkernelconf.atom" rel="self" title="Atom"/>
+  <link href="2008/08/11/netkernelconf.atom" rel="edit" title="Edit"/>
+  <link href="2008/08/11/netkernelconf/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Brian Sletten interviewed about REST for JavaWorld Podcast</title>
+          <id>6b11d14c-d1e3-517c-b837-60b8cce5856a</id>
+          <updated>2008-06-23T19:15:39Z</updated>
+          <published>2008-06-23T19:15:39Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Brian Sletten is interviewed by Andy Glover for a JavaWorld Podcast on the subject of REST and applying lessons from the Web in the Enterprise.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Andy Glover
+ <a href="http://www.javaworld.com/podcasts/jtech/2008/062408jtech.html">
+  interviews
+ </a>
+ Brian Sletten about REST and how it applies to software developers and the organizations they support. Far from being a rogue way to do Web Services, Brian explores exactly why organizations should care about REST for information-driven, business-friendly ways of building systems. He highlights some common misconceptions about REST, SOAP and discusses technologies like Restlets, JSR-311, NetKernel and Groovy
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="briansletten rest" scheme="tags"/>
+<link href="2008/06/23/restpodcast.atom" rel="self" title="Atom"/>
+  <link href="2008/06/23/restpodcast.atom" rel="edit" title="Edit"/>
+  <link href="2008/06/23/restpodcast/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>"Practical Semantic Technology for the Enterprise" at EIM Toronto</title>
+          <id>38afffe8-0a5a-5710-81b3-e8fd66687d5f</id>
+          <updated>2008-06-21T12:01:47Z</updated>
+          <published>2008-06-21T12:01:47Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Zepheira partner Uche Ogbuji gave a presentation 19 June at the
+<a href="http://eimtoronto.wilshireconferences.com/">
+ Enterprise Information Management Conference
+</a>
+in Toronto discussing the role of semantic technology for bringing Web architecture within the firewall.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ On 19 June at the
+ <a href="http://eimtoronto.wilshireconferences.com/">
+  Enterprise Information Management Conference
+ </a>
+ in Toronto, Uche Ogbuji presented
+ <a href="http://eimtoronto.wilshireconferences.com/sessionPop.cfm?confid=23&amp;proposalid=944">
+  Practical Semantic Technology for the Enterprise
+ </a>
+ in which he shared techniques and tools for applying semantic technology to bring Web architecture within the firewall.  He discussed the fact that people can find things so much easier on the Web than in their companies, and touched on how Zepheira plans to address this through the
+ <a href="http://zepheira.com/community/LED/">
+  Linked Enterprise Data
+ </a>
+ initiative.
+</p>
+    </div>
+  </content>
+        <category term="uche ogbuji EIM Enterprise Integration Management conference" scheme="tags"/>
+<link href="2008/06/21/eim-ogbuji.atom" rel="self" title="Atom"/>
+  <link href="2008/06/21/eim-ogbuji.atom" rel="edit" title="Edit"/>
+  <link href="2008/06/21/eim-ogbuji/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Interview with Uche Ogbuji on Linked Data</title>
+          <id>d14d17d6-3ed2-5250-9c9d-ff9f6e9eab11</id>
+          <updated>2008-06-09T15:21:53Z</updated>
+          <published>2008-06-09T15:21:53Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Bob DuCharme interviews Zepheira's Uche Ogbuji about the applications of Semantic Technologies in preparation for the upcoming Linked Data Planet conference.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Bob DuCharme
+ <a href="http://www.snee.com/bobdc.blog/2008/06/an_interview_with_uche_ogbuji.html">
+  interviewed
+ </a>
+ Uche Ogbuji about the concept and application of Linked Data.  Ogbuji's
+ <a href="http://www.linkeddataplanet.com/conference/sessionsbyday.php#T4">
+  talk
+ </a>
+ will help anchor next week's Linked Data Planet conference.
+</p>
+<blockquote>
+ <p>
+  "Think of how we traditionally deal with data in informatics. We look to fit data into neat partitions, shepherd it along neat lines and fit it into grand unified theory. All good, hard science. The problem is that data isn't so easily quantized. It's a living , temperamental entity that absorbs bits of personality from everyone who touches it. Dealing effectively with data requires art, and at Zepheira we really look to the art of data rather than to the science of code. We think adopting the right conventions for data that accommodate its unpredictable qualities is the key to so many of the problems that have dogged IT, and we believe that the web is the most successful set of conventions in this regard. In general we look to apply web architecture to enterprise problems. This brings us right in line with the Linked Data concept, which is really just a way to distill the essential keys to web architecture in a way any developer could tick off his fingers. At Zepheira we start with such principles as the body of art, and we bring together folks who've have proven themselves as journeymen and masters in this art, and we think this positions us to offer particularly effective solutions to our customers."
+ </p>
+</blockquote>
+<blockquote>
+ <p>
+  "At Zepheira we tend towards techniques popularized in (Linked Open Data), but clearly for most of our clients the data can't be thrown into a cloud of public data, so we've added our own refinements leading to what we've started to call Linking Enterprise Data (LED) to increase the definition of the Linked Data principles as applied to organizational data integration and decision support needs."
+ </p>
+</blockquote>
+<p>
+ -- Uche Ogbuji
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="uche ogbuji linked data conference Linking Enterprise Data" scheme="tags"/>
+<link href="2008/06/09/An_interview_with_Uche_Ogbuji_on_Linked_Data.atom" rel="self" title="Atom"/>
+  <link href="2008/06/09/An_interview_with_Uche_Ogbuji_on_Linked_Data.atom" rel="edit" title="Edit"/>
+  <link href="2008/06/09/An_interview_with_Uche_Ogbuji_on_Linked_Data/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Uche Ogbuji to speak at LinkedData Planet Conference</title>
+          <id>ec87b9d1-81d7-544a-ab28-59181a5bb684</id>
+          <updated>2008-05-28T15:39:34Z</updated>
+          <published>2008-05-28T15:39:34Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Zepheira, LLC is proud to have Uche Ogbuji speaking at the new  LinkedData Planet Conference in New York June 17-18, 2008.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Uche will be
+ <a href="http://www.linkeddataplanet.com/conference/sessionsbyday.php#T4">
+  discussing
+ </a>
+ the
+ <a href="http://esw.w3.org/topic/SweoIG/TaskForces/CommunityProjects/LinkingOpenData">
+  Linking Open Data (LOD) Project
+ </a>
+ , an exciting initiative to tie together public structured data sets currently available on the Web. This is one of many examples of people who are working together to create webs of data, not just of documents.
+</p>
+<p>
+ Uche will also be participating in a
+ <a href="http://www.linkeddataplanet.com/conference/sessionsbyday.php#T8">
+  panel
+ </a>
+ of experts discussing the architecture and development considerations developing a Linked Data environment.
+</p>
+<p>
+ The LinkedData Planet conference is sponsored by
+ <a href="http://www.jupitermedia.com/">
+  JupiterMedia
+ </a>
+ and will bring together many of the leading minds of this space including Tim Berners-Lee. The conference will be held at the
+ <a href="http://www.theroosevelthotel.com/">
+  Roosevelt Hotel
+ </a>
+ in New York City on June 17-18, 2008.
+</p>
+<p>
+ For more information, please click through the following banner.
+</p>
+<p>
+ <a href="http://linkeddataplanet.com">
+  <img src="http://www.linkeddataplanet.com/images/hdr_logo.jpg"/>
+ </a>
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="ucheogbuji linkeddata conference" scheme="tags"/>
+<link href="2008/05/28/linkeddata-planet-conf.atom" rel="self" title="Atom"/>
+  <link href="2008/05/28/linkeddata-planet-conf.atom" rel="edit" title="Edit"/>
+  <link href="2008/05/28/linkeddata-planet-conf/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Zepheira launches community site for PURL Software</title>
+          <id>771950b7-9f66-5186-b4e4-23d00b2027d6</id>
+          <updated>2008-05-21T12:01:02Z</updated>
+          <published>2008-05-21T12:01:02Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Zepheira has announced the launch of a community Web site for the Open Source Persistent URL (PURL) software.
+
+The new community site at
+<a href="http://purlz.org/">
+ purlz.org
+</a>
+is intended to become a focal point for further development of the PURL software. The site provides access to mailing lists, coordinated bug reporting, a forum for feature requests and community discussions, documentation and access to the software. The full press release is
+<a href="http://zepheira.com/news/releases/20080520.html">
+ here
+</a>
+.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Zepheira has announced the launch of a community Web site for the Open Source Persistent URL (PURL) software.
+</p>
+<p>
+ The new community site at
+ <a href="http://purlz.org/">
+  purlz.org
+ </a>
+ is intended to become a focal point for further development of the PURL software. The site provides access to mailing lists, coordinated bug reporting, a forum for feature requests and community discussions, documentation and access to the software. The full press release is
+ <a href="http://zepheira.com/news/releases/20080520.html">
+  here
+ </a>
+ .
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+<category term="PURLs" scheme="tags"/>
+<link href="2008/05/21/PURL_Community_Site.atom" rel="self" title="Atom"/>
+  <link href="2008/05/21/PURL_Community_Site.atom" rel="edit" title="Edit"/>
+  <link href="2008/05/21/PURL_Community_Site/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Zepheira and Aduna back Sesame/Mulgara Integration</title>
+          <id>62204b9b-826f-5326-9421-f97dcb160af7</id>
+          <updated>2008-05-16T13:56:02Z</updated>
+          <published>2008-05-16T13:56:02Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <a href="http://zepheira.com">
+ Zepheira
+</a>
+and
+<a href="http://www.aduna-software.com/">
+ Aduna
+</a>
+are pleased to announce the integration of the
+<a href="http://mulgara.org">
+ Mulgara Semantic Store
+</a>
+with the
+<a href="http://openrdf.org">
+ Sesame RDF Framework
+</a>
+.  The full press release is available
+<a href="http://zepheira.com/news/releases/20080516.html">
+ here
+</a>
+.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ <a href="http://zepheira.com">
+  Zepheira
+ </a>
+ and
+ <a href="http://www.aduna-software.com/">
+  Aduna
+ </a>
+ are pleased to announce the integration of the
+ <a href="http://mulgara.org">
+  Mulgara Semantic Store
+ </a>
+ with the
+ <a href="http://openrdf.org">
+  Sesame RDF Framework
+ </a>
+ .  The full press release is available
+ <a href="http://zepheira.com/news/releases/20080516.html">
+  here
+ </a>
+ .
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+<category term="Sesame Mulgara integration" scheme="tags"/>
+<link href="2008/05/16/Sesame-Mulgara-integration.atom" rel="self" title="Atom"/>
+  <link href="2008/05/16/Sesame-Mulgara-integration.atom" rel="edit" title="Edit"/>
+  <link href="2008/05/16/Sesame-Mulgara-integration/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Video Interview with Brian Sletten</title>
+          <id>c270c787-105a-5d52-b90f-a644fadbdeca</id>
+          <updated>2008-05-01T21:44:29Z</updated>
+          <published>2008-05-01T21:44:29Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Jared Richardson interviewed Zepheira Brian, asking for career advice for developers.  The interview touches on topics such as where Web and RESTful architecture meet SOA and EAI to support organizational data needs.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Highlighting a popular speaker at the
+ <a href="http://www.nofluffjuststuff.com/speaker_view.jsp?speakerId=22">
+  No Fluff Just Stuff
+ </a>
+ conferences, Jared Richardson posted a
+ <a href="http://www.6thsenseanalytics.com/blog/posts/video-interview-brian-sletten/">
+  video interview
+ </a>
+ with Zepheira partner
+ <a href="http://zepheira.com/team/brian/">
+  Brian Sletten
+ </a>
+ .  Brian discussed the most important topics for developers looking to boost their careers, and emphasized one area where they can make a real difference for their employers.
+</p>
+<p>
+ <blockquote>
+  "We spend too much time struggling to get access to our own data.  There are schisms between business and the the rules they want to enforce (such as access control) and the information technologies in place to make this available to them.  We've thrown a lot of money down the drain trying to do integration at the relational DB level, the Enterprise Application Integration level, even at the Services Oriented Architecture level.  While there's a lot of great ideas in that space, it's really the wrong level for integration.
+ </blockquote>
+</p>
+<p>
+ <blockquote>
+  "Our position is that the Web is the biggest, most successful, scalable example of software architecture that gives you access to data in terms of issuing requests for logical names and getting back physical representations.  It also gives you the flexibility to change the back ends, to change the intermediaries, and allow people to add value on the edge.  They can consume information over here, do some processing on it and republish it....
+ </blockquote>
+</p>
+<p>
+ <blockquote>
+  "When we look at trying to expose information in the enterprise—I don't care what company you work for, your data integration needs are not bigger and more diverse, and needing to be more scalable than the entire world's, so these technologies have been tremendously successful and you should look for ways to adopt them in your organization."
+ </blockquote>
+</p>
+<p>
+ —Brian Sletten
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+<category term="video interview NFJS brian sletten EAI SOA REST Web architecture data integration open source NetKernel" scheme="tags"/>
+<link href="2008/05/01/Video_Interview_with_Brian_Sletten.atom" rel="self" title="Atom"/>
+  <link href="2008/05/01/Video_Interview_with_Brian_Sletten.atom" rel="edit" title="Edit"/>
+  <link href="2008/05/01/Video_Interview_with_Brian_Sletten/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Zepheira Announces New High-Value Training Content</title>
+          <id>43a44aa3-d335-561d-b98e-fec862a114ae</id>
+          <updated>2008-03-25T13:50:57Z</updated>
+          <published>2008-03-25T13:50:57Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Zepheira has announced a series of new training courses for both custom and open-enrollment presentations. The topics include Semantic Web technologies, Data Architecture and Transformation and Resource-Oriented Architectures for Business-Driven and Scalable systems in the Enterprise.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Zepheira is pleased to announce the availability of several new high value courses available in pre-packaged, a la carte and open enrollment settings. Customers can target specific topics or go for longer, more comprehensive Bootcamps to bring their employees and teams quickly up to speed on these must-know next-generation technologies.
+</p>
+<p>
+ The 2-3 Day Courses include:
+ <ul>
+  <li>
+   Introduction to Semantic Web Technologies
+  </li>
+  <li>
+   Applied Semantic Web Technologies
+  </li>
+  <li>
+   Service-Oriented Architectures
+  </li>
+  <li>
+   Introduction to NetKernel
+  </li>
+  <li>
+   XML and Data Transformation
+  </li>
+ </ul>
+</p>
+<p>
+ The 5 Day BootCamp provide more comprehensive coverage on the following topics:
+ <ul>
+  <li>
+   Semantic Technology Bootcamp
+  </li>
+  <li>
+   Resource-Oriented Architecture Bootcamp
+  </li>
+  <li>
+   Data Architecture
+  </li>
+ </ul>
+</p>
+<p>
+ For more information, please see
+ <a href="http://zepheira.com/solutions/Training/">
+  here
+ </a>
+ or
+ <a href="mailto:training@zepheira.com">
+  contact us
+ </a>
+ for custom requests.
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="Zepheira architecture training" scheme="tags"/>
+<link href="2008/03/25/trainingcourses.atom" rel="self" title="Atom"/>
+  <link href="2008/03/25/trainingcourses.atom" rel="edit" title="Edit"/>
+  <link href="2008/03/25/trainingcourses/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>Brian Sletten to Contribute to O'Reilly Media's "Beautiful Architecture"</title>
+          <id>3ba34160-1f50-5159-ab80-ca2f8be00bfa</id>
+          <updated>2008-03-24T12:38:29Z</updated>
+          <published>2008-03-24T12:38:29Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Brian Sletten will be contributing a chapter on Resource-Oriented Architectures to O'Reilly Media's forthcoming "Beautiful Architecture" book.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ Following on the success of their Jolt-Award winning "Beautiful Code" book, O'Reilly Media is publishing a new book of personal essays by notable architects talking about decisions they have made, architectures they have seen, etc. that resulted in "beautiful" systems.
+</p>
+<p>
+ Brian Sletten will be contributing a chapter on the beauty of Resource-Oriented Architectures as a means of enabling information-driven, business-focused systems that scale. The power of the Web applied to the Enterprise not only solves many of the problems not yet solved by a sad string of failed Silver Bullets, but does so with a business-friendly attention to value-driven migration, efficient use of hardware investments, access control, regulatory compliance, etc.
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+<category term="architecture book resource-oriented" scheme="tags"/>
+<link href="2008/03/24/beautifularchitecture-chapter.atom" rel="self" title="Atom"/>
+  <link href="2008/03/24/beautifularchitecture-chapter.atom" rel="edit" title="Edit"/>
+  <link href="2008/03/24/beautifularchitecture-chapter/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+          <title>New STC08 site built by Zepheira</title>
+          <id>63ff9ac3-e5c4-5e66-aeb9-1285c20dbcdd</id>
+          <updated>2008-02-28T22:48:31Z</updated>
+          <published>2008-02-28T22:48:31Z</published>
+          <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">The new
+<a href="http://www.semantic-conference.com/" title="2008 Semantic Technology Conference">
+ Semantic Technology Conference 2008
+</a>
+site built by Zepheira demonstrates the practical value of the Semantic technology with innovative features such as a dynamic scheduler and a conference session Weblog.  The dynamic scheduler provides a faceted browse interface for the program, including features for interactively building a custom schedule.
+</div>
+  </summary>
+          <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+ This week
+ <a href="http://www.semanticuniverse.com/">
+  Semantic Universe
+ </a>
+ launched a new site for the
+ <a href="http://www.semantic-conference.com/" title="2008 Semantic Technology Conference">
+  Semantic Technology Conference 2008
+ </a>
+ .  The conference organizers, intent on demonstrating the practical value of the technology featured at this conference, hired
+ <a href="http://zepheira.com/">
+  Zepheira
+ </a>
+ to develop a site with innovative features to benefit attendees, speakers and other participants.
+</p>
+<p>
+ The site features a personalized conference
+ <a href="http://www.semantic-conference.com/scheduler" title="">
+  Scheduler
+ </a>
+ , a dynamic user interface based on the 
+
+the
+ <a href="http://picker.mit.edu/ ">
+  MIT Picker
+ </a>
+ tool which allows the user to quickly look at the available sessions on the schedule, narrowing down choices by facets such as speakers, dates and subject matter, and using common features such as search, pagination, and bookmarking favorites.  The user can then select sessions to create a custom schedule, which can be exported to iCal format for incorporation into most popular calendar software. The user can also export other views of the data such as RDF/XML and JSON.
+</p>
+<p>
+ The user can also click through to see session details, and the site provides
+ <a href="http://www.semantic-conference.com/sessionblog/" title="Comment on the Semantic Technology Conference">
+  Weblog features for conference sessions
+ </a>
+ , including the ability for people to comment on sessions, and track the discussion through
+ <a href="http://en.wikipedia.org/wiki/Atom_%28standard%29" title="Atom (standard) - Wikipedia, the free encyclopedia">
+  Atom
+ </a>
+ feeds.  Contributing comments requires log-in through
+ <a href="http://en.wikipedia.org/wiki/Openid" title="OpenID - Wikipedia, the free encyclopedia">
+  OpenID
+ </a>
+ , showcasing the popular, decentralized standard for single sign-on.
+</p>
+<p>
+ The session Weblog features and the overall site framework are implemented using the open source
+ <a href="http://wiki.xml3k.org/Bright_Content" title="Bright Content - xml3k Wiki">
+  Bright Content
+ </a>
+ platform, one of the many
+ <a href="http://zepheira.com/community/" title="Zepheira :: Professional Communities">
+  community projects
+ </a>
+ supported by Zepheira.
+</p>
+    </div>
+  </content>
+        
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+
+
+  
+  
+<category term="customer Remix Bright Content" scheme="tags"/>
+<link href="2008/02/28/stc08-site-launch.atom" rel="self" title="Atom"/>
+  <link href="2008/02/28/stc08-site-launch.atom" rel="edit" title="Edit"/>
+  <link href="2008/02/28/stc08-site-launch/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Uche Ogbuji</name>
+        </author>            
+        <title type="text">Zepheira presentation "Weaving a Web of Data" at TTI/Vanguard Boston conference</title>
+        
+        <id>http://zepheira.com/news/#x20070824a</id>
+        <updated>2007-08-24T17:30:01Z</updated>
+        <published>2007-08-24T17:30:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+          <p>On 25 September 2007 at the <a href="http://www.ttivanguard.com/conference/2007/boston.html">TTI/Vanguard Boston conference</a> Zepheira President Eric Miller presents "Weaving a Web of Data", discussing the role of of Web technology in enterprise systems.</p>
+    </div>
+        </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+          <p>Zepheira president <a href="http://zepheira.com/team/eric/">Eric
+    Miller</a> makes a presentation, "Weaving a Web of Data" at the <a href="http://www.ttivanguard.com/conference/2007/boston.html">TTI/Vanguard Boston conference</a> on 25 September 2007.  The presentation discusses the role of of Web technology in enterprise systems, addressing an audience of executives.  The theme of the conference is "The Wealth of Networks", and sessions will look beyond "Web 2.0" technologies to a new generation of pervasive networks anticipated to cause further disruption and opportunities.  "A wealth of networks allows for smoother collaboration as data and applications quickly make their way to the Web. With networks everywhere, where data resides no longer matters, as long as it’s easily accessible. Software running on laptops may soon fade away, as Web-resident apps get rented, shared, shifted, rebuilt, and mashed up."</p>
+    </div>
+        </content>
+    <link href="2007/08/24/Zepheira_presentation__Weaving_a_Web_of_Data__at_TTI_Vanguard_Boston_conference.atom" rel="self" title="Atom"/>
+  <link href="2007/08/24/Zepheira_presentation__Weaving_a_Web_of_Data__at_TTI_Vanguard_Boston_conference.atom" rel="edit" title="Edit"/>
+  <link href="2007/08/24/Zepheira_presentation__Weaving_a_Web_of_Data__at_TTI_Vanguard_Boston_conference/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Uche Ogbuji</name>
+        </author>            
+        <title type="text">Zepheira to give keynote, "The One Web" and other talks at the 2007 Rich Web Experience</title>
+        
+        <id>http://zepheira.com/news/#x20070807a</id>
+        <updated>2007-08-07T07:30:01Z</updated>
+        <published>2007-08-07T07:30:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+          <p>At <a href="http://www.therichwebexperience.com/conference/san_jose/2007/09/index.html">the
+    2007 Rich Web Experience</a> Zepheira President Eric Miller will present a keynote session, <a href="http://www.therichwebexperience.com/show_session_view.jsp?presentationId=330&amp;showId=60">"The
+    One Web"</a> and Partner Brian Sletten will present <a href="http://www.therichwebexperience.com/show_session_view.jsp?presentationId=304&amp;showId=60">"Data
+    Integration Part I: Beyond Cutesy Mashups"</a>
+      </p>
+    </div>
+        </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+          <p>Zepheira president <a href="http://zepheira.com/team/eric/">Eric
+    Miller</a> has been invited to give a keynote talk at <a href="http://www.therichwebexperience.com/conference/san_jose/2007/09/index.html">the
+    2007 Rich Web Experience (RWE)</a>, a conference in San Jose 6-8
+    September.  In his talk, <a href="http://www.therichwebexperience.com/show_session_view.jsp?presentationId=330&amp;showId=60">"The
+    One Web"</a>, he will discuss convergence of the different factions
+    trying to push the Web forward, informed by his long history in core
+    development of the Web.  The session will include a demonstration of how
+    richer Went user interface mets with richer Web data integration for
+    more effective collaboration and information management.  <a href="http://zepheira.com/team/brian/">Brian Sletten</a>, Partner at
+    Zepheira, will present <a href="http://www.therichwebexperience.com/show_session_view.jsp?presentationId=304&amp;showId=60">"Data
+    Integration Part I: Beyond Cutesy Mashups"</a>.  Brian, a long-time
+    presenter at RWE sister seminar series <a href="http://www.nofluffjuststuff.com/">No Fluff Just Stuff</a> will be
+    discussing how to bring together information from numerous silos using
+    the same technologies that make the Web work as a fairly unified
+    whole.</p>
+    </div>
+        </content>
+    <link href="2007/08/07/Zepheira_to_give_keynote___The_One_Web__and_other_talks_at_the_2007_Rich_Web_Experience.atom" rel="self" title="Atom"/>
+  <link href="2007/08/07/Zepheira_to_give_keynote___The_One_Web__and_other_talks_at_the_2007_Rich_Web_Experience.atom" rel="edit" title="Edit"/>
+  <link href="2007/08/07/Zepheira_to_give_keynote___The_One_Web__and_other_talks_at_the_2007_Rich_Web_Experience/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Brian Sletten</name>
+        </author>            
+        <title type="text">Brian Sletten is part of new DevX SemWeb Zone</title>
+        
+        <id>http://zepheira.com/news/#x20070719a</id>
+        <updated>2007-07-19T17:00:01Z</updated>
+        <published>2007-07-19T17:00:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Zepheira Partner Brian Sletten begins contributing articles to DevX's new Semantic Web-oriented Zone.</p>
+    </div>
+  </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+<p>
+Brian Sletten has been invited to start contributing articles to DevX's new <a href="http://www.devx.com/semantic/Door/34578">Semantic Web Zone</a>. <a href="http://www.devx.com/">DevX</a>, a site popular with developers solving real-world problems, has started this new area on the Semantic Web to meet a growing demand for instructional material on semantic-oriented technologies. The site will feature a variety of articles dealing with particular technologies as well as larger introductions to the underlying concepts and strategies. Brian's <a href="http://www.devx.com/semantic/Article/34994">first article</a> is an introduction to the URI spec and some of the complexities found in long-lived naming schemes.
+</p>
+	</div>
+  </content>
+    <link href="2007/07/19/Brian_Sletten_is_part_of_new_DevX_SemWeb_Zone.atom" rel="self" title="Atom"/>
+  <link href="2007/07/19/Brian_Sletten_is_part_of_new_DevX_SemWeb_Zone.atom" rel="edit" title="Edit"/>
+  <link href="2007/07/19/Brian_Sletten_is_part_of_new_DevX_SemWeb_Zone/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Eric Miller</name>
+        </author>
+        <title type="text">Zepheira partners with OCLC to rearchitect Persistent URL (PURL) service</title>
+        
+        <id>http://zepheira.com/news/#x20070711a</id>
+        <updated>2007-07-11T16:55:01Z</updated>
+        <published>2007-07-11T16:55:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Zepheira and OCLC Online Computer Library Center announced today that they will work together to rearchitect OCLC's Persistent URL (PURL) service to more effectively support the management of a "Web of data."</p>
+    </div>
+  </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+<p>
+Zepheira and OCLC Online Computer Library Center <a href="http://www.oclc.org/news/releases/200669.htm">announced</a> today that
+they will work together to rearchitect OCLC's Persistent URL (PURL)
+service to more effectively support the management of a "Web of data."
+The software developed will be released under an Apache 2 Open Source
+Software license allowing PURLs and the PURL infrastructure to be used
+in various applications for public or proprietary use. PURLs provide a
+level of indirection that allows the underlying Web addresses of
+resources to change over time without negatively affecting systems
+that depend on them.  This capability provides continuity of
+references to network resources that may migrate from machine to
+machine for business, social or technical reasons. The new PURL
+software will also be updated to reflect the current understanding of
+Web architecture as defined by the World Wide Web Consortium (W3C).
+This new software will provide the ability to permanently identify
+networked information resources, such as Web documents, as well as
+non-networked resources such as people, organizations, concepts and
+scientific data.  This capability will represent an important step
+forward in the adoption of a machine-processable "Web of data"
+enabled by the Semantic Web.</p>
+
+<p>OCLC identified Zepheira for their expertise with Semantic technology
+and retained their services for the design and implementation effort
+required to bring the PURL service to its full potential. Zepheira's
+work on identification technology on the scale of the Web dovetails
+with their solutions to help organizations manage and integrate data
+scattered within their walls.  PURL software is also an important
+component in many of Zepheira's enterprise solutions.</p>
+
+<p>"We are very excited to be taking on this work because one of the most
+important principles for Zepheira is that developments towards a
+Semantic Web can be carefully tuned and scaled to meet the immediate
+needs of businesses, while valuable experience from solving enterprise
+needs can bring focus to Semantic Web efforts.  This project for OCLC
+is a clear embodiment of this interchange, and helps establish Zepheira's
+place at the vanguard of data integration as well as enabling the Semantic Web." --
+Eric Miller, President, Zepheira</p>
+
+        </div>
+  </content>
+    <link href="2007/07/11/Zepheira_partners_with_OCLC_to_rearchitect_Persistent_URL__PURL__service.atom" rel="self" title="Atom"/>
+  <link href="2007/07/11/Zepheira_partners_with_OCLC_to_rearchitect_Persistent_URL__PURL__service.atom" rel="edit" title="Edit"/>
+  <link href="2007/07/11/Zepheira_partners_with_OCLC_to_rearchitect_Persistent_URL__PURL__service/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Kathy MacDougall</name>
+        </author>
+        <title type="text">Zepheira partners with Sun Microsystems on Case Study for Semantic Web
+        Outreach and Education at W3C</title>
+        
+        <id>http://zepheira.com/news/#x20070609a</id>
+        <updated>2007-06-09T15:30:01Z</updated>
+        <published>2007-06-09T15:00:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Zepheira Principal Kathy MacDougall authors Semantic Web case study for the W3C</p>
+    </div>
+  </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+            Kathy MacDougall, Zepheira Principal and founding Product Manager for
+            the swoRDFish Metadata Initiative, has co-authored <a href="http://www.w3.org/2001/sw/sweo/public/UseCases/Sun/">The swoRDFish Metadata Initiative: Better,
+            Faster, Smarter Web Content</a> with current swoRDFish
+            Product Manager, Susie Cone of <a href="http://www.sun.com">Sun Microsystems, Inc.</a>. This case study outlines the way in which Sun
+            Microsystems uses Semantic Web technologies to integrate various types
+            of product-related information held in many systems across the company
+            and drive dynamic delivery of this content to its external web
+            properties. The paper was prepared for <a href="http://www.w3.org/2001/sw/sweo/">W3C's Semantic Web Education
+            and Outreach Interest Group</a>, which
+            recently launched a site—<a href="http://www.w3.org/2001/sw/sweo/public/UseCases/">Semantic Web Education and Outreach Interest Group:
+            Case Studies and Use Cases</a>—to showcase
+            how Semantic Web technologies are providing value in a variety of
+            organizations.
+        </p>
+    </div>
+  </content>
+    <link href="2007/06/09/Zepheira_partners_with_Sun_Microsystems_on_Case_Study_for_Semantic_Web_________Outreach_and_Education_at_W3C.atom" rel="self" title="Atom"/>
+  <link href="2007/06/09/Zepheira_partners_with_Sun_Microsystems_on_Case_Study_for_Semantic_Web_________Outreach_and_Education_at_W3C.atom" rel="edit" title="Edit"/>
+  <link href="2007/06/09/Zepheira_partners_with_Sun_Microsystems_on_Case_Study_for_Semantic_Web_________Outreach_and_Education_at_W3C/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+        <author>
+            <name>Eric Miller</name>
+        </author>
+        <title type="text">Zepheira featured in Investor's Business Daily Web 3.0 article</title>
+        
+        <id>http://zepheira.com/news/#x20070604b</id>
+        <updated>2007-06-04T15:00:01Z</updated>
+        <published>2007-06-04T15:00:01Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Investor's Business Daily interviewed Eric Miller of Zepheira for an article on Web 3.0</p>
+    </div>
+  </summary>
+        <content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        <a href="http://investors.com/">Investor's Business Daily</a> interviewed Eric Miller for their Special Report on Web
+        2.0.  The interview covered Semantic Web technologies and how these can
+        be used to facilitate effective collaboration and data reuse within the
+        enterprise.</p>
+        <p>
+        <cite>"These technologies make it easier to free the data from the application that created it and combine this with other data sources, identify new relationships among disparate sets of data and use this information to draw new conclusions for more effective business decisions."</cite>—Eric Miller, <a href="http://purl.org/NET/ZEPHEIRA/IBDWeb3.0_20070604">After All This Interactivity, Look Out For Web 3.0 Leap</a>, by J. Bonasia, Investor's Business Daily</p>
+    </div>
+  </content>
+    <link href="2007/06/04/Zepheira_featured_in_Investor_s_Business_Daily_Web_3_0_article.atom" rel="self" title="Atom"/>
+  <link href="2007/06/04/Zepheira_featured_in_Investor_s_Business_Daily_Web_3_0_article.atom" rel="edit" title="Edit"/>
+  <link href="2007/06/04/Zepheira_featured_in_Investor_s_Business_Daily_Web_3_0_article/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+	 	<author>
+		<name>David Wood</name>
+		</author>
+		<title type="text">FIRST (First Industrial Results of Semantic Technologies) workshop at
+                ISWC 2007</title>
+		
+		<id>http://zepheira.com/news/#x20070604a</id>
+		<updated>2007-06-04T14:00:01Z</updated>
+		<published>2007-06-04T14:00:01Z</published>
+		<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Workshop to highlight industry adoption of Semantic Web techniques.</p>
+    </div>
+  </summary>
+		<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>David Wood, a partner in Zepheira, has been invited to join the program committe for the workshop <a href="http://www.disa.unitn.it/net-economy/first/index.html">FIRST (First Industrial Results of Semantic Technologies)</a>, to be held in conjunction with the 6th International Semantic Web Conference (<a href="http://iswc2007.semanticweb.org">ISWC</a>) 2007. This workshop aims to have presentations from industry reporting on early adoption of semantic technologies.  The audience will be researchers who will learn what industry needs from their research.  It is being organized by Lyndon Nixon of Free University Berlin, Roberta Cuel of University of Trento and Claudio Bergamini of Imola Informatica, Italy.</p>
+    </div>
+  </content>
+	<link href="2007/06/04/FIRST__First_Industrial_Results_of_Semantic_Technologies__workshop_at_________________ISWC_2007.atom" rel="self" title="Atom"/>
+  <link href="2007/06/04/FIRST__First_Industrial_Results_of_Semantic_Technologies__workshop_at_________________ISWC_2007.atom" rel="edit" title="Edit"/>
+  <link href="2007/06/04/FIRST__First_Industrial_Results_of_Semantic_Technologies__workshop_at_________________ISWC_2007/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+	 	<author>
+		<name>Uche Ogbuji</name>
+		</author>
+    	<title type="text">Zepheira appearance at XML Prague</title>
+		
+		<id>http://zepheira.com/news/#x20070601a</id>
+		<updated>2007-06-01T14:00:00Z</updated>
+		<published>2007-06-01T14:00:00Z</published>
+		<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+    	    <p>Uche Ogbuji of Zepheira is an invited expert speaker at <a href="http://www.xmlprague.cz/">XML Prague 2007</a>
+      </p>
+    </div>
+  </summary>
+    		<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+            <p>
+                        <a href="http://zepheira.com/team/uche/">Uche Ogbuji</a> a Partner in Zepheira, has been
+            invited to <a href="http://www.xmlprague.cz/">XML Prague 2007</a> to make
+            presentations of XML's connection to the Python Programming language,
+            and to Microformats.  The discussion of XML and Microformats includes
+            consideration of basic Semantic technology.  This focused conference in
+            the Czech capital is organized by
+                          <a href="http://iti.mff.cuni.cz/">Institute for
+            Theoretical Computer Science</a> and <a href="http://www.gingerall.com">Ginger Alliance</a>.</p>
+
+                    <p>"A regular conference on XML for developers, markup geeks,
+            information managers, and students, focusing this year on Alternative
+            Approaches to XML Processing. A full day of experts speaking has been
+            extended with an additional day dedicated for participants to hold
+            related BoF sessions and workshops."—XML Prague home page</p>
+        </div>
+  </content>
+	<link href="2007/06/01/Zepheira_appearance_at_XML_Prague.atom" rel="self" title="Atom"/>
+  <link href="2007/06/01/Zepheira_appearance_at_XML_Prague.atom" rel="edit" title="Edit"/>
+  <link href="2007/06/01/Zepheira_appearance_at_XML_Prague/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+	 	<author>
+		<name>Brian Sletten</name>
+		</author>
+		<title type="text">Zepheira Featured in EWeek Article on Semantic Web</title>
+		
+		<id>http://zepheira.com/news/#x20070530a</id>
+		<updated>2007-05-30T00:45:00Z</updated>
+		<published>2007-05-30T00:45:00Z</published>
+		<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Jim Rapoza
+	    <a href="http://etech.eweek.com/content/web_technology/spinning_the_semantic_web.html">interviewed Eric Miller</a> in an Eweek Etech article which discussed the Semantic Web and its use in the data integration landscape.</p>
+    </div>
+  </summary>
+		<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+		    <a href="http://etech.eweek.com">EWeek</a> has published an story by Jim Rapoza discussing the Semantic Web. In 
+		    <a href="http://etech.eweek.com/content/web_technology/spinning_the_semantic_web.html">"Spinning the Semantic Web"</a>, Jim interviews Eric Miller of Zepheira and Tim Berners-Lee of the W3C on the increased recognition of need for technologies to assist in semantic integration of data in the Enterprise and on the Web. Even when high profile companies choose not to use specific Semantic Web technologies, it is possible to convert their proprietary data into standard and reusable forms for additional linkage in a web of data. EWeek concludes:</p>
+
+        <p>"Our take is that the Semantic Web will eventually succeed, as it holds too many benefits for too many people to fall by the wayside. But it's also likely that the Semantic Web won't come about in the exact same way that many people envision. The lesson of the Web 2.0 technologies is that users are often surprising in the way they utilize new technologies. Miller told us that he had already seen businesses using Semantic Web technologies in interesting and unexpected ways." <a href="http://etech.eweek.com/content/web_technology/spinning_the_semantic_web.html&amp;ContextSubtypeID=107">"Spinning the Semantic Web"</a>, 29 May 2007.</p>
+        </div>
+  </content>
+	<link href="2007/05/30/Zepheira_Featured_in_EWeek_Article_on_Semantic_Web.atom" rel="self" title="Atom"/>
+  <link href="2007/05/30/Zepheira_Featured_in_EWeek_Article_on_Semantic_Web.atom" rel="edit" title="Edit"/>
+  <link href="2007/05/30/Zepheira_Featured_in_EWeek_Article_on_Semantic_Web/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+	 	<author>
+		<name>Uche Ogbuji</name>
+		</author>
+		<title type="text">Zepheira Featured in EContent Podcast on Semantic Web</title>
+		
+		<id>http://zepheira.com/news/#x20070515a</id>
+		<updated>2007-05-15T19:00:00Z</updated>
+		<published>2007-05-15T19:00:00Z</published>
+		<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Michelle Manafy
+	    <a href="http://www.econtentmag.com/Articles/ArticleReader.aspx?ArticleID=35968&amp;ContextSubtypeID=107">interviewed Eric Miller</a> in an EContent magazine podcast which touched on Semantic Web in general and Zepheira in particular.</p>
+    </div>
+  </summary>
+		<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+		    <a href="http://www.econtentmag.com">EContent magazine</a> editor Michelle Manafy
+		    <a href="http://www.econtentmag.com/Articles/ArticleReader.aspx?ArticleID=35968&amp;ContextSubtypeID=107">interviewed
+        Eric Miller</a> of Zepheira on 24 April 2007 about practical
+        applications of the Semantic Web.  They discussed common misconceptions
+        of Semantic Web, and the present surge in practice of such  technology
+        after long incubation.</p>
+
+        <p>"Businesses are starting to realize the full potential of employees'
+        collective mind-share as they create digital assets, spreadsheets,
+        presentations, e-mail and such...  Enterprises that treat their
+        environment as a Web of data are able to take advantage of how
+        information is connected to mine their employees' insights in order to
+        make better business decisions."—Eric Miller,
+        <a href="http://www.econtentmag.com/Articles/ArticleReader.aspx?ArticleID=35968&amp;ContextSubtypeID=107">"Practical
+        Applications of the Semantic Web" podcast</a>, 24 April 2007.</p>
+        </div>
+  </content>
+	<link href="2007/05/15/Zepheira_Featured_in_EContent_Podcast_on_Semantic_Web.atom" rel="self" title="Atom"/>
+  <link href="2007/05/15/Zepheira_Featured_in_EContent_Podcast_on_Semantic_Web.atom" rel="edit" title="Edit"/>
+  <link href="2007/05/15/Zepheira_Featured_in_EContent_Podcast_on_Semantic_Web/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+	 	<author>
+		<name>Uche Ogbuji</name>
+		</author>
+		<title type="text">Zepheira Featured in Talis Podcast on Semantic Web</title>
+		
+		<id>http://zepheira.com/news/#x20070514a</id>
+		<updated>2007-05-14T20:00:00Z</updated>
+		<published>2007-05-14T20:00:00Z</published>
+		<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Paul Miller <a href="http://talk.talis.com/archives/2007/04/eric_miller_tal.html">interviewed Eric Miller</a> (no relation) of Zepheira about his background, Semantic Web in general, and how Zepheira helps clients put this technology into practice.</p>
+    </div>
+  </summary>
+		<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>As part of the <a href="http://talk.talis.com">Talking with Talis</a> podcast series Paul Miller <a href="http://talk.talis.com/archives/2007/04/eric_miller_tal.html">interviewed Eric Miller</a> (no relation) of Zepheira.  Eric spoke about his background, Semantic Web in general, and how Zepheira helps clients put this technology into practice.</p>
+
+        <p>"Zepheira provides a variety of solutions for data management and integration based on open, royalty-free Semantic Web standards, with individual skill-sets ranging from XML to RDF, from technology to business.  We provide education, mentoring, architecture and implementation to take best-of-breed open source as well as commercial solutions and help organizations, communities and companies become more effective in terms of managing the data they have, seeing and understanding new connections in the data, and making more effective decisions."—Eric Miller, <a href="http://talk.talis.com/archives/2007/04/eric_miller_tal.html">Talking with Talis</a>, 13 April 2007.</p>
+        </div>
+  </content>
+	<link href="2007/05/14/Zepheira_Featured_in_Talis_Podcast_on_Semantic_Web.atom" rel="self" title="Atom"/>
+  <link href="2007/05/14/Zepheira_Featured_in_Talis_Podcast_on_Semantic_Web.atom" rel="edit" title="Edit"/>
+  <link href="2007/05/14/Zepheira_Featured_in_Talis_Podcast_on_Semantic_Web/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+		 	<author>
+			<name>David Wood</name>
+			</author>
+			<title type="text">Zepheira Featured in Talis Podcast on Mulgara</title>
+			
+			<id>http://zepheira.com/news/#x20070501a</id>
+			<updated>2007-05-01T20:58:00Z</updated>
+			<published>2007-05-01T20:58:00Z</published>
+			<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Zepheira partner David Wood <a href="http://blogs.talis.com/nodalities/2007/05/david_wood_talks_with_talis_ab.php">discusses</a> the past, present and future of the <a href="http://mulgara.org/">Mulgara Semantic Store</a> with Talis.</p>
+    </div>
+  </summary>
+			<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Zepheira partner David Wood <a href="http://blogs.talis.com/nodalities/2007/05/david_wood_talks_with_talis_ab.php">discusses</a> the past, present and future of the <a href="http://mulgara.org/">Mulgara Semantic Store</a> with Talis.</p>
+    </div>
+  </content>
+		<link href="2007/05/01/Zepheira_Featured_in_Talis_Podcast_on_Mulgara.atom" rel="self" title="Atom"/>
+  <link href="2007/05/01/Zepheira_Featured_in_Talis_Podcast_on_Mulgara.atom" rel="edit" title="Edit"/>
+  <link href="2007/05/01/Zepheira_Featured_in_Talis_Podcast_on_Mulgara/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+		 	<author>
+			<name>David Wood</name>
+			</author>
+			<title type="text">IEEE Software News Feature on Semantic Software Maintenance</title>
+			
+			<id>http://zepheira.com/news/#x20070423d</id>
+			<updated>2007-04-23T16:56:03Z</updated>
+			<published>2007-04-23T16:56:03Z</published>
+			<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>IEEE Software editors spot coming trend.</p>
+    </div>
+  </summary>
+			<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>David Wood, a partner in Zepheira, was recently interviewed for a full length news feature to appear in the July-August edition of IEEE Software.  The feaure will explore how and if the concepts and technologies in the Semantic Web are affecting, or will affect, the discipline of software engineering.  David attracted the interest of the editors after his paper <a href="http://www.itee.uq.edu.au/~dwood/papers/TowardASoftwareMaintenanceMethodology.pdf">Toward a Software Maintenance Methodology using Semantic Web Techniques</a> was presented at <a href="http://homepages.feis.herts.ac.uk/~comqcln/EN/software_evolvability06.html">Software Evolvability 06</a>.</p>
+    </div>
+  </content>
+		<link href="2007/04/23/IEEE_Software_News_Feature_on_Semantic_Software_Maintenance.atom" rel="self" title="Atom"/>
+  <link href="2007/04/23/IEEE_Software_News_Feature_on_Semantic_Software_Maintenance.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/23/IEEE_Software_News_Feature_on_Semantic_Software_Maintenance/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+		 	<author>
+			<name>David Wood</name>
+			</author>
+			<title type="text">Bridging the Gap between Semantic Web and Web 2.0 workshop at ESWC 2007</title>
+			
+			<id>http://zepheira.com/news/#x20070423c</id>
+			<updated>2007-04-23T16:56:02Z</updated>
+			<published>2007-04-23T16:56:02Z</published>
+			<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Workshop to bring Web 2.0 and the Semantic Web closer.</p>
+    </div>
+  </summary>
+			<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>David Wood, a partner in Zepheira, has been invited to join the program committe for the workshop <a href="http://www.kde.cs.uni-kassel.de/ws/eswc2007/">Bridging the Gap between Semantic Web and Web 2.0</a>, to be held in conjunction with the 4th European Semantic Web Conference (<a href="http://www.eswc2007.org/">ESWC</a>) 2007. The main topic of the workshop is to bridge the gap between the Semantic Web and the upcoming Web 2.0 communities. The workshop is being organized by Andreas Hotho and Bettina Hoser of Universitaet Kassel.</p>
+    </div>
+  </content>
+		<link href="2007/04/23/Bridging_the_Gap_between_Semantic_Web_and_Web_2_0_workshop_at_ESWC_2007.atom" rel="self" title="Atom"/>
+  <link href="2007/04/23/Bridging_the_Gap_between_Semantic_Web_and_Web_2_0_workshop_at_ESWC_2007.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/23/Bridging_the_Gap_between_Semantic_Web_and_Web_2_0_workshop_at_ESWC_2007/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+		 	<author>
+			<name>David Wood</name>
+			</author>
+			<title type="text">Making Semantics Work For Business workshop at ESWC 2007</title>
+			
+			<id>http://zepheira.com/news/#x20070423b</id>
+			<updated>2007-04-23T16:56:01Z</updated>
+			<published>2007-04-23T16:56:01Z</published>
+			<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Workshop to demonstrate semantic solutions for businesses.</p>
+    </div>
+  </summary>
+			<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>David Wood, a partner in Zepheira, has been invited to join the program committe for the workshop <a href="http://www.ag-nbi.de/conf/MSWFB">Making Semantics Work For Business</a>, to be held in conjunction with the 4th European Semantic Web Conference (<a href="http://www.eswc2007.org/">ESWC</a>) 2007. This workshop aims to solicit demonstrations of semantic technologies solving real business problems and is being organized by Lyndon Nixon of Free University Berlin, Roberta Cuel of University of Trento and David de Francisco of Telefonica, Spain.</p>
+    </div>
+  </content>
+		<link href="2007/04/23/Making_Semantics_Work_For_Business_workshop_at_ESWC_2007.atom" rel="self" title="Atom"/>
+  <link href="2007/04/23/Making_Semantics_Work_For_Business_workshop_at_ESWC_2007.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/23/Making_Semantics_Work_For_Business_workshop_at_ESWC_2007/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+		 	<author>
+			<name>David Wood</name>
+			</author>
+			<title type="text">Zepheira partners to author REST book</title>
+			
+			<id>http://zepheira.com/news/#x20070423a</id>
+			<updated>2007-04-23T16:56:00Z</updated>
+			<published>2007-04-23T16:56:00Z</published>
+			<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Pragmatic Programmers to publish book on Representational State Transfer.</p>
+    </div>
+  </summary>
+			<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Brian Sletten and David Wood, partners in Zepheira, have recently signed a contract with <a href="http://pragmaticprogrammer.com/">The Pragmatic Programmers</a> to co-author a book on Representational State Transfer (REST).  REST is the architectural style used by much of the World Wide Web and one of two major approaches to Service Oriented Architectures (SOA).  The book is to be published in early 2008.</p>
+    </div>
+  </content>
+		<link href="2007/04/23/Zepheira_partners_to_author_REST_book.atom" rel="self" title="Atom"/>
+  <link href="2007/04/23/Zepheira_partners_to_author_REST_book.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/23/Zepheira_partners_to_author_REST_book/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+     	<author>
+    	<name>Uche Ogbuji</name>
+    	</author>
+    	<title type="text">Zepheira featured in BusinessWeek Podcast</title>
+    	
+    	<id>http://zepheira.com/news/#x20070418a</id>
+    	<updated>2007-04-18T20:00:00Z</updated>
+    	<published>2007-04-18T20:00:00Z</published>
+    	<category term=".important" scheme="http://www.zepheira.com/feeds/"/>
+    	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Rachael King of BusinessWeek interviewed Eric Miller in a podcast, <a href="http://www.businessweek.com/mediacenter/podcasts/guide_to_tech/guidetotech_04_09_07.htm?chan=technology_technology+index+page_top+stories">"The CEO Guide to the Semantic Web"</a>
+    </div>
+  </summary>
+    	<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>As part of BusinessWeek's "CEO Guide To Technology" series Rachael King interviewed Eric Miller of Zepheira for
+           <a href="http://www.businessweek.com/mediacenter/podcasts/guide_to_tech/guidetotech_04_09_07.htm?chan=technology_technology+index+page_top+stories">"The CEO Guide to the Semantic Web"</a>.  The interview, recorded 9 April 2007, discussed the evolution of Semantic Web technology, and focused on the factors that make this technology particularly relevant to businesses today.
+        </p>
+        <p>"Quite frequently businesses are realizing that inside their organization they're creating very valuable data assets, and the problem of not being able to stitch those data assets together is keeping them from making effective decisions."—Eric Miller, "The CEO Guide to the Semantic Web", 9 April 2007.</p>
+        </div>
+  </content>
+    <link href="2007/04/18/Zepheira_featured_in_BusinessWeek_Podcast.atom" rel="self" title="Atom"/>
+  <link href="2007/04/18/Zepheira_featured_in_BusinessWeek_Podcast.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/18/Zepheira_featured_in_BusinessWeek_Podcast/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+     	<author>
+    	<name>Uche Ogbuji</name>
+    	</author>
+    	<title type="text">Zepheira featured in MIT Tech Review article</title>
+    	
+    	<id>http://zepheira.com/news/#x20070417a</id>
+    	<updated>2007-04-17T20:00:00Z</updated>
+    	<published>2007-04-17T20:00:00Z</published>
+    	<category term=".important" scheme="http://www.zepheira.com/feeds/"/>
+    	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <a href="http://www.technologyreview.com/Infotech/18395/">"Part I: A Smarter Web"</a>, a feature article by John Borland in the March, 2007 edition of MIT Technology Review, includes significant coverage of <span class="name">Zepheira</span>, touching on the company's professional work, and the personal journey of President Eric Miller.</div>
+  </summary>
+    	<content type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>
+        <a href="http://www.technologyreview.com/Infotech/18395/">"Part I: A Smarter Web"</a> is a feature article by John Borland in the March, 2007 edition of MIT Technology Review.  The four-page article includes significant coverage of <span class="name">Zepheira</span>, touches on the company's professional work and the personal journey of President Eric Miller.  The author traces Semantic Web technology from labs and institutions through early adoption in smart organizations through venture capitalists and into the business mainstream.  <span class="name">Zepheira</span>'s expert team has taken a lead role in shepherding Semantic technology through all these stages of development, and commercialization.  We are at the forefront of efforts to integrate the promise of semantic technology into the practical needs of today's organizations.  <a href="http://zepheira.com/contact/">Contact us today</a> to learn more.
+        </p>
+        <p>"<span class="name">Zepheira</span>, a consulting company that helps businesses link fragmented data sources into easily searched wholes..."—John Borland in MIT Technology Review, 19 March 2007</p>
+        </div>
+  </content>
+    <link href="2007/04/17/Zepheira_featured_in_MIT_Tech_Review_article.atom" rel="self" title="Atom"/>
+  <link href="2007/04/17/Zepheira_featured_in_MIT_Tech_Review_article.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/17/Zepheira_featured_in_MIT_Tech_Review_article/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+     	<author>
+    	<name>Daniel Krech</name>
+    	</author>
+    	<title type="text">rdflib 2.4.0 released</title>
+    	
+    	<id>http://zepheira.com/news/#x20070411a</id>
+    	<updated>2007-04-11T16:00:00Z</updated>
+    	<published>2007-04-11T16:00:00Z</published>
+    	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <a href="http://rdflib.net/2.4.0/">rdflib-2.4.0</a>, a <a href="http://python.org/">Python</a> library for working with <a href="http://www.w3.org/RDF/">RDF</a>, has ben released.</div>
+  </summary>
+    	<content type="xhtml" xml:base="http://zepheira.com/news/#x20070228a">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Daniel Krech, along with a great group of <a href="http://rdflib.net/contributors/">contributors</a>, has released
+        <a href="http://rdflib.net/2.4.0/">rdflib-2.4.0</a>, a <a href="http://python.org/">Python</a> library for working with <a href="http://www.w3.org/RDF/">RDF</a>. The library contains parsers
+        and serializers for <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML</a>, <a href="http://www.w3.org/DesignIssues/Notation3">N3</a>, <a href="http://www.w3.org/TR/rdf-testcases/#ntriples">NTriples</a>, <a href="http://www.dajobe.org/2004/01/turtle/">Turtle</a>, <a href="http://swdev.nokia.com/trix/trix.html">TriX</a> and <a href="http://www.w3.org/2006/07/SWD/RDFa/syntax/">RDFa</a>. The
+        library presents a Graph interface which can be backed by any one of a
+        number of store implementations, including, memory, MySQL, Redland,
+        SQLite, Sleepycat, ZODB and SQLObject. The 2.4.0 release contains
+        improved literal support in regards to datatype mapping and comparison
+        operations, many SPARQL fixes and improvements, and many other fixes
+        and improvements.</p>
+    </div>
+  </content>
+    <link href="2007/04/11/rdflib_2_4_0_released.atom" rel="self" title="Atom"/>
+  <link href="2007/04/11/rdflib_2_4_0_released.atom" rel="edit" title="Edit"/>
+  <link href="2007/04/11/rdflib_2_4_0_released/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+     	<author>
+    	<name>Brian Sletten</name>
+    	</author>
+    	<title type="text">New Data Mashup Talk</title>
+    	
+    	<id>http://zepheira.com/news/#x20070228a</id>
+    	<updated>2007-02-28T16:00:00Z</updated>
+    	<published>2007-02-28T16:00:00Z</published>
+    	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Brian Sletten is introducing a new data mashup talk to be delivered as part of the <a href="http://www.nofluffjuststuff.com">No Fluff Just Stuff</a> 2007 tour.</div>
+  </summary>
+    	<content type="xhtml" xml:base="http://zepheira.com/news/#x20070228a">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Brian Sletten has introduced a new data mashups <a href="http://www.nofluffjuststuff.com/speaker_topic_view.jsp?topicId=502">talk</a> to be presented as part of the 2007 <a href="http://www.nofluffjuststuff.com">No Fluff Just Stuff Tour</a>. The talk focuses on emerging technologies that will enable a level of data integration rarely seen in the enterprise. Examples include consuming <a href="http://del.icio.us">del.icio.us</a> queries as iTunes podcasts, viewing data multi-dimensionally in <a href="http://simile.mit.edu/exhibit/">Exhibit</a> and exercising <a href="http://pipes.yahoo.com">Yahoo Pipes</a>-like functionality in <a href="http://sourceforge.net/projects/pinky">Pinky</a>, a rapidly growing <a href="http://1060.org">NetKernel</a> module for RSS feed remixing.</p>
+    </div>
+  </content>
+    <link href="2007/02/28/New_Data_Mashup_Talk.atom" rel="self" title="Atom"/>
+  <link href="2007/02/28/New_Data_Mashup_Talk.atom" rel="edit" title="Edit"/>
+  <link href="2007/02/28/New_Data_Mashup_Talk/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+  	<author>
+	<name>Eric Miller</name>
+	</author>
+	<title type="text">HTTP Vocabulary in RDF</title>
+	
+	<id>http://zepheira.com/news/#x20061220a</id>
+	<updated>2006-12-20T16:00:00Z</updated>
+	<published>2006-12-20T16:00:00Z</published>
+	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">The Web Accessibility Initiative WAI Evaluation and Repair Tools Working Group (ERT WG) has released the first public Working Draft of HTTP Vocabulary in RDF. This specification defines an RDF vocabulary for concepts relating to HTTP protocol and conventions. This can be used in a variety of ways, including expression of business rules for Web [...]</div>
+  </summary>
+	<content type="xhtml" xml:base="http://zepheira.com/news/#x20061220a">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>The Web Accessibility Initiative WAI Evaluation and Repair Tools Working Group (ERT WG) has released the first public Working Draft of <a href="http://www.w3.org/TR/HTTP-in-RDF/">HTTP Vocabulary in RDF</a>. This specification defines an RDF vocabulary for concepts relating to HTTP protocol and conventions. This can be used in a variety of ways, including expression of business rules for Web interaction and analysis of actual Web interaction records.</p>
+</div>
+  </content>
+	<link href="2006/12/20/HTTP_Vocabulary_in_RDF.atom" rel="self" title="Atom"/>
+  <link href="2006/12/20/HTTP_Vocabulary_in_RDF.atom" rel="edit" title="Edit"/>
+  <link href="2006/12/20/HTTP_Vocabulary_in_RDF/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+  	<author>
+		<name>Eric Miller</name>
+	</author>
+	<title type="text">Call for papers closing for 2007 Semantic Technology Conference</title>
+	
+	<id>http://zepheira.com/news/#x20061213a</id>
+        <updated>2006-12-13T16:00:00Z</updated>
+	<published>2006-12-13T16:00:00Z</published>
+	<summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">The Semantic Technology Conference has for the past three years been a highly successful gathering of the best and brightest on the subject. Eric Miller of Zepheira presented the keynote at the inaugural conference in 2005 and Uche Ogbuji has spoken at the 2005 and 2006 conferences. The call for presentations for the 2007 conference [...]</div>
+  </summary>
+	<content type="xhtml" xml:base="http://zepheira.com/news/#x20061213a">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>The <a href="http://www.semantic-conference.com/">Semantic Technology Conference</a> has for the past three years been a highly successful gathering of the best and brightest on the subject. Eric Miller of Zepheira presented the keynote at the inaugural conference in 2005 and Uche Ogbuji has spoken at the 2005 and 2006 conferences. The <a href="http://upcoming.org/event/129269/">call for presentations for the 2007 conference</a> is closing Monday, December 18, 2006. Registration is opening soon. If you’re interested in latest developments in semantic technology and its practical application, do plan to attend the conference.</p>
+    </div>
+  </content>
+	<link href="2006/12/13/Call_for_papers_closing_for_2007_Semantic_Technology_Conference.atom" rel="self" title="Atom"/>
+  <link href="2006/12/13/Call_for_papers_closing_for_2007_Semantic_Technology_Conference.atom" rel="edit" title="Edit"/>
+  <link href="2006/12/13/Call_for_papers_closing_for_2007_Semantic_Technology_Conference/" rel="alternate" title="Permalink"/>
+</entry>
+  <entry>
+  	<author>
+		<name>Eric Miller</name>
+	</author>
+	<title type="text">Eric Miller to keynote at MEDSA's 14th Annual Conference</title>
+	
+	<id>http://zepheira.com/news/#x20061128a</id>
+	<updated>2006-11-28T16:00:00Z</updated>
+	<published>2006-11-28T16:00:00Z</published>
+        <summary type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml">Eric Miller will be giving the Keynote at MESDA's 14th Annual Conference on how Semantic Web and Web 2.0 improve businesses today. MESDA is Northern New England's premier networking and educational event. If you're interested in understanding how these technologies will shape the future of how individuals, groups and businesses can be more effective in [...]</div>
+  </summary>
+		<content type="xhtml" xml:base="http://zepheira.com/news/#x20061128a">
+    <div xmlns="http://www.w3.org/1999/xhtml">
+      <p>Eric Miller will be giving the Keynote at <a href="http://www.mesda.com/ac2006/index.aspx">MESDA’s 14th Annual Conference</a> on how Semantic Web and Web 2.0 improve businesses today. MESDA is Northern New England’s premier networking and educational event. If you’re interested in understanding how these technologies will shape the future of how individuals, groups and businesses can be more effective in data management, merging and reuse, plan to attend.</p>
+    </div>
+  </content>
+	<link href="2006/11/28/Eric_Miller_to_keynote_at_MEDSA_s_14th_Annual_Conference.atom" rel="self" title="Atom"/>
+  <link href="2006/11/28/Eric_Miller_to_keynote_at_MEDSA_s_14th_Annual_Conference.atom" rel="edit" title="Edit"/>
+  <link href="2006/11/28/Eric_Miller_to_keynote_at_MEDSA_s_14th_Annual_Conference/" rel="alternate" title="Permalink"/>
+</entry>
+  <updated>2008-10-17T18:58:03Z</updated>
+</feed>

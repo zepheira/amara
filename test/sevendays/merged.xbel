@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- From http://www.cs.uu.nl/~joris/bookmarks/bookmark.xml -->
+<xbel version="1.0">
+  <title>Bookmarks of Joris Graaumans [excerpt]</title>
+  <info>
+    <metadata owner="Joris Graaumans"/>
+  </info>
+  <folder folded="yes">
+    <title>XML</title>
+    <bookmark visited="8/24/00 4:47:38 PM" href="http://www.zvon.org">
+      <title>ZVON.org</title>
+    </bookmark>
+    <bookmark visited="8/25/00 10:31:51 AM" href="http://www.xml.org/">
+      <title>XML.ORG - The XML Industry Portal</title>
+    </bookmark>
+    <bookmark visited="8/30/00 1:42:33 PM" href="http://www.oasis-open.org/cover/sgml-xml.html">
+      <title>The XML Cover Pages - Home Page</title>
+    </bookmark>
+    <folder folded="yes">
+      <title>Software</title>
+      <bookmark href="http://www.xmlsoftware.com">
+        <title>xmlsoftware.com</title>
+      </bookmark>
+      <bookmark href="http://www.vbxml.com/">
+        <title>VBXML</title>
+        <desc>Xpath Visualiser</desc>
+      </bookmark>
+    </folder>
+    <folder folded="yes">
+      <title>DOM</title>
+      <bookmark href="http://www.mozilla.org/docs/dom/technote/tn-dom-table/">
+        <title>JavaScript DOM level 1</title>
+      </bookmark>
+      <bookmark href="http://www.w3c.rl.ac.uk/talks/lectures/06gdom/slide12-0.htm">
+        <title>JavaScript DOM examples</title>
+      </bookmark>
+      <bookmark href="http://www.w3.org/TR/DOM-Level-2-Core/">
+        <title>DOM-Level-2-Core</title>
+      </bookmark>
+    </folder>
+    <folder folded="yes">
+      <title>DTDs</title>
+      <folder folded="yes">
+        <title>TEI</title>
+        <bookmark href="http://www.hcu.ox.ac.uk/TEI/pizza.html">
+          <title>TEI pizza chef</title>
+        </bookmark>
+        <bookmark visited="7/3/00 3:02:43 PM" href="http://www.tei-c.org/">
+          <title>TEI Consortium</title>
+        </bookmark>
+      </folder>
+      <folder folded="yes">
+        <title>Xbel</title>
+        <bookmark visited="8/29/00 3:48:40 PM" href="http://www.python.org/topics/xml/xbel/">
+          <title>Xbel homepage</title>
+        </bookmark>
+      </folder>
+      <folder folded="yes">
+        <title>Misc</title>
+        <bookmark visited="8/24/00 4:00:30 PM" href="http://www.xmlephant.com/pages/Technologies/DTDs_and_Examples/">
+          <title>XMLephant: Technologies/DTDs_and_Examples</title>
+        </bookmark>
+      </folder>
+      <folder folded="yes">
+        <title>DocBook DTD</title>
+        <bookmark visited="8/30/00 4:48:45 PM" href="http://www.oreilly.com/catalog/docbook/chapter/book/refchar.html">
+          <title>DocBook Character Entity Reference</title>
+        </bookmark>
+        <bookmark href="http://www.oreilly.com/catalog/docbook/chapter/book/docbook.html">
+          <title>Docbook reference guide</title>
+        </bookmark>
+      </folder>
+    </folder>
+    <bookmark visited="8/24/00 9:48:40 AM" href="http://www.oasis-open.org/cover/xml.html#discussionLists">
+      <title>XML discussion lists</title>
+    </bookmark>
+    <bookmark visited="8/30/00 4:41:22 PM" href="http://www.w3.org/">
+      <title>The World Wide Web Consortium</title>
+    </bookmark>
+    <folder folded="yes">
+      <title>XSL</title>
+      <bookmark href="http://www.datapower.com/XSLTMark/">
+        <title>XSLT benchmark</title>
+      </bookmark>
+      <bookmark visited="8/25/00 11:09:44 AM" href="http://xml.apache.org/fop/examples.html">
+        <title>xml.apache.org Examples</title>
+      </bookmark>
+      <bookmark visited="8/24/00 4:10:35 PM" href="http://www.w3.org/TR/xsl/">
+        <title>XSL specs van W3c</title>
+        <desc>XSL working draft 1.0 van het W3c</desc>
+      </bookmark>
+      <bookmark href="http://www.w3.org/Style/XSL/">
+        <title>Extensible Stylesheet
+		Language (XSL)</title>
+      </bookmark>
+      <folder folded="yes">
+        <title>Discussion lists</title>
+        <bookmark visited="8/10/00 11:04:02 AM" href="http://www.mulberrytech.com/xsl/xsl-list/index.html#subscribing">
+          <title>Mulberry Technologies, Inc.: XSL-List -- Open Forum on XSL</title>
+        </bookmark>
+        <bookmark visited="8/10/00 11:06:40 AM" href="http://www.mulberrytech.com/xsl/index.html">
+          <title>Mulberry Technologies, Inc.: XSL</title>
+        </bookmark>
+      </folder>
+    </folder>
+  </folder>
+  <folder folded="yes">
+    <title>Dictionaries</title>
+    <bookmark visited="8/24/00 4:40:17 PM" href="http://web.psych.ualberta.ca/~mike/Pearl_Street/Dictionary/dictionary.html">
+      <title>University of Alberta Cognitive Science Dictionary (Home
+		  Page)</title>
+      <desc>Cognitive science woordenboek</desc>
+    </bookmark>
+    <bookmark visited="8/25/00 11:44:32 AM" href="http://www.dictionary.com">
+      <title>Dictionary.com</title>
+    </bookmark>
+    <bookmark visited="7/18/00 2:03:43 PM" href="http://dictionary.cambridge.org/">
+      <title>Cambridge International Dictionaries</title>
+    </bookmark>
+    <bookmark visited="8/29/00 3:10:17 PM" href="http://www.vandale.nl/current/">
+      <title>Het Van Dale Taalweb</title>
+    </bookmark>
+  </folder>
+</xbel>
