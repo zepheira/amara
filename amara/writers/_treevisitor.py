@@ -20,7 +20,7 @@ class visitor:
     printer classes (XMLPrinter, HTMLPrinter, etc.) for the event
     handlers.
     """
-    def __init__(self, stream, encoding, ns_hints=None, is_html=False,
+    def __init__(self, stream=sys.stdout, encoding='utf-8', printer=None, ns_hints=None, is_html=False,
                  indent=False, canonical=False, added_attributes=None,
                  removed_ns_decls=None):
         """
@@ -30,7 +30,9 @@ class visitor:
         help determine if namespace declarations need to be emitted when
         visiting the first Element node.
         """
-        if indent and is_html:
+        if printer:
+            self.printer = printer
+        elif indent and is_html:
             self.printer = _htmlprinters.htmlprettyprinter(stream, encoding)
         elif indent:
             self.printer = _xmlprinters.xmlprettyprinter(stream, encoding)
@@ -131,6 +133,7 @@ class visitor:
 
         # Gather the namespaces and attributes for writing
         namespaces = node.xml_namespaces.copy()
+        del namespaces[u'xml']
         if self._ns_hints:
             for prefix, namespaceUri in self._ns_hints.items():
                 # See if this namespace needs to be emitted

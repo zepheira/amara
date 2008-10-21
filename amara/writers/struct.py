@@ -11,6 +11,7 @@ for considered reasons of clarity in use
 
 import sys
 from itertools import *
+import amara
 from amara import tree
 from amara.writers import WriterError
 from amara import XML_NAMESPACE
@@ -70,6 +71,13 @@ class structwriter(object):
             self.printer.end_document()
             return
         if isinstance(obj, NS):
+            return
+        if isinstance(obj, RAW):
+            doc = amara.parse(obj.content)
+            from amara.writers._treevisitor import visitor
+            v = visitor(printer=self.printer)
+            for child in doc.xml_children:
+                v.visit(child)
             return
         if isinstance(obj, E):
             #First attempt used tee.  Seems we ran into the warning at http://www.python.org/doc/2.4.3/whatsnew/node13.html
@@ -151,8 +159,17 @@ class NS(object):
         self.namespace = namespace
 
 class RAW(object):
+    '''
+    >>> from amara.writers.struct import *
+    >>> w = structwriter(indent=u"yes").feed(ROOT(
+      E((u'urn:x-bogus1', u'n:a'), {(u'urn:x-bogus1', u'n:x'): u'1'},
+        E((u'urn:x-bogus2', u'b'), u'c'), RAW(u'<test />')
+      )))
+    
+    '''
     def __init__(self, *content):
-        self.content = content
+        #Eventually use incremental parse and feed()
+        self.content = ''.join(content)
 
 class ROOT(object):
     def __init__(self, *content):
