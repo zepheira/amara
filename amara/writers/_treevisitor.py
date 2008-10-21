@@ -130,7 +130,7 @@ class visitor:
         current_nss = self._namespaces[-1].copy()
 
         # Gather the namespaces and attributes for writing
-        namespaces = {}
+        namespaces = node.xml_namespaces.copy()
         if self._ns_hints:
             for prefix, namespaceUri in self._ns_hints.items():
                 # See if this namespace needs to be emitted
