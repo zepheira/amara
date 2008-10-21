@@ -294,5 +294,68 @@ version="1.0">
     #    test_harness.XsltTest(tester, source, [sheet], EXPECTED1, ignorePis=0,
     #                          title='test 5')
 
+
+OUTPUT_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
+<xsl:transform version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+>
+ <xsl:strip-space elements="*"/>
+ <xsl:output %s/>
+
+  <xsl:template match="@*|node()">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()"/>
+    </xsl:copy>
+  </xsl:template>
+
+</xsl:transform>
+"""
+
+class test_basics_6(xslt_test):
+    '''
+    Basic output parameter test, 1
+    '''
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="yes"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div>
+    <img src="x"/>
+</div>"""
+
+class test_basics_7(xslt_test):
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="no"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div><img src="x"/></div>"""
+
+class test_basics_8(xslt_test):
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="xml"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div><img src="x"/></div>"""
+
+class test_basics_9(xslt_test):
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="html" indent="no"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div><img src="x"></img></div>"""
+
+class test_basics_10(xslt_test):
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="yes"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div>
+   <img src="x"></img>
+</div>"""
+
+class test_basics_11(xslt_test):
+    source = stringsource('<div><img src="x"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="xml"')
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div>
+   <img src="x"></img>
+</div>"""
+
+
 if __name__ == '__main__':
     test_main()
