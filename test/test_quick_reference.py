@@ -13,6 +13,23 @@ from amara import bindery
 XML = '<a x="1"><b>i</b><c>j<d/>k</c><b>l</b></a>'
 #self.assertEqual(doc[u'a'], doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
 
+def check_bindery(self, doc):
+    self.assertEqual(doc.a, doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
+    #self.assertEqual(doc[u'a'], doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
+    self.assertEqual(doc.a.xml_type, 'element')      #object representing a element (instance of class a),
+    self.assertEqual(doc.a.b, doc.xml_select(u'//a/b')[0])               #first instance of b
+    self.assertEqual(doc.a.x, u'1')               #u"1"
+    self.assertEqual(doc.a[u'x'], u'1')            #u"1"
+    self.assertEqual(doc.a.b[0], doc.xml_select(u'//b')[0])           #first instance of b
+    self.assertEqual(doc.a.b[1], doc.xml_select(u'//b')[1])            #second instance of b
+    self.assertEqual(doc.a[u'b'][1], doc.xml_select(u'//b')[1])         #second instance of b
+    #iter(doc.a.b)         #iterator over both instances of b
+    self.assertEqual(unicode(doc.a.b), u'i')      #u"i"
+    self.assertEqual(unicode(doc.a.b[1]), u'l')   #u"l"
+    self.assertEqual(unicode(doc.a), u"ijkl")        #u"ijkl"
+    return
+
+
 class Test_quick_reference(unittest.TestSuite):
     class Test_basic_access(unittest.TestCase):
         def test_basic_access(self):
@@ -32,10 +49,10 @@ class Test_quick_reference(unittest.TestSuite):
             self.assertEqual(a.xml_parent, doc)
             self.assertEqual(a.xml_attributes.items(), [((None, u'x'), u'1')])
 
-            
+
     class Test_basic_document_update(unittest.TestCase):
         
-        def test_update_domlette(self):
+        def test_update_tree(self):
             doc = amara.parse(XML)
             a = doc.xml_children[0]
             #Add a new text node to a (--> last child)
@@ -52,27 +69,46 @@ class Test_quick_reference(unittest.TestSuite):
             e1 = a.xml_select(u"./b")[-1]
             e1.xml_parent.xml_remove(e1)
             self.assertEqual(len(a.xml_children), num_kids-1)
-            
-            doc.a.xml_clear()  #Remove all children from a
+            return
 
-            
+    
     class Test_bindery(unittest.TestCase):
+        XML = '<a x="1"><b>i</b><c>j<d/>k</c><b>l</b></a>'
         def test_bindery(self):
-            XML = '<a x="1"><b>i</b><c>j<d/>k</c><b>l</b></a>'
-            doc = bindery.parse(XML)  # bindery doc
-            self.assertEqual(doc[u'a'], doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
-            self.assertEqual(doc.a.xml_type, 'element')      #object representing a element (instance of class a),
-            self.assertEqual(doc.a.b, doc.xml_select(u'//a/b')[0])               #first instance of b
-            self.assertEqual(doc.a.x, u'1')               #u"1"
-            self.assertEqual(doc.a[u'x'], u'1')            #u"1"
-            self.assertEqual(doc.a.b[0], doc.xml_select(u'//b')[0])           #first instance of b
-            self.assertEqual(doc.a.b[1], doc.xml_select(u'//b')[1])            #second instance of b
-            self.assertEqual(doc.a[u'b'][1], doc.xml_select(u'//b')[1])         #second instance of b
-            #iter(doc.a.b)         #iterator over both instances of b
-            self.assertEqual(unicode(doc.a.b), u'i')      #u"i"
-            self.assertEqual(unicode(doc.a.b[1]), u'l')   #u"l"
-            self.assertEqual(unicode(doc.a), u"ijkl")        #u"ijkl"
+            doc = bindery.parse(self.XML)  # bindery doc
+            check_bindery(self, doc)
+            return
 
+
+    class Test_bindery_document_update(unittest.TestCase):
+        XML = '<a x="1"><b>i</b><c>j<d/>k</c><b>l</b></a>'
+        def test_update_bindery(self):
+            doc = bindery.parse(self.XML)
+            #Add a new text node to a (--> last child)
+            doc.a.xml_append(u'New Content')
+            self.assertEqual(doc.a.xml_children[-1].xml_value, u'New Content')
+            new_elem = doc.xml_element_factory(None, u'spam')
+            doc.a.xml_append(new_elem)
+            self.assertEqual(doc.a.xml_children[-1], new_elem)
+            
+            new_text = amara.tree.text(u'New Content')
+            doc.a.xml_insert(1, new_text)
+            self.assertEqual(doc.a.xml_children[1], new_text)
+            
+            #Remove the last b child from a
+            num_kids = len(doc.a.xml_children)
+            #e1 = doc.a.b[-1].e
+            b1 = doc.a.b[1]
+            b1.xml_parent.xml_remove(b1)
+            self.assertEqual(len(doc.a.xml_children), num_kids-1)
+            
+            doc = bindery.nodes.entity_base()
+            #doc.xml_clear()  #Remove all children from a
+            doc.xml_append_fragment(self.XML)
+            check_bindery(self, doc)
+            return
+
+            
     class Test_namespaces(unittest.TestCase):
         def setUp(self):
             self.XML = '<n:a xmlns:n="urn:x-bogus1" n:x="1"><b xmlns="urn:x-bogus2">c</b></n:a>'

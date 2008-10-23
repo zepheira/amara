@@ -225,6 +225,26 @@ class container_mixin(object):
             child = childiter.next() #Will raise StopIteration when siblings are exhausted
             found = child.xml_type == tree.element.xml_type and child.xml_name == (ns, local)
         return child
+    
+    def xml_append(self, obj):
+        #Can't really rely on super here
+        base_class = {tree.element.xml_type: tree.element, tree.entity.xml_type: tree.entity}[self.xml_type]
+        if isinstance(obj, str):
+            base_class.xml_append(self, tree.text(obj.decode('utf-8')))
+        elif isinstance(obj, unicode):
+            base_class.xml_append(self, tree.text(obj))
+        elif isinstance(obj, tree.node):
+            base_class.xml_append(self, obj)
+        else:
+            raise TypeError
+        return
+
+    def xml_append_fragment(self, frag):
+        from amara.bindery import parse
+        doc = parse(frag)
+        for child in doc.xml_children:
+            self.xml_append(child)
+        return
 
     def __getitem__(self, key):
         #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
@@ -240,7 +260,7 @@ class container_mixin(object):
                 key = (None, key)
             else:
                 raise TypeError('Inappropriate key (%s)'%(key))
-            if force_type in (None, tree.attribute.xml_type) and key in self.xml_attributes:
+            if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
                 return self.xml_attributes[key]
             if force_type in (None, tree.element.xml_type):
                 return self.xml_find_named_child(self, key[0], key[1])
