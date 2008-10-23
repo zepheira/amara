@@ -564,7 +564,6 @@ class processor(object):
         self.transform.root.prime(context)
 
         # Process the document
-        context.start_document()
         try:
             self.transform.apply_templates(context, [node])
         except XPathError, e:
@@ -590,7 +589,9 @@ class processor(object):
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
                 instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
-        context.end_document()
+        finally:
+            last_writer = context.pop_writer()
+            assert last_writer is writer
 
         # Perform cleanup
         self.transform.root.teardown()
