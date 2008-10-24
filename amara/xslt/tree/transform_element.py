@@ -19,7 +19,7 @@ from amara.xslt.tree import (xslt_element, content_model, attribute_types,
                              literal_element, variable_elements)
 
 
-__all__ = ['match_tree', 'stylesheet_element']
+__all__ = ['match_tree', 'transform_element']
 
 TEMPLATE_CONFLICT_LOCATION = _(
     'In stylesheet %s, line %s, column %s, pattern %r')
