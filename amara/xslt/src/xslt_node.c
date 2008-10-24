@@ -51,15 +51,13 @@ XsltNodeObject *XsltNode_New(PyTypeObject *type)
 {
   XsltNodeObject *self;
 
-  self = (XsltNodeObject *) type->tp_alloc(type, 0);
+  self = (XsltNodeObject *)type->tp_alloc(type, 0);
   if (self != NULL) {
     Py_INCREF(Py_None);
     self->parent = Py_None;
-
     Py_INCREF(Py_None);
     self->root = Py_None;
   }
-
   return self;
 }
 
@@ -69,7 +67,6 @@ int XsltNode_PrettyPrint(XsltNodeObject *self)
     PyErr_BadInternalCall();
     return -1;
   }
-
   return node_pretty_print(self, 0);
 }
 
@@ -161,7 +158,7 @@ static PyObject *node_isLastChild(PyObject *self, PyObject *args)
     int i, count = XsltElement_GET_COUNT(parent);
     result = Py_False;
     for (i = 0; i < count; i++) {
-      PyObject *sibling, *temp;
+      PyObject *sibling;
       sibling = (PyObject *) XsltElement_GET_CHILD(parent, i);
       if (self == sibling)
         result = Py_True;
@@ -265,7 +262,6 @@ static PyObject *node_pprint(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-
 static char reduce_doc[] = "helper for pickle protocols 0 and 1";
 
 static PyObject *node_reduce(PyObject *self, PyObject *args)
@@ -364,60 +360,33 @@ static PyObject *node_repr(XsltNodeObject *self)
   PyObject *name, *repr;
 
   name = PyObject_GetAttrString((PyObject *)self->ob_type, "__name__");
-  if (name == NULL) {
+  if (name == NULL)
     return NULL;
-  }
-
   repr = PyString_FromFormat("<%s at %p>", PyString_AsString(name), self);
   Py_DECREF(name);
-
   return repr;
 }
 
-
 static int node_traverse(XsltNodeObject *self, visitproc visit, void *arg)
 {
-  int rt;
-
-  if (self->parent != NULL) {
-    rt = visit(self->parent, arg);
-    if (rt) return rt;
-  }
-
-  if (self->root != NULL) {
-    rt = visit(self->root, arg);
-    if (rt) return rt;
-  }
+  Py_VISIT(self->parent);
+  Py_VISIT(self->root);
   return 0;
 }
-
 
 static int node_clear(XsltNodeObject *self)
 {
-  PyObject *tmp;
-
-  if (self->parent != NULL) {
-    tmp = self->parent;
-    self->parent = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->root != NULL) {
-    tmp = self->root;
-    self->root = NULL;
-    Py_DECREF(tmp);
-  }
-
+  Py_CLEAR(self->parent);
+  Py_CLEAR(self->root);
   return 0;
 }
 
-
 static void node_dealloc(XsltNodeObject *self)
 {
-  node_clear(self);
+  Py_XDECREF(self->parent);
+  Py_XDECREF(self->root);
   self->ob_type->tp_free((PyObject *) self);
 }
-
 
 static int node_init(XsltNodeObject *self, PyObject *args, PyObject *kwds)
 {
@@ -441,14 +410,13 @@ static PyObject *node_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   return (PyObject *) XsltNode_New(type);
 }
 
-
 static char node_doc[] = "\
-The Node type is the primary datatype for the entire Stylesheet Model.";
+The xslt_node type is the primary datatype for the entire stylesheet model.";
 
 PyTypeObject XsltNode_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "Ft.Xml.Xslt.cStylesheetTree.XsltNode",
+  /* tp_name           */ "amara.xslt.tree.xslt_node",
   /* tp_basicsize      */ sizeof(XsltNodeObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) node_dealloc,
@@ -495,7 +463,7 @@ static PyObject *
 metaclass_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { "name", "bases", "dict", NULL };
-  PyObject *name, *bases, *dict, *result;
+  PyObject *name, *bases, *dict;
   struct { PyObject *function; PyObject *attribute; }
     *table, lookup_table[] = {
       { setup_string, does_setup_string },
@@ -514,7 +482,7 @@ metaclass_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     /* if the child does setup, call that function now */
     if (PyDict_GetItem(dict, table->function) != NULL) {
       if (PyDict_SetItem(dict, table->attribute, Py_True) < 0)
-        return -1;
+        return NULL;
     }
   }
 
@@ -537,7 +505,7 @@ metaclass_init(PyObject *cls, PyObject *args, PyObject *kwds)
 PyTypeObject xslt_metaclass = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "amara.xslt.tree._tree.__metaclass__",
+  /* tp_name           */ "amara.xslt.tree.xslt_node.__metaclass__",
   /* tp_basicsize      */ 0,
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,

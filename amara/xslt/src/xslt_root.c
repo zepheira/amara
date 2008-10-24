@@ -133,7 +133,6 @@ static PyObject *root_prime(XsltRootObject *self, PyObject *args)
   for (i = 0; i < size; i++) {
     PyObject *result = PyList_GET_ITEM(nodes, i);
     PyObject *func = PyObject_GetAttr(result, prime_string);
-    Py_DECREF(result);
     if (func == NULL) return NULL;
     result = PyObject_Call(func, args, NULL);
     Py_DECREF(func);

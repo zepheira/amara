@@ -659,40 +659,24 @@ static PyObject *element_repr(XsltElementObject *self)
   return repr;
 }
 
-
 static int element_traverse(XsltElementObject *self, visitproc visit,
                             void *arg)
 {
-  int rt, i;
+  Py_ssize_t i;
 
-  i = XsltElement_GET_COUNT(self);
-  while (--i >= 0) {
-    rt = visit((PyObject *) XsltElement_GET_CHILD(self, i), arg);
-    if (rt) return rt;
+  for (i = XsltElement_GET_COUNT(self); --i >= 0;) {
+    Py_VISIT(XsltElement_GET_CHILD(self, i));
   }
-
-  if (self->attributes != NULL) {
-    rt = visit(self->attributes, arg);
-    if (rt) return rt;
-  }
-
-  if (self->namespaces != NULL) {
-    rt = visit(self->namespaces, arg);
-    if (rt) return rt;
-  }
-
-  if (XsltNode_Type.tp_traverse)
-    return XsltNode_Type.tp_traverse((PyObject *)self, visit, arg);
-
-  return 0;
+  Py_VISIT(self->attributes);
+  Py_VISIT(self->namespaces);
+  assert(XsltNode_Type.tp_traverse);
+  return XsltNode_Type.tp_traverse((PyObject *)self, visit, arg);
 }
-
 
 static int element_clear(XsltElementObject *self)
 {
-  PyObject *tmp;
   XsltNodeObject **nodes = self->nodes;
-  int i;
+  Py_ssize_t i;
 
   if (nodes != NULL) {
     i = self->count;
@@ -704,30 +688,17 @@ static int element_clear(XsltElementObject *self)
     }
     PyMem_Free(nodes);
   }
-
-  if (self->attributes != NULL) {
-    tmp = self->attributes;
-    self->attributes = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (self->namespaces != NULL) {
-    tmp = self->namespaces;
-    self->namespaces = NULL;
-    Py_DECREF(tmp);
-  }
-
-  if (XsltNode_Type.tp_clear)
-    return XsltNode_Type.tp_clear((PyObject *)self);
-
-  return 0;
+  Py_CLEAR(self->attributes);
+  Py_CLEAR(self->namespaces);
+  assert(XsltNode_Type.tp_clear);
+  return XsltNode_Type.tp_clear((PyObject *)self);
 }
-
 
 static void element_dealloc(XsltElementObject *self)
 {
   element_clear(self);
-  XsltNode_Del((PyObject *) self);
+  assert(XsltNode_Type.tp_dealloc);
+  XsltNode_Type.tp_dealloc((PyObject *)self);
 }
 
 /* initialize everything a subclass cannot change */
@@ -814,7 +785,7 @@ The Element interface represents an XML element in the Stylesheet Tree.";
 PyTypeObject XsltElement_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "Ft.Xml.Xslt.cStylesheetTree.XsltElement",
+  /* tp_name           */ "amara.xslt.tree.xslt_element",
   /* tp_basicsize      */ sizeof(XsltElementObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) element_dealloc,
