@@ -126,6 +126,8 @@ class xslt_test(test_case):
                            params=self.parameters)
         diff = '\n'.join(treecompare.document_diff(self.expected, result))
         self.assertFalse(diff, msg=(None, diff))
+        return
+
 
 class xslt_error(xslt_test):
     error_class = XsltError

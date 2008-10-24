@@ -356,6 +356,5 @@ class test_basics_11(xslt_test):
    <img src="x"></img>
 </div>"""
 
-
 if __name__ == '__main__':
     test_main()
