@@ -352,6 +352,7 @@ class entity_base(container_mixin, tree.entity):
     #xml_processing_instruction_factory = tree.processing_instruction
     #xml_text_factory = tree.text
     xml_element_base = element_base
+    xml_exclude_pnames = ()
 
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
@@ -391,7 +392,7 @@ class entity_base(container_mixin, tree.entity):
             if python_id in RESERVED_NAMES:
                 python_id = python_id + '_'
             self._names[(local, ns)] = python_id
-        while python_id in exclude:
+        while python_id in exclude or python_id in self.xml_exclude_pnames:
             python_id += '_'
         return python_id
 
