@@ -56,16 +56,12 @@ class _avt_constant(avt_expression):
     def __init__(self, element, attribute_type, value):
         self._format = attribute_type.reprocess(element, value)
         self._args = None
-        self._value = value or ''
 
     def __str__(self):
-        value = self._value
-        if '"' in value:
-            value = value.replace('"', '\\"')
-        return '"%s"' % value
+        return repr(self._format)
 
     def __nonzero__(self):
-        return not not self._value
+        return self._format is not None
 
 
 class _avt_wrapper(avt_expression):
