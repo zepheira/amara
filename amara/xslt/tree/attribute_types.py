@@ -53,21 +53,19 @@ class _avt_constant(avt_expression):
     # optimization hook
     constant = True
 
-    def __init__(self, value):
-        if value:
-            self._format = datatypes.string(value)
-        else:
-            self._format = None
+    def __init__(self, element, attribute_type, value):
+        self._format = attribute_type.reprocess(element, value)
         self._args = None
+        self._value = value or ''
 
     def __str__(self):
-        value = self._format or ''
+        value = self._value
         if '"' in value:
             value = value.replace('"', '\\"')
         return '"%s"' % value
 
     def __nonzero__(self):
-        return not not self._format
+        return not not self._value
 
 
 class _avt_wrapper(avt_expression):
@@ -123,9 +121,9 @@ class avt:
 
     def prepare(self, element, value):
         if value is None:
-            return _avt_constant(self.reprocess(element, self.default))
+            return _avt_constant(element, self, self.default)
         elif '{' not in value and '}' not in value:
-            return _avt_constant(self.reprocess(element, value))
+            return _avt_constant(element, self, value)
         try:
             return _avt_wrapper(element, self, value)
         except XsltError, error:

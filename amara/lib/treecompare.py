@@ -138,11 +138,14 @@ class _markup_sequence(list):
         if self._data: self._flush()
         self.append('namespace: %s=%r' % (prefix, uri))
 
+    _prepare_attrs = sorted
+
     def start_element(self, name, attrs):
         if self._data: self._flush()
         self.append('start-tag: ' + name)
         if attrs:
-            attrs = [ '%s=%r' % pair for pair in sorted(attrs) ]
+            attrs = self._prepare_attrs(attrs)
+            attrs = [ '%s=%r' % pair for pair in attrs ]
             self.append('attributes: ' + ', '.join(attrs))
         return
 
@@ -203,6 +206,10 @@ class _xml_sequence(_markup_sequence):
 
     def _create_parser(self):
         return expat.ParserCreate(namespace_separator='#')
+
+    def _prepare_attrs(self, attrs):
+        it = iter(attrs)
+        return sorted(itertools.izip(it, it))
 
     def feed(self, data):
         self._parser.Parse(data, 0)

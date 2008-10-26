@@ -333,6 +333,42 @@ def bigaddrspacetest(f):
 class test_case(unittest.TestCase):
     failureException = TestFailed
 
+    def run(self, result):
+        result.startTest(self)
+        if result.simulate:
+            testMethod = lambda: None
+        else:
+            testMethod = getattr(self, self._testMethodName)
+        try:
+            try:
+                self.setUp()
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self._exc_info())
+                return
+
+            ok = False
+            try:
+                testMethod()
+                ok = True
+            except self.failureException:
+                result.addFailure(self, self._exc_info())
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self._exc_info())
+
+            try:
+                self.tearDown()
+            except KeyboardInterrupt:
+                raise
+            except:
+                result.addError(self, self._exc_info())
+                ok = False
+            if ok: result.addSuccess(self)
+        finally:
+            result.stopTest(self)
 
 class test_loader(unittest.TestLoader):
     """
@@ -381,11 +417,12 @@ class _test_result(unittest.TestResult):
     separator1 = '=' * 70
     separator2 = '-' * 70
 
-    def __init__(self, stream, verbosity, timer=default_timer):
+    def __init__(self, stream, verbosity, simulate, timer=default_timer):
         unittest.TestResult.__init__(self)
         self.stream = stream
         self.dots = verbosity == 1
         self.verbose = verbosity > 1
+        self.simulate = simulate
         self.timer = timer
         self.total_time = 0
         return
@@ -547,17 +584,19 @@ class test_runner(object):
     """
     A test runner the display results in colorized textual form.
     """
+    __slots__ = ('stream', 'verbosity', 'simulate')
 
     separator1 = '=' * 70
     separator2 = '-' * 70
 
-    def __init__(self, stream=None, verbosity=1):
+    def __init__(self, stream=None, verbosity=1, simulate=False):
         self.stream = _test_stream(stream or sys.stderr)
         self.verbosity = verbosity
+        self.simulate = simulate
 
     def run(self, test):
         # Run the tests
-        result = _test_result(self.stream, self.verbosity)
+        result = _test_result(self.stream, self.verbosity, self.simulate)
         result.startSuite()
         test(result)
         result.stopSuite()
@@ -619,9 +658,10 @@ def test_main(*modules):
     # parse args
     import getopt
     verbosity = 1
+    simulate = False
     try:
-        options, args = getopt.getopt(sys.argv[1:], 'hvq', 
-                                      ['help', 'verbose', 'quiet'])
+        options, args = getopt.getopt(sys.argv[1:], 'hvqn', 
+                                      ['help', 'verbose', 'quiet', 'dry-run'])
         for option, value in options:
             if option in ('-h', '--help'):
                 usage_exit()
@@ -629,6 +669,8 @@ def test_main(*modules):
                 verbosity -= 1
             if option in ('-v', '--verbose'):
                 verbosity += 1
+            if option in ('-n', '--dry-run'):
+                simulate = True
     except getopt.error, msg:
         usage_exit(msg)
 
@@ -645,6 +687,6 @@ def test_main(*modules):
         test = loader.loadTestsFromNames(modules)
 
     # run the tests
-    runner = test_runner(sys.stderr, verbosity)
+    runner = test_runner(sys.stderr, verbosity, simulate)
     result = runner.run(test)
     raise SystemExit(0 if result.wasSuccessful() else 1)

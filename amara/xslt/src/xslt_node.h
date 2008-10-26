@@ -34,7 +34,6 @@ extern "C" {
 
 #define XsltNode_Check(op) \
   PyObject_TypeCheck((PyObject *)(op), &XsltNode_Type)
-#define XsltNode_Del(op) XsltNode_Type.tp_dealloc(op)
 
   /* Module Methods */
   int XsltNode_Init(PyObject *module);

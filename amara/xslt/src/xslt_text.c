@@ -72,7 +72,6 @@ static PyObject *text_getstate(XsltTextObject *self, PyObject *args)
   return state;
 }
 
-
 static char setstate_doc[] = "helper for pickle";
 
 static PyObject *text_setstate(XsltTextObject *self, PyObject *args)
@@ -101,38 +100,35 @@ static PyObject *text_setstate(XsltTextObject *self, PyObject *args)
   return Py_None;
 }
 
-
 static struct PyMethodDef text_methods[] = {
   { "instantiate", text_instantiate, METH_VARARGS, NULL },
-  { "__getstate__", (PyCFunction) text_getstate, METH_VARARGS, getstate_doc },
-  { "__setstate__", (PyCFunction) text_setstate, METH_VARARGS, setstate_doc },
+  { "__getstate__", (PyCFunction)text_getstate, METH_VARARGS, getstate_doc },
+  { "__setstate__", (PyCFunction)text_setstate, METH_VARARGS, setstate_doc },
   { NULL }
 };
 
-
 /** Python Members *****************************************************/
-
 
 static struct PyMemberDef text_members[] = {
   { "data", T_OBJECT, offsetof(XsltTextObject, data), RO },
   { NULL }
 };
 
-
 /** Python Computed Members ********************************************/
 
+static PyGetSetDef text_getsets[] = {
+  { NULL }
+};
 
 /** Type Object ********************************************************/
-
 
 static void text_dealloc(XsltTextObject *self)
 {
   Py_XDECREF(self->data);
   self->data = NULL;
-
-  XsltNode_Del((PyObject *) self);
+  assert(XsltNode_Type.tp_dealloc);
+  XsltNode_Type.tp_dealloc((PyObject *) self);
 }
-
 
 static PyObject *text_repr(XsltTextObject *self)
 {
@@ -169,7 +165,6 @@ static PyObject *text_repr(XsltTextObject *self)
   return obj;
 }
 
-
 static int text_init(XsltTextObject *self, PyObject *args, PyObject *kwds)
 {
   PyObject *root, *data, *temp;
@@ -194,7 +189,6 @@ static int text_init(XsltTextObject *self, PyObject *args, PyObject *kwds)
   return 0;
 }
 
-
 static PyObject *text_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   XsltTextObject *self = (XsltTextObject *) XsltNode_New(&XsltText_Type);
@@ -205,14 +199,13 @@ static PyObject *text_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   return (PyObject *) self;
 }
 
-
 static char text_doc[] = "\
 This interface represents the content of a text node.";
 
 PyTypeObject XsltText_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ "Ft.Xml.Xslt.cStylesheetTree.XsltText",
+  /* tp_name           */ "amara.xslt.tree.xslt_text",
   /* tp_basicsize      */ sizeof(XsltTextObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) text_dealloc,
@@ -240,7 +233,7 @@ PyTypeObject XsltText_Type = {
   /* tp_iternext       */ (iternextfunc) 0,
   /* tp_methods        */ (PyMethodDef *) text_methods,
   /* tp_members        */ (PyMemberDef *) text_members,
-  /* tp_getset         */ (PyGetSetDef *) 0,
+  /* tp_getset         */ (PyGetSetDef *) text_getsets,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
   /* tp_descr_get      */ (descrgetfunc) 0,
@@ -252,9 +245,7 @@ PyTypeObject XsltText_Type = {
   /* tp_free           */ 0,
 };
 
-
 /** Module Setup & Teardown *******************************************/
-
 
 int XsltText_Init(PyObject *module)
 {
@@ -277,7 +268,6 @@ int XsltText_Init(PyObject *module)
 
   return 0;
 }
-
 
 void XsltText_Fini(void)
 {
