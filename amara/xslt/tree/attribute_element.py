@@ -21,7 +21,7 @@ class attribute_element(xslt_element):
 
         prefix, name = self._name.evaluate(context)
         if prefix:
-            name = prefix + ':' + name
+            name = prefix + u':' + name
         elif name == 'xmlns':
             # Section 7.1.3, Paragraph 2
             raise XsltError(XsltError.BAD_ATTRIBUTE_NAME, self, name)

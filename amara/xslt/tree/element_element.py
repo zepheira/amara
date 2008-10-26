@@ -24,7 +24,7 @@ class element_element(xslt_element):
         # ERROR: not a QName
         # RECOVERY: instantiate children excluding attribute nodes
         prefix, name = self._name.evaluate(context)
-        if prefix is not None:
+        if prefix:
             name = prefix + u':' + name
 
         # XSLT 1.0, Section 7.1.2:
@@ -43,12 +43,12 @@ class element_element(xslt_element):
         context.start_element(name, namespace)
         if self._use_attribute_sets:
             attribute_sets = context.transform.attribute_sets
-            for name in self._use_attribute_sets:
+            for set_name in self._use_attribute_sets:
                 try:
-                    attribute_set = attribute_sets[name]
+                    attribute_set = attribute_sets[set_name]
                 except KeyError:
                     raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, self,
-                                    name)
+                                    set_name)
                 attribute_set.instantiate(context)
         self.process_children(context)
         context.end_element(name, namespace)

@@ -80,7 +80,7 @@ class test_elem_attr2(xslt_test):
         <!-- should be in explicitly specified namespace -->   
         <xsl:element name="xse-ns" namespace="http://foo/bar"/>
         <xsl:element name="xse-empty-ns" namespace=""/>
-        <!-- should be in http://stuff namespace -->                                                           
+        <!-- should be in http://stuff namespace -->
         <xsl:element name="xse"/>
       </lre-ns>
     </result>
