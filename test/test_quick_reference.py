@@ -14,6 +14,8 @@ XML = '<a x="1"><b>i</b><c>j<d/>k</c><b>l</b></a>'
 #self.assertEqual(doc[u'a'], doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
 
 def check_bindery(self, doc):
+    a = doc.xml_elements.next() #element node
+    self.assertEqual(a, doc.a)
     self.assertEqual(doc.a, doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
     #self.assertEqual(doc[u'a'], doc.xml_select(u'//a')[0])              #object representing a element (instance of a),
     self.assertEqual(doc.a.xml_type, 'element')      #object representing a element (instance of class a),
@@ -36,10 +38,8 @@ class Test_quick_reference(unittest.TestSuite):
             doc = amara.parse(XML)
             a = doc.xml_children[0]
             self.assertEqual(doc.xml_type, tree.entity.xml_type)
-            #self.assertEqual(len(doc.xml_element_children), 1)
             self.assertEqual(len(doc.xml_children), 1)
             self.assertEqual(a.xml_type, tree.element.xml_type)
-            self.assertEqual(doc.xml_element_children[0].xml_local, u'a')
             self.assertEqual(doc.xml_children[0].xml_local, u'a')
             self.assertEqual(a.xml_attributes[u'x'], u"1")
             self.assertEqual(a.xml_local, u'a')
@@ -118,8 +118,6 @@ class Test_quick_reference(unittest.TestSuite):
             return
         
         def test_parsing_namespaces(self):
-            #a = self.doc.xml_element_children[0] #element node  ¿?   -->
-            #'amara._domlette.Document' object has no attribute 'xml_element_children'
             a = self.doc.xml_children[0] #element node
             self.assertEqual(type(a), tree.element)
             self.assertEqual(a.xml_attributes[(u'urn:x-bogus1', u'x')], u'1')
