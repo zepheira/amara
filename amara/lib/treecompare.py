@@ -26,10 +26,10 @@ _xmldecl_find = re.compile(r"<\?xml" +
                            r"(?P<VersionInfo>%s)" % _VersionInfo +
                            r"(?P<EncodingDecl>%s)?" % _EncodingDecl +
                            r"(?P<SDDecl>%s)?" % _SDDecl +
-                           r"%s?\?>" % _S)
-_doctype_find = re.compile("<!DOCTYPE" + _S)
-_starttag_find = re.compile("<[^!?]")
-_html_find = re.compile("(<!DOCTYPE html)|(<html)", re.IGNORECASE)
+                           r"%s?\?>" % _S).match
+_doctype_find = re.compile("<!DOCTYPE" + _S).search
+_starttag_find = re.compile("<[^!?]").search
+_html_find = re.compile("(<!DOCTYPE html)|(<html)", re.IGNORECASE).search
 
 
 def document_compare(expected, compared, whitespace=True):
@@ -41,7 +41,7 @@ def document_compare(expected, compared, whitespace=True):
 
 def document_diff(expected, compared, whitespace=True):
     # See if we need to use XML or HTML
-    if not _xmldecl_find.match(expected) and _html_find.search(expected):
+    if not _xmldecl_find(expected) and _html_find(expected):
         diff = html_diff
     else:
         diff = xml_diff
@@ -89,14 +89,14 @@ def xml_diff(expected, compared, whitespace=True):
     # External Parsed Entities cannot have a standalone declaration or
     # DOCTYPE declaration.
     # See XML 1.0 2nd, 4.3.2, Well-Formed Parsed Entities
-    match = _xmldecl_find.match(expected)
+    match = _xmldecl_find(expected)
     if match and match.groupdict().get('SDDecl'):
         sequencer = _xml_sequence
     else:
         # Limit the search for DOCTYPE to the content before the first element.
         # If no elements exist, it *MUST* be a parsed entity.
-        match = _starttag_find.search(expected)
-        if match and _doctype_find.search(expected, 0, match.start()):
+        match = _starttag_find(expected)
+        if match and _doctype_find(expected, 0, match.start()):
             sequencer = _xml_sequence
         else:
             sequencer = _entity_sequence
@@ -117,6 +117,7 @@ class _markup_sequence(list):
         if not whitespace:
             self._flush = self._flush_whitespace
         self._data = u''
+        self._nsdecls = []
         self.feed(data)
         self.close()
         self._flush()
@@ -135,18 +136,22 @@ class _markup_sequence(list):
             self._data = u''
 
     def namespace_decl(self, prefix, uri):
-        if self._data: self._flush()
-        self.append('namespace: %s=%r' % (prefix, uri))
+        self._nsdecls.append((prefix, uri))
 
     _prepare_attrs = sorted
 
     def start_element(self, name, attrs):
         if self._data: self._flush()
         self.append('start-tag: ' + name)
+        if self._nsdecls:
+            nsdecls = sorted(self._nsdecls)
+            nsdecls = [ '%s=%r' % pair for pair in nsdecls ]
+            self.append('  namespaces: ' + ', '.join(nsdecls))
+            del self._nsdecls[:]
         if attrs:
             attrs = self._prepare_attrs(attrs)
             attrs = [ '%s=%r' % pair for pair in attrs ]
-            self.append('attributes: ' + ', '.join(attrs))
+            self.append('  attributes: ' + ', '.join(attrs))
         return
 
     def end_element(self, name):
