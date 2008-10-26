@@ -139,7 +139,9 @@ class xmlwriter(streamwriter):
             else:
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT)
         prefix, local = xmlstring.splitqname(name)
-        if namespace is not None:
+        if namespace is None:
+            name = local
+        else:
             # The general approach is as follows:
             # - If the new namespace/prefix combo is unique in the scope, add
             #   it as is.
@@ -158,10 +160,10 @@ class xmlwriter(streamwriter):
             # - If the prefix exists, but with a different namespace, generate
             #   a new (and probably rather ugly) prefix.
             namespaces = self._namespaces[-1]
-            if prefix is None:
+            if not prefix or prefix == 'xmlns':
                 # Find an existing namespace/prefix pair
                 for prefix, inscope_namespace in namespaces.iteritems():
-                    if prefix is not None and inscope_namespace == namespace:
+                    if prefix and inscope_namespace == namespace:
                         break
                 else:
                     # Generate a new prefix
@@ -171,17 +173,11 @@ class xmlwriter(streamwriter):
                         if prefix not in namespaces:
                             break
                     namespaces[prefix] = namespace
-                # Generate a new node name
-                name = prefix + ':' + local
             elif prefix not in namespaces:
                 # Find an existing namespace/prefix pair
                 for inscope_prefix, inscope_namespace in namespaces.iteritems():
-                    if inscope_namespace == namespace:
-                        # Generate a new node name
-                        if inscope_prefix:
-                            name = inscope_prefix + ':' + local
-                        else:
-                            name = local
+                    if inscope_prefix and inscope_namespace == namespace:
+                        prefix = inscope_prefix
                         break
                 else:
                     # Use given namespace/prefix pair
@@ -191,12 +187,7 @@ class xmlwriter(streamwriter):
                 # we're trying to use. First, try to reuse an existing namespace
                 # declaration.
                 for prefix, inscope_namespace in namespaces.iteritems():
-                    if inscope_namespace == namespace:
-                        # Generate a new node name
-                        if prefix:
-                            name = prefix + ':' + local
-                        else:
-                            name = local
+                    if prefix and inscope_namespace == namespace:
                         break
                 else:
                     # Generate a new prefix
@@ -205,23 +196,23 @@ class xmlwriter(streamwriter):
                         prefix = template % suffix
                         if prefix not in namespaces:
                             break
-                    # Generate a new node name
-                    name = prefix + ':' + local
                     namespaces[prefix] = namespace
-        else:
-            name = local
+            # Generate a new node name
+            assert prefix, "'prefix' required for non-null namespace"
+            name = prefix + ':' + local
 
         self._attributes[namespace, local] = (name, value)
         return
 
     def namespace(self, prefix, namespace):
-        if prefix not in self._namespaces[-1]:
+        namespaces = self._namespaces[-1]
+        if prefix not in namespaces:
             if (prefix is not None
-                and namespace in self._namespaces[-1].values()):
+                and namespace in namespaces.values()):
                 prefix = self.changePrefix(namespace)
             else:
-                self._namespaces[-1][prefix] = namespace
-        elif self._namespaces[-1][prefix] != namespace:
+                namespaces[prefix] = namespace
+        elif namespaces[prefix] != namespace:
             # An existing prefix/namespace pair that doesn't match what
             # we're trying to use.  Generate a new prefix.
             prefix = self.changePrefix(namespace)
@@ -271,7 +262,6 @@ class xmlwriter(streamwriter):
     def end_element(self, name, namespace=None):
         self._complete_element()
         self._printer.end_element(namespace, name)
-
         del self._namespaces[-1]
         return
 
