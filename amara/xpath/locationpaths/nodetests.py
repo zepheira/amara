@@ -51,7 +51,7 @@ class node_type(node_test):
         of the XPath 1.0 spec.  Only attribute and namespace axes
         differ from the default of elements.
         """
-        return isinstance(node, principal_type)
+        return isinstance(node, self.node_type)
 
     def __str__(self):
         return self.name + '()'
