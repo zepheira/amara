@@ -245,7 +245,7 @@ class processor(object):
             document = tree.parse(source)
         except ReaderError, e:
             raise XsltError(XsltError.SOURCE_PARSE_ERROR,
-                            source.uri or '<Python string>', e)
+                            uri=(source.uri or '<Python string>'), text=e)
         if not ignorePis and self.__checkStylesheetPis(document, source):
             #Do it again with updates WS strip lists
 

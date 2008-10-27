@@ -13,7 +13,7 @@ from amara import sax
 from amara.lib import IriError, inputsource
 from amara.lib.xmlstring import isspace
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE, XSL_NAMESPACE
-from amara.xslt import XsltError
+from amara.xslt import XsltError, XsltTypeError
 #from amara.xslt import builtinextelements, exslt
 from amara.xslt.tree import *
 
@@ -464,7 +464,7 @@ class stylesheet_reader(object):
 
             # XSLT Spec 2.6 - Combining Stylesheets
             if local in ('import', 'include'):
-                self._combine_stylesheet(instance._href, (local == 'import'))
+                self._combine_stylesheet(instance, (local == 'import'))
         elif ext_class: # -- extension element -------------------------
             validate_attributes = (legal_attrs is not None)
             if validate_attributes:
@@ -559,9 +559,9 @@ class stylesheet_reader(object):
         if state.localVariables is not parent_state.localVariables:
             # add context save/restore nodes
             binding_stack = []
-            node = PushVariablesNode(self._root, binding_stack)
+            node = push_variables_node(self._root, binding_stack)
             element.insertChild(0, node)
-            node = PopVariablesNode(self._root, binding_stack)
+            node = pop_variables_node(self._root, binding_stack)
             element.appendChild(node)
 
         # ----------------------------------------------------------
@@ -667,11 +667,11 @@ class stylesheet_reader(object):
 
     # -- utility functions ---------------------------------------------
 
-    def _combine_stylesheet(self, href, is_import):
-        hint = is_import and 'STYLESHEET IMPORT' or 'STYLESHEET INCLUDE'
+    def _combine_stylesheet(self, element, is_import):
+        href = element._href
         try:
-            new_source = self._input_source.resolve(href, hint=hint)
-        except (OSError, UriException):
+            new_source = self._input_source.resolve(href)
+        except (OSError, IriError):
             # FIXME: create special inputsource for 4xslt command-line
             #for uri in self._alt_base_uris:
             #    try:
@@ -679,22 +679,21 @@ class stylesheet_reader(object):
             #        #Do we need to figure out a way to pass the hint here?
             #        new_source = self._input_source.factory.fromUri(new_href)
             #        break
-            #    except (OSError, UriException):
+            #    except (OSError, IriError):
             #        pass
             #else:
             if 1:
-                raise XsltParserException(XsltError.INCLUDE_NOT_FOUND,
-                                          self._locator, href,
-                                          self._locator.getSystemId())
+                raise XsltTypeError(XsltError.INCLUDE_NOT_FOUND, element,
+                                    uri=href, base=self._locator.getSystemId())
 
         # XSLT Spec 2.6.1, Detect circular references in stylesheets
         # Note, it is NOT an error to include/import the same stylesheet
         # multiple times, rather that it may lead to duplicate definitions
         # which are handled regardless (variables, params, templates, ...)
         if new_source.uri in self._visited_stylesheet_uris:
-            raise XsltParserException(XsltError.CIRCULAR_INCLUDE,
-                                      self._locator, new_source.uri)
-        self.fromSrc(new_source)
+            raise XsltTypeError(XsltError.CIRCULAR_INCLUDE, element,
+                                uri=new_source.uri)
+        self.parse(new_source)
 
         self._import_index += is_import
         # Always update the precedence as the included stylesheet may have
@@ -818,10 +817,10 @@ class stylesheet_reader(object):
             elif uri in self._root.sources:
                 content = self._root.sources[baseUri]
                 isrc = factory.fromString(content, baseUri)
-                # temporarily uncache it so fromSrc will process it;
-                # fromSrc will add it back to the cache when finished
+                # temporarily uncache it so `parse()` will process it;
+                # `parse()` will add it back to the cache when finished
                 del self._root.sources[baseUri]
-                return self.fromSrc(isrc)
+                return self.parse(isrc)
 
         isrc = factory.fromStream(None, baseUri)
         features = []

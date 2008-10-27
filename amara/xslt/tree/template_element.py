@@ -33,7 +33,7 @@ class template_element(xslt_element):
         params = self._params = []
         for child in self.children:
             if isinstance(child, param_element):
-                params.append(child)
+                params.append((child, child._name))
             elif isinstance(child, xslt_element):
                 break
         if self._params:

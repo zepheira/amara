@@ -280,7 +280,7 @@ version="1.0">
 
 </xsl:stylesheet>
 """)
-    parameters={'override': 'xyz', 'list': ['a', 'b', 'c']}
+    parameters = {'override': 'xyz', 'list': ('a', 'b', 'c')}
     expected = """<?xml version='1.0' encoding='UTF-8'?>
 <doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>"""
 

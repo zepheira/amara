@@ -572,7 +572,7 @@ class transform_element(xslt_element):
                 # Nothing matched, use builtin templates
                 if params and not self._builtInWarningGiven:
                     self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
-                    self._builtInWarningGiven = 1
+                    self._builtInWarningGiven = True
                 if isinstance(node, (Element, Document)):
                     self.apply_templates(context, node.xml_children)
                 elif isinstance(node, (Text, Attr)):

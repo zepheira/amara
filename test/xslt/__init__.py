@@ -5,7 +5,7 @@ import sys
 
 from amara import Error
 from amara.lib import inputsource, iri, treecompare
-from amara.xpath import datatypes
+from amara.xpath import datatypes, util
 from amara.xslt import XsltError, transform
 from amara.xslt.processor import processor
 
@@ -116,14 +116,16 @@ class xslt_test(test_case):
         P = processor()
         for transform in self.transform:
             P.append_transform(transform)
-        result = P.run(self.source, parameters=self.parameters)
+        parameters = self.parameters
+        if parameters:
+            parameters = util.parameterize(parameters)
+        result = P.run(self.source, parameters=parameters)
         diff = '\n'.join(treecompare.document_diff(self.expected, result))
         self.assertFalse(diff, msg=(None, diff))
         return
 
     def test_transform(self):
-        result = transform(self.source, self.transform,
-                           params=self.parameters)
+        result = transform(self.source, self.transform, params=self.parameters)
         diff = '\n'.join(treecompare.document_diff(self.expected, result))
         self.assertFalse(diff, msg=(None, diff))
         return

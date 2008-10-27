@@ -1,10 +1,5 @@
 ########################################################################
 # test/xslt/test_elem_attr.py
-import os
-import cStringIO
-import unittest
-
-from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 

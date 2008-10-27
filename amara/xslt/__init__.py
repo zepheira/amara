@@ -272,11 +272,11 @@ class XsltError(Error):
                 '(see XSLT 1.0 sec. 2.6.2)'),
             #XsltError.IMPORT_NOT_FOUND: _(''),
             XsltError.INCLUDE_NOT_FOUND: _(
-                'Unable to open imported or included stylesheet "%s", using '
-                'base URI "%s", or all base URIs in the include PATH'),
+                "Unable to retrieve the stylesheet '%(uri)s', "
+                "using base URI '%(base)s'"),
             XsltError.CIRCULAR_INCLUDE: _(
-                'Stylesheet %s may not be included or imported more than '
-                'once (see XSLT 1.0 sec. 2.6)'),
+                "Stylesheet '%(uri)s' may not be included or imported more "
+                "than once (see XSLT 1.0 sec. 2.6)"),
 
             # xsl:choose, xsl:when and xsl:otherwise
             XsltError.ILLEGAL_CHOOSE_CHILD: _('FIXME'),
