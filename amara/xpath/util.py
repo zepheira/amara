@@ -123,7 +123,7 @@ def Compile(expr):
 def paramvalue(obj):
     """
     Try to convert a Python object into an XPath data model value
-    
+
     returns the value if successful, else None
     """
     if isinstance(obj, datatypes.xpathobject):
@@ -141,15 +141,32 @@ def paramvalue(obj):
         return datatypes.TRUE if obj else datatypes.FALSE
     elif isinstance(obj, (int, long, float)):
         return datatypes.number(obj)
-    elif isinstance(obj, tree.Node):
+    elif isinstance(obj, tree.node):
         return obj
-    #NOTE: At one time (WSGI.xml days) this attemped to be smart and handle all iterables
-    #But this would mean blindly dealing with dangerous creatures, such as sockets
-    #So now it's more conservative and sticks to list & tuple
+    # NOTE: At one time (WSGI.xml days) this attemped to be smart and handle
+    # all iterables but this would mean blindly dealing with dangerous
+    # creatures, such as sockets. So now it's more conservative and sticks to
+    # just list & tuple.
     elif isinstance(obj, (list, tuple)):
-        # We can only use the list if all the items are Nodes.
+        # We can only use the list if the items are all nodes or all strings.
+        # Strings are converted to a nodeset of text nodes.
         for item in obj:
-            if not isinstance(item, tree.Node):
+            if not isinstance(item, (str, unicode)):
+                break
+        else:
+            # We need to use an entity to preserve ordering
+            entity = tree.entity()
+            for item in obj:
+                if isinstance(item, str):
+                    try:
+                        item = unicode(item, 'utf8')
+                    except UnicodeError:
+                        return None
+                entity.xml_append(tree.text(item))
+            return datatypes.nodeset(entity.xml_children)
+        # We can only use the list if all the items are nodes.
+        for item in obj:
+            if not isinstance(item, tree.node):
                 return None
         return datatypes.nodeset(obj)
     else:
@@ -170,17 +187,13 @@ def parameterize(inputdict, defaultns=None):
     resultdict = {}
     for key in inputdict:
         value = paramvalue(inputdict[key])
-        if value is None: return None
+        if value is None:
+            continue
         if isinstance(key, basestring):
             if isinstance(key, str): key = key.decode('utf-8')
-            if defaultns:
-                resultdict[(defaultns, key)] = value
-            else:
-                resultdict[key] = value
-        elif isinstance(key, list) or isinstance(key, tuple):
+            resultdict[(defaultns, key)] = value
+        elif isinstance(key, (tuple, list)):
             resultdict[key] = value
-        else:
-            return None
 
     return resultdict
 
