@@ -132,7 +132,7 @@ int ElementType_SetContentModel(PyObject *self, PyObject *model)
 
   tmp = ((ElementTypeObject *)self)->content_model;
   ((ElementTypeObject *)self)->content_model = dfa;
-  Py_DECREF(tmp);
+  Py_XDECREF(tmp);
 
   return 0;
 }
