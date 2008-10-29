@@ -22,11 +22,15 @@ _EncodingDecl = _S + "encoding" + _Eq + \
                 "(?:(?:'" + _EncName + "')|" + '(?:"' + _EncName + '"))'
 _SDDecl = _S + "standalone" + _Eq + \
           "(?:(?:'(?:yes|no)')|" + '(?:"(?:yes|no)"))'
-_xmldecl_find = re.compile(r"<\?xml" +
+_xmldecl_match = re.compile(r"<\?xml" +
                            r"(?P<VersionInfo>%s)" % _VersionInfo +
                            r"(?P<EncodingDecl>%s)?" % _EncodingDecl +
                            r"(?P<SDDecl>%s)?" % _SDDecl +
                            r"%s?\?>" % _S).match
+_textdecl_match = re.compile(r"<\?xml" +
+                             r"(?P<VersionInfo>%s)?" % _VersionInfo +
+                             r"(?P<EncodingDecl>%s)" % _EncodingDecl +
+                             r"%s?\?>" % _S).match
 _doctype_find = re.compile("<!DOCTYPE" + _S).search
 _starttag_find = re.compile("<[^!?]").search
 _html_find = re.compile("(<!DOCTYPE html)|(<html)", re.IGNORECASE).search
@@ -41,7 +45,7 @@ def document_compare(expected, compared, whitespace=True):
 
 def document_diff(expected, compared, whitespace=True):
     # See if we need to use XML or HTML
-    if not _xmldecl_find(expected) and _html_find(expected):
+    if not _xmldecl_match(expected) and _html_find(expected):
         diff = html_diff
     else:
         diff = xml_diff
@@ -89,16 +93,12 @@ def xml_diff(expected, compared, whitespace=True):
     # External Parsed Entities cannot have a standalone declaration or
     # DOCTYPE declaration.
     # See XML 1.0 2nd, 4.3.2, Well-Formed Parsed Entities
-    match = _xmldecl_find(expected)
-    if match and match.groupdict().get('SDDecl'):
-        sequencer = _xml_sequence
-    else:
+    sequencer = _xml_sequence
+    if _textdecl_match(expected):
         # Limit the search for DOCTYPE to the content before the first element.
         # If no elements exist, it *MUST* be a parsed entity.
         match = _starttag_find(expected)
-        if match and _doctype_find(expected, 0, match.start()):
-            sequencer = _xml_sequence
-        else:
+        if not match or _doctype_find(expected, 0, match.start()):
             sequencer = _entity_sequence
     expected = sequencer(expected, whitespace)
     compared = sequencer(compared, whitespace)
@@ -111,7 +111,7 @@ def entity_compare(expected, compared, ignorews=False):
 
 
 class _markup_sequence(list):
-    __slots__ = ('_data',)
+    __slots__ = ('_data', '_nsdecls')
     def __init__(self, data, whitespace=True):
         list.__init__(self)
         if not whitespace:
