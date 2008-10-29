@@ -13,9 +13,9 @@ from amara.tree import Node, Document, Element, ProcessingInstruction
 from amara.lib import iri, inputsource
 from amara.xpath import XPathError
 from amara.xslt import XsltError
-from amara.xslt import xsltcontext, proxywriter
+from amara.xslt import xsltcontext
 from amara.xslt.reader import stylesheet_reader
-
+from amara.xslt.result import stringresult
 # For builtin extension elements/functions
 #from amara.xslt import exslt
 #from amara.xslt.extensions import builtins
@@ -215,7 +215,7 @@ class processor(object):
             self.transform = self._reader.parse(source)
         return
 
-    def run(self, source, parameters=None, writer=None, output=None):
+    def run(self, source, parameters=None, result=None):
         """
         Transform a source document as given via an InputSource.
 
@@ -257,10 +257,9 @@ class processor(object):
             #Regardless, we need to remove any new whitespace defined in the PI
             self._stripElements(document)
 
-        return self._run(document, parameters, writer, output)
+        return self._run(document, parameters, result)
 
-    def runNode(self, node, sourceUri=None,
-                parameters=None, writer=None, output=None,
+    def runNode(self, node, sourceUri=None, parameters=None, result=None,
                 preserveSrc=0, docInputSource=None):
         """
         Transform a source document as given via a Domlette document
@@ -345,7 +344,7 @@ class processor(object):
             self._stripElements(node)
 
 
-        return self._run(node, parameters, writer, output)
+        return self._run(node, parameters, result)
 
     def __cmp_stys(self, a, b):
         """
@@ -509,11 +508,8 @@ class processor(object):
         # (i.e., the stylesheets they reference are going to be used)
         return not not hrefs
 
-    def _run(self, node, parameters=None, writer=None, output=None):
+    def _run(self, node, parameters=None, result=None):
         """
-        Warning: do not call this method directly unless you know what
-        you're doing.  If unsure, you probably want the runNode method.
-
         Runs the stylesheet processor against the given XML DOM node with the
         stylesheets that have been registered. It does not mutate the source.
         If writer is given, it is used in place of the default output method
@@ -535,16 +531,13 @@ class processor(object):
 
         if not self.transform:
             raise XsltError(XsltError.NO_STYLESHEET)
-        self.outputParams = self.transform.output_parameters
 
-        # Use an internal stream to gather the output only if the caller
+        # Use an internal result to gather the output only if the caller
         # didn't supply other means of retrieving it.
-        internalStream = writer is None and output is None
-
-        if writer is None:
-            # Use `proxywriter` to determine the real writer to use.
-            stream = output or cStringIO.StringIO()
-            writer = proxywriter.proxywriter(self.outputParams, stream)
+        if result is None:
+            result = stringresult()
+        result.parameters = self.transform.output_parameters
+        assert result.writer
 
         # Initialize any stylesheet parameters
         initial_variables = parameters.copy()
@@ -558,9 +551,9 @@ class processor(object):
                                           transform=self.transform,
                                           processor=self,
                                           extfunctions=self._extfunctions,
-                                          output_parameters=self.outputParams)
+                                          output_parameters=result.parameters)
         context.add_document(node, node.xml_base)
-        context.push_writer(writer)
+        context.push_writer(result.writer)
         self.transform.root.prime(context)
 
         # Process the document
@@ -590,18 +583,14 @@ class processor(object):
                 instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
         finally:
-            last_writer = context.pop_writer()
-            assert last_writer is writer
+            writer = context.pop_writer()
+            assert writer is result.writer
 
         # Perform cleanup
         self.transform.root.teardown()
 
-        if internalStream:
-            # Get the result from our cStringIO 'stream'.
-            result = stream.getvalue()
-        else:
-            # It is the callers responsibility to get the result
-            result = u""
+        if isinstance(result, stringresult):
+            return result.clone()
         return result
 
     def message_control(self, suppress):

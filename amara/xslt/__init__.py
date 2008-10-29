@@ -472,6 +472,7 @@ def transform(source, transforms, params=None, output=None):
     #avoid circular crap
     from amara.lib import inputsource
     from amara.xpath.util import parameterize
+    from amara.xslt.result import streamresult, stringresult
     from amara.xslt.processor import processor
     params = parameterize(params) if params else {}
     proc = processor()
@@ -480,5 +481,9 @@ def transform(source, transforms, params=None, output=None):
             proc.append_transform(inputsource(transform))
     else:
         proc.append_transform(inputsource(transforms))
-    return proc.run(inputsource(source), params, output=output)
+    if output is not None:
+        result = streamresult(output)
+    else:
+        result = stringresult()
+    return proc.run(inputsource(source), params, result)
 
