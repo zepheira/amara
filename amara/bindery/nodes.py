@@ -230,7 +230,7 @@ class container_mixin(object):
         #Can't really rely on super here
         base_class = {tree.element.xml_type: tree.element, tree.entity.xml_type: tree.entity}[self.xml_type]
         if isinstance(obj, str):
-            base_class.xml_append(self, tree.text(obj.decode('utf-8')))
+            base_class.xml_append(self, tree.text(obj.decode(self.factory_entity.xml_encoding)))
         elif isinstance(obj, unicode):
             base_class.xml_append(self, tree.text(obj))
         elif isinstance(obj, tree.node):
@@ -332,7 +332,7 @@ class element_base(container_mixin, tree.element):
     def __str__(self):
         #Amara 1 note: Should we make the encoding configurable? (self.defencoding?)
         #For Amara 2, consider using the document node encoding property
-        return unicode(self).encode('utf-8')
+        return unicode(self).encode(self.factory_entity.xml_encoding)
 
     def __iter__(self):
         return element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)
@@ -353,6 +353,7 @@ class entity_base(container_mixin, tree.entity):
     #xml_text_factory = tree.text
     xml_element_base = element_base
     xml_exclude_pnames = ()
+    xml_encoding = 'utf-8'
 
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information

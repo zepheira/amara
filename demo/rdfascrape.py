@@ -7,22 +7,27 @@ Works on any HTML, though people who put what they call RDFa into tag soup are n
 
 Sample usage:
 
-rdfascrape.py http://www.ivan-herman.net/foaf.html
+python rdfascrape.py data/xhtmlrdfa.html
+python rdfascrape.py http://www.ivan-herman.net/foaf.html
 
 For other examples see: http://esw.w3.org/topic/RDFa/Examples
 """
 
 import sys
 import amara
-#from amara.bindery import html
-from amara import bindery
+from amara.bindery import html
 from amara.writers.struct import *
 from amara.namespaces import *
 from amara.lib.xmlstring import *
 from amara.lib.iri import DEFAULT_RESOLVER
+from amara.bindery.model import *
+
+#Give Amara an example so it knows what structure to expect
+#label_model = examplotron_model('data/xhtmlrdfa.html')
 
 DOCURI = sys.argv[1]
-doc = bindery.parse(DOCURI)
+#doc = html.parse(DOCURI, model=label_model)
+doc = html.parse(DOCURI)
 
 try:
     DOCURI = BASEURI = doc.html.head.base.href

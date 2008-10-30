@@ -68,10 +68,16 @@ class element(nodes.element_base, node):
 
     def xml_set_attributes_(self, attrs):
         for key, val in attrs.iteritems():
-            self.xml_attributes[None, key] = val
+            #from amara.bindery import html; doc = html.parse('http://outreach.zepheira.com/public/rdfa/plos-10.1371-journal.pgen.1000219.html'); h = doc.xml_select(u'//h1')[0]; print h.property
+            #from amara.bindery import html; doc = html.parse('/tmp/plos-10.1371-journal.pgen.1000219.html'); h = doc.xml_select(u'//h1')[0]; print h.property
+            if key.startswith(u'xmlns'):
+                dummy, prefix = splitqname(key)
+                self.xml_namespaces[prefix] = val
+            else:
+                self.xml_attributes[None, key] = val
         return
 
-    def xml_get_attributes_(self, attrs):
+    def xml_get_attributes_(self):
         return self.xml_attributes
 
     attributes = property(xml_get_attributes_, xml_set_attributes_, None, "html5lib uses this property to manage HTML element attrs")
@@ -132,12 +138,14 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         self.elementClass = eclass
     
 
-def parse(source):
+def parse(source, model=None):
     '''
     
     '''
     #from amara.bindery import html; doc = html.parse("http://www.hitimewine.net/istar.asp?a=6&id=161153!1247")
     #parser = html5lib.HTMLParser()
     parser = html5lib.HTMLParser(tree=treebuilder)
-    return parser.parse(inputsource(source, None).stream)
+    if model:
+        entity_factory = model.clone
+    return parser.parse(inputsource(source, None).stream, model)
 

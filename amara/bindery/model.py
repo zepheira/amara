@@ -141,7 +141,7 @@ class content_model:
             #Make sure all known element types have corresponding properties on the node class
             for (ns, local), (pname, default) in self.element_types.iteritems():
                 if not hasattr(node, pname):
-                    from amara.bindery.nodes import *
+                    from amara.bindery.nodes import node
                     setattr(node.__class__, pname, bound_element(ns, local))
         else:
             for d in self.entities:
