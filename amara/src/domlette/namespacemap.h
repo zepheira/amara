@@ -44,6 +44,8 @@ extern "C" {
 
   PyObject *NamespaceMap_New(ElementObject *owner);
 
+  Py_ssize_t NamespaceMap_GetHash(PyObject *name);
+
   NamespaceObject *NamespaceMap_GetNode(PyObject *self, PyObject *prefix);
 
   int NamespaceMap_SetNode(PyObject *self, NamespaceObject *node);

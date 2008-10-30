@@ -3,28 +3,30 @@
 
 /** Private Routines **************************************************/
 
+static PyObject *empty_string;
+
 Py_LOCAL_INLINE(NamespaceObject *)
 namespace_init(NamespaceObject *self, ElementObject *parentNode,
                PyObject *prefix, PyObject *namespaceURI)
 {
   assert(self && Namespace_Check(self));
-  if ((parentNode == NULL || !Element_Check(parentNode)) ||
-      (prefix == NULL || !XmlString_NullCheck(prefix)) ||
+  assert(parentNode != NULL && Element_Check(parentNode));
+  if ((prefix == NULL || !XmlString_NullCheck(prefix)) ||
       (namespaceURI == NULL || !XmlString_Check(namespaceURI))) {
     PyErr_BadInternalCall();
     Py_DECREF(self);
     return NULL;
   }
+  if (prefix == Py_None)
+    prefix = empty_string;
 
-  if (prefix == Py_None) {
-    prefix = PyUnicode_FromUnicode(NULL, 0);
-    if (prefix == NULL) {
-      Py_DECREF(self);
-      return NULL;
-    }
-  } else {
-    Py_INCREF(prefix);
+  self->hash = NamespaceMap_GetHash(prefix);
+  if (self->hash == -1) {
+    Py_DECREF(self);
+    return NULL;
   }
+
+  Py_INCREF(prefix);
   self->name = prefix;
 
   Py_INCREF(namespaceURI);
@@ -207,6 +209,10 @@ int DomletteNamespace_Init(PyObject *module)
   if (PyType_Ready(&DomletteNamespace_Type) < 0)
     return -1;
 
+  empty_string = XmlString_FromASCII("");
+  if (empty_string == NULL)
+    return -1;
+
   dict = DomletteNamespace_Type.tp_dict;
 
   value = PyString_FromString("namespace");
@@ -223,5 +229,6 @@ int DomletteNamespace_Init(PyObject *module)
 
 void DomletteNamespace_Fini(void)
 {
+  Py_DECREF(empty_string);
   PyType_CLEAR(&DomletteNamespace_Type);
 }

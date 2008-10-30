@@ -23,7 +23,7 @@ static PyTypeObject NodeIter_Type;
   ((((a) == Py_None || (b) == Py_None) && (a) == (b)) || \
    (PyUnicode_GET_SIZE(a) == PyUnicode_GET_SIZE(b) && \
     *PyUnicode_AS_UNICODE(a) == *PyUnicode_AS_UNICODE(b) && \
-    memcmp(PyUnicode_AS_UNICODE(a), PyUnicode_AS_UNICODE(b), \
+    !memcmp(PyUnicode_AS_UNICODE(a), PyUnicode_AS_UNICODE(b), \
            PyUnicode_GET_DATA_SIZE(a))))
 
 Py_LOCAL_INLINE(long)
@@ -176,6 +176,31 @@ parse_key(PyObject *key, int node_allowed)
 }
 
 /** Public C API ******************************************************/
+
+void _NamespaceMap_Dump(NamespaceMapObject *nm)
+{
+  Py_ssize_t i;
+  if (nm == NULL)
+    fprintf(stderr, "NULL\n");
+  else {
+    fprintf(stderr, "object  : ");
+    (void)PyObject_Print((PyObject *)nm, stderr, 0);
+    /* XXX(twouters) cast refcount to long until %zd is
+        universally available */
+    fprintf(stderr, "\n"
+            "nm_used : %ld\n"
+            "nm_mask : %ld\n",
+            (long)nm->nm_used, (long)nm->nm_mask);
+    for (i = 0; i <= nm->nm_mask; i++) {
+      fprintf(stderr, "nm_table[%ld]: ", (long)i);
+      if (nm->nm_table[i] == NULL)
+        fputs("NULL", stderr);
+      else
+        (void)PyObject_Print((PyObject *)nm->nm_table[i], stderr, 0);
+      fputs("\n", stderr);
+    }
+  }
+}
 
 PyObject *
 NamespaceMap_New(ElementObject *owner)
