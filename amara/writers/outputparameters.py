@@ -57,6 +57,17 @@ class outputparameters(object):
                 setattr(clone, name, value)
         return self.__class__(**attrs)
 
+    def update(self, other):
+        if not isinstance(other, outputparameters):
+            raise TypeError(other)
+        for name in self.__slots__:
+            value = getattr(other, name)
+            if value is not None:
+                if name in self.sequence_attributes:
+                    value += getattr(self, name)
+                setattr(self, name, value)
+        return
+
     def setdefault(self, attr, default):
         value = getattr(self, attr)
         if value is not None:
