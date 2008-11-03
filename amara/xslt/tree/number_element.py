@@ -45,7 +45,7 @@ class number_element(xslt_element):
         elif self._level == 'any':
             self._level = ANY
 
-        if self._format.isConstant() and self._lang.isConstant():
+        if self._format.constant and self._lang.constant:
             format = self._format.evaluate_as_string(None)
             lang = self._lang.evaluate_as_string(None)
             self._formatter = numbers.formatter(lang, format)

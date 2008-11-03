@@ -1,5 +1,6 @@
 ########################################################################
 # amara/xslt/expressions.py
+import operator
 
 class rtf_expression:
     def __init__(self, nodes):
@@ -24,50 +25,43 @@ class rtf_expression:
         print indent + str(self)
 
     def __str__(self):
-        return '<RtfExpr at %x: %s>' % (id(self), str(self.nodes))
+        return '<RtfExpr at %x: %s>' % (id(self), self.nodes)
 
 
 class sorted_expression:
-    def __init__(self, expression, sortKeys):
+    def __init__(self, expression, keys):
         self.expression = expression
-        self.sortKeys = sortKeys or []
+        self.keys = tuple(reversed(keys or ()))
         return
 
     def __str__(self):
-        return "<SortedExpr at 0x%x: %s>" % (id(self), repr(self.expression))
+        return "<sorted_expression at 0x%x: %r>" % (id(self), self.expression)
 
-    def compare(self, (node1, keys1), (node2, keys2)):
-        for i in xrange(len(self.cmps)):
-            diff = self.cmps[i](keys1[i], keys2[i])
-            if diff: return diff
-        # compare in document order
-        # WARNING - This assumes domlette trees
-        #return cmp(node1.docIndex, node2.docIndex)
-        return cmp(node1, node2)
-
-    def evaluate(self, context):
+    def evaluate_as_nodeset(self, context):
         if self.expression is None:
-            base = context.node.xml_children
+            nodes = context.node.xml_children
         else:
-            base = self.expression.evaluate(context)
-            if type(base) is not type([]):
-                raise TypeError('expected nodeset, %s found' % type(base).__name__)
+            nodes = self.expression.evaluate_as_nodeset(context)
 
         # create initial sort structure
-        state = context.copy()
-        size = len(base)
-        nodekeys = [None]*size
-        pos = 1
-        for node in base:
-            context.node, context.position, context.size = node, pos, size
-            context.currentNode = node
-            keys = map(lambda sk, c=context: sk.evaluate(c), self.sortKeys)
-            nodekeys[pos - 1] = (node, keys)
-            pos += 1
-        context.set(state)
+        initial_focus = context.node, context.position, context.size
+        context.size = size = len(nodes)
+        decorated = [None]*size
+        position = 0
+        for node in nodes:
+            keys = decorated[position] = [node]
+            position += 1
+            context.node = context.current_node = node
+            context.position = position
+            keys[1:] = [ key.get_key(context) for key in self.keys ]
+        context.node, context.position, context.size = initial_focus
 
-        # get the compare function for each of the sort keys
-        self.cmps = map(lambda sk, c=context: sk.getComparer(c), self.sortKeys)
-        nodekeys.sort(self.compare)
-        # extract the sorted nodes
-        return map(lambda nk: nk[0], nodekeys)
+        # Now sort the nodes based on the `xsl:sort` parameters
+        index = 1
+        for key in self.keys:
+            compare, reverse = key.get_parameters(context)
+            decorated.sort(cmp=compare, key=operator.itemgetter(index),
+                           reverse=reverse)
+            index += 1
+        return map(operator.itemgetter(0), decorated)
+    evaluate = evaluate_as_nodeset

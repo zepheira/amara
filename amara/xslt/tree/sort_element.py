@@ -4,6 +4,7 @@
 Implementation of `xsl:sort` element
 """
 
+from amara.xpath import datatypes
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 class sort_element(xslt_element):
@@ -21,21 +22,23 @@ class sort_element(xslt_element):
                                                   'lower-first')),
         }
 
-    _comparer = None
+    # Using `object` as a sentinel as `None` is a valid compare function
+    _missing = object()
+    _compare = _missing
+    _reverse = _missing
 
     def setup(self):
         # optimize for constant AVT attribute values (i.e., no {})
-        if (self._data_type.isConstant()
-            and self._order.isConstant()
-            and self._case_order.isConstant()):
-            self._comparer = self._make_comparer(
-                self._order.evaluate(None), self._data_type.evaluate(None),
-                self._case_order.evaluate(None))
+        if self._data_type.constant and self._case_order.constant:
+            self._compare = self._get_compare(self._data_type.evaluate(None),
+                                              self._case_order.evaluate(None))
+        if self._order.constant:
+            self._reverse = self._order.evaluate(None) == 'descending'
         return
 
-    def _make_comparer(self, order, data_type, case_order):
+    def _get_compare(self, data_type, case_order):
         if data_type == 'number':
-            comparer = _float_compare
+            comparer = _number_compare
         else:
             if case_order == 'lower-first':
                 comparer = _lower_first_compare
@@ -43,48 +46,39 @@ class sort_element(xslt_element):
                 comparer = _upper_first_compare
             else:
                 # use default for this locale
-                comparer = cmp
-
-        if order == 'descending':
-            comparer = _descending(comparer)
-
+                comparer = None
         return comparer
 
-    def get_comparer(self, context):
-        if self._comparer:
-            return self._comparer
-        data_type = self._data_type.evaluate(context)
-        order = self._order.evaluate(context)
-        case_order = self._case_order and self._case_order.evaluate(context)
-        return self._make_comparer(order, data_type, case_order)
+    def get_parameters(self, context, _missing=_missing):
+        compare, reverse = self._compare, self._reverse
+        if compare is _missing:
+            data_type = self._data_type.evaluate(context)
+            case_order = self._case_order and self._case_order.evaluate(context)
+            compare = self._get_compare(data_type, case_order)
+        if reverse is _missing:
+            reverse = self._order.evaluate(context) == 'descending'
+        return (compare, reverse)
 
-    def evaluate(self, context):
+    def get_key(self, context):
+        data_type = self._data_type.evaluate(context)
+        if data_type == 'text':
+            # Use "real" strings as XPath string objects implement
+            # XPath semantics for relational (<,>) operators.
+            return unicode(self._select.evaluate_as_string(context))
+        elif data_type == 'number':
+            return self._select.evaluate_as_number(context)
         return self._select.evaluate(context)
 
 
 ### Comparision Functions ###
 
-class _descending:
-    def __init__(self, comparer):
-        self.comparer = comparer
-
-    def __call__(self, a, b):
-        return self.comparer(b, a)
-
-def _float_compare(a, b):
-    a = float(a or 0)
-    b = float(b or 0)
-
+def _number_compare(a, b):
     # NaN seems to always equal everything else, so we'll do it ourselves
-    # the IEEE definition of NaN makes it the largest possible number
-    if number.isnan(a):
-        if number.isnan(b):
-            return 0
-        else:
-            return -1
-    elif number.isnan(b):
+    # the IEEE definition of NaN makes it the smallest possible number
+    if a.isnan():
+        return 0 if b.isnan() else -1
+    elif b.isnan():
         return 1
-
     return cmp(a, b)
 
 def _lower_first_compare(a, b):
@@ -92,7 +86,7 @@ def _lower_first_compare(a, b):
     if a.lower() == b.lower():
         for i, ch in enumerate(a):
             if ch != b[i]:
-                return ch.islower() and -1 or 1
+                return -1 if ch.islower() else 1
         # they are truly equal
         return 0
     else:

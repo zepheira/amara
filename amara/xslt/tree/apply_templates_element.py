@@ -8,6 +8,8 @@ from amara.namespaces import XSL_NAMESPACE
 from amara.xpath import XPathError
 from amara.xslt import XsltError, XsltTypeError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
+from amara.xslt.tree.sort_element import sort_element
+from amara.xslt.tree.with_param_element import with_param_element
 from amara.xslt.expressions import sorted_expression
 
 class apply_templates_element(xslt_element):
@@ -25,12 +27,10 @@ class apply_templates_element(xslt_element):
         sort_keys = []
         self._params = params = []
         for child in self.children:
-            # only XSL children are guaranteed by the validation
-            name = child.local_name
-            if name == 'sort':
+            if isinstance(child, sort_element):
                 sort_keys.append(child)
             else:
-                assert name == 'with-param'
+                assert isinstance(child, with_param_element)
                 params.append((child, child._name, child._select))
 
         if sort_keys:

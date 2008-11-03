@@ -49,7 +49,7 @@ class pattern(nodetests.node_test):
         self.axis_type = axis_type
         return
 
-    def match(self, context, node, principalType=None):
+    def match(self, context, node, principal_type=None):
         (axis_type, node_test, ancestor) = self.steps[0]
         if not node_test.match(context, node, axis_type):
             return 0
@@ -90,23 +90,24 @@ class predicated_test(nodetests.node_test):
 
     def __init__(self, node_test, predicates):
         self._node_test = node_test
-        self._predicates = _predicates
+        self._predicates = predicates
         self.name_key = node_test.name_key
         return
 
-    def match(self, context, node, principalType):
-        
-        if principalType == Node.ATTRIBUTE_NODE:
-            nodes = node.xml_parent.xml_attributes.nodes()
-        elif node.parentNode:
-            nodes = node.xml_parent.xml_children
-        else:
+    def match(self, context, node, principal_type):
+        parent = node.xml_parent
+        if principal_type == tree.attribute:
+            nodes = parent.xml_attributes.nodes()
+        elif not parent:
             # Must be a document
             return False
+        else:
+            # Amara nodes are iterable (over their children)
+            nodes = parent
 
         # Pass through the NodeTest (genexp)
         nodes = ( node for node in nodes
-                  if self._node_test.match(context, node, principalType) )
+                  if self._node_test.match(context, node, principal_type) )
 
         # Child and attribute axes are forward only
         nodes = self._predicates.filter(nodes, context, reverse=0)

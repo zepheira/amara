@@ -329,11 +329,13 @@
         <symbol>NodeTest</symbol>
         <symbol>Predicate.list</symbol>
         <code language="c">
+          $3 = PyObject_CallFunction(predicates, "N", $3);
           $2 = PyObject_CallFunction(predicated_test, "NO", $2, $3);
           $$ = PyTuple_New(3);
           if ($$) {
             Py_INCREF($1);
             PyTuple_SET_ITEM($$, 0, $1);
+            Py_INCREF($2);
             PyTuple_SET_ITEM($$, 1, $2);
             PyTuple_SET_ITEM($$, 2, PyInt_FromLong(0));
           }
