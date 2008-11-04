@@ -534,6 +534,7 @@ class stylesheet_reader(object):
         return
 
     def endElementNS(self, expandedName, qualifiedName,
+                     _literal_element=literal_element.literal_element,
                      _variable_element=variable_elements.variable_element):
         """
         Callback interface for SAX.

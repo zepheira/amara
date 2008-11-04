@@ -6,9 +6,10 @@ Implementation of `xsl:for-each` element.
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
-from amara.xslt.tree import (xslt_element, content_model, attribute_types,
-                             sort_element)
+from amara.xslt.tree import xslt_element, content_model, attribute_types
 from amara.xslt.expressions import sorted_expression
+
+from sort_element import sort_element
 
 class for_each_element(xslt_element):
 
@@ -24,7 +25,7 @@ class for_each_element(xslt_element):
         children = self.children
         nkeys = 0
         for child in children:
-            if isinstance(child, sort_element):
+            if isinstance(child, sort_element.sort_element):
                 nkeys += 1
             else:
                 break

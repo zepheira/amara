@@ -8,6 +8,9 @@ from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
+from call_template_element import call_template_element
+from choose_elements import choose_element
+from if_element import if_element
 from variable_elements import param_element
 
 class template_element(xslt_element):
