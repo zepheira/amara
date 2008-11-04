@@ -192,7 +192,7 @@ class container_mixin(object):
             name_chosen = False
             exclusions = []
             while not name_chosen:
-                pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_qname, exclusions)
+                pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_local, exclusions)
                 existing = getattr(self, pname, None)
                 if existing is None or existing.xml_name == child.xml_name:
                     name_chosen = True

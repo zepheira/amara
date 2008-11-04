@@ -130,7 +130,6 @@ class visitor:
         """
         #print "visit_element", node.xml_name
         current_nss = self._namespaces[-1].copy()
-
         # Gather the namespaces and attributes for writing
         namespaces = node.xml_namespaces.copy()
         del namespaces[u'xml']
@@ -138,7 +137,7 @@ class visitor:
             for prefix, namespaceUri in self._ns_hints.items():
                 # See if this namespace needs to be emitted
                 if current_nss.get(prefix, 0) != namespaceUri:
-                    namespaces[prefix] = namespaceUri
+                    namespaces[prefix or u''] = namespaceUri
             self._ns_hints = None
         if self._added_attributes:
             attributes = self._added_attributes
@@ -161,13 +160,14 @@ class visitor:
                 attributes[attr.xml_qname] = attr.xml_value
 
         # The element's namespaceURI/prefix mapping takes precedence
-        if node.xml_namespace or current_nss.get(None, 0):
+        if node.xml_namespace or current_nss.get(u'', 0):
             if current_nss.get(node.xml_prefix, 0) != node.xml_namespace:
-                namespaces[node.xml_prefix] = node.xml_namespace or u""
+                namespaces[node.xml_prefix or u''] = node.xml_namespace or u""
 
         #The 
         for prefix in self._removed_ns_decls:
             del namespaces[prefix]
+
         self.printer.start_element(node.xml_namespace, node.xml_qname, namespaces.iteritems(),
                                  attributes.iteritems())
         if self._removed_ns_decls:

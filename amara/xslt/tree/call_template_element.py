@@ -78,7 +78,7 @@ class call_template_element(xslt_element):
             context.recursive_parameters = params
         else:
             context.current_node = context.node
-            self._called_template.instantiate(context, params)
+            self._template.instantiate(context, params)
         return
 
     #def __getstate__(self):
