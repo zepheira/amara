@@ -25,7 +25,7 @@ class for_each_element(xslt_element):
         children = self.children
         nkeys = 0
         for child in children:
-            if isinstance(child, sort_element.sort_element):
+            if isinstance(child, sort_element):
                 nkeys += 1
             else:
                 break
