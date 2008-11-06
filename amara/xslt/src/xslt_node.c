@@ -350,6 +350,7 @@ static PyObject *get_base_uri(XsltNodeObject *self, void *arg)
 
 static struct PyGetSetDef node_getset[] = {
   { "baseUri",    (getter)get_base_uri },
+  { "base_uri",    (getter)get_base_uri },
   { NULL }
 };
 

@@ -22,6 +22,6 @@ class textwriter(streamwriter):
         return
 
     def text(self, data, disable_escaping=False):
-        bytes, nbytes = self._encode(text)
-        self.stream.write(data)
+        bytes, nbytes = self._encode(data)
+        self.stream.write(bytes)
         return

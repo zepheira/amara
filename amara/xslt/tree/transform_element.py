@@ -14,6 +14,7 @@ from amara.tree import Node, Element, Document, Text, Attr
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import xpath
 from amara.writers import outputparameters
+from amara.xpath import XPathError
 from amara.xslt import XsltError, xsltcontext
 from amara.xslt.tree import (xslt_element, content_model, attribute_types,
                              literal_element, variable_elements)
