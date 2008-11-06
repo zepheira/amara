@@ -490,13 +490,15 @@ def transform(source, transforms, params=None, output=None):
 
 
 def launch(*args, **kwargs):
-    #print args
-    #print kwargs
     source = args[0]
     transforms = args[1:]
     out = sys.stdout
     #print >> out, 
-    transform(source, transforms, output=out)
+    params = dict(( k.split(u'=') for k in kwargs.get('define', []) ))
+    #print params
+    transform(source, transforms, params=params, output=out)
+    return
+
 
 class Usage(Exception):
 	def __init__(self, msg):
@@ -520,7 +522,7 @@ def main(argv=None):
 			if option in ("-h", "--help"):
 				raise Usage(help_message)
 			if option in ("-D", "--define"):
-				kwargs['dbfile'] = value
+			    kwargs.setdefault('define', []).append(value)
 	
 	except Usage, err:
 		print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
@@ -532,3 +534,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
 	sys.exit(main())
+

@@ -117,7 +117,7 @@ class doctype(tree.node, html5lib.treebuilders.simpletree.DocumentType):
         self.xml_system_id = systemId
         self.xml_name = name
 
-def doctype_create(dummy, name, publicId, systemId):
+def doctype_create(dummy, name, publicId=None, systemId=None):
     c = comment(u'')
     c.xml_public_id = publicId
     c.xml_system_id = systemId
@@ -148,4 +148,52 @@ def parse(source, model=None):
     if model:
         entity_factory = model.clone
     return parser.parse(inputsource(source, None).stream, model)
+
+
+def launch(*args, **kwargs):
+    source = args[0]
+    doc = parse(source)
+    from amara import xml_print
+    xml_print(doc, indent=kwargs.get('pretty'), is_html=bool(kwargs.get('html')))
+    return
+
+
+import sys, getopt
+
+class Usage(Exception):
+	def __init__(self, msg):
+		self.msg = msg
+
+
+def main(argv=None):
+	if argv is None:
+		argv = sys.argv
+	try:
+		try:
+			opts, args = getopt.getopt(argv[1:], "hpHv", ["help", "pretty", "html"])
+		except getopt.error, msg:
+			raise Usage(msg)
+	
+		# option processing
+		kwargs = {'pretty': False}
+		for option, value in opts:
+			if option == "-v":
+				verbose = True
+			elif option in ("-h", "--help"):
+				raise Usage(help_message)
+			elif option in ("-p", "--pretty"):
+			    kwargs['pretty'] = True
+			elif option in ("-H", "--html"):
+			    kwargs['html'] = True
+	
+	except Usage, err:
+		print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
+		print >> sys.stderr, "\t for help use --help"
+		return 2
+
+	launch(*args, **kwargs)
+
+
+if __name__ == "__main__":
+	sys.exit(main())
 

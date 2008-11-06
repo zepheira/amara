@@ -230,3 +230,52 @@ class context(writer):
         return ('<%s at 0x%x: node %r, position %d, size %d>' %
                 (self.__class__.__name__, ptr, self.node, self.position,
                  self.size))
+
+
+def launch(*args, **kwargs):
+    import pprint
+    from amara.xpath.util import simplify
+    source = args[0]
+    expr = args[1]
+    import amara
+    doc = amara.parse(source)
+    result = doc.xml_select(expr.decode('utf-8'))
+    pprint.pprint(simplify(result))
+    return
+
+
+import sys, getopt
+
+class Usage(Exception):
+	def __init__(self, msg):
+		self.msg = msg
+
+
+def main(argv=None):
+	if argv is None:
+		argv = sys.argv
+	try:
+		try:
+			opts, args = getopt.getopt(argv[1:], "hv", ["help", ])
+		except getopt.error, msg:
+			raise Usage(msg)
+	
+		# option processing
+		kwargs = {}
+		for option, value in opts:
+			if option == "-v":
+				verbose = True
+			if option in ("-h", "--help"):
+				raise Usage(help_message)
+	
+	except Usage, err:
+		print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
+		print >> sys.stderr, "\t for help use --help"
+		return 2
+
+	launch(*args, **kwargs)
+
+
+if __name__ == "__main__":
+	sys.exit(main())
+
