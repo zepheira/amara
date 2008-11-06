@@ -23,6 +23,9 @@ class function_call(expression):
     def __new__(cls, name, args):
         if name in cls._builtins:
             cls = cls._builtins[name]
+        elif 1:
+            from amara.xpath.functions import function_callN
+            cls = function_callN
         elif not args:
             cls = function_call0
         else:

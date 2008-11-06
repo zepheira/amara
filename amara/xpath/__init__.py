@@ -93,8 +93,8 @@ class XPathError(Error):
 import types
 import operator
 
-from amara import XML_NAMESPACE
-from amara.tree import Node, Namespace
+from amara import tree
+from amara.namespaces import XML_NAMESPACE
 from amara.writers import writer, treewriter, stringwriter
 from amara.xpath import extensions, parser
 
@@ -180,7 +180,7 @@ class context(writer):
         return
 
     def copy_node(self, node):
-        if isinstance(node, Element):
+        if isinstance(node, tree.element):
             self.start_element(node.xml_qname, node.xml_namespace,
                                node.xmlns_attributes.copy())
             for attr in node.xml_attributes.nodes():
@@ -188,18 +188,18 @@ class context(writer):
             for child in node:
                 self.copy_node(child)
             self.end_element(node.xml_qname, node.xml_namespace)
-        elif isinstance(node, Attr):
+        elif isinstance(node, tree.attribute):
             self.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
-        elif isinstance(node, Text):
-            self.text(node.data, node.xsltOutputEscaping)
-        elif isinstance(node, ProcessingInstruction):
-            self.processing_instruction(node.target, node.data)
-        elif isinstance(node, Comment):
-            self.comment(node.data)
-        elif isinstance(node, Document):
+        elif isinstance(node, tree.text):
+            self.text(node.xml_value, node.xsltOutputEscaping)
+        elif isinstance(node, tree.processing_instruction):
+            self.processing_instruction(node.xml_target, node.xml_data)
+        elif isinstance(node, tree.comment):
+            self.comment(node.xml_value)
+        elif isinstance(node, tree.entity):
             for child in node:
                 self.copy_node(child)
-        elif isinstance(node, Namespace):
+        elif isinstance(node, tree.namespace):
             self.namespace(node.xml_qname, node.value)
         else:
             pass

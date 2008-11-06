@@ -626,10 +626,17 @@ static PyObject *get_attributes(XsltElementObject *self, void *arg)
   return PyDictProxy_New(self->attributes);
 }
 
+static PyObject *get_last_instruction(XsltElementObject *self, void *arg)
+{
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static struct PyGetSetDef element_getset[] = {
   { "prefix",     (getter) get_prefix, (setter) set_prefix, NULL, "prefix" },
   { "children",   (getter) get_children },
   { "attributes", (getter) get_attributes },
+  { "last_instruction", (getter) get_last_instruction },
   { NULL }
 };
 

@@ -26,16 +26,18 @@ class call_template_element(xslt_element):
                          for child in self.children ]
         return
 
-    def validate(self, context,
+    def prime(self, context,
                  _test_elements=(if_element.if_element,),
                  _choose_elements=(choose_elements.when_element,
                                    choose_elements.otherwise_element,)):
-        transform = context.transform
+        transform = self.root.stylesheet
         try:
             template = self._template = transform.named_templates[self._name]
         except KeyError:
             raise XsltError(XsltError.NAMED_TEMPLATE_NOT_FOUND,
                             self, self._name)
+        self._tail_recursive = template._tail_recursive
+        return
         # Check for tail-recursion
         node = self.parent
         while node is not transform:

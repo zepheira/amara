@@ -3,8 +3,8 @@
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_elem_attr1(xslt_test):
-    "xsl:element and xsl:attribute instantiation"
+class test_elem_attr_1(xslt_test):
+    """`xsl:element` and `xsl:attribute` instantiation"""
     source = filesource('addr_book1.xml')
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -55,8 +55,8 @@ version="1.0">
 </HTML>"""
 
 
-class test_elem_attr2(xslt_test):
-    "xsl:element with namespaces"
+class test_elem_attr_2(xslt_test):
+    """`xsl:element` with namespaces"""
     source = stringsource('<?xml version="1.0"?><dummy/>')
     transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
 <xsl:transform version="1.0"
@@ -86,8 +86,8 @@ class test_elem_attr2(xslt_test):
 <result><xse-ns xmlns='http://foo/bar'/><xse-empty-ns/><xse/><lre-ns xmlns='http://stuff'><xse-ns xmlns='http://foo/bar'/><xse-empty-ns xmlns=''/><xse/></lre-ns></result>"""
 
 
-class test_elem_attr3(xslt_test):
-    "xsl:attribute with namespaces"
+class test_elem_attr_3(xslt_test):
+    """`xsl:attribute` with namespaces"""
     source = stringsource('<?xml version="1.0"?><dummy/>')
     transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
 <xsl:transform version="1.0"

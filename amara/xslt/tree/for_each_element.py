@@ -48,7 +48,7 @@ class for_each_element(xslt_element):
         state = context.node, context.position, context.size, context.template
         # Now process the selected nodes
         context.template = None
-        size = context.size = len(node_set)
+        size = context.size = len(nodes)
         position = 1
         for node in nodes:
             context.node = context.current_node = node

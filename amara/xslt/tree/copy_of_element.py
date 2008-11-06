@@ -4,6 +4,7 @@
 Implementation of `xsl:copy-of` element.
 """
 
+from amara import tree
 from amara.xpath import datatypes
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
@@ -20,7 +21,7 @@ class copy_of_element(xslt_element):
         context.namespaces = self.namespaces
 
         result = self._select.evaluate(context)
-        if isinstance(result, Node):
+        if isinstance(result, tree.node):
             context.copy_node(result)
         elif isinstance(result, datatypes.nodeset):
             context.copy_nodes(result)
