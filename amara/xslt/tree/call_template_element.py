@@ -36,7 +36,7 @@ class call_template_element(xslt_element):
         except KeyError:
             raise XsltError(XsltError.NAMED_TEMPLATE_NOT_FOUND,
                             self, self._name)
-        self._tail_recursive = template._tail_recursive
+        # NOTE: Tail recursion is now checked for in the xsl:template setup().
         return
         # Check for tail-recursion
         node = self.parent

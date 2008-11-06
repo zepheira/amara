@@ -51,6 +51,7 @@ class template_element(xslt_element):
                 if isinstance(last, call_template_element):
                     if last._name == self._name:
                         self._tail_recursive = True
+                        last._tail_recursive = True
                         break
                 elif isinstance(last, if_element):
                     last = last.last_instruction
