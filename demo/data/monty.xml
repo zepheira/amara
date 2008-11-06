@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<monty>
+  <python spam="eggs">
+    What do you mean "bleh"
+  </python>
+  <python ministry="abuse">
+    But I was looking for argument
+  </python>
+</monty>
