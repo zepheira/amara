@@ -25,6 +25,7 @@ from amara.namespaces import *
 from amara.lib.xmlstring import *
 from amara.lib.util import *
 from amara.xpath import datatypes
+from amara.xpath.util import *
 
 ATTIBUTE_AXIS = u'@'
 
@@ -124,6 +125,9 @@ class content_model:
         self.attribute_types = {}
         self.constraints = []
         self.entities = set()
+        self.metadata_resource_expr = None
+        self.metadata_rel_expr = None
+        self.metadata_value_expr = None
         return
 
     def add_constraint(self, constraint, validate=False):
@@ -159,6 +163,39 @@ class content_model:
             print >> sys.stderr, (c.assertion if node else c.assertion(node))
         return
 
+    def generate_metadata(self, root):
+        '''
+        Process an document for metadata according to extraction cues
+        '''
+        metadata = []
+        def handle_element(elem, resource):
+            #print elem.xml_name, (elem.xml_model.metadata_resource_expr, elem.xml_model.metadata_rel_expr, elem.xml_model.metadata_value_expr)
+            if self.metadata_resource_expr:
+                resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
+                #Basically expandqname first
+                #prefix, local = splitqname(rattr)
+                #try:
+                #    ns = elem.xml_namespaces[prefix]
+                #    resource = ns + local
+                #except KeyError:
+                #    resource = rattr
+            if elem.xml_model.metadata_rel_expr:
+                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
+                val = datatypes.string(elem.xml_select(elem.xml_model.metadata_value_expr)) if self.metadata_value_expr else elem.xml_select(u'string(.)')
+                metadata.append((unicode(resource), unicode(rel), simplify(val)))
+            for child in elem.xml_elements:
+                handle_element(child, resource)
+            return
+        #Make sure we skip any entities and start with top element(s)
+        if isinstance(root, tree.entity):
+            for elem in root.xml_elements:
+                #FIXME: use elem.xml_base when it doesn't core dump :)
+                handle_element(elem, root.xml_base)
+        else:
+            handle_element(root, elem.xml_base)
+        return metadata
+
+
 #        node.xml_model.constraints.append(u'@xml:id', validate=True)      #Make xml:id required.  Will throw a constraint violation right away if there is not one.  Affects all instances of this class.
 #        node.xml_model.validate(recurse=True)     #Recursively validate constraints on node and all children
 
@@ -191,20 +228,22 @@ class document_model(object):
 
 class examplotron_model(document_model):
     '''
-    XML model information from an examplotron document
+    XML model information and metadata extraction cues from an examplotron document
     '''
     def __init__(self, egdoc):
         from amara import bindery
         self.model_document = bindery.parse(egdoc)
-        self.generate_constraints()
+        self.setup_model()
     
-    def generate_constraints(self, parent=None):
+    def setup_model(self, parent=None):
         '''
         Process an examplotron document for constraints
         '''
+        NSS = {u'ak': u'http://purl.org/dc/org/xml3k/akara'}
         parent = parent or self.model_document
         allowed_elements_test = []
         for e in parent.xml_elements:
+            #Constraint info
             eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
             if not (e.xml_namespace, e.xml_local) in parent.xml_model.element_types:
                 parent.xml_model.element_types[e.xml_namespace, e.xml_local] = (self.model_document.xml_pyname(e.xml_namespace, e.xml_local), None)
@@ -216,7 +255,20 @@ class examplotron_model(document_model):
                     constraint(u'count(%s) = 1'%named_node_test(e.xml_namespace, e.xml_local, parent), msg=u'Only one instance of element allowed')
                 )
             allowed_elements_test.append(named_node_test(e.xml_namespace, e.xml_local, parent))
-            self.generate_constraints(parent=e)
+
+            #Metadata extraction cues
+            #FIXME: Compile these XPath expressions
+            rattr = e.xml_select(u'string(@ak:resource)', NSS)
+            if rattr: e.xml_model.metadata_resource_expr = rattr
+            relattr = e.xml_select(u'string(@ak:rel)', NSS)
+            if relattr: e.xml_model.metadata_rel_expr = relattr
+            valattr = e.xml_select(u'string(@ak:value)', NSS)
+            if valattr: e.xml_model.metadata_value_expr = valattr
+            #print e.xml_name, (e.xml_model.metadata_resource_expr, e.xml_model.metadata_rel_expr, e.xml_model.metadata_value_expr)
+            
+            #Recurse to process children
+            self.setup_model(e)
+
         if allowed_elements_test:
             parent.xml_model.add_constraint(
                 constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Invalid elements present')
@@ -226,4 +278,4 @@ class examplotron_model(document_model):
                 constraint(u'not(*)', msg=u'Element should be empty')
             )
 
-
+        

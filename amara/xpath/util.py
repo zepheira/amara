@@ -17,7 +17,7 @@ from amara.lib.util import *
 # NOTE: XPathParser and Context are imported last to avoid import errors
 
 __all__ = [# XPath expression processing:
-           'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize'
+           'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize', 'simplify'
            ]
 
 
