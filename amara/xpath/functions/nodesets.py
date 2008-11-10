@@ -89,7 +89,7 @@ class name_function(builtin_function):
                     if len(arg._steps) == 1:
                         step, = arg._steps
                         if (step.axis.name == 'self' and
-                            step.nodetest.name == 'node' and
+                            step.node_test.name == 'node' and
                             not step.predicates):
                             args = ()
         builtin_function.__init__(self, name, args)
