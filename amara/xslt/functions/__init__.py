@@ -4,6 +4,8 @@
 XSLT expression nodes that evaluate function calls.
 """
 
+import amara
+from amara.lib import iri
 from amara.namespaces import XSL_NAMESPACE, EXTENSION_NAMESPACE
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
@@ -23,7 +25,36 @@ class document_function(builtin_function):
 
     def evaluate_as_nodeset(self, context):
         arg0, arg1 = self._args
-        return datatypes.nodeset()
+        if arg1 is None:
+            base_uri = context.instruction.baseUri
+        else:
+            for node in arg1.evaluate_as_nodeset(context):
+                base_uri = node.xml_base
+                break
+            else:
+                raise XsltRuntimeError(XsltError.DOC_FUNC_EMPTY_NODESET,
+                                       context.instruction)
+        arg0 = arg0.evaluate(context)
+        documents = {}
+        if isinstance(arg0, datatypes.nodeset):
+            for node in arg0:
+                uri = datatypes.string(node)
+                if arg1 is None:
+                    base_uri = node.xml_base
+                assert base_uri or iri.is_absolute(uri)
+            documents[iri.DEFAULT_RESOLVER.normalize(uri, base_uri)] = None
+        else:
+            uri = datatypes.string(arg0)
+            assert base_uri or iri.is_absolute(uri)
+            documents[iri.DEFAULT_RESOLVER.normalize(uri, base_uri)] = None
+
+        for uri in documents:
+            if uri not in context.documents:
+                doc = amara.parse(uri)
+            else:
+                doc = context.documents[uri]
+            documents[uri] = doc
+        return datatypes.nodeset(documents.values())
     evaluate = evaluate_as_nodeset
 
 
@@ -48,7 +79,19 @@ class format_number_function(builtin_function):
 
     def evaluate_as_string(self, context):
         arg0, arg1, arg2 = self._args
-        return datatypes.string()
+        number = arg0.evaluate_as_number(context)
+        pattern = arg1.evaluate_as_string(context)
+        if arg2:
+            qname = arg2.evaluate_as_string(context)
+            name = context.expand_qname(qname)
+            try:
+                format = context.transform.decimal_formats[name]
+            except KeyError:
+                raise XsltRuntimeError(XsltError.UNDEFINED_DECIMAL_FORMAT,
+                                       self, name=qname)
+        else:
+            format = None
+        return datatypes.string(FormatNumber(number, pattern, format))
 
 
 class current_function(builtin_function):
@@ -70,7 +113,12 @@ class unparsed_entity_uri_function(builtin_function):
 
     def evaluate_as_string(self, context):
         arg0, = self._args
-        return datatypes.string()
+        name = arg0.evaluate_as_string(context)
+        try:
+            uri = context.node.xml_root.xml_unparsed_entities[name]
+        except KeyError:
+            return datatypes.EMPTY_STRING
+        return datatypes.string(uri)
 
 
 class generate_id_function(builtin_function):
