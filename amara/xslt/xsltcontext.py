@@ -11,6 +11,7 @@ Project home, documentation, distributions: http://4suite.org/
 from amara._xmlstring import splitqname
 from amara.lib.iri import uridict
 from amara.xpath import XPathError, context
+from amara.xslt import functions
 #from amara.xslt import xsltfunctions, builtinextfunctions, exslt
 
 try:
