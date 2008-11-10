@@ -210,7 +210,7 @@ class XsltError(Error):
 
             # misc element validation
             XsltError.ILLEGAL_ELEMENT_CHILD: _(
-                "Illegal child '%s' within element '%s'"),
+                "Illegal child '%(child)s' within element '%(element)s'"),
             XsltError.ILLEGAL_TEXT_CHILD_PARSE: _(
                 "Illegal literal text %s within element '%s'"),
             XsltError.UNDEFINED_PREFIX: _(
