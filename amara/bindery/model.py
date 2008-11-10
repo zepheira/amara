@@ -170,7 +170,7 @@ class content_model:
         metadata = []
         def handle_element(elem, resource):
             #print elem.xml_name, (elem.xml_model.metadata_resource_expr, elem.xml_model.metadata_rel_expr, elem.xml_model.metadata_value_expr)
-            if self.metadata_resource_expr:
+            if elem.xml_model.metadata_resource_expr:
                 resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
                 #Basically expandqname first
                 #prefix, local = splitqname(rattr)
