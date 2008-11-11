@@ -93,6 +93,11 @@ class visitor:
         Work on DTDecl details, if any, and then to the children.
         """
         self.printer.start_document()
+        if node.xml_system_id:
+            for child in node.xml_children:
+                if child.xml_type == tree.entity.xml_type:
+                    break
+            self.printer.doctype(child.xml_qname, node.xml_public_id, node.xml_system_id)
         #hasDocTypeNode = False
         #if hasattr(node, 'doctype'):
             # DOM Level 1/2/3
