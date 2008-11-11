@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<rss version="0.91">
+
+<channel>
+<title>freshmeat.net</title>
+<link>http://freshmeat.net</link>
+<description>the one-stop-shop for all your Linux software needs</description>
+<language>en-us</language>
+
+<item>
+<title>Alzabo 0.06a</title>
+<link>http://freshmeat.net/news/2000/07/19/964065475.html</link>
+<description>Perl data modelling tool and RDBMS-OO mapper.</description>
+</item>
+
+<item>
+<title>HLmaps 0.90</title>
+<link>http://freshmeat.net/news/2000/07/19/964065450.html</link>
+<description>A Perl/CGI script for Half-Life servers to present a list of loaded maps</description>
+</item>
+
+<textinput>
+<title>quick finder</title>
+<description>Use the text input below to search the freshmeat application database</description>
+<name>query</name>
+<link>http://core.freshmeat.net/search.php3</link>
+</textinput>
+</channel>
+</rss>
