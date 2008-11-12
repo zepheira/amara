@@ -323,35 +323,37 @@ static PyObject *get_base_uri(PyObject *self, void *arg)
      *    if one exists, otherwise
      */
     if (Element_Check(node)) {
-      base = (PyObject *)AttributeMap_GetNode(Element_GET_ATTRIBUTES(node),
-                                              xml_namespace_string,
-                                              base_string);
-      if (base) {
-        base = Attr_GET_VALUE(base);
-        /* If the xml:base in scope for the current node is not absolute, we find
-         * the element where that xml:base was declared, then Absolutize our
-         * relative xml:base against the base URI of the parent of declaring
-         * element, recursively. */
-        result = PyObject_CallFunction(is_absolute_function, "O", base);
-        if (result == NULL) return NULL;
-        switch (PyObject_IsTrue(result)) {
-        case 0:
-          Py_DECREF(result);
-          result = get_base_uri((PyObject *)Node_GET_PARENT(node), arg);
+      PyObject *attrs = Element_ATTRIBUTES(node);
+      if (attrs != NULL) {
+        base = (PyObject *)AttributeMap_GetNode(attrs, xml_namespace_string,
+                                                base_string);
+        if (base) {
+          base = Attr_GET_VALUE(base);
+          /* If the xml:base in scope for the current node is not absolute, we
+           * find the element where that xml:base was declared, then Absolutize
+           * our relative xml:base against the base URI of the parent of
+           * declaring element, recursively. */
+          result = PyObject_CallFunction(is_absolute_function, "O", base);
           if (result == NULL) return NULL;
-          else if (result == Py_None) return result;
-          base = PyObject_CallFunction(absolutize_function, "OO", base, result);
-          if (base == NULL) {
+          switch (PyObject_IsTrue(result)) {
+          case 0:
             Py_DECREF(result);
+            result = get_base_uri((PyObject *)Node_GET_PARENT(node), arg);
+            if (result == NULL) return NULL;
+            else if (result == Py_None) return result;
+            base = PyObject_CallFunction(absolutize_function, "OO", base, result);
+            if (base == NULL) {
+              Py_DECREF(result);
+              return NULL;
+            }
+            /* fall through */
+          case 1:
+            Py_DECREF(result);
+            Py_INCREF(base);
+            return base;
+          default:
             return NULL;
           }
-          /* fall through */
-        case 1:
-          Py_DECREF(result);
-          Py_INCREF(base);
-          return base;
-        default:
-          return NULL;
         }
       }
     }

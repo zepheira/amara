@@ -158,8 +158,8 @@ node_nametest(NodeFilterObject *self, PyObject *namespace, PyObject *name)
 
 static int element_nametest(NodeFilterObject *self, PyObject *node)
 {
-  return node_nametest(self, Element_GET_NAMESPACE_URI(node),
-                       Element_GET_LOCAL_NAME(node));
+  return node_nametest(self, Element_NAMESPACE_URI(node),
+                       Element_LOCAL_NAME(node));
 }
 
 static int attr_nametest(NodeFilterObject *self, PyObject *node)

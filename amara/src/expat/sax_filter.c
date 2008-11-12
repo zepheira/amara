@@ -933,7 +933,7 @@ static int domwalker_visit(XMLParserObject *parser,
 
     /* Create expat-style attribute names and trim out namespaces */
     i = 0;
-    while (PyDict_Next(Element_GET_ATTRIBUTES(node), &i, &key, &value)) {
+    while (PyDict_Next(Element_ATTRIBUTES(node), &i, &key, &value)) {
       PyObject *nodeName, *localName, *nodeValue;
       namespaceURI = Attr_GET_NAMESPACE_URI(value);
       nodeName = Attr_GET_QNAME(value);
@@ -988,8 +988,8 @@ static int domwalker_visit(XMLParserObject *parser,
     }
 
     /* DOM doesn't need separate namespace declarations */
-    namespaceURI = Element_GET_NAMESPACE_URI(node);
-    prefix = get_prefix(Element_GET_QNAME(node));
+    namespaceURI = Element_NAMESPACE_URI(node);
+    prefix = get_prefix(Element_QNAME(node));
     if (prefix == NULL) {
       Py_DECREF(new_namespaces);
       Py_DECREF(attrs);
@@ -1050,9 +1050,9 @@ static int domwalker_visit(XMLParserObject *parser,
     handler = parser->handlers[Handler_StartElement];
     if (handler != NULL) {
       args = Py_BuildValue("(OO)OO",
-                           Element_GET_NAMESPACE_URI(node),
-                           Element_GET_LOCAL_NAME(node),
-                           Element_GET_QNAME(node),
+                           Element_NAMESPACE_URI(node),
+                           Element_LOCAL_NAME(node),
+                           Element_QNAME(node),
                            attrs);
       if (args == NULL) {
         Py_DECREF(current_namespaces);
@@ -1075,8 +1075,8 @@ static int domwalker_visit(XMLParserObject *parser,
 //    /* update preserving whitespace state for child nodes */
 //    preserve_whitespace =
 //      Expat_IsWhitespacePreserving(parser->reader,
-//                                   Element_GET_NAMESPACE_URI(node),
-//                                   Element_GET_LOCAL_NAME(node));
+//                                   Element_NAMESPACE_URI(node),
+//                                   Element_LOCAL_NAME(node));
 
     /* process the children */
     for (i = 0; i < Container_GET_COUNT(node); i++) {
@@ -1093,9 +1093,9 @@ static int domwalker_visit(XMLParserObject *parser,
     handler = parser->handlers[Handler_EndElement];
     if (handler != NULL) {
       args = Py_BuildValue("(OO)O",
-                           Element_GET_NAMESPACE_URI(node),
-                           Element_GET_LOCAL_NAME(node),
-                           Element_GET_QNAME(node));
+                           Element_NAMESPACE_URI(node),
+                           Element_LOCAL_NAME(node),
+                           Element_QNAME(node));
       if (args == NULL) {
         Py_DECREF(current_namespaces);
         Py_DECREF(prefixes);

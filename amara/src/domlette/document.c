@@ -68,7 +68,7 @@ get_element_by_id(NodeObject *node, PyObject *elementId)
     NodeObject *child = Container_GET_CHILD(node, i);
     if (Element_Check(child)) {
       /* Searth the attributes for an ID attr */
-      PyObject *attributes = Element_GET_ATTRIBUTES(child);
+      PyObject *attributes = Element_ATTRIBUTES(child);
       if (attributes != NULL) {
         AttrObject *attr;
         Py_ssize_t pos = 0;

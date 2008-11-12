@@ -18,11 +18,11 @@ extern "C" {
   } ElementObject;
 
 #define Element(op) ((ElementObject *)(op))
-#define Element_GET_NAMESPACE_URI(op) (Element(op)->namespaceURI)
-#define Element_GET_LOCAL_NAME(op) (Element(op)->localName)
-#define Element_GET_QNAME(op) (Element(op)->qname)
-#define Element_GET_ATTRIBUTES(op) (Element(op)->attributes)
-#define Element_GET_NAMESPACES(op) (Element(op)->namespaces)
+#define Element_NAMESPACE_URI(op) (Element(op)->namespaceURI)
+#define Element_LOCAL_NAME(op) (Element(op)->localName)
+#define Element_QNAME(op) (Element(op)->qname)
+#define Element_ATTRIBUTES(op) (Element(op)->attributes)
+#define Element_NAMESPACES(op) (Element(op)->namespaces)
 
 #ifdef Domlette_BUILDING_MODULE
 #include "attributemap.h"

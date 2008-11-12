@@ -195,7 +195,7 @@ static PyObject *attribute_axis_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
   if (Element_Check(node)) {
-    axis->adict = Element_GET_ATTRIBUTES(node);
+    axis->adict = Element_ATTRIBUTES(node);
     Py_XINCREF(axis->adict);
   } else {
     axis->adict = NULL;

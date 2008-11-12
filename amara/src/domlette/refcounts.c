@@ -54,13 +54,13 @@ static int node_refcounts(PyObject *tester, NodeObject *node,
 
     /* test element's attributes */
     i = 0;
-    while ((ns = NamespaceMap_Next(Element_GET_NAMESPACES(node), &i))) {
+    while ((ns = NamespaceMap_Next(Element_NAMESPACES(node), &i))) {
       if (node_refcounts(tester, (NodeObject *)ns, counter) == 0) return 0;
     }
 
     /* test element's attributes */
     i = 0;
-    while ((attr = AttributeMap_Next(Element_GET_ATTRIBUTES(node), &i))) {
+    while ((attr = AttributeMap_Next(Element_ATTRIBUTES(node), &i))) {
       if (node_refcounts(tester, (NodeObject *)attr, counter) == 0) return 0;
     }
 

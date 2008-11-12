@@ -41,7 +41,7 @@ lookup_prefix(ElementObject *self, PyObject *namespace)
   NamespaceObject *node;
 
   do {
-    nodemap = Element_GET_NAMESPACES(current);
+    nodemap = Element_NAMESPACES(current);
     if (nodemap != NULL) {
       /* process the element's declared namespaces */
       pos = 0;
@@ -281,7 +281,7 @@ Element_InscopeNamespaces(ElementObject *self)
   Py_DECREF(node);
 
   do {
-    nodemap = Element_GET_NAMESPACES(current);
+    nodemap = Element_NAMESPACES(current);
     if (nodemap != NULL) {
       /* process the element's declared namespaces */
       pos = 0;
@@ -315,8 +315,7 @@ Element_InscopeNamespaces(ElementObject *self)
 
 static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
 {
-  return PyTuple_Pack(2, Element_GET_NAMESPACE_URI(self),
-                      Element_GET_QNAME(self));
+  return PyTuple_Pack(2, Element_NAMESPACE_URI(self), Element_QNAME(self));
 }
 
 static PyObject *element_getstate(PyObject *self, PyObject *args)
@@ -335,10 +334,10 @@ static PyObject *element_getstate(PyObject *self, PyObject *args)
     default:
       return NULL;
   }
-  namespaces = Element_GET_NAMESPACES(self);
+  namespaces = Element_NAMESPACES(self);
   if (namespaces == NULL)
     namespaces = Py_None;
-  attributes = Element_GET_ATTRIBUTES(self);
+  attributes = Element_ATTRIBUTES(self);
   if (attributes == NULL)
     attributes = Py_None;
   return Py_BuildValue("OOON", Node_GET_PARENT(self), namespaces, attributes,
@@ -410,31 +409,46 @@ static PyMethodDef element_methods[] = {
 
 /** Python Members ****************************************************/
 
-#define Element_MEMBER(name, member) \
-  { name, T_OBJECT, offsetof(ElementObject, member), RO }
-
 static PyMemberDef element_members[] = {
-  Element_MEMBER("xml_qname", qname),
-  Element_MEMBER("xml_local", localName),
-  Element_MEMBER("xml_namespace", namespaceURI),
   { NULL }
 };
 
 /** Python Computed Members *******************************************/
 
-static PyObject *get_name(PyObject *self, void* arg)
+/* (RO) element.xml_name */
+static PyObject *get_name(PyObject *self, void *arg)
 {
-  return PyTuple_Pack(2, Element_GET_NAMESPACE_URI(self), 
-                      Element_GET_LOCAL_NAME(self));
+  return PyTuple_Pack(2, Element_NAMESPACE_URI(self),
+                      Element_LOCAL_NAME(self));
 }
 
-static PyObject *get_prefix(ElementObject *self, void *arg)
+/* (RW) element.xml_qname */
+static PyObject *get_qname(PyObject *self, void *arg)
+{
+  PyObject *result = Element_QNAME(self);
+  Py_INCREF(result);
+  return result;
+}
+
+static int set_qname(PyObject *self, PyObject *v, void *arg)
+{
+  PyObject *qname;
+  qname = XmlString_ConvertArgument(v, "xml_qname", 0);
+  if (qname == NULL)
+    return -1;
+  Py_DECREF(Element_QNAME(self));
+  Element_QNAME(self) = qname;
+  return 0;
+}
+
+/* (RW) element.xml_prefix */
+static PyObject *get_prefix(PyObject *self, void *arg)
 {
   Py_UNICODE *p;
   Py_ssize_t size, i;
 
-  p = PyUnicode_AS_UNICODE(self->qname);
-  size = PyUnicode_GET_SIZE(self->qname);
+  p = PyUnicode_AS_UNICODE(Element_QNAME(self));
+  size = PyUnicode_GET_SIZE(Element_QNAME(self));
   for (i = 0; i < size; i++) {
     if (p[i] == ':') {
       return PyUnicode_FromUnicode(p, i);
@@ -444,29 +458,98 @@ static PyObject *get_prefix(ElementObject *self, void *arg)
   return Py_None;
 }
 
-static int set_prefix(ElementObject *self, PyObject *v, void *arg)
+static int set_prefix(PyObject *self, PyObject *v, void *arg)
 {
-  PyObject *qualifiedName, *prefix;
+  PyObject *qname, *prefix;
 
   prefix = XmlString_ConvertArgument(v, "xml_prefix", 1);
   if (prefix == NULL)
     return -1;
   if (prefix == Py_None) {
-    qualifiedName = self->localName;
-    Py_INCREF(qualifiedName);
+    qname = Element_LOCAL_NAME(self);
+    Py_INCREF(qname);
   } else {
-    qualifiedName = build_qname(prefix, self->localName);
-    if (qualifiedName == NULL) {
+    qname = build_qname(prefix, Element_LOCAL_NAME(self));
+    if (qname == NULL) {
       Py_DECREF(prefix);
       return -1;
     }
   }
   Py_DECREF(prefix);
-  Py_DECREF(self->qname);
-  self->qname = qualifiedName;
+  Py_DECREF(Element_QNAME(self));
+  Element_QNAME(self) = qname;
   return 0;
 }
 
+/* (RW) element.xml_local */
+static PyObject *get_local(PyObject *self, void *arg)
+{
+  PyObject *result = Element_LOCAL_NAME(self);
+  Py_INCREF(result);
+  return result;
+}
+
+static int set_local(PyObject *self, PyObject *v, void *arg)
+{
+  PyObject *local, *qname;
+  Py_ssize_t size, i;
+  Py_UNICODE *p;
+
+  local = XmlString_ConvertArgument(v, "xml_local", 0);
+  if (local == NULL)
+    return -1;
+
+  qname = Element_QNAME(self);
+  size = PyUnicode_GET_SIZE(qname);
+  p = PyUnicode_AS_UNICODE(qname);
+  for (i = 0; i < size; i++) {
+    if (p[i] == ':') {
+      i++;
+      size = i + PyUnicode_GET_SIZE(local);
+      qname = PyUnicode_FromUnicode(NULL, size);
+      if (qname == NULL) {
+        Py_DECREF(local);
+        return -1;
+      }
+      Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qname),
+                      PyUnicode_AS_UNICODE(Element_QNAME(self)), i);
+      Py_UNICODE_COPY(PyUnicode_AS_UNICODE(qname) + i,
+                      PyUnicode_AS_UNICODE(local),
+                      PyUnicode_GET_SIZE(local));
+      goto finally;
+    }
+  }
+  /* No prefix found in the existing qname; just use the local name */
+  Py_INCREF(local);
+  qname = local;
+finally:
+  Py_DECREF(Element_LOCAL_NAME(self));
+  Element_LOCAL_NAME(self) = local;
+  Py_DECREF(Element_QNAME(self));
+  Element_QNAME(self) = qname;
+  return 0;
+}
+
+/* (RW) element.xml_namespace */
+static PyObject *get_namespace(PyObject *self, void *arg)
+{
+  PyObject *result = Element_NAMESPACE_URI(self);
+  Py_INCREF(result);
+  return result;
+}
+
+static int set_namespace(PyObject *self, PyObject *v, void *arg)
+{
+  PyObject *namespace;
+  namespace = XmlString_ConvertArgument(v, "xml_namespace", 1);
+  if (namespace == NULL)
+    return -1;
+  Py_DECREF(Element_NAMESPACE_URI(self));
+  Element_NAMESPACE_URI(self) = namespace;
+  return 0;
+}
+
+/* (RO) element.xml_attributes */
 static PyObject *
 get_xml_attributes(ElementObject *self, void *arg)
 {
@@ -476,6 +559,7 @@ get_xml_attributes(ElementObject *self, void *arg)
   return self->attributes;
 }
 
+/* (RO) element.xmlns_attributes */
 static PyObject *
 get_xmlns_attributes(ElementObject *self, void *arg)
 {
@@ -485,6 +569,7 @@ get_xmlns_attributes(ElementObject *self, void *arg)
   return self->namespaces;
 }
 
+/* (RO) element.xml_namespaces */
 static PyObject *
 get_xml_namespaces(PyObject *self, void *arg)
 {
@@ -493,7 +578,10 @@ get_xml_namespaces(PyObject *self, void *arg)
 
 static PyGetSetDef element_getset[] = {
   { "xml_name", get_name },
-  { "xml_prefix", (getter)get_prefix, (setter)set_prefix},
+  { "xml_qname", get_qname, set_qname },
+  { "xml_prefix", get_prefix, set_prefix},
+  { "xml_local", get_local, set_local },
+  { "xml_namespace", get_namespace, set_namespace },
   { "xml_attributes", (getter)get_xml_attributes },
   { "xmlns_attributes", (getter)get_xmlns_attributes },
   { "xml_namespaces", get_xml_namespaces },
@@ -520,10 +608,10 @@ static PyObject *element_repr(ElementObject *self)
   name = PyObject_Repr(self->qname);
   if (name == NULL)
     return NULL;
-  if (Element_GET_NAMESPACES(self))
-    num_namespaces = NamespaceMap_GET_SIZE(Element_GET_NAMESPACES(self));
-  if (Element_GET_ATTRIBUTES(self))
-    num_attributes = AttributeMap_GET_SIZE(Element_GET_ATTRIBUTES(self));
+  if (Element_NAMESPACES(self))
+    num_namespaces = NamespaceMap_GET_SIZE(Element_NAMESPACES(self));
+  if (Element_ATTRIBUTES(self))
+    num_attributes = AttributeMap_GET_SIZE(Element_ATTRIBUTES(self));
   repr = PyString_FromFormat("<%s at %p: name %s, %zd namespaces, "
                              "%zd attributes, %zd children>",
                              self->ob_type->tp_name, self, 

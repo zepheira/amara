@@ -275,7 +275,7 @@ static PyObject *treewriter_end_element(TreeWriterObject *self,
     return NULL;
   }
 
-  switch (PyObject_RichCompareBool(Element_GET_QNAME(element), name, Py_EQ)) {
+  switch (PyObject_RichCompareBool(Element_QNAME(element), name, Py_EQ)) {
   case 1:
     break;
   case 0:
@@ -287,7 +287,7 @@ static PyObject *treewriter_end_element(TreeWriterObject *self,
     Py_DECREF(namespace);
     return NULL;
   }
-  switch (PyObject_RichCompareBool(Element_GET_NAMESPACE_URI(element),
+  switch (PyObject_RichCompareBool(Element_NAMESPACE_URI(element),
                                    namespace, Py_EQ)) {
   case 1:
     break;
