@@ -74,6 +74,96 @@ lookup_prefix(ElementObject *self, PyObject *namespace)
 }
 
 Py_LOCAL_INLINE(PyObject *)
+lookup_namespace(ElementObject *self, PyObject *prefix)
+{
+  NodeObject *current = (NodeObject *)self;
+  PyObject *nodemap, *name, *namespace;
+  Py_ssize_t pos;
+  NamespaceObject *node;
+
+  do {
+    nodemap = Element_NAMESPACES(current);
+    if (nodemap != NULL) {
+      /* process the element's declared namespaces */
+      pos = 0;
+      while ((node = NamespaceMap_Next(nodemap, &pos))) {
+        /* namespace attribute */
+        name = Namespace_GET_NAME(node);
+        namespace = Namespace_GET_VALUE(node);
+        if (PyUnicode_GET_SIZE(namespace) == 0) {
+          /* empty string; remove prefix binding */
+          /* NOTE: in XML Namespaces 1.1 it would be possible to do this
+              for all prefixes, for now just the default namespace */
+          if (name == Py_None)
+            namespace = Py_None;
+          else
+            continue;
+        }
+        switch (PyObject_RichCompareBool(prefix, name, Py_EQ)) {
+        case 0:
+          break;
+        case 1:
+          return namespace;
+        default:
+          return NULL;
+        }
+      }
+    }
+    current = Node_GET_PARENT(current);
+  } while (current && Element_Check(current));
+
+  /* if the default namespace is not declared, then it is the null namespace */
+  if (prefix == Py_None)
+    return Py_None;
+
+  PyErr_SetString(PyExc_ValueError, "undeclared prefix");
+  return NULL;
+}
+
+Py_LOCAL_INLINE(int)
+update_namespaces(ElementObject *self)
+{
+#if 0
+  NodeObject *current = (NodeObject *)self;
+  PyObject *nodemap, *name, *namespace;
+  Py_ssize_t pos;
+  NamespaceObject *node;
+
+  do {
+    nodemap = Element_NAMESPACES(current);
+    if (nodemap != NULL) {
+      /* process the element's declared namespaces */
+      pos = 0;
+      while ((node = NamespaceMap_Next(nodemap, &pos))) {
+        /* namespace attribute */
+        name = Namespace_GET_NAME(node);
+        namespace = Namespace_GET_VALUE(node);
+        if (PyUnicode_GET_SIZE(namespace) == 0) {
+          /* empty string; remove prefix binding */
+          /* NOTE: in XML Namespaces 1.1 it would be possible to do this
+              for all prefixes, for now just the default namespace */
+          if (name == Py_None)
+            namespace = Py_None;
+          else
+            continue;
+        }
+        switch (PyObject_RichCompareBool(prefix, name, Py_EQ)) {
+        case 0:
+          break;
+        case 1:
+          return namespace;
+        default:
+          return NULL;
+        }
+      }
+    }
+    current = Node_GET_PARENT(current);
+  } while (current && Element_Check(current));
+#endif
+  return 0;
+}
+
+Py_LOCAL_INLINE(PyObject *)
 build_qname(PyObject *prefix, PyObject *local)
 {
   PyObject *qualifiedName;
@@ -138,7 +228,7 @@ Element_AddNamespace(ElementObject *self, PyObject *prefix, PyObject *namespace)
 /* returns a new reference */
 AttrObject *
 Element_AddAttribute(ElementObject *self, PyObject *namespaceURI,
-                     PyObject *qualifiedName, PyObject *localName, 
+                     PyObject *qualifiedName, PyObject *localName,
                      PyObject *value)
 {
   PyObject *attributes, *factory;
@@ -320,7 +410,7 @@ static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
 
 static PyObject *element_getstate(PyObject *self, PyObject *args)
 {
-  PyObject *deep=Py_True, *namespaces, *attributes, *children;
+  PyObject *deep=Py_True, *parent, *namespaces, *attributes, *children;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
@@ -334,14 +424,16 @@ static PyObject *element_getstate(PyObject *self, PyObject *args)
     default:
       return NULL;
   }
+  parent = (PyObject *)Node_GET_PARENT(self);
+  if (parent == NULL)
+    parent = Py_None;
   namespaces = Element_NAMESPACES(self);
   if (namespaces == NULL)
     namespaces = Py_None;
   attributes = Element_ATTRIBUTES(self);
   if (attributes == NULL)
     attributes = Py_None;
-  return Py_BuildValue("OOON", Node_GET_PARENT(self), namespaces, attributes,
-                       children);
+  return Py_BuildValue("OOON", parent, namespaces, attributes, children);
 }
 
 static PyObject *element_setstate(PyObject *self, PyObject *state)
@@ -422,23 +514,12 @@ static PyObject *get_name(PyObject *self, void *arg)
                       Element_LOCAL_NAME(self));
 }
 
-/* (RW) element.xml_qname */
+/* (RO) element.xml_qname */
 static PyObject *get_qname(PyObject *self, void *arg)
 {
   PyObject *result = Element_QNAME(self);
   Py_INCREF(result);
   return result;
-}
-
-static int set_qname(PyObject *self, PyObject *v, void *arg)
-{
-  PyObject *qname;
-  qname = XmlString_ConvertArgument(v, "xml_qname", 0);
-  if (qname == NULL)
-    return -1;
-  Py_DECREF(Element_QNAME(self));
-  Element_QNAME(self) = qname;
-  return 0;
 }
 
 /* (RW) element.xml_prefix */
@@ -450,9 +531,8 @@ static PyObject *get_prefix(PyObject *self, void *arg)
   p = PyUnicode_AS_UNICODE(Element_QNAME(self));
   size = PyUnicode_GET_SIZE(Element_QNAME(self));
   for (i = 0; i < size; i++) {
-    if (p[i] == ':') {
+    if (p[i] == ':')
       return PyUnicode_FromUnicode(p, i);
-    }
   }
   Py_INCREF(Py_None);
   return Py_None;
@@ -460,7 +540,7 @@ static PyObject *get_prefix(PyObject *self, void *arg)
 
 static int set_prefix(PyObject *self, PyObject *v, void *arg)
 {
-  PyObject *qname, *prefix;
+  PyObject *qname, *prefix, *namespace;
 
   prefix = XmlString_ConvertArgument(v, "xml_prefix", 1);
   if (prefix == NULL)
@@ -475,9 +555,19 @@ static int set_prefix(PyObject *self, PyObject *v, void *arg)
       return -1;
     }
   }
+  namespace = lookup_namespace(Element(self), prefix);
+  if (namespace == NULL) {
+    Py_DECREF(prefix);
+    Py_DECREF(qname);
+    return -1;
+  }
   Py_DECREF(prefix);
+
   Py_DECREF(Element_QNAME(self));
   Element_QNAME(self) = qname;
+  Py_DECREF(Element_NAMESPACE_URI(self));
+  Py_INCREF(namespace);
+  Element_NAMESPACE_URI(self) = namespace;
   return 0;
 }
 
@@ -540,12 +630,30 @@ static PyObject *get_namespace(PyObject *self, void *arg)
 
 static int set_namespace(PyObject *self, PyObject *v, void *arg)
 {
-  PyObject *namespace;
+  PyObject *namespace, *prefix, *qname;
   namespace = XmlString_ConvertArgument(v, "xml_namespace", 1);
   if (namespace == NULL)
     return -1;
+  prefix = lookup_prefix(Element(self), namespace);
+  if (prefix == NULL) {
+    Py_DECREF(namespace);
+    return -1;
+  }
+  if (prefix == Py_None) {
+    qname = Element_LOCAL_NAME(self);
+    Py_INCREF(qname);
+  } else {
+    qname = build_qname(prefix, Element_LOCAL_NAME(self));
+    if (qname == NULL) {
+      Py_DECREF(namespace);
+      return -1;
+    }
+  }
+
   Py_DECREF(Element_NAMESPACE_URI(self));
   Element_NAMESPACE_URI(self) = namespace;
+  Py_DECREF(Element_QNAME(self));
+  Element_QNAME(self) = qname;
   return 0;
 }
 
@@ -578,7 +686,7 @@ get_xml_namespaces(PyObject *self, void *arg)
 
 static PyGetSetDef element_getset[] = {
   { "xml_name", get_name },
-  { "xml_qname", get_qname, set_qname },
+  { "xml_qname", get_qname },
   { "xml_prefix", get_prefix, set_prefix},
   { "xml_local", get_local, set_local },
   { "xml_namespace", get_namespace, set_namespace },
