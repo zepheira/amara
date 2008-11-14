@@ -55,7 +55,8 @@ class node(html5lib.treebuilders._base.Node):
 
 class element(nodes.element_base, node):
     '''
-    attributes - a dict holding name, value pairs for attributes of the node        childNodes - a list of child nodes of the current node. This must 
+    attributes - a dict holding name, value pairs for attributes of the node
+    childNodes - a list of child nodes of the current node. This must
     include all elements but not necessarily other node types
     _flags - A list of miscellaneous flags that can be set on the node
     '''
@@ -70,9 +71,11 @@ class element(nodes.element_base, node):
         for key, val in attrs.iteritems():
             #from amara.bindery import html; doc = html.parse('http://outreach.zepheira.com/public/rdfa/plos-10.1371-journal.pgen.1000219.html'); h = doc.xml_select(u'//h1')[0]; print h.property
             #from amara.bindery import html; doc = html.parse('/tmp/plos-10.1371-journal.pgen.1000219.html'); h = doc.xml_select(u'//h1')[0]; print h.property
-            if key.startswith(u'xmlns'):
-                dummy, prefix = splitqname(key)
-                self.xml_namespaces[prefix] = val
+            if isinstance(key, tuple):
+                self.xml_attributes[key] = val
+            elif key.startswith(u'xmlns'):
+                prefix, local = splitqname(key)
+                self.xml_namespaces[local if prefix else None] = val
             else:
                 self.xml_attributes[None, key] = val
         return
@@ -92,6 +95,7 @@ class entity(node, nodes.entity_base):
     def __init__(self, document_uri=None):
         nodes.entity_base.__init__(self, document_uri)
         return
+    __repr__ = nodes.entity_base.__repr__
 
 
 class comment(tree.comment):
