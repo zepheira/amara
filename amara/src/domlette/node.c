@@ -112,71 +112,92 @@ static PyObject *xml_select(NodeObject *self, PyObject *args, PyObject *kw)
   return result;
 }
 
+Py_LOCAL_INLINE(PyObject *)
+call_getnewargs(PyObject *self)
+{
+  PyObject *args = PyObject_CallMethod(self, "__getnewargs__", NULL);
+  if (args == NULL)
+    return NULL;
+  if (!PyTuple_Check(args)) {
+    PyErr_Format(PyExc_TypeError,
+                 "__getnewargs__() should return a tuple, not '%.200s'",
+                 args == Py_None ? "None" : args->ob_type->tp_name);
+    Py_DECREF(args);
+    return NULL;
+  }
+  return args;
+}
+
 static PyObject *node_copy(PyObject *self, PyObject *noargs)
 {
-  PyObject *info, *callable, *args, *state=NULL;
+  PyObject *args, *state, *temp;
   PyObject *result;
 
-  info = PyObject_CallMethod(self, "__reduce__", NULL);
-  if (info == NULL)
+  args = call_getnewargs(self);
+  if (args == NULL)
     return NULL;
-  if (!PyArg_UnpackTuple(info, NULL, 2, 3, &callable, &args, &state)) {
-    Py_DECREF(info);
-    return NULL;
-  }
-  Py_DECREF(info);
-
-  result = PyObject_CallObject(callable, args);
+  result = self->ob_type->tp_new(self->ob_type, args, NULL);
+  Py_DECREF(args);
   if (result == NULL)
     return NULL;
-  if (state != NULL) {
-    info = PyObject_CallMethod(result, "__setstate__", "O", state);
-    if (info == NULL) {
-      Py_DECREF(result);
-      return NULL;
-    }
-    Py_DECREF(info);
+
+  /* __getstate__(deep=False) is our extension for copying nodes */
+  state = PyObject_CallMethod(self, "__getstate__", "O", Py_False);
+  if (state == NULL) {
+    Py_DECREF(result);
+    return NULL;
   }
+  temp = PyObject_CallMethod(result, "__setstate__", "(N)", state);
+  if (temp == NULL) {
+    Py_DECREF(result);
+    return NULL;
+  }
+  Py_DECREF(temp);
   return result;
 }
 
 static PyObject *node_deepcopy(PyObject *self, PyObject *memo)
 {
-  PyObject *info, *callable, *args, *state=NULL;
-  PyObject *result;
+  PyObject *args, *state, *temp;
+  PyObject *result=NULL;
 
-  info = PyObject_CallMethod(self, "__reduce__", NULL);
-  if (info == NULL)
-    return NULL;
-  if (!PyArg_UnpackTuple(info, NULL, 2, 3, &callable, &args, &state)) {
-    Py_DECREF(info);
-    return NULL;
-  }
-  Py_DECREF(info);
-
-  args = PyObject_CallFunctionObjArgs(deepcopy_function, args, memo, NULL);
+  args = call_getnewargs(self);
   if (args == NULL)
     return NULL;
-  result = PyObject_CallObject(callable, args);
+  args = PyObject_CallFunction(deepcopy_function, "NO", args, memo);
+  if (args == NULL)
+    return NULL;
+  result = self->ob_type->tp_new(self->ob_type, args, NULL);
   Py_DECREF(args);
   if (result == NULL)
     return NULL;
-  if (PyDict_SetItem(memo, self, result) < 0) {
+  temp = PyLong_FromVoidPtr(self);
+  if (temp == NULL) {
     Py_DECREF(result);
     return NULL;
   }
-  if (state != NULL) {
-    state = PyObject_CallFunctionObjArgs(deepcopy_function, state, memo, NULL);
-    if (state == NULL) {
-      Py_DECREF(result);
-      return NULL;
-    }
-    info = PyObject_CallMethod(result, "__setstate__", "O", state);
-    if (info == NULL) {
-      Py_DECREF(result);
-      return NULL;
-    }
-    Py_DECREF(info);
+  if (PyDict_SetItem(memo, temp, result) < 0) {
+    Py_DECREF(temp);
+    Py_DECREF(result);
+    return NULL;
+  }
+  Py_DECREF(temp);
+
+  /* __getstate__(deep=True) is our extension for deepcopying nodes */
+  state = PyObject_CallMethod(self, "__getstate__", "O", Py_True);
+  if (state == NULL) {
+    Py_DECREF(result);
+    return NULL;
+  }
+  state = PyObject_CallFunction(deepcopy_function, "NO", state, memo);
+  if (state == NULL) {
+    Py_DECREF(result);
+    return NULL;
+  }
+  temp = PyObject_CallMethod(result, "__setstate__", "(N)", state);
+  if (temp == NULL) {
+    Py_DECREF(result);
+    return NULL;
   }
   return result;
 }
@@ -240,34 +261,35 @@ static PyObject *node_getnewargs(PyObject *self, PyObject *noarg)
 
 static PyObject *node_getstate(PyObject *self, PyObject *args)
 {
-  PyObject *deep=Py_True, *state;
+  PyObject *deep=Py_True;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
 
-  state = (PyObject *)Node_GET_PARENT(self);
-  Py_INCREF(state);
-  return state;
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
+    return PyObject_GetAttrString(self, "__dict__");
+
+  Py_RETURN_NONE;
 }
 
 static PyObject *node_setstate(PyObject *self, PyObject *state)
 {
-  NodeObject *parent, *temp;
+  PyObject *dict;
 
-  if (Node_Check(state))
-    parent = Node(state);
-  else
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
+    dict = PyObject_GetAttrString(self, "__dict__");
+    if (dict == NULL)
+      return NULL;
+    if (PyDict_Update(dict, state) < 0) {
+      Py_DECREF(dict);
+      return NULL;
+    }
+    Py_DECREF(dict);
+  } else if (state != Py_None)
     return PyErr_Format(PyExc_NotImplementedError,
                         "subclass '%s' must override __setstate__()",
                         self->ob_type->tp_name);
-
-  temp = Node_GET_PARENT(self);
-  Node_SET_PARENT(self, parent);
-  Py_INCREF(parent);
-  Py_XDECREF(temp);
-
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 #define PyMethod_INIT(NAME, FLAGS) \
@@ -722,35 +744,28 @@ static PyObject *newobj_call(PyObject *module, PyObject *args)
 
   assert(PyTuple_Check(args));
   len = PyTuple_GET_SIZE(args);
-  if (len < 1) {
-    PyErr_SetString(PyExc_TypeError, 
-                    "__newobj__() takes at least 1 argument (0 given)");
-    return NULL;
-  }
-
+  if (len < 1)
+    return PyErr_Format(PyExc_TypeError,
+                        "__newobj__() takes at least 1 argument (%zd given)",
+                        len);
   cls = PyTuple_GET_ITEM(args, 0);
-  if (!PyType_Check(cls)) {
-    PyErr_Format(PyExc_TypeError,
-                 "__newobj__() argument 1 must be type, not %.50s",
-                 cls == Py_None ? "None" : cls->ob_type->tp_name);
-    return NULL;
-  }
-
+  if (!PyType_Check(cls))
+    return PyErr_Format(PyExc_TypeError,
+                        "__newobj__() argument 1 must be type, not %s",
+                        cls == Py_None ? "None" : cls->ob_type->tp_name);
   type = (PyTypeObject *)cls;
-  if (type->tp_new == NULL) {
-    PyErr_Format(PyExc_TypeError, "type '%.100s' has NULL tp_new slot",
-                 type->tp_name);
-    return NULL;
-  }
+  if (type->tp_new == NULL)
+    return PyErr_Format(PyExc_TypeError, "cannot create '%s' instances",
+                        type->tp_name);
 
   /* create the argument tuple for the __new__ method */
-  newargs = PyTuple_New(len - 1);
+  newargs = PyTuple_New(--len);
   if (newargs == NULL)
     return NULL;
-  while (len > 1) {
-    PyObject *item = PyTuple_GET_ITEM(args, len--);
+  while (len > 0) {
+    PyObject *item = PyTuple_GET_ITEM(args, len);
     Py_INCREF(item);
-    PyTuple_SET_ITEM(newargs, len, item);
+    PyTuple_SET_ITEM(newargs, --len, item);
   }
 
   /* call __new__ */

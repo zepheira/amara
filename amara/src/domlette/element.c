@@ -410,9 +410,16 @@ static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
 
 static PyObject *element_getstate(PyObject *self, PyObject *args)
 {
-  PyObject *deep=Py_True, *parent, *namespaces, *attributes, *children;
+  PyObject *deep=Py_True, *dict, *namespaces, *attributes, *children;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
+    return NULL;
+
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
+    dict = PyObject_GetAttrString(self, "__dict__");
+  else
+    dict = PyDict_New();
+  if (dict == NULL)
     return NULL;
   switch (PyObject_IsTrue(deep)) {
     case 1:
@@ -424,34 +431,43 @@ static PyObject *element_getstate(PyObject *self, PyObject *args)
     default:
       return NULL;
   }
-  parent = (PyObject *)Node_GET_PARENT(self);
-  if (parent == NULL)
-    parent = Py_None;
   namespaces = Element_NAMESPACES(self);
   if (namespaces == NULL)
     namespaces = Py_None;
   attributes = Element_ATTRIBUTES(self);
   if (attributes == NULL)
     attributes = Py_None;
-  return Py_BuildValue("OOON", parent, namespaces, attributes, children);
+  return Py_BuildValue("NOON", dict, namespaces, attributes, children);
 }
 
 static PyObject *element_setstate(PyObject *self, PyObject *state)
 {
-  NodeObject *parent, *node;
-  PyObject *namespaces, *attributes, *children;
+  NodeObject *node;
+  PyObject *dict, *namespaces, *attributes, *children, *temp;
+  Py_ssize_t i, n;
 
-  if (!PyArg_ParseTuple(state, "O!OOO", &DomletteNode_Type, &parent,
-                        &namespaces, &attributes, &children))
+  if (!PyArg_ParseTuple(state, "O!OOO!", &PyDict_Type, &dict,
+                        &namespaces, &attributes, &PyTuple_Type, &children))
     return NULL;
 
-  node = Node_GET_PARENT(self);
-  Node_SET_PARENT(self, parent);
-  Py_INCREF(parent);
-  Py_XDECREF(node);
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
+    temp = PyObject_GetAttrString(self, "__dict__");
+    if (temp == NULL)
+      return NULL;
+    if (PyDict_Update(temp, dict) < 0) {
+      Py_DECREF(temp);
+      return NULL;
+    }
+    Py_DECREF(temp);
+  }
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
+    node = (NodeObject *)PyTuple_GET_ITEM(children, i);
+    if (Container_Append((NodeObject *)self, node) < 0)
+      return NULL;
+  }
+
+  Py_RETURN_NONE;
 }
 
 static char xml_attribute_added_doc[] = "xml_attribute_added(target)\n\n\

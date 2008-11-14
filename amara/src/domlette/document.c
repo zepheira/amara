@@ -152,11 +152,17 @@ static PyObject *entity_getnewargs(PyObject *self, PyObject *noarg)
 
 static PyObject *entity_getstate(PyObject *self, PyObject *args)
 {
-  PyObject *deep=Py_True, *unparsed_entities, *children;
+  PyObject *deep=Py_True, *dict, *unparsed_entities, *children;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
 
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
+    dict = PyObject_GetAttrString(self, "__dict__");
+  else
+    dict = PyDict_New();
+  if (dict == NULL)
+    return NULL;
   switch (PyObject_IsTrue(deep)) {
     case 1:
       unparsed_entities = Document_GET_UNPARSED_ENTITIES(self);
@@ -164,25 +170,36 @@ static PyObject *entity_getstate(PyObject *self, PyObject *args)
       break;
     case 0:
       unparsed_entities = Py_None;
-      Py_INCREF(Py_None);
-      children = Py_None;
+      children = PyTuple_New(0);
       break;
     default:
       return NULL;
   }
-  return Py_BuildValue("OOON", 
-                       Document_GET_PUBLIC_ID(self),
-                       Document_GET_SYSTEM_ID(self),
-                       unparsed_entities, children);
+  return Py_BuildValue("NOOON", dict, Document_GET_PUBLIC_ID(self),
+                       Document_GET_SYSTEM_ID(self), unparsed_entities,
+                       children);
 }
 
 static PyObject *entity_setstate(PyObject *self, PyObject *state)
 {
-  PyObject *public_id, *system_id, *unparsed_entities, *children, *temp;
+  PyObject *dict, *public_id, *system_id, *unparsed_entities, *children, *temp;
+  Py_ssize_t i, n;
 
-  if (!PyArg_ParseTuple(state, "OOOO", &public_id, &system_id,
-                        &unparsed_entities, &children))
+  if (!PyArg_ParseTuple(state, "O!OOOO!", &PyDict_Type, &dict,
+                        &public_id, &system_id, &unparsed_entities,
+                        &PyTuple_Type, &children))
     return NULL;
+
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
+    temp = PyObject_GetAttrString(self, "__dict__");
+    if (temp == NULL)
+      return NULL;
+    if (PyDict_Update(temp, dict) < 0) {
+      Py_DECREF(temp);
+      return NULL;
+    }
+    Py_DECREF(temp);
+  }
 
   temp = Document_GET_PUBLIC_ID(self);
   Document_SET_PUBLIC_ID(self, public_id);
@@ -198,6 +215,12 @@ static PyObject *entity_setstate(PyObject *self, PyObject *state)
   if (unparsed_entities != Py_None)
     if (PyDict_Update(Document_GET_UNPARSED_ENTITIES(self), unparsed_entities))
       return NULL;
+
+  for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
+    NodeObject *node = (NodeObject *)PyTuple_GET_ITEM(children, i);
+    if (Container_Append((NodeObject *)self, node) < 0)
+      return NULL;
+  }
 
   Py_INCREF(Py_None);
   return Py_None;
