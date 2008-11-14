@@ -138,12 +138,14 @@ class visitor:
         # Gather the namespaces and attributes for writing
         namespaces = node.xml_namespaces.copy()
         del namespaces[u'xml']
+
         if self._ns_hints:
             for prefix, namespaceUri in self._ns_hints.items():
                 # See if this namespace needs to be emitted
                 if current_nss.get(prefix, 0) != namespaceUri:
                     namespaces[prefix or u''] = namespaceUri
             self._ns_hints = None
+
         if self._added_attributes:
             attributes = self._added_attributes
             self._added_attributes = None
@@ -166,10 +168,18 @@ class visitor:
 
         # The element's namespaceURI/prefix mapping takes precedence
         if node.xml_namespace or current_nss.get(u'', 0):
-            if current_nss.get(node.xml_prefix, 0) != node.xml_namespace:
+            if current_nss.get(node.xml_prefix or u'', 0) != node.xml_namespace:
                 namespaces[node.xml_prefix or u''] = node.xml_namespace or u""
 
         #The 
+        kill_prefixes = []
+        for prefix in namespaces:
+            if prefix in current_nss and current_nss[prefix] == namespaces[prefix]:
+                kill_prefixes.append(prefix)
+
+        for prefix in kill_prefixes:
+            del namespaces[prefix]
+
         for prefix in self._removed_ns_decls:
             del namespaces[prefix]
 

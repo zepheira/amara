@@ -36,3 +36,18 @@ def top_namespaces(doc):
     elems.reverse()
     return reduce(lambda a, b: a.update(b) or a, elems, {})
 
+
+def replace_namespace(node, oldns, newns):
+    '''
+    Checks the subtree at node for elements in oldns, and changes their xml_namespace to newns.
+    If newprefix is provided, update the xml_qname as well.
+    Update namespace declarations on node accordingly
+
+    You should probably ensure the appropriate namespace declaration is ready first:
+    node.xmlns_attributes[newprefix] = newns
+    '''
+    for elem in node.xml_select(u'.//*'):
+        if elem.xml_namespace == oldns:
+            elem.xml_namespace = newns
+    return
+

@@ -248,5 +248,4 @@ def indexer(source, expressions, output=None):
         output.put(result)
     if output:
         output.bottom()
-        
 

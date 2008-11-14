@@ -6,7 +6,9 @@
 import unittest
 import cStringIO
 import amara
+from amara.test import test_case, test_main
 from amara.lib import testsupport
+from amara.lib import inputsource, iri, treecompare
 from amara import tree, xml_print
 from amara import bindery
 
@@ -17,13 +19,32 @@ Content-type: Preventing XSRF in IE.
 The title is the beginning of “Heavensgate”, by Christopher Okigbo, the greatest modern Nigerian poem, and I think the greatest modern African poem.  Okigbo is my patron saint, and my personal Janus (he died in the war that gave life to me), so it’s appropriate to pour out for him before I take a [...]</summary><author><name>Uche Ogbuji</name></author><source gr:stream-id="feed/http://www.thenervousbreakdown.com/uogbuji/feed/"><id>tag:google.com,2005:reader/feed/http://www.thenervousbreakdown.com/uogbuji/feed/</id><title type="html">The Nervous Breakdown » Uche Ogbuji</title><link rel="alternate" href="http://www.thenervousbreakdown.com" type="text/html"/></source></entry></feed>
 '''
 
-class Test_tnb_feed(unittest.TestSuite):
+ATOMENTRY1 = '<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'
+
+class Test_tnb_feed(test_case):
     doc = bindery.parse(TNBFEED)
     s = cStringIO.StringIO()
     xml_print(doc.feed.entry, stream=s)
     out = s.getvalue()
     doc2 = bindery.parse(out)
 
-    
+#python -c "import amara; doc=amara.parse('<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'); amara.xml_print(doc)"
+class Test_parse_print_roundtrips(unittest.TestSuite):
+    class Test_simple_atom_entry(test_case):
+        def test_simple_atom_entry(self):
+            '''Basic ns fixup upon mutation'''
+            doc = bindery.parse(ATOMENTRY1)
+            s = cStringIO.StringIO()
+            xml_print(doc, stream=s)
+            out = s.getvalue()
+            #self.assertEqual(out, ATOMENTRY1)
+            diff = treecompare.xml_diff(out, ATOMENTRY1)
+            diff = '\n'.join(diff)
+            self.assertFalse(diff, msg=(None, diff))
+            #Make sure we can parse the result
+            doc2 = bindery.parse(out)
+            return
+
 if __name__ == '__main__':
-    testsupport.test_main()
+    test_main()
+
