@@ -217,12 +217,35 @@ Element_AddNamespace(ElementObject *self, PyObject *prefix, PyObject *namespace)
       return NULL;
   }
   /* new reference */
-  node = Namespace_New(self, prefix, namespace);
+  node = Namespace_New(prefix, namespace);
   if (node != NULL) {
     if (NamespaceMap_SetNode(namespaces, node) < 0)
       Py_CLEAR(node);
   }
   return node;
+}
+
+/* returns 0 on success, -1 on error */
+int
+Element_SetNamespace(ElementObject *self, NamespaceObject *node)
+{
+  PyObject *namespaces;
+
+  /* OPT: ensure the NamespaceMap exists */
+  namespaces = self->namespaces;
+  if (namespaces == NULL) {
+    namespaces = self->namespaces = NamespaceMap_New(self);
+    if (namespaces == NULL) 
+      return -1;
+  }
+  if (!Namespace_Check(node)) {
+    PyErr_Format(PyExc_TypeError,
+                 "can only add namespaces to %s.xmlns_attributes, not %s",
+                 self->ob_type->tp_name, node->ob_type->tp_name);
+    return -1;
+  }
+  /* add the namespace node */
+  return NamespaceMap_SetNode(namespaces, node);
 }
 
 /* returns a new reference */
@@ -318,8 +341,7 @@ Element_GetAttribute(ElementObject *self, PyObject *namespaceURI,
 int
 Element_SetAttribute(ElementObject *self, AttrObject *attr)
 {
-  PyObject *attributes, *namespace, *name;
-  AttrObject *node;
+  PyObject *attributes;
 
   /* OPT: ensure the AttributeMap exists */
   attributes = self->attributes;
@@ -328,20 +350,14 @@ Element_SetAttribute(ElementObject *self, AttrObject *attr)
     if (attributes == NULL)
       return -1;
   }
-  /* Get the return value */
-  namespace = Attr_GET_NAMESPACE_URI(attr);
-  name = Attr_GET_LOCAL_NAME(attr);
-  node = AttributeMap_GetNode(attributes, namespace, name);
-  if (node == NULL && PyErr_Occurred())
+  if (!Attr_Check(attr)) {
+    PyErr_Format(PyExc_TypeError,
+                 "can only add attributes to %s.xml_attributes, not %s",
+                 self->ob_type->tp_name, attr->ob_type->tp_name);
     return -1;
-  /* Add the new attribute */
-  if (AttributeMap_SetNode(attributes, attr) < 0)
-    return -1;
-  /* Reset the removed attributes owner */
-  if (node != NULL)
-    Py_CLEAR(Node_GET_PARENT(node));
-
-  return 0;
+  }
+  /* Add the attribute */
+  return AttributeMap_SetNode(attributes, attr);
 }
 
 /* returns a new reference */
@@ -358,7 +374,7 @@ Element_InscopeNamespaces(ElementObject *self)
     return NULL;
 
   /* add the XML namespace */
-  node = Namespace_New(self, xml_string, xml_namespace);
+  node = Namespace_New(xml_string, xml_namespace);
   if (node == NULL) {
     Py_DECREF(namespaces);
     return NULL;
@@ -410,63 +426,152 @@ static PyObject *element_getnewargs(PyObject *self, PyObject *noargs)
 
 static PyObject *element_getstate(PyObject *self, PyObject *args)
 {
-  PyObject *deep=Py_True, *dict, *namespaces, *attributes, *children;
+  PyObject *deep=Py_True, *dict, *nodemap, *namespaces, *attributes, *children;
+  Py_ssize_t pos, i;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
 
-  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
     dict = PyObject_GetAttrString(self, "__dict__");
-  else
-    dict = PyDict_New();
-  if (dict == NULL)
-    return NULL;
+    if (dict == NULL)
+      return NULL;
+  } else {
+    Py_INCREF(Py_None);
+    dict = Py_None;
+  }
+  /* save the namespace nodes as a tuple of pairwise prefix/uri items */
+  nodemap = Element_NAMESPACES(self);
+  if (nodemap == NULL) {
+    namespaces = Py_None;
+    Py_INCREF(namespaces);
+  } else {
+    NamespaceObject *node;
+    namespaces = PyTuple_New(NamespaceMap_GET_SIZE(nodemap));
+    if (namespaces == NULL) {
+      Py_DECREF(dict);
+      return NULL;
+    }
+    i = 0;
+    pos = 0;
+    while ((node = NamespaceMap_Next(nodemap, &pos)) != NULL) {
+      PyTuple_SET_ITEM(namespaces, i++, (PyObject *)node);
+      Py_INCREF(node);
+    }
+  }
+  /* save the attributes nodes in a tuple */
+  nodemap = Element_ATTRIBUTES(self);
+  if (nodemap == NULL) {
+    attributes = Py_None;
+    Py_INCREF(attributes);
+  } else {
+    AttrObject *node;
+    attributes = PyTuple_New(AttributeMap_GET_SIZE(nodemap));
+    if (attributes == NULL) {
+      Py_DECREF(namespaces);
+      Py_DECREF(dict);
+      return NULL;
+    }
+    i = 0;
+    pos = 0;
+    while ((node = AttributeMap_Next(nodemap, &pos)) != NULL) {
+      PyTuple_SET_ITEM(attributes, i++, (PyObject *)node);
+      Py_INCREF(node);
+    }
+  }
+  /* save the child nodes in a tuple */
   switch (PyObject_IsTrue(deep)) {
-    case 1:
-      children = PyObject_GetAttrString(self, "xml_children");
-      break;
     case 0:
-      children = PyTuple_New(0);
+      children = Py_None;
+      Py_INCREF(children);
       break;
+    case 1:
+      children = PyTuple_New(Container_GET_COUNT(self));
+      if (children != NULL) {
+        for (i = 0; i < Container_GET_COUNT(self); i++) {
+          PyObject *item = (PyObject *)Container_GET_CHILD(self, i);
+          PyTuple_SET_ITEM(children, i, item);
+          Py_INCREF(item);
+        }
+        break;
+      }
+      /* error; fall through */
     default:
+      Py_DECREF(attributes);
+      Py_DECREF(namespaces);
+      Py_DECREF(dict);
       return NULL;
   }
-  namespaces = Element_NAMESPACES(self);
-  if (namespaces == NULL)
-    namespaces = Py_None;
-  attributes = Element_ATTRIBUTES(self);
-  if (attributes == NULL)
-    attributes = Py_None;
-  return Py_BuildValue("NOON", dict, namespaces, attributes, children);
+  return Py_BuildValue("NNNN", dict, namespaces, attributes, children);
 }
 
-static PyObject *element_setstate(PyObject *self, PyObject *state)
+Py_LOCAL_INLINE(int)
+convert_arg(int item, PyTypeObject *type, PyObject **arg)
 {
-  NodeObject *node;
+  PyObject *obj = *arg;
+  if (obj->ob_type == type)
+    return 1;
+  if (obj == Py_None) {
+    *arg = NULL;
+    return 1;
+  }
+  PyErr_Format(PyExc_TypeError,
+               "__setstate__() argument 1, item %d must be %s, not %s",
+               item, type->tp_name, obj->ob_type->tp_name);
+  return 0;
+}
+
+static PyObject *element_setstate(PyObject *obj, PyObject *state)
+{
+  ElementObject *self = (ElementObject *)obj;
   PyObject *dict, *namespaces, *attributes, *children, *temp;
   Py_ssize_t i, n;
 
-  if (!PyArg_ParseTuple(state, "O!OOO!", &PyDict_Type, &dict,
-                        &namespaces, &attributes, &PyTuple_Type, &children))
+  if (!PyArg_UnpackTuple(state, NULL, 4, 4,
+                         &dict, &namespaces, &attributes, &children))
+    return NULL;
+  if (!convert_arg(0, &PyDict_Type, &dict))
+    return NULL;
+  if (!convert_arg(1, &PyTuple_Type, &namespaces))
+    return NULL;
+  if (!convert_arg(2, &PyTuple_Type, &attributes))
+    return NULL;
+  if (!convert_arg(3, &PyTuple_Type, &children))
     return NULL;
 
-  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
-    temp = PyObject_GetAttrString(self, "__dict__");
-    if (temp == NULL)
-      return NULL;
-    if (PyDict_Update(temp, dict) < 0) {
+  if (dict) {
+    if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
+      temp = PyObject_GetAttrString((PyObject *)self, "__dict__");
+      if (temp == NULL)
+        return NULL;
+      if (PyDict_Update(temp, dict) < 0) {
+        Py_DECREF(temp);
+        return NULL;
+      }
       Py_DECREF(temp);
-      return NULL;
     }
-    Py_DECREF(temp);
   }
-
-  for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
-    node = (NodeObject *)PyTuple_GET_ITEM(children, i);
-    if (Container_Append((NodeObject *)self, node) < 0)
-      return NULL;
+  if (namespaces) {
+    for (i = 0, n = PyTuple_GET_SIZE(namespaces); i < n; i++) {
+      temp = PyTuple_GET_ITEM(namespaces, i);
+      if (Element_SetNamespace(self, (NamespaceObject *)temp) < 0)
+        return NULL;
+    }
   }
-
+  if (attributes) {
+    for (i = 0, n = PyTuple_GET_SIZE(attributes); i < n; i++) {
+      temp = PyTuple_GET_ITEM(attributes, i);
+      if (Element_SetAttribute(self, (AttrObject *)temp) < 0)
+        return NULL;
+    }
+  }
+  if (children) {
+    for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
+      temp = PyTuple_GET_ITEM(children, i);
+      if (Container_Append((NodeObject *)self, (NodeObject *)temp) < 0)
+        return NULL;
+    }
+  }
   Py_RETURN_NONE;
 }
 

@@ -153,26 +153,40 @@ static PyObject *entity_getnewargs(PyObject *self, PyObject *noarg)
 static PyObject *entity_getstate(PyObject *self, PyObject *args)
 {
   PyObject *deep=Py_True, *dict, *unparsed_entities, *children;
+  Py_ssize_t i;
 
   if (!PyArg_ParseTuple(args, "|O:__getstate__", &deep))
     return NULL;
 
-  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
+  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
     dict = PyObject_GetAttrString(self, "__dict__");
-  else
-    dict = PyDict_New();
-  if (dict == NULL)
-    return NULL;
+    if (dict == NULL)
+      return NULL;
+  } else {
+    dict = Py_None;
+    Py_INCREF(Py_None);
+  }
+  /* save the child nodes in a tuple */
   switch (PyObject_IsTrue(deep)) {
-    case 1:
-      unparsed_entities = Document_GET_UNPARSED_ENTITIES(self);
-      children = PyObject_GetAttrString(self, "xml_children");
-      break;
     case 0:
       unparsed_entities = Py_None;
-      children = PyTuple_New(0);
+      children = Py_None;
+      Py_INCREF(children);
       break;
+    case 1:
+      unparsed_entities = Document_GET_UNPARSED_ENTITIES(self);
+      children = PyTuple_New(Container_GET_COUNT(self));
+      if (children != NULL) {
+        for (i = 0; i < Container_GET_COUNT(self); i++) {
+          PyObject *item = (PyObject *)Container_GET_CHILD(self, i);
+          PyTuple_SET_ITEM(children, i, item);
+          Py_INCREF(item);
+        }
+        break;
+      }
+      /* error; fall through */
     default:
+      Py_DECREF(dict);
       return NULL;
   }
   return Py_BuildValue("NOOON", dict, Document_GET_PUBLIC_ID(self),
@@ -180,27 +194,51 @@ static PyObject *entity_getstate(PyObject *self, PyObject *args)
                        children);
 }
 
+Py_LOCAL_INLINE(int)
+convert_arg(int item, PyTypeObject *type, PyObject **arg)
+{
+  PyObject *obj = *arg;
+  if (obj->ob_type == type)
+    return 1;
+  if (obj == Py_None) {
+    *arg = NULL;
+    return 1;
+  }
+  PyErr_Format(PyExc_TypeError,
+               "__setstate__() argument 1, item %d must be %s, not %s",
+               item, type->tp_name, obj->ob_type->tp_name);
+  return 0;
+}
+
 static PyObject *entity_setstate(PyObject *self, PyObject *state)
 {
   PyObject *dict, *public_id, *system_id, *unparsed_entities, *children, *temp;
   Py_ssize_t i, n;
 
-  if (!PyArg_ParseTuple(state, "O!OOOO!", &PyDict_Type, &dict,
-                        &public_id, &system_id, &unparsed_entities,
-                        &PyTuple_Type, &children))
+  if (!PyArg_UnpackTuple(state, NULL, 5, 5,
+                         &dict, &public_id, &system_id, &unparsed_entities,
+                         &children))
     return NULL;
 
-  if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
-    temp = PyObject_GetAttrString(self, "__dict__");
-    if (temp == NULL)
-      return NULL;
-    if (PyDict_Update(temp, dict) < 0) {
-      Py_DECREF(temp);
-      return NULL;
-    }
-    Py_DECREF(temp);
-  }
+  if (!convert_arg(0, &PyDict_Type, &dict))
+    return NULL;
+  if (!convert_arg(3, &PyDict_Type, &unparsed_entities))
+    return NULL;
+  if (!convert_arg(4, &PyTuple_Type, &children))
+    return NULL;
 
+  if (dict) {
+    if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE)) {
+      temp = PyObject_GetAttrString(self, "__dict__");
+      if (temp == NULL)
+        return NULL;
+      if (PyDict_Update(temp, dict) < 0) {
+        Py_DECREF(temp);
+        return NULL;
+      }
+      Py_DECREF(temp);
+    }
+  }
   temp = Document_GET_PUBLIC_ID(self);
   Document_SET_PUBLIC_ID(self, public_id);
   Py_INCREF(public_id);
@@ -211,19 +249,20 @@ static PyObject *entity_setstate(PyObject *self, PyObject *state)
   Py_INCREF(system_id);
   Py_DECREF(temp);
 
-  PyDict_Clear(Document_GET_UNPARSED_ENTITIES(self));
-  if (unparsed_entities != Py_None)
-    if (PyDict_Update(Document_GET_UNPARSED_ENTITIES(self), unparsed_entities))
-      return NULL;
-
-  for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
-    NodeObject *node = (NodeObject *)PyTuple_GET_ITEM(children, i);
-    if (Container_Append((NodeObject *)self, node) < 0)
+  if (unparsed_entities) {
+    temp = Document_GET_UNPARSED_ENTITIES(self);
+    PyDict_Clear(temp);
+    if (PyDict_Update(temp, unparsed_entities) < 0)
       return NULL;
   }
-
-  Py_INCREF(Py_None);
-  return Py_None;
+  if (children) {
+    for (i = 0, n = PyTuple_GET_SIZE(children); i < n; i++) {
+      NodeObject *node = (NodeObject *)PyTuple_GET_ITEM(children, i);
+      if (Container_Append((NodeObject *)self, node) < 0)
+        return NULL;
+    }
+  }
+  Py_RETURN_NONE;
 }
 
 #define Document_METHOD(name) \

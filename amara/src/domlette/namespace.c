@@ -6,11 +6,9 @@
 static PyObject *empty_string;
 
 Py_LOCAL_INLINE(NamespaceObject *)
-namespace_init(NamespaceObject *self, ElementObject *parentNode,
-               PyObject *prefix, PyObject *namespaceURI)
+namespace_init(NamespaceObject *self, PyObject *prefix, PyObject *namespaceURI)
 {
   assert(self && Namespace_Check(self));
-  assert(parentNode != NULL && Element_Check(parentNode));
   if ((prefix == NULL || !XmlString_NullCheck(prefix)) ||
       (namespaceURI == NULL || !XmlString_Check(namespaceURI))) {
     PyErr_BadInternalCall();
@@ -32,36 +30,31 @@ namespace_init(NamespaceObject *self, ElementObject *parentNode,
   Py_INCREF(namespaceURI);
   self->value = namespaceURI;
 
-  assert(Node_GET_PARENT(self) == NULL);
-  Py_INCREF(parentNode);
-  Node_SET_PARENT(self, (NodeObject *)parentNode);
-
   return self;
 }
 
 /** C API *************************************************************/
 
-NamespaceObject *Namespace_New(ElementObject *parentNode,
-                               PyObject *prefix,
-                               PyObject *namespaceURI)
+NamespaceObject *Namespace_New(PyObject *prefix, PyObject *namespaceURI)
 {
   NamespaceObject *self;
 
-  if (parentNode == NULL || !Element_Check(parentNode)) {
-    PyErr_BadInternalCall();
-    return NULL;
-  }
-
   self = Node_New(NamespaceObject, &DomletteNamespace_Type);
   if (self != NULL) {
-    self = namespace_init(self, parentNode, prefix, namespaceURI);
+    self = namespace_init(self, prefix, namespaceURI);
   }
   return self;
 }
 
 /** Python Methods ****************************************************/
 
+static PyObject *namespace_getnewargs(PyObject *self, PyObject *noargs)
+{
+  return PyTuple_Pack(2, Namespace_GET_NAME(self), Namespace_GET_VALUE(self));
+}
+
 static PyMethodDef namespace_methods[] = {
+  { "__getnewargs__", namespace_getnewargs, METH_NOARGS,  "helper for pickle" },
   { NULL }
 };
 
@@ -116,20 +109,18 @@ static PyObject *namespace_repr(NamespaceObject *self)
 static PyObject *
 namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-  ElementObject *parentNode;
   PyObject *prefix, *namespaceURI;
-  static char *kwlist[] = { "parent", "prefix", "namespace", NULL };
+  static char *kwlist[] = { "prefix", "namespace", NULL };
   NamespaceObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:Element", kwlist,
-                                   &DomletteElement_Type, &parentNode,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:Element", kwlist,
                                    &prefix, &namespaceURI)) {
     return NULL;
   }
 
   prefix = XmlString_ConvertArgument(prefix, "prefix", 1);
-  if (prefix == NULL) return NULL;
-
+  if (prefix == NULL)
+    return NULL;
   namespaceURI = XmlString_ConvertArgument(namespaceURI, "namespace", 0);
   if (namespaceURI == NULL) {
     Py_DECREF(prefix);
@@ -139,19 +130,19 @@ namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   if (type != &DomletteNamespace_Type) {
     self = Namespace(type->tp_alloc(type, 0));
     if (self != NULL) {
-      self = namespace_init(self, parentNode, prefix, namespaceURI);
+      self = namespace_init(self, prefix, namespaceURI);
     }
   } else {
-    self = Namespace_New(parentNode, prefix, namespaceURI);
+    self = Namespace_New(prefix, namespaceURI);
   }
   Py_DECREF(prefix);
   Py_DECREF(namespaceURI);
 
-  return (PyObject *) self;
+  return (PyObject *)self;
 }
 
 static char namespace_doc[] = "\
-Namespace(parent, prefix, namespace) -> Namespace object\n\
+Namespace(prefix, namespace) -> Namespace object\n\
 \n\
 The Namespace interface represents the XPath namespace node type\n\
 that DOM lacks.";

@@ -741,8 +741,9 @@ static PyObject *namespace_axis_next(namespace_axis *self)
   if (self->namespaces != NULL) {
     NamespaceObject *node;
     while ((node = NamespaceMap_Next(self->namespaces, &self->pos))) {
-      node = Namespace_New(self->element, Namespace_GET_NAME(node),
-                           Namespace_GET_VALUE(node));
+      node = Namespace_New(Namespace_GET_NAME(node), Namespace_GET_VALUE(node));
+      assert(Node_GET_PARENT(node) == NULL);
+      Node_SET_PARENT(node, (NodeObject *)self->element);
       return (PyObject *)node;
     }
     Py_CLEAR(self->namespaces);

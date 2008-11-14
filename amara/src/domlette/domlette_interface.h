@@ -77,9 +77,7 @@ extern "C" {
     ProcessingInstructionObject *(*ProcessingInstruction_New)(PyObject *target,
                                                               PyObject *data);
 
-    NamespaceObject *(*Namespace_New)(ElementObject *parent,
-                                      PyObject *prefix, 
-                                      PyObject *uri);
+    NamespaceObject *(*Namespace_New)(PyObject *prefix, PyObject *uri);
 
     /* NamespaceMap Methods */
     NamespaceObject *(*NamespaceMap_Next)(PyObject *nodemap, Py_ssize_t *ppos);

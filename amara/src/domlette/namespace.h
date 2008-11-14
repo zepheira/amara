@@ -34,9 +34,7 @@ extern "C" {
   void DomletteNamespace_Fini(void);
 
   /* Namespace Methods */
-  NamespaceObject *Namespace_New(ElementObject *parentNode,
-                                 PyObject *prefix,
-                                 PyObject *namespaceURI);
+  NamespaceObject *Namespace_New(PyObject *prefix, PyObject *namespaceURI);
 
 #endif /* Domlette_BUILDING_MODULE */
 

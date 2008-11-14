@@ -45,6 +45,7 @@ extern "C" {
   NamespaceObject *Element_AddNamespace(ElementObject *self,
                                         PyObject *prefix,
                                         PyObject *namespace);
+  int Element_SetNamespace(ElementObject *self, NamespaceObject *node);
 
   AttrObject *Element_AddAttribute(ElementObject *self,
                                    PyObject *namespaceURI,
