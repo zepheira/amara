@@ -46,7 +46,7 @@ test_xml = """<?xml version = "1.0"?>
 static PyObject *PyTestTree(PyObject *self, PyObject *args)
 {
   /*Build a test tree*/
-  DocumentObject *doc;
+  EntityObject *doc;
   ProcessingInstructionObject *pi;
   ElementObject *documentElement, *element;
   TextObject *text;
@@ -58,7 +58,7 @@ static PyObject *PyTestTree(PyObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, ":TestTree")) return NULL;
 
-  doc = Document_New(Py_None);
+  doc = Entity_New(Py_None);
   if (doc == NULL) return NULL;
   CHECK_REFS(doc, 1);
 
@@ -489,7 +489,7 @@ static PyMethodDef module_methods[] = {
 
 static Domlette_APIObject Domlette_API = {
   &DomletteNode_Type,
-  &DomletteDocument_Type,
+  &DomletteEntity_Type,
   &DomletteElement_Type,
   &DomletteAttr_Type,
   &DomletteText_Type,
@@ -502,7 +502,7 @@ static Domlette_APIObject Domlette_API = {
   Container_Insert,
   Container_Replace,
 
-  Document_New,
+  Entity_New,
 
   Element_New,
   Element_AddNamespace,
@@ -541,7 +541,7 @@ struct submodule_t submodules[] = {
   SUBMODULE(Text),
   SUBMODULE(ProcessingInstruction),
   SUBMODULE(Comment),
-  SUBMODULE(Document),
+  SUBMODULE(Entity),
   SUBMODULE(Namespace),
   { NULL, NULL }
 };
@@ -561,7 +561,7 @@ DL_EXPORT(void) init_domlette(void)
   struct submodule_t *submodule;
   PyObject *cobj;
 
-  module = Py_InitModule3(Domlette_MODULE_NAME, module_methods, module_doc);
+  module = Py_InitModule3("_domlette", module_methods, module_doc);
   if (module == NULL) return;
 
   if ((XmlString_IMPORT) == NULL) return;

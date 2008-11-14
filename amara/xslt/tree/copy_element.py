@@ -4,8 +4,7 @@
 Implementation of `xsl:copy` element.
 """
 
-from amara.tree import (Element, Attr, Text, ProcessingInstruction,
-                        Comment, Document, Namespace)
+from amara import tree
 from amara.xslt import XsltError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
@@ -23,7 +22,7 @@ class copy_element(xslt_element):
         context.namespaces = self.namespaces
 
         node = context.node
-        if isinstance(node, Element):
+        if isinstance(node, tree.element):
             # Namespace nodes are automatically copied as well
             # See XSLT 1.0 Sect 7.5
             nodemap = node.xmlns_attributes
@@ -47,20 +46,20 @@ class copy_element(xslt_element):
             self.process_children(context)
             context.end_element(node.xml_qname, node.xml_namespace)
 
-        elif isinstance(node, (Text, Comment)):
+        elif isinstance(node, (tree.text, tree.comment)):
             context.text(node.xml_value)
 
-        elif isinstance(node, Document):
+        elif isinstance(node, tree.entity):
             self.process_children(context)
 
-        elif isinstance(node, Attr):
+        elif isinstance(node, tree.attribute):
             context.attribute(node.xml_qname, node.xml_value,
                               node.xml_namespace)
 
-        elif isinstance(node, ProcessingInstruction):
+        elif isinstance(node, tree.processing_instruction):
             context.processing_instruction(node.xml_target, node.xml_data)
 
-        elif isinstance(node, Namespace):
+        elif isinstance(node, tree.namespace):
             # Relies on XmlWriter rules, which is very close to spec:
             # http://www.w3.org/1999/11/REC-xslt-19991116-errata/#E25
             context.namespace(node.xml_qname, node.xml_value)

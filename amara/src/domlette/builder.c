@@ -28,7 +28,7 @@ typedef struct {
   PyObject *processing_instruction_factory;
   PyObject *comment_factory;
 
-  DocumentObject *owner_document;
+  EntityObject *owner_document;
 } ParserState;
 
 typedef enum {
@@ -223,7 +223,7 @@ builder_StartDocument(void *userState)
 {
   ParserState *state = (ParserState *)userState;
   PyObject *uri;
-  DocumentObject *document;
+  EntityObject *document;
 
 #ifdef DEBUG_PARSER
   fprintf(stderr, "--- builder_StartDocument(%p)\n", state);
@@ -232,7 +232,7 @@ builder_StartDocument(void *userState)
   if (state->entity_factory) {
     PyObject *obj = PyObject_CallFunction(state->entity_factory, "N", uri);
     if (obj) {
-      if (Document_Check(obj)) {
+      if (Entity_Check(obj)) {
         /* populate the remaining factory callables */
         if (!load_factory(obj, "xml_element_factory", &DomletteElement_Type,
                           &state->element_factory))
@@ -256,9 +256,9 @@ builder_StartDocument(void *userState)
         return EXPAT_STATUS_ERROR;
       }
     }
-    document = Document(obj);
+    document = Entity(obj);
   } else {
-    document = Document_New(uri);
+    document = Entity_New(uri);
     Py_DECREF(uri);
   }
   if (document == NULL)
@@ -636,7 +636,7 @@ builder_UnparsedEntityDecl(void *userState, PyObject *name, PyObject *publicId,
   fprintf(stderr, ")\n");
 #endif
 
-  if (PyDict_SetItem(Document_GET_UNPARSED_ENTITIES(state->owner_document),
+  if (PyDict_SetItem(Entity_GET_UNPARSED_ENTITIES(state->owner_document),
                      name, systemId))
     return EXPAT_STATUS_ERROR;
 

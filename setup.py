@@ -234,7 +234,7 @@ setup(name='Amara',
                              'amara/src/domlette/text.c',
                              'amara/src/domlette/comment.c',
                              'amara/src/domlette/processinginstruction.c',
-                             'amara/src/domlette/document.c',
+                             'amara/src/domlette/entity.c',
                              'amara/src/domlette/namespace.c',
                              # Document builder
                              'amara/src/domlette/builder.c',

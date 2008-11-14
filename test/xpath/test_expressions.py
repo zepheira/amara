@@ -74,16 +74,16 @@ class nodeset_literal(test_literal):
 
     def __str__(self):
         def nodestr(node):
-            if isinstance(node, tree.Document):
+            if isinstance(node, tree.entity):
                 return '#document'
-            if isinstance(node, (tree.Text, tree.Comment)):
-                data = node.nodeValue
+            if isinstance(node, (tree.text, tree.comment)):
+                data = node.xml_value
                 if len(data) > 20:
                     data = data[:15] + '...' + data[-3:]
                 return '(#%s: %s)' % (node.xml_type, data)
-            if isinstance(node, tree.Element):
+            if isinstance(node, tree.element):
                 return '<%s>' % node.xml_qname
-            if isinstance(node, tree.Attr):
+            if isinstance(node, tree.attribute):
                 return '@%s' % node.xml_qname
         nodes = ', '.join(map(nodestr, self._literal))
         return '{%s}' % (nodes,)
@@ -132,14 +132,14 @@ src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 """, 'urn:domlette-test-tree')
 DOC = tree.parse(src)
 
-def children(node, type=tree.Element):
+def children(node, type=tree.element):
     return [ child for child in node if isinstance(child, type) ]
 
 # `#document` nodes
-PI, PI2 = children(DOC, tree.ProcessingInstruction)
-ROOT = children(DOC, tree.Element)[0]
+PI, PI2 = children(DOC, tree.processing_instruction)
+ROOT = children(DOC, tree.element)[0]
 # `ROOT` nodes
-COMMENT = children(ROOT, tree.Comment)[0]
+COMMENT = children(ROOT, tree.comment)[0]
 CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 # `CHILD1` nodes
 ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')

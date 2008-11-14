@@ -36,14 +36,14 @@ static PyGetSetDef text_getset[] = {
 /** Type Object ********************************************************/
 
 static char text_doc[] = "\
-Text(data) -> Text object\n\
+text(data) -> text object\n\
 \n\
-This interface represents the contents of a text node.";
+The `text` interface represents the contents of a text node.";
 
 PyTypeObject DomletteText_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Text",
+  /* tp_name           */ Domlette_MODULE_NAME "." "text",
   /* tp_basicsize      */ sizeof(TextObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -107,7 +107,7 @@ int DomletteText_Init(PyObject *module)
     return -1;
 
   Py_INCREF(&DomletteText_Type);
-  return PyModule_AddObject(module, "Text", (PyObject*)&DomletteText_Type);
+  return PyModule_AddObject(module, "text", (PyObject*)&DomletteText_Type);
 }
 
 void DomletteText_Fini(void)

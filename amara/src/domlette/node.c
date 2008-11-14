@@ -322,7 +322,7 @@ static PyMemberDef node_members[] = {
 static PyObject *get_root(PyObject *self, void *arg)
 {
   NodeObject *node = (NodeObject *)self;
-  while (!Document_Check(node)) {
+  while (!Entity_Check(node)) {
     node = Node_GET_PARENT(node);
     if (node == NULL) {
       Py_INCREF(Py_None);
@@ -389,8 +389,8 @@ static PyObject *get_base_uri(PyObject *self, void *arg)
   /* 3. the base URI of the document entity or external entity containing the
    *    element.
    */
-  if (Document_Check(node)) {
-    base = Document_GET_DOCUMENT_URI(node);
+  if (Entity_Check(node)) {
+    base = Entity_GET_DOCUMENT_URI(node);
     result = PyObject_CallFunction(is_absolute_function, "O", base);
     if (result == NULL) return NULL;
     switch (PyObject_IsTrue(result)) {
@@ -578,11 +578,11 @@ static PyObject *node_richcompare(NodeObject *a, NodeObject *b, int op)
     depth_b++;
   }
 
-  /* compare the top of each tree; for Documents use the creation index,
-   * otherwise None for trees not rooted in a Document. If both trees do
-   * not have a Document root, fall back to default Python comparison. */
-  doc_a = Document_Check(parent_a) ? Document_GET_INDEX(parent_a) : Py_None;
-  doc_b = Document_Check(parent_b) ? Document_GET_INDEX(parent_b) : Py_None;
+  /* compare the top of each tree; for entities use the creation index,
+   * otherwise None for trees not rooted in an `entity`. If both trees do
+   * not have an `entity` root, fall back to default Python comparison. */
+  doc_a = Entity_Check(parent_a) ? Entity_GET_INDEX(parent_a) : Py_None;
+  doc_b = Entity_Check(parent_b) ? Entity_GET_INDEX(parent_b) : Py_None;
   if (doc_a != doc_b) {
     return PyObject_RichCompare(doc_a, doc_b, op);
   }
@@ -673,7 +673,7 @@ static PyObject *node_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return NULL;
   }
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O!:Node", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O!:node", kwlist,
                                    &DomletteContainer_Type, &parent)) {
     return NULL;
   }
@@ -687,7 +687,7 @@ static PyObject *node_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char node_doc[] = "\
-The Node type is the primary datatype for the entire Document Object Model.";
+The `node` type is the primary datatype for the entire Document Object Model.";
 
 PyTypeObject DomletteNode_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
@@ -841,7 +841,7 @@ int DomletteNode_Init(PyObject *module)
     return -1;
 
   Py_INCREF(&DomletteNode_Type);
-  return PyModule_AddObject(module, "Node", (PyObject*)&DomletteNode_Type);
+  return PyModule_AddObject(module, "node", (PyObject*)&DomletteNode_Type);
 }
 
 void DomletteNode_Fini(void)

@@ -113,7 +113,7 @@ static PyObject *pi_repr(ProcessingInstructionObject *self)
     return NULL;
   }
   repr = PyString_FromFormat(
-    "<ProcessingInstruction at %p: target %s, data %s>",
+    "<processing_instruction at %p: target %s, data %s>",
     self, PyString_AsString(target), PyString_AsString(data));
   Py_DECREF(target);
   Py_DECREF(data);
@@ -126,7 +126,7 @@ static PyObject *pi_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   static char *kwlist[] = { "target", "data", NULL };
   ProcessingInstructionObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:ProcessingInstruction",
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:processing_instruction",
                                    kwlist, &target, &data)) {
     return NULL;
   }
@@ -155,16 +155,16 @@ static PyObject *pi_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char pi_doc[] = "\
-ProcessingInstruction(target, data) -> ProcessingInstruction\n\
+processing_instruction(target, data) -> processing_instruction object\n\
 \n\
-The ProcessingInstruction interface represents a \"processing instruction\",\n\
+The `processing_instruction` interface represents a processing instruction,\n\
 used in XML as a way to keep processor-specific information in the text of\n\
 the document.";
 
 PyTypeObject DomletteProcessingInstruction_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "ProcessingInstruction",
+  /* tp_name           */ Domlette_MODULE_NAME "." "processing_instruction",
   /* tp_basicsize      */ sizeof(ProcessingInstructionObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) pi_dealloc,
@@ -224,7 +224,7 @@ int DomletteProcessingInstruction_Init(PyObject *module)
   Py_DECREF(value);
 
   Py_INCREF(&DomletteProcessingInstruction_Type);
-  return PyModule_AddObject(module, "ProcessingInstruction",
+  return PyModule_AddObject(module, "processing_instruction",
            (PyObject*) &DomletteProcessingInstruction_Type);
 }
 

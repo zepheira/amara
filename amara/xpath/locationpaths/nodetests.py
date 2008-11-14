@@ -45,7 +45,7 @@ class node_type(node_test):
     def get_filter(self, compiler, principal_type):
         return _nodetests.nodefilter(self.node_type)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         """
         The principalType is discussed in section [2.3 Node Tests]
         of the XPath 1.0 spec.  Only attribute and namespace axes
@@ -59,7 +59,7 @@ class node_type(node_test):
 
 class any_node_test(node_type):
     name = 'node'
-    node_type = tree.Node
+    node_type = tree.node
 
     def get_filter(self, compiler, principal_type):
         return None
@@ -67,17 +67,17 @@ class any_node_test(node_type):
 
 class comment_test(node_type):
     name = 'comment'
-    node_type = tree.Comment
+    node_type = tree.comment
 
 
 class text_test(node_type):
     name = 'text'
-    node_type = tree.Text
+    node_type = tree.text
 
 
 class processing_instruction_test(node_type):
     name = 'processing-instruction'
-    node_type = tree.ProcessingInstruction
+    node_type = tree.processing_instruction
 
     def __init__(self, name, target=None):
         if target:
@@ -92,7 +92,7 @@ class processing_instruction_test(node_type):
     def get_filter(self, compiler, principal_type):
         return _nodetests.nodefilter(self.node_type, self._target)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         if isinstance(node, principal_type):
             if self._target:
                 return node.target == self._target
@@ -109,7 +109,7 @@ class processing_instruction_test(node_type):
 
 class name_test(node_test):
 
-    node_type = tree.Element
+    node_type = tree.element
 
     def __new__(cls, name):
         if name[-1:] == '*':
@@ -129,7 +129,7 @@ class principal_type_test(name_test):
     def get_filter(self, compiler, principal_type):
         return _nodetests.nodefilter(principal_type)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         return isinstance(node, principal_type)
 
     def __str__(self):
@@ -147,7 +147,7 @@ class local_name_test(name_test):
     def get_filter(self, compiler, principal_type):
         return _nodetests.nodefilter(principal_type, None, self._name)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         # NameTests do not use the default namespace, just as attributes
         if isinstance(node, principal_type) and not node.xml_namespace:
             return node.xml_local == self._name
@@ -171,7 +171,7 @@ class namespace_test(name_test):
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=self._prefix)
         return _nodetests.nodefilter(principal_type, namespace, None)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         if not isinstance(node, principal_type):
             return False
         try:
@@ -199,7 +199,7 @@ class qualified_name_test(name_test):
             raise XPathError(XPathError.UNDEFINED_PREFIX, prefix=prefix)
         return _nodetests.nodefilter(principal_type, namespace, local_name)
 
-    def match(self, context, node, principal_type=tree.Element):
+    def match(self, context, node, principal_type=tree.element):
         if isinstance(node, principal_type):
             prefix, local_name = self.name_key
             if node.xml_local == local_name:

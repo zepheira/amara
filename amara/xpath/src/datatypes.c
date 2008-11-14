@@ -77,7 +77,7 @@ static int join_descendants(NodeObject *node, PyObject **result,
 {
   Py_ssize_t i, n;
 
-  assert(Element_Check(node) || Document_Check(node));
+  assert(Element_Check(node) || Entity_Check(node));
   n = Container_GET_COUNT(node);
   for (i = 0; i < n; i++) {
     NodeObject *child = Container_GET_CHILD(node, i);
@@ -122,7 +122,7 @@ static PyObject *node_to_string(PyObject *node)
   PyObject *result;
 
   /* convert amara.tree node to string */
-  if (Element_Check(node) || Document_Check(node)) {
+  if (Element_Check(node) || Entity_Check(node)) {
     /* The concatenation of all text descendants in document order */
     Py_ssize_t used = 0;
     PyObject *result = PyUnicode_FromUnicode(NULL, 100);

@@ -872,7 +872,7 @@ static PyObject *element_new(PyTypeObject *type, PyObject *args,
   static char *kwlist[] = { "namespace", "qname", NULL };
   ElementObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:Element", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:element", kwlist,
                                    &namespaceURI, &qualifiedName)) {
     return NULL;
   }
@@ -1008,7 +1008,7 @@ int DomletteElement_Init(PyObject *module)
     return -1;
 
   Py_INCREF(&DomletteElement_Type);
-  return PyModule_AddObject(module, "Element",
+  return PyModule_AddObject(module, "element",
                             (PyObject*) &DomletteElement_Type);
 }
 

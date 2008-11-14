@@ -277,7 +277,7 @@ typedef struct {
 Py_LOCAL_INLINE(PyObject *)
 child_axis_init(child_axis *axis, NodeObject *node)
 {
-  if (Element_Check(node) || Document_Check(node))
+  if (Element_Check(node) || Entity_Check(node))
     Py_INCREF(node);
   else
     node = NULL; /* mark iterator as done */
@@ -617,7 +617,7 @@ static PyObject *followingsibling_axis_new(PyTypeObject *type, PyObject *args,
   axis->parent = Node_GET_PARENT(node);
   Py_XINCREF(axis->parent);
   if (axis->parent) {
-    assert(Element_Check(axis->parent) || Document_Check(axis->parent));
+    assert(Element_Check(axis->parent) || Entity_Check(axis->parent));
     axis->count = Container_GET_COUNT(axis->parent);
     for (axis->index = 0; axis->index < axis->count; axis->index++) {
       if (Container_GET_CHILD(axis->parent, axis->index) == node) {

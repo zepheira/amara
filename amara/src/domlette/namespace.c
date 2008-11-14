@@ -113,7 +113,7 @@ namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   static char *kwlist[] = { "prefix", "namespace", NULL };
   NamespaceObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:Element", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO:namespace", kwlist,
                                    &prefix, &namespaceURI)) {
     return NULL;
   }
@@ -142,15 +142,15 @@ namespace_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static char namespace_doc[] = "\
-Namespace(prefix, namespace) -> Namespace object\n\
+namespace(prefix, namespace) -> namespace object\n\
 \n\
-The Namespace interface represents the XPath namespace node type\n\
+The `namespace` interface represents the XPath namespace node type\n\
 that DOM lacks.";
 
 PyTypeObject DomletteNamespace_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Namespace",
+  /* tp_name           */ Domlette_MODULE_NAME "." "namespace",
   /* tp_basicsize      */ sizeof(NamespaceObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) namespace_dealloc,
@@ -214,7 +214,7 @@ int DomletteNamespace_Init(PyObject *module)
   Py_DECREF(value);
 
   Py_INCREF(&DomletteNamespace_Type);
-  return PyModule_AddObject(module, "Namespace",
+  return PyModule_AddObject(module, "namespace",
                             (PyObject*)&DomletteNamespace_Type);
 }
 

@@ -10,9 +10,8 @@ import itertools
 import collections
 from gettext import gettext as _
 
-from amara.tree import Node, Element, Document, Text, Attr
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
-from amara import xpath
+from amara import tree, xpath
 from amara.writers import outputparameters
 from amara.xpath import XPathError
 from amara.xslt import XsltError, xsltcontext
@@ -43,7 +42,7 @@ def _fixup_aliases(node, aliases):
 def _dispatch_table():
     class type_dispatch_table(collections.defaultdict):
         def __missing__(self, type_key):
-            if type_key == Element.xml_type:
+            if type_key == tree.element.xml_type:
                 value = self[type_key] = collections.defaultdict(list)
             else:
                 value = self[type_key] = []
@@ -289,7 +288,7 @@ class transform_element(xslt_element):
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
                     type_key = node_type.xml_type
-                    if issubclass(node_type, Element):
+                    if issubclass(node_type, tree.element):
                         # Element types are further keyed by the name test.
                         name_key = node_test.name_key
                         if name_key:
@@ -325,10 +324,10 @@ class transform_element(xslt_element):
         for mode, type_table in match_templates.iteritems():
             # Add those patterns that don't have a distinct type:
             #   node(), id() and key() patterns
-            any_patterns = type_table[Node.xml_type]
+            any_patterns = type_table[tree.node.xml_type]
             type_table = match_templates[mode] = dict(type_table)
             for type_key, patterns in type_table.iteritems():
-                if type_key == Element.xml_type:
+                if type_key == tree.element.xml_type:
                     # Add those that are wildcard tests ('*' and 'prefix:*')
                     wildcard_names = patterns[None]
                     name_table = type_table[type_key] = dict(patterns)
@@ -504,7 +503,7 @@ class transform_element(xslt_element):
             if mode in self.match_templates:
                 type_table = self.match_templates[mode]
                 if node_type in type_table:
-                    if node_type == Element.xml_type:
+                    if node_type == tree.element.xml_type:
                         element_table = type_table[node_type]
                         name = node.xml_name
                         if name in element_table:
@@ -514,7 +513,7 @@ class transform_element(xslt_element):
                     else:
                         template_rules = type_table[node_type]
                 else:
-                    template_rules = type_table[Node.xml_type]
+                    template_rules = type_table[tree.node.xml_type]
             else:
                 template_rules = ()
 
@@ -574,9 +573,9 @@ class transform_element(xslt_element):
                 if params and not self._builtInWarningGiven:
                     self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
                     self._builtInWarningGiven = True
-                if isinstance(node, (Element, Document)):
+                if isinstance(node, (tree.element, tree.entity)):
                     self.apply_templates(context, node.xml_children)
-                elif isinstance(node, (Text, Attr)):
+                elif isinstance(node, (tree.text, tree.attribute)):
                     context.text(node.xml_value)
 
         # Restore context

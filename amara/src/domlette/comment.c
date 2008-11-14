@@ -36,7 +36,7 @@ static PyGetSetDef comment_getset[] = {
 /** Type Object ********************************************************/
 
 static char comment_doc[] = "\
-Comment(data) -> Comment object\n\
+comment(data) -> comment object\n\
 \n\
 This interface represents the content of a comment, i.e., all the characters\n\
 between the starting '<!--' and ending '-->'.";
@@ -44,7 +44,7 @@ between the starting '<!--' and ending '-->'.";
 PyTypeObject DomletteComment_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Comment",
+  /* tp_name           */ Domlette_MODULE_NAME "." "comment",
   /* tp_basicsize      */ sizeof(CommentObject),
   /* tp_itemsize       */ 0,
   /* tp_dealloc        */ (destructor) 0,
@@ -105,7 +105,7 @@ int DomletteComment_Init(PyObject *module)
   Py_DECREF(value);
 
   Py_INCREF(&DomletteComment_Type);
-  return PyModule_AddObject(module, "Comment",
+  return PyModule_AddObject(module, "comment",
                             (PyObject*) &DomletteComment_Type);
 }
 

@@ -254,7 +254,7 @@ static PyObject *attr_repr(AttrObject *self)
     Py_XDECREF(value);
     return NULL;
   }
-  repr = PyString_FromFormat("<Attr at %p: name %s, value %s>", self,
+  repr = PyString_FromFormat("<attribute at %p: name %s, value %s>", self,
                              PyString_AsString(name),
                              PyString_AsString(value));
   Py_DECREF(name);
@@ -269,7 +269,7 @@ static PyObject *attr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                             NULL };
   AttrObject *attr;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:Attr", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:attribute", kwlist,
                                    &namespaceURI, &qualifiedName, &value)) {
     return NULL;
   }
@@ -404,7 +404,8 @@ int DomletteAttr_Init(PyObject *module)
     return -1;
 
   Py_INCREF(&DomletteAttr_Type);
-  return PyModule_AddObject(module, "Attr", (PyObject*) &DomletteAttr_Type);
+  return PyModule_AddObject(module, "attribute",
+                            (PyObject *)&DomletteAttr_Type);
 }
 
 void DomletteAttr_Fini(void)

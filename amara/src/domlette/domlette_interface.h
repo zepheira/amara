@@ -5,13 +5,13 @@
 extern "C" {
 #endif
 
-#define Domlette_MODULE_NAME  "amara._domlette"
+#define Domlette_MODULE_NAME  "amara.tree"
 
 #include "Python.h"
 #include "structmember.h"
 
 #include "node.h"
-#include "document.h"
+#include "entity.h"
 #include "element.h"
 #include "attr.h"
 #include "text.h"
@@ -34,7 +34,7 @@ extern "C" {
   typedef struct {
     /* Domlette Node C Types */
     PyTypeObject *Node_Type;
-    PyTypeObject *Document_Type;
+    PyTypeObject *Entity_Type;
     PyTypeObject *Element_Type;
     PyTypeObject *Attr_Type;
     PyTypeObject *Text_Type;
@@ -51,7 +51,7 @@ extern "C" {
                              NodeObject *newChild);
 
     /* Document Methods */
-    DocumentObject *(*Document_New)(PyObject *documentURI);
+    EntityObject *(*Entity_New)(PyObject *documentURI);
 
     /* Element Methods */
     ElementObject *(*Element_New)(PyObject *namespaceURI,
@@ -108,7 +108,7 @@ extern "C" {
      PyCObject_Import(Domlette_MODULE_NAME, "CAPI")
 
 #define DomletteNode_Type Domlette->Node_Type
-#define DomletteDocument_Type Domlette->Document_Type
+#define DomletteEntity_Type Domlette->Entity_Type
 #define DomletteElement_Type Domlette->Element_Type
 #define DomletteAttr_Type Domlette->Attr_Type
 #define DomletteText_Type Domlette->Text_Type
@@ -124,9 +124,9 @@ extern "C" {
 #define Container_Insert Domlette->Container_Insert
 #define Container_Replace Domlette->Container_Replace
 
-#define Document_Check(op) PyObject_TypeCheck((op), DomletteDocument_Type)
-#define Document_CheckExact(op) ((op)->ob_type == DomletteDocument_Type)
-#define Document_New Domlette->Document_New
+#define Entity_Check(op) PyObject_TypeCheck((op), DomletteEntity_Type)
+#define Entity_CheckExact(op) ((op)->ob_type == DomletteEntity_Type)
+#define Entity_New Domlette->Entity_New
 
 #define Element_Check(op) PyObject_TypeCheck((op), DomletteElement_Type)
 #define Element_CheckExact(op) ((op)->ob_type == DomletteElement_Type)

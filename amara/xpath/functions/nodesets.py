@@ -3,7 +3,7 @@
 """
 The implementation of the core node-set functions from XPath 1.0.
 """
-from amara.tree import Element, Attr, ProcessingInstruction, Namespace
+from amara import tree
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
 from amara.xpath.locationpaths import relative_location_path
@@ -104,8 +104,8 @@ class name_function(builtin_function):
                 return datatypes.EMPTY_STRING
             node = arg0[0]
 
-        if isinstance(node, (Element, Attr, ProcessingInstruction,
-                             Namespace)):
+        if isinstance(node, (tree.element, tree.attribute,
+                             tree.processing_instruction, tree.namespace)):
             return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
@@ -128,9 +128,9 @@ class local_name_function(name_function):
                 return datatypes.EMPTY_STRING
             node = arg0[0]
 
-        if isinstance(node, (Element, Attr)):
+        if isinstance(node, (tree.element, tree.attribute)):
             return datatypes.string(node.xml_local)
-        elif isinstance(node, (ProcessingInstruction, Namespace)):
+        elif isinstance(node, (tree.processing_instruction, tree.namespace)):
             return datatypes.string(node.xml_qname)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string

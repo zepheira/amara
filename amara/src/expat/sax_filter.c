@@ -1936,7 +1936,7 @@ XMLPARSER_METHOD_DEF(setProperty)
   else if (PyObject_RichCompareBool(propertyname, property_dom_node,
                                     Py_EQ)) {
     /* create a "DOM Walker"-style parser */
-    if (Document_Check(value)) {
+    if (Entity_Check(value)) {
       Py_XDECREF(self->dom_node);
       Py_INCREF(value);
       self->dom_node = (NodeObject *) value;
@@ -2036,7 +2036,7 @@ XMLPARSER_METHOD_DEF(getSystemId)
     return NULL;
 
   if (self->dom_node) {
-    systemId = Document_GET_DOCUMENT_URI(self->dom_node);
+    systemId = Entity_GET_DOCUMENT_URI(self->dom_node);
     Py_INCREF(systemId);
   } else {
     systemId = ExpatReader_GetBase(self->reader);

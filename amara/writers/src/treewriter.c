@@ -32,7 +32,7 @@ Result Tree Fragment writer for XSLT output\n\
 typedef struct {
   PyObject_HEAD
   PyObject *slots[TreeWriter_SLOTS];
-  DocumentObject *document;
+  EntityObject *document;
   NodeObject *current_node;
   Py_UNICODE *buffer;
   Py_ssize_t buffer_size;
@@ -603,7 +603,7 @@ treewriter_init(TreeWriterObject *self, PyObject *args, PyObject *kwds)
   if (base_uri == NULL)
     return -1;
 
-  self->document = Document_New(base_uri);
+  self->document = Entity_New(base_uri);
   Py_DECREF(base_uri);
   if (self->document == NULL)
     return -1;

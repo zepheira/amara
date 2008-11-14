@@ -14,19 +14,19 @@ from test_expressions import (
     nodeset_literal, EMPTY_NODESET,
     )
 
-EGG1 = tree.Element(None, 'egg1')
-EGG1.xml_append(tree.Text('egg1'))
-EGG2 = tree.Element(None, 'egg2')
-EGG2.xml_append(tree.Text('egg2'))
+EGG1 = tree.element(None, 'egg1')
+EGG1.xml_append(tree.text('egg1'))
+EGG2 = tree.element(None, 'egg2')
+EGG2.xml_append(tree.text('egg2'))
 
-NUM = tree.Element(None, 'num')
-NUM0 = tree.Attr(None, 'num0', '0')
+NUM = tree.element(None, 'num')
+NUM0 = tree.attribute(None, 'num0', '0')
 NUM.xml_attributes.setnode(NUM0)
-NUM2 = tree.Attr(None, 'num2', '2')
+NUM2 = tree.attribute(None, 'num2', '2')
 NUM.xml_attributes.setnode(NUM0)
-NUM4 = tree.Attr(None, 'num4', '4')
+NUM4 = tree.attribute(None, 'num4', '4')
 NUM.xml_attributes.setnode(NUM0)
-NUM31 = tree.Attr(None, 'num31', '31')
+NUM31 = tree.attribute(None, 'num31', '31')
 NUM.xml_attributes.setnode(NUM0)
 
 

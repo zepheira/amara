@@ -5,8 +5,8 @@
 
 static PyObject *creation_counter, *counter_inc;
 
-Py_LOCAL_INLINE(DocumentObject *)
-document_init(DocumentObject *self, PyObject *documentURI)
+Py_LOCAL_INLINE(EntityObject *)
+entity_init(EntityObject *self, PyObject *documentURI)
 {
   PyObject *creationIndex, *unparsed_entities;
 
@@ -43,10 +43,10 @@ document_init(DocumentObject *self, PyObject *documentURI)
 
   self->creationIndex = creationIndex;
   self->unparsed_entities = unparsed_entities;
-  Document_SET_DOCUMENT_URI(self, documentURI);
-  Document_SET_PUBLIC_ID(self, Py_None);
+  Entity_SET_DOCUMENT_URI(self, documentURI);
+  Entity_SET_PUBLIC_ID(self, Py_None);
   Py_INCREF(Py_None);
-  Document_SET_SYSTEM_ID(self, Py_None);
+  Entity_SET_SYSTEM_ID(self, Py_None);
   Py_INCREF(Py_None);
 
   /* update creation counter */
@@ -99,27 +99,27 @@ get_element_by_id(NodeObject *node, PyObject *elementId)
 
 /** Public C API ******************************************************/
 
-DocumentObject *Document_New(PyObject *documentURI)
+EntityObject *Entity_New(PyObject *documentURI)
 {
-  DocumentObject *self;
+  EntityObject *self;
 
-  self = Container_New(DocumentObject, &DomletteDocument_Type);
+  self = Container_New(EntityObject, &DomletteEntity_Type);
   if (self != NULL) {
-    self = document_init(self, documentURI);
+    self = entity_init(self, documentURI);
   }
   return self;
 }
 
 /** Python Methods ****************************************************/
 
-static char document_lookup_doc[] =
+static char entity_lookup_doc[] =
 "xml_lookup(idref) -> Element\n\
 \n\
-Returns the Element whose ID is given by `idref`. If no such element\n\
+Returns the element whose ID is given by `idref`. If no such element\n\
 exists, returns None. If more than one element has this ID, the first in\n\
-the document is returned.";
+the entity is returned.";
 
-static PyObject *document_lookup(PyObject *self, PyObject *args)
+static PyObject *entity_lookup(PyObject *self, PyObject *args)
 {
   PyObject *idref, *element;
   Py_ssize_t i;
@@ -147,7 +147,7 @@ static PyObject *document_lookup(PyObject *self, PyObject *args)
 
 static PyObject *entity_getnewargs(PyObject *self, PyObject *noarg)
 {
-  return PyTuple_Pack(1, Document_GET_DOCUMENT_URI(self));
+  return PyTuple_Pack(1, Entity_GET_DOCUMENT_URI(self));
 }
 
 static PyObject *entity_getstate(PyObject *self, PyObject *args)
@@ -174,7 +174,7 @@ static PyObject *entity_getstate(PyObject *self, PyObject *args)
       Py_INCREF(children);
       break;
     case 1:
-      unparsed_entities = Document_GET_UNPARSED_ENTITIES(self);
+      unparsed_entities = Entity_GET_UNPARSED_ENTITIES(self);
       children = PyTuple_New(Container_GET_COUNT(self));
       if (children != NULL) {
         for (i = 0; i < Container_GET_COUNT(self); i++) {
@@ -189,8 +189,8 @@ static PyObject *entity_getstate(PyObject *self, PyObject *args)
       Py_DECREF(dict);
       return NULL;
   }
-  return Py_BuildValue("NOOON", dict, Document_GET_PUBLIC_ID(self),
-                       Document_GET_SYSTEM_ID(self), unparsed_entities,
+  return Py_BuildValue("NOOON", dict, Entity_GET_PUBLIC_ID(self),
+                       Entity_GET_SYSTEM_ID(self), unparsed_entities,
                        children);
 }
 
@@ -239,18 +239,18 @@ static PyObject *entity_setstate(PyObject *self, PyObject *state)
       Py_DECREF(temp);
     }
   }
-  temp = Document_GET_PUBLIC_ID(self);
-  Document_SET_PUBLIC_ID(self, public_id);
+  temp = Entity_GET_PUBLIC_ID(self);
+  Entity_SET_PUBLIC_ID(self, public_id);
   Py_INCREF(public_id);
   Py_DECREF(temp);
 
-  temp = Document_GET_SYSTEM_ID(self);
-  Document_SET_SYSTEM_ID(self, system_id);
+  temp = Entity_GET_SYSTEM_ID(self);
+  Entity_SET_SYSTEM_ID(self, system_id);
   Py_INCREF(system_id);
   Py_DECREF(temp);
 
   if (unparsed_entities) {
-    temp = Document_GET_UNPARSED_ENTITIES(self);
+    temp = Entity_GET_UNPARSED_ENTITIES(self);
     PyDict_Clear(temp);
     if (PyDict_Update(temp, unparsed_entities) < 0)
       return NULL;
@@ -265,11 +265,11 @@ static PyObject *entity_setstate(PyObject *self, PyObject *state)
   Py_RETURN_NONE;
 }
 
-#define Document_METHOD(name) \
-  { "xml_" #name, document_##name, METH_VARARGS, document_##name##_doc }
+#define Entity_METHOD(name) \
+  { "xml_" #name, entity_##name, METH_VARARGS, entity_##name##_doc }
 
-static PyMethodDef document_methods[] = {
-  Document_METHOD(lookup),
+static PyMethodDef entity_methods[] = {
+  Entity_METHOD(lookup),
   { "__getnewargs__", entity_getnewargs, METH_NOARGS,  "helper for pickle" },
   { "__getstate__",   entity_getstate,   METH_VARARGS, "helper for pickle" },
   { "__setstate__",   entity_setstate,   METH_O,       "helper for pickle" },
@@ -278,29 +278,29 @@ static PyMethodDef document_methods[] = {
 
 /** Python Members ****************************************************/
 
-#define Document_MEMBER(name, member) \
-  { name, T_OBJECT, offsetof(DocumentObject, member), RO }
+#define Entity_MEMBER(name, member) \
+  { name, T_OBJECT, offsetof(EntityObject, member), RO }
 
-static PyMemberDef document_members[] = {
-  Document_MEMBER("xml_unparsed_entities", unparsed_entities),
+static PyMemberDef entity_members[] = {
+  Entity_MEMBER("xml_unparsed_entities", unparsed_entities),
   { NULL }
 };
 
 /** Python Computed Members *******************************************/
 
-static PyObject *get_root(DocumentObject *self, void *arg)
+static PyObject *get_root(EntityObject *self, void *arg)
 {
   Py_INCREF(self);
   return (PyObject *)self;
 }
 
-static PyObject *get_public_id(DocumentObject *self, void *arg)
+static PyObject *get_public_id(EntityObject *self, void *arg)
 {
   Py_INCREF(self->publicId);
   return self->publicId;
 }
 
-static int set_public_id(DocumentObject *self, PyObject *v, void *arg)
+static int set_public_id(EntityObject *self, PyObject *v, void *arg)
 {
   if ((v = XmlString_ConvertArgument(v, "xml_public_id", 1)) == NULL)
     return -1;
@@ -309,13 +309,13 @@ static int set_public_id(DocumentObject *self, PyObject *v, void *arg)
   return 0;
 }
 
-static PyObject *get_system_id(DocumentObject *self, void *arg)
+static PyObject *get_system_id(EntityObject *self, void *arg)
 {
   Py_INCREF(self->systemId);
   return self->systemId;
 }
 
-static int set_system_id(DocumentObject *self, PyObject *v, void *arg)
+static int set_system_id(EntityObject *self, PyObject *v, void *arg)
 {
   if ((v = XmlString_ConvertArgument(v, "xml_system_id", 1)) == NULL)
     return -1;
@@ -324,7 +324,7 @@ static int set_system_id(DocumentObject *self, PyObject *v, void *arg)
   return 0;
 }
 
-static PyGetSetDef document_getset[] = {
+static PyGetSetDef entity_getset[] = {
   { "xml_root",      (getter)get_root },
   { "xml_public_id", (getter)get_public_id, (setter)set_public_id },
   { "xml_system_id", (getter)get_system_id, (setter)set_system_id },
@@ -333,7 +333,7 @@ static PyGetSetDef document_getset[] = {
 
 /** Type Object ********************************************************/
 
-static void document_dealloc(DocumentObject *self)
+static void entity_dealloc(EntityObject *self)
 {
   PyObject_GC_UnTrack((PyObject *) self);
   Py_CLEAR(self->documentURI);
@@ -344,32 +344,31 @@ static void document_dealloc(DocumentObject *self)
   Node_Del(self);
 }
 
-static PyObject *document_repr(DocumentObject *self)
+static PyObject *entity_repr(EntityObject *self)
 {
-  return PyString_FromFormat("<Document at %p: %zd children>",
+  return PyString_FromFormat("<entity at %p: %zd children>",
                              self, Container_GET_COUNT(self));
 }
 
-static int document_traverse(DocumentObject *self, visitproc visit, void *arg)
+static int entity_traverse(EntityObject *self, visitproc visit, void *arg)
 {
   Py_VISIT(self->unparsed_entities);
   return DomletteContainer_Type.tp_traverse((PyObject *)self, visit, arg);
 }
 
-static int document_clear(DocumentObject *self)
+static int entity_clear(EntityObject *self)
 {
   Py_CLEAR(self->unparsed_entities);
   return DomletteContainer_Type.tp_clear((PyObject *)self);
 }
 
-static PyObject *document_new(PyTypeObject *type, PyObject *args,
-                              PyObject *kwds)
+static PyObject *entity_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   PyObject *documentURI = Py_None;
   static char *kwlist[] = { "documentURI", NULL };
-  DocumentObject *self;
+  EntityObject *self;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:Document", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:entity", kwlist,
                                    &documentURI)) {
     return NULL;
   }
@@ -379,13 +378,13 @@ static PyObject *document_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
 
-  if (type != &DomletteDocument_Type) {
-    self = Document(type->tp_alloc(type, 0));
+  if (type != &DomletteEntity_Type) {
+    self = Entity(type->tp_alloc(type, 0));
     if (self != NULL) {
-      self = document_init(self, documentURI);
+      self = entity_init(self, documentURI);
     }
   } else {
-    self = Document_New(documentURI);
+    self = Entity_New(documentURI);
   }
   Py_DECREF(documentURI);
 
@@ -393,25 +392,25 @@ static PyObject *document_new(PyTypeObject *type, PyObject *args,
 
 }
 
-static char document_doc[] = "\
-Document([documentURI]) -> Document object\n\
+static char entity_doc[] = "\
+entity([documentURI]) -> entity object\n\
 \n\
-The Document interface represents the entire XML document. Conceptually,\n\
+The `entity` interface represents an entire XML document. Conceptually,\n\
 it is the root of the document tree, and provides the primary access to the\n\
 document's data.";
 
-PyTypeObject DomletteDocument_Type = {
+PyTypeObject DomletteEntity_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
   /* ob_size           */ 0,
-  /* tp_name           */ Domlette_MODULE_NAME "." "Document",
-  /* tp_basicsize      */ sizeof(DocumentObject),
+  /* tp_name           */ Domlette_MODULE_NAME "." "entity",
+  /* tp_basicsize      */ sizeof(EntityObject),
   /* tp_itemsize       */ 0,
-  /* tp_dealloc        */ (destructor) document_dealloc,
+  /* tp_dealloc        */ (destructor) entity_dealloc,
   /* tp_print          */ (printfunc) 0,
   /* tp_getattr        */ (getattrfunc) 0,
   /* tp_setattr        */ (setattrfunc) 0,
   /* tp_compare        */ (cmpfunc) 0,
-  /* tp_repr           */ (reprfunc) document_repr,
+  /* tp_repr           */ (reprfunc) entity_repr,
   /* tp_as_number      */ (PyNumberMethods *) 0,
   /* tp_as_sequence    */ (PySequenceMethods *) 0,
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
@@ -424,16 +423,16 @@ PyTypeObject DomletteDocument_Type = {
   /* tp_flags          */ (Py_TPFLAGS_DEFAULT |
                            Py_TPFLAGS_BASETYPE |
                            Py_TPFLAGS_HAVE_GC),
-  /* tp_doc            */ (char *) document_doc,
-  /* tp_traverse       */ (traverseproc) document_traverse,
-  /* tp_clear          */ (inquiry) document_clear,
+  /* tp_doc            */ (char *) entity_doc,
+  /* tp_traverse       */ (traverseproc) entity_traverse,
+  /* tp_clear          */ (inquiry) entity_clear,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,
   /* tp_iternext       */ (iternextfunc) 0,
-  /* tp_methods        */ (PyMethodDef *) document_methods,
-  /* tp_members        */ (PyMemberDef *) document_members,
-  /* tp_getset         */ (PyGetSetDef *) document_getset,
+  /* tp_methods        */ (PyMethodDef *) entity_methods,
+  /* tp_members        */ (PyMemberDef *) entity_members,
+  /* tp_getset         */ (PyGetSetDef *) entity_getset,
   /* tp_base           */ (PyTypeObject *) 0,
   /* tp_dict           */ (PyObject *) 0,
   /* tp_descr_get      */ (descrgetfunc) 0,
@@ -441,21 +440,21 @@ PyTypeObject DomletteDocument_Type = {
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) 0,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) document_new,
+  /* tp_new            */ (newfunc) entity_new,
   /* tp_free           */ 0,
 };
 
 /** Module Interface **************************************************/
 
-int DomletteDocument_Init(PyObject *module)
+int DomletteEntity_Init(PyObject *module)
 {
   PyObject *dict, *value;
 
-  DomletteDocument_Type.tp_base = &DomletteContainer_Type;
-  if (PyType_Ready(&DomletteDocument_Type) < 0)
+  DomletteEntity_Type.tp_base = &DomletteContainer_Type;
+  if (PyType_Ready(&DomletteEntity_Type) < 0)
     return -1;
 
-  dict = DomletteDocument_Type.tp_dict;
+  dict = DomletteEntity_Type.tp_dict;
 
   value = PyString_FromString("document");
   if (value == NULL)
@@ -482,15 +481,15 @@ int DomletteDocument_Init(PyObject *module)
   counter_inc = PyLong_FromLong(1L);
   if (counter_inc == NULL) return -1;
 
-  Py_INCREF(&DomletteDocument_Type);
-  return PyModule_AddObject(module, "Document",
-                            (PyObject*) &DomletteDocument_Type);
+  Py_INCREF(&DomletteEntity_Type);
+  return PyModule_AddObject(module, "entity",
+                            (PyObject*) &DomletteEntity_Type);
 }
 
-void DomletteDocument_Fini(void)
+void DomletteEntity_Fini(void)
 {
   Py_DECREF(creation_counter);
   Py_DECREF(counter_inc);
 
-  PyType_CLEAR(&DomletteDocument_Type);
+  PyType_CLEAR(&DomletteEntity_Type);
 }

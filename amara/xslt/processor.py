@@ -9,7 +9,6 @@ from gettext import gettext as _
 DEFAULT_ENCODING = 'UTF-8'
 #from amara import DEFAULT_ENCODING
 from amara import ReaderError, tree
-from amara.tree import Node, Document, Element, ProcessingInstruction
 from amara.lib import iri, inputsource
 from amara.xpath import XPathError
 from amara.xslt import XsltError
@@ -196,17 +195,13 @@ class processor(object):
         transform followed by an `xsl:import` for the document accessible via
         the given `transform`.
         """
-        if isinstance(source, Node):
-            document = source.ownerDocument or source
+        if isinstance(source, tree.node):
+            document = source.xml_root
             if not uri:
                 try:
-                    uri = document.documentURI
+                    uri = document.xml_base
                 except AttributeError:
-                    try:
-                        uri = document.xml_base
-                    except AttributeError:
-                        raise ValueError('base-uri required for %s' %
-                                         document)
+                    raise ValueError('base-uri required for %s' % document)
             self._documents[uri] = document
             self.transform = self._reader.parse(document)
         else:
@@ -303,7 +298,7 @@ class processor(object):
         """
         ignorePis = False
 
-        if not isinstance(node, tree.Document):
+        if not isinstance(node, tree.entity):
             raise ValueError(MessageSource.g_errorMessages[
                              XsltError.CANNOT_TRANSFORM_FRAGMENT])
 
@@ -318,7 +313,7 @@ class processor(object):
 
         if preserveSrc:
             # preserve the node's baseURI so our DOM is a true copy
-            entity = Document(node.xml_base)
+            entity = tree.entity(node.xml_base)
             for child in node:
                 entity.xml_append(entity.importNode(child, 1))
             node = entity
@@ -439,9 +434,9 @@ class processor(object):
         stys = []
         for node in root:
             # only look at prolog, not anything that comes after it
-            if isinstance(node, Element): break
+            if isinstance(node, tree.element): break
             # build dict of pseudo-attrs for the xml-stylesheet PIs
-            if not (isinstance(node, ProcessingInstruction)
+            if not (isinstance(node, tree.processing_instruction)
                     and node.xml_target == 'xml-stylesheet'):
                 continue
             pseudo_attrs = {}

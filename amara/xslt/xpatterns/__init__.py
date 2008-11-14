@@ -7,8 +7,8 @@ Implement Patterns according to the XSLT spec
 from amara import tree
 from amara.xpath.locationpaths import nodetests
 
-child_axis = tree.Element
-attribute_axis = tree.Attr
+child_axis = tree.element
+attribute_axis = tree.attribute
 
 class patterns(tuple):
 
@@ -120,7 +120,7 @@ class predicated_test(nodetests.node_test):
 class document_test(nodetests.node_test):
 
     priority = 0.5
-    node_type = tree.Document
+    node_type = tree.entity
 
     def match(self, context, node, principal_type):
         return isinstance(node, self.node_type)
@@ -132,7 +132,7 @@ class document_test(nodetests.node_test):
 class id_key_test(nodetests.node_test):
 
     priority = 0.5
-    node_type = tree.Node
+    node_type = tree.node
 
     def __init__(self, function):
         self._function = function

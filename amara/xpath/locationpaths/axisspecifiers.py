@@ -12,7 +12,7 @@ axis_specifier = None
 class axis_specifier(object):
 
     _classmap = {}
-    principal_type = tree.Element
+    principal_type = tree.element
     reverse = False
 
     class __metaclass__(type):
@@ -81,7 +81,7 @@ class ancestor_or_self_axis(axis_specifier):
 
 class attribute_axis(axis_specifier):
     name = 'attribute'
-    principal_type = tree.Attr
+    principal_type = tree.attribute
     def select(self, node):
         """Select all of the attributes from the context node"""
         return (node.xml_attributes)
@@ -106,7 +106,7 @@ class descendant_axis(axis_specifier):
     name = 'descendant'
     def select(self, node):
         descendants = self.select
-        node_type = tree.Element
+        node_type = tree.element
         for child in node:
             yield child
             if isinstance(child, node_type):
@@ -168,7 +168,7 @@ class following_sibling_axis(axis_specifier):
 
 class namespace_axis(axis_specifier):
     name = 'namespace'
-    principal_type = tree.Namespace
+    principal_type = tree.namespace
 
     def select(self, node):
         """Select all of the namespaces from the context node."""

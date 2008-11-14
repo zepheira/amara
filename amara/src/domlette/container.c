@@ -110,7 +110,7 @@ ensure_hierarchy(NodeObject *self, NodeObject *child)
 Py_LOCAL_INLINE(int)
 try_dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
 {
-  if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
+  if (!Element_CheckExact(self) && !Entity_CheckExact(self)) {
     return Node_DispatchEvent(self, event, target);
   }
   return 0;
@@ -166,7 +166,7 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
   Container_SET_COUNT(self, size);
   Container_SET_ALLOCATED(self, size);
 
-  if (!Element_CheckExact(self) && !Document_CheckExact(self)) {
+  if (!Element_CheckExact(self) && !Entity_CheckExact(self)) {
     for (i = 0; i < size; i++) {
       if (Node_DispatchEvent(self, inserted_event, nodes[i]) < 0)
         return -1;
