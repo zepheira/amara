@@ -4,85 +4,47 @@ from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_literals_1(xslt_test):
-    """`xsl:if`"""
     source = stringsource("""<customer id="uo">Uche Ogbuji</customer>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-  <xsl:strip-space elements='*'/>
-
-  <xsl:template match="/">
-    <HTML>
-    <HEAD><TITLE>Address Book</TITLE>
-    </HEAD>
-    <BODY>
-    <TABLE><xsl:apply-templates/></TABLE>
-    </BODY>
-    </HTML>
-  </xsl:template>
-
-  <xsl:template match="ENTRY">
-        <xsl:element name='TR'>
-        <xsl:apply-templates select='NAME'/>
-        </xsl:element>
-        <xsl:if test='not(position()=last())'><HR/></xsl:if>
-  </xsl:template>
-
-  <xsl:template match="NAME">
-    <xsl:element name='TD'>
-    <xsl:attribute name='ALIGN'>CENTER</xsl:attribute>
-      <B><xsl:apply-templates/></B>
-    </xsl:element>
+  <xsl:template match="customer">
+    <wrapper>
+    <customer id="{@id}" xmlns="http://spam.com">
+      <xsl:element name="{substring-before(., ' ')}" namespace="http://eggs.com">Eggs</xsl:element>
+      <name><xsl:value-of select="."/></name>
+    </customer>
+    </wrapper>
   </xsl:template>
 
 </xsl:stylesheet>
 """)
-    expected = """<HTML>
-  <HEAD>
-    <META HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=iso-8859-1'>
-    <TITLE>Address Book</TITLE>
-  </HEAD>
-  <BODY>
-    <TABLE>
-      <TR>
-        <TD ALIGN='CENTER'><B>Pieter Aaron</B></TD>
-      </TR>
-      <HR>
-      <TR>
-        <TD ALIGN='CENTER'><B>Emeka Ndubuisi</B></TD>
-      </TR>
-      <HR>
-      <TR>
-        <TD ALIGN='CENTER'><B>Vasia Zhugenev</B></TD>
-      </TR>
-    </TABLE>
-  </BODY>
-</HTML>"""
+    expected = """<?xml version='1.0' encoding='UTF-8'?>
+<wrapper><customer id='uo' xmlns='http://spam.com'><Uche xmlns='http://eggs.com'>Eggs</Uche><name>Uche Ogbuji</name></customer></wrapper>"""
 
 
-class test_if_2(xslt_test):
-    """test text and element children of `xsl:if`"""
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
+class test_literals_2(xslt_test):
+    source = stringsource("""<?xml version="1.0"?><foo/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-  <xsl:template match="/">
-    <boo>
-      <!-- true -->
-      <xsl:if test='/'>
-        ( <true/> )
-      </xsl:if>
-      <!-- false -->
-      <xsl:if test='/..'>
-        ( <false/> )
-      </xsl:if>
-    </boo>
-  </xsl:template>
+     <xsl:output indent="no" encoding="us-ascii"/>
+
+     <xsl:template match="/">
+       <result>
+         <text>
+           <xsl:text/>
+         </text>
+         <value>
+           <xsl:value-of select="''"/>
+         </value>
+       </result>
+     </xsl:template>
 
 </xsl:stylesheet>
 """)
-    expected = """<?xml version="1.0"?>
-<boo>\n        ( <true/> )\n      </boo>"""
+    expected = """<?xml version='1.0' encoding='us-ascii'?>
+<result><text/><value/></result>"""
 
 
 if __name__ == '__main__':
