@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<result>
+  <bar>matched foo[@bar]</bar>
+  <baz>matched foo[@baz]</baz>
+  <bar>matched foo[@bar]</bar>
+  <bar>matched foo[@bar]</bar>
+  <baz>matched foo[@baz]</baz>
+  <bar>matched foo[@bar] (mode m)</bar>
+  <baz>matched foo[@baz] (mode m)</baz>
+  <bar>matched foo[@bar] (mode m)</bar>
+  <bar>matched foo[@bar] (mode m)</bar>
+  <baz>matched foo[@baz] (mode m)</baz>
+</result>

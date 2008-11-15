@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xhtml><body><demo/>
+Document with erroneous attributes
+
+&lt;errors>
+        &lt;wrong_char a<SPAN class='error'>*</SPAN>b = "23432"/>
+        &lt;mismatched_separator value = <SPAN class='error'>"</SPAN>12<SPAN class='error'>'</SPAN>/>
+        &lt;wrong_separator_type  value="aa<SPAN class='error'>"</SPAN>aa"/>
+        &lt;wrong_separator_type  value='bb<SPAN class='error'>'</SPAN>bb'/>
+        &lt;wrong_start <SPAN class='error'>XML</SPAN>-ID = "xml234"/>
+&lt;/errors>
+
+</body></xhtml>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+
+<!DOCTYPE pool>
+
+<pool>
+  <car state="1">
+    <brand>Ferrari</brand>
+    <type>F40</type>
+    <number>459 CBO 75</number>
+  </car>
+  <car state="2">
+    <brand>Porsche</brand>
+    <type>911</type>
+    <number>347 CQQ 75</number>
+  </car>
+</pool>

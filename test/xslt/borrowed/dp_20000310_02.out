@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tag>Namespace:http://ns1.com
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+
+  <tag>Namespace: Null namespace
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns2
+      NS value : http://ns2.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+    <tag>Namespace: Null namespace
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns2
+      NS value : http://ns2.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+  
+
+  <tag>Namespace:http://ns2.com
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns2
+      NS value : http://ns2.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+    <tag>Namespace: Null namespace
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns2
+      NS value : http://ns2.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+  
+
+    <tag>Namespace:http://ns3.com
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns3
+      NS value : http://ns3.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+      <tag>Namespace:A long namespace uri
+      NS name: long
+      NS value : A long namespace uri
+      NS name: ns1
+      NS value : http://ns1.com
+      NS name: ns3
+      NS value : http://ns3.com
+      NS name: xml
+      NS value : http://www.w3.org/XML/1998/namespace</tag>
+    
+
+

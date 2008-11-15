@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<result xmlns:new="urn:added-by-stylesheet">
+<r>total nodes: 15</r>
+<r>copy:
+<doc>
+<elem xmlns:unused="urn:uuu000"/>
+<elem xmlns="urn:sss111"/>
+<y:elem xmlns:y="urn:yyyy222"/>
+</doc></r></result>

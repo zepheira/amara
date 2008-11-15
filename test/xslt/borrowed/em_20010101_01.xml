@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<outer>
+        <inner>
+                <deep att='value' att2='val2'>
+                my goodness
+                </deep>
+        </inner>
+</outer>

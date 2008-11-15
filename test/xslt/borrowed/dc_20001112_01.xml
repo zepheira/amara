@@ -1,0 +1,16 @@
+<x>
+  <itemlist>
+	<item itemid="Z101" units="1"/>
+	<item itemid="Z102" units="2"/>
+	<item itemid="Z101" units="4"/>
+  </itemlist>
+
+  <itemlist>
+	<item itemid="y101" units="1"/>
+	<item itemid="y102" units="2"/>
+	<item itemid="y102" units="3"/>
+	<item itemid="y101" units="4"/>
+	<item itemid="y101" units="5"/>
+  </itemlist>
+
+</x>

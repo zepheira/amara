@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<foo>
+  <set1>
+    <x>hello</x>
+    <x>world</x>
+  </set1>
+  <set2>
+    <y>world</y>
+    <y>bazaar</y>
+  </set2>
+  <set3>
+    <z>totally</z>
+    <z>different</z>
+  </set3>
+</foo>

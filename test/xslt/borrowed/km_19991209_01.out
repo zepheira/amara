@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<top><DEPT_PREHTML>
+        <!-- Well-formed HTML. -->
+        <DIV style='position: absolute' id='Layer1'>
+            <IMG height='104' width='917' src='/images/edu.gif'/>
+        </DIV>
+    </DEPT_PREHTML>Departments<!--Do some more things here--><DEPT_POSTHTML>
+        <P>DEPT_POSTHTML: Some more well-formed HTML. </P>
+    </DEPT_POSTHTML><EMP_PREHTML>
+        <P>EMP_PREHTML: Some more well-formed HTML. </P>
+    </EMP_PREHTML>Employees<!--Do some more things here--><EMP_POSTHTML>
+        <P>EMP_POSTHTML: Some more well-formed HTML. </P>
+    </EMP_POSTHTML></top>

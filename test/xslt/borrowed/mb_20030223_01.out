@@ -1,0 +1,23 @@
+<table>
+  <tr>
+    <td><b>excellent skills:</b></td>
+    <td>excellentskill
+      <br>excellent skill
+      <br>excellentskill
+    </td>
+  </tr>
+  <tr>
+    <td><b>good skills:</b></td>
+    <td>goodskill
+      <br>goodskill
+      <br>goodskill
+    </td>
+  </tr>
+  <tr>
+    <td><b>basic skills:</b></td>
+    <td>basicskill
+      <br>basicskill
+      <br>basicskill
+    </td>
+  </tr>
+</table>

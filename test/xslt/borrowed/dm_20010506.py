@@ -48,6 +48,7 @@ class test_xslt_import_with_params_dm_20010506(xslt_test):
 </xsl:stylesheet>""")
 
 class test_xslt_include_with_variables_dm_20010506(xslt_error):
+    error_code = XsltError.DUPLICATE_TOP_LEVEL_VAR
     source = commonsource
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet
@@ -64,18 +65,8 @@ class test_xslt_include_with_variables_dm_20010506(xslt_error):
     parameters = {}
     expected = ""
 
-    def test_transform(self):
-        from amara.xslt import transform
-
-        exceptionCode=Error.DUPLICATE_TOP_LEVEL_VAR,
-
-        # io = cStringIO.StringIO()
-        result = transform(self.source, self.transform, output=io)
-        # self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        self.assertEquals(self.expected, exceptionCode)
-        return
-
 class test_xslt_include_with_params_dm_20010506(xslt_error):
+    error_code = XsltError.DUPLICATE_TOP_LEVEL_VAR
     source = commonsource
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet
@@ -91,18 +82,6 @@ class test_xslt_include_with_params_dm_20010506(xslt_error):
 </xsl:stylesheet>""")
     parameters = {}
     expected= ""
-
-
-    def test_transform(self):
-        from amara.xslt import transform
-
-        exceptionCode=XsltError.DUPLICATE_TOP_LEVEL_VAR,
-
-        # io = cStringIO.StringIO()
-        result = transform(self.source, self.transform, output=io)
-        # self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        self.assertEquals(self.expected, exceptionCode)
-        return
 
 if __name__ == '__main__':
     test_main()

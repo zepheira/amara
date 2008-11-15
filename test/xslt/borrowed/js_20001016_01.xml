@@ -1,0 +1,18 @@
+<products>
+   <product prodID="A1234">
+     <name>First prod</name>
+     <price curr="USD">29.95</price>
+   </product>
+   <product prodID="A5678">
+     <name>Second prod</name>
+     <price curr="GBP">115.95</price>
+   </product>
+   <product prodID="A9012">
+     <name>Third prod</name>
+     <price curr="EU">29.95</price>
+   </product>
+   <product prodID="A9012">
+     <name>Fourth prod</name>
+     <price curr="USD">50.00</price>
+   </product>
+</products>

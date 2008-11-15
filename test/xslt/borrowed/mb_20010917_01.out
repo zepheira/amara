@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<result>
+  <r>set1 = set1: true</r>
+  <r>set2 = set2: true</r>
+  <r>set3 = set3: true</r>
+  <r>set1 = set2: true</r>
+  <r>set1 = set3: false</r>
+  <r>set2 = set3: false</r>
+  <r>set1 != set1: true</r>
+  <r>set2 != set2: true</r>
+  <r>set3 != set3: true</r>
+  <r>set1 != set2: true</r>
+  <r>set1 != set3: true</r>
+  <r>set2 != set3: true</r>
+  <r>not(set1 = set1): false</r>
+  <r>not(set2 = set2): false</r>
+  <r>not(set3 = set3): false</r>
+  <r>not(set1 = set2): false</r>
+  <r>not(set1 = set3): true</r>
+  <r>not(set2 = set3): true</r>
+</result>

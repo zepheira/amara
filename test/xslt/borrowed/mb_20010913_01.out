@@ -1,0 +1,12 @@
+current element: 'x' with id '0'
+string-value: 'foo'
+--------------------
+current element: 'x' with id '1'
+string-value: 'foobar'
+--------------------
+current element: 'x' with id '2'
+string-value: 'hello world'
+--------------------
+current element: 'x' with id '4'
+string-value: 'hrrmmmm'
+--------------------

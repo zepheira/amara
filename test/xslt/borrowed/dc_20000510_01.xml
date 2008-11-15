@@ -1,0 +1,17 @@
+  <exp>
+      <add-exp>
+        <add-exp>
+          <mult-exp>
+            <primary-exp>
+              <literal value="2"/>
+            </primary-exp>
+          </mult-exp>
+        </add-exp>
+        <op-add/>
+        <mult-exp>
+          <primary-exp>
+            <literal value="3"/>
+          </primary-exp>
+        </mult-exp>
+      </add-exp>
+    </exp>

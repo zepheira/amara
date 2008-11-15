@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data>
+  <stuff>
+    <files>
+      <file name="three" num="3"/>
+      <file name="four" num="4"/>
+    </files>
+    <morefiles>
+      <file name="one" num="1"/>
+      <file name="two" num="2"/>
+    </morefiles>
+  </stuff>
+  <otherstuff>
+    <file name="six" num="6"/>
+    <file name="five" num="5"/>
+  </otherstuff>
+</data>

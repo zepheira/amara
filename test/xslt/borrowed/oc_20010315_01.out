@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<template match='car[@price &lt; 1000]'>This is a good one</template>

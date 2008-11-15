@@ -1,0 +1,35 @@
+<FORMS>
+    <CONTAINERS>
+        <CONTAINER>
+            <PRE_HTML>DEPT_PREHTML</PRE_HTML>
+            <TITLE>Departments</TITLE>
+            <POST_HTML>DEPT_POSTHTML</POST_HTML>
+        </CONTAINER>
+
+        <CONTAINER>
+            <PRE_HTML>EMP_PREHTML</PRE_HTML>
+            <TITLE>Employees</TITLE>
+            <POST_HTML>EMP_POSTHTML</POST_HTML>
+        </CONTAINER>
+    </CONTAINERS>
+
+    <DEPT_PREHTML>
+        <!-- Well-formed HTML. -->
+        <DIV id="Layer1" style="position: absolute">
+            <IMG src="/images/edu.gif" width="917"
+                 height="104"/>
+        </DIV>
+    </DEPT_PREHTML>
+
+    <DEPT_POSTHTML>
+        <P>DEPT_POSTHTML: Some more well-formed HTML. </P>
+    </DEPT_POSTHTML>
+
+    <EMP_PREHTML>
+        <P>EMP_PREHTML: Some more well-formed HTML. </P>
+    </EMP_PREHTML>
+
+    <EMP_POSTHTML>
+        <P>EMP_POSTHTML: Some more well-formed HTML. </P>
+    </EMP_POSTHTML>
+</FORMS>

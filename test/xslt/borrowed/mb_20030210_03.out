@@ -1,0 +1,22 @@
+<html>
+  <body>
+    <h1>indented html</h1>
+    <p>html indented 1
+html indented 2
+html indented 3</p>
+    <div class="screen">
+      <pre>html not indented 1
+html not indented 2<span xmlns="http://foo/bar"><i><b>xml span, i, b, this text, br, p.i., not indented</b></i><br/><?foo bar?></span><p>still xml, no indenting here either</p><span>html not indented 3<br><p>html still not indented</p>
+html on new line but still not indented</span></pre>
+      <p>html indented
+        <span xmlns="http://foo/bar">
+          <i>
+            <b>xml indented<pre xmlns="">html not indented 1
+and 2</pre> back to xml indented</b>
+          </i>
+        </span>html indented again
+and again
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<result>
+  <group>
+    <city name="Barcelona" country="Espana"/>
+    <city name="Madrid" country="Espana"/>
+  </group>
+  <group>
+    <city name="Paris" country="France"/>
+    <city name="Lyon" country="France"/>
+  </group>
+  <group>
+    <city name="Roma" country="Italia"/>
+    <city name="Milano" country="Italia"/>
+    <city name="Firenze" country="Italia"/>
+    <city name="Napoli" country="Italia"/>
+  </group>
+</result>

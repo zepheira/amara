@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<result>
+  <r>
+    <x>hello</x>
+  </r>
+  <r>
+    <x>hello</x>
+    <x>world</x>
+  </r>
+  <r>
+    <y>bazaar</y>
+  </r>
+  <r>
+    <y>world</y>
+    <y>bazaar</y>
+  </r>
+  <r>
+    <z>totally</z>
+    <z>different</z>
+  </r>
+  <r>
+    <z>totally</z>
+    <z>different</z>
+  </r>
+</result>

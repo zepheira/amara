@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<el xmlns:org.4suite.4xslt.ns0='uri2' xmlns:prefix='uri1' org.4suite.4xslt.ns0:att2='bar' prefix:att='foo'/>

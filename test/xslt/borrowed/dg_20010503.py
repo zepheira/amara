@@ -9,8 +9,6 @@ from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
-raise Exception, "FAIL, incomplete port, self.transform is [], results in XsltError: No stylesheets to process."
-
 class test_xslt_order_dependence_dg_20010503(xslt_test):
     source = stringsource("""\
 <?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>

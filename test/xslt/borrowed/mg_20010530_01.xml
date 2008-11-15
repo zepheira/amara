@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.1//EN"
+  "/usr/local/share/xml/xhtml/xhtml11.dtd"
+>
+-->
+<html xmlns="http://www.w3.org/1999/xhtml"
+  version="-//W3C//DTD XHTML 1.1//EN"
+  xml:lang="en">
+  <head>
+    <title>Welcome</title>
+  </head>
+
+  <body xml:lang="en">
+    <h1 xml:lang="en">Welcome</h1>
+    <h1 xml:lang="ja">ようこそ</h1>
+    <hr/>
+    <p xml:lang="en">
+The Kaiwa Club is an informal group for people who want to practice
+Japanese conversation. We welcome members at all levels of
+proficiency.
+</p>
+    <p xml:lang="ja">
+会話倶楽部は日本語の会話を練習したい人のためのインフォーマルなグループで
+ございます。レベルはかかわらず、新しい会員を大歓迎しております。
+</p>
+  </body>
+</html>

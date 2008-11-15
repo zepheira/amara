@@ -1,0 +1,14 @@
+These are sample XSLT style-sheet applications taken from the net, with full attribution where applicable.
+
+Most require no explanation or have comments with information and references.  In a few cases, however, we decided against editing the original source.  In such cases you'll find comments here.
+
+xbel-1.0.xsl
+============
+
+This comes from http://cscene.org/%7ejh/xml/bookmarks/, a very nice collection of Python and other tools for manipulating XBEL bookmark files.
+
+Note that the XBEL distributed with the default Python XML-SIG distro is broken.  Apply ns_parse.py.patch to fix escaping of reserved XML characters such as "&" in XBEL attributes (at least for Netscape)
+
+
+
+

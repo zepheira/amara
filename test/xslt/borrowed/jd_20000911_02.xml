@@ -1,0 +1,88 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:s="http://s.com#"
+    xmlns:v="http://v.com#">
+
+    <!-- A simple Example of a contained bag -->
+    <!--  <rdf:Description about="http://mycollege.edu/courses/6.001">
+        <s:students>
+          <rdf:Bag>
+            <rdf:li resource="http://mycollege.edu/students/Amy"/>
+            <rdf:li resource="http://mycollege.edu/students/Tim"/>
+            <rdf:li resource="http://mycollege.edu/students/John"/>
+            <rdf:li resource="http://mycollege.edu/students/Mary"/>
+            <rdf:li resource="http://mycollege.edu/students/Sue"/>
+          </rdf:Bag>
+        </s:students>
+      </rdf:Description>-->
+
+    <!-- A simple Example of a contained Seq -->
+    <!-- <rdf:Description about="http://mycollege.edu/courses/6.002">
+        <s:students>
+          <rdf:Seq>
+            <rdf:li resource="http://mycollege.edu/students/Amy2"/>
+            <rdf:li resource="http://mycollege.edu/students/Tim2"/>
+            <rdf:li resource="http://mycollege.edu/students/John2"/>
+            <rdf:li resource="http://mycollege.edu/students/Mary2"/>
+            <rdf:li resource="http://mycollege.edu/students/Sue2"/>
+          </rdf:Seq>
+        </s:students>
+      </rdf:Description> -->
+
+  <!-- A contained Alt -->
+  <!-- <rdf:Description about="http://x.org/packages/X11">
+      <s:DistributionSite>
+        <rdf:Alt>
+          <rdf:li resource="ftp://ftp.x.org"/>
+          <rdf:li resource="ftp://ftp.cs.purdue.edu"/>
+          <rdf:li resource="ftp://ftp.eu.net"/>
+        </rdf:Alt>
+      </s:DistributionSite>
+    </rdf:Description> -->
+
+
+    <!-- A simple Example of a contained bag with _ attrs -->
+    <!-- <rdf:Description about="http://mycollege.edu/courses/6.003">
+        <s:students>
+          <rdf:Bag 
+             rdf:_1="http://mycollege.edu/students/Amy4"
+             rdf:_2="http://mycollege.edu/students/Tim4"
+             rdf:_3="http://mycollege.edu/students/John4"
+             rdf:_4="http://mycollege.edu/students/Mary4"
+             rdf:_5="http://mycollege.edu/students/Sue4" />
+        </s:students>
+      </rdf:Description> -->
+
+
+
+  <!-- top level container -->
+  <rdf:Bag ID="pages">
+    <rdf:li resource="http://foo.org/foo.html" />
+    <rdf:li resource="http://bar.org/bar.html" />
+  </rdf:Bag>
+
+  <!-- speak about the bag -->
+  <!--<rdf:Description about="#pages">
+    <s:Creator>Ora Lassila</s:Creator>
+  </rdf:Description>-->
+
+  <!-- Speak about each item in the bag -->
+  <!--<rdf:Description aboutEach="#pages">
+    <s:Creator>Mike Olson</s:Creator>
+  </rdf:Description>-->
+
+
+  <!-- set up resources for aboutEachPrefix -->
+  <!--<rdf:Description about="http://foo.org/doc/page1">
+    <s:Copyright>1998, The Foo Organization</s:Copyright>
+  </rdf:Description>
+  <rdf:Description about="http://foo.org/doc/page2">
+    <s:Copyright>1998, The Foo Organization</s:Copyright>
+  </rdf:Description>-->
+
+  <!-- test aboutEachPrefix  -->
+  <!--<rdf:Description aboutEachPrefix="http://foo.org/doc">
+    <s:Copyright>1998, The Foo Organization</s:Copyright>
+  </rdf:Description>-->
+
+  </rdf:RDF>

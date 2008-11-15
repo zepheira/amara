@@ -1,0 +1,28 @@
+
+Schema Element
+  name: swissBankAccountNo
+  type: {http://www.w3.org/1999/XMLSchema} string
+  Elements with the same type are:
+    swissBankAccountNo
+    luxembourgBankAccountNo
+
+Schema Element
+  name: luxembourgBankAccountNo
+  type: {http://www.w3.org/1999/XMLSchema} string
+  Elements with the same type are:
+    swissBankAccountNo
+    luxembourgBankAccountNo
+
+Schema Element
+  name: englishBankAccountNo
+  type: {http://www.w3.org/1999/XMLSchema} string2
+  Elements with the same type are:
+    englishBankAccountNo
+    frenchBankAccountNo
+
+Schema Element
+  name: frenchBankAccountNo
+  type: {http://www.w3.org/1999/XMLSchema} string2
+  Elements with the same type are:
+    englishBankAccountNo
+    frenchBankAccountNo

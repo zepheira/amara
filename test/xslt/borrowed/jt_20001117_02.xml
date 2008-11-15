@@ -1,0 +1,5 @@
+<vote xmlns:d="http://www.democrat.org/"
+      xmlns:r="http://www.republican.org/"
+      county="Palm Beach"
+      d:count="31563"
+      r:count="23725"/>

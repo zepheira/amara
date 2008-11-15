@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<top>
+  <p>spam</p>
+  <blockquote><p>eggs</p></blockquote>
+  <p class='naught'>lumberjack</p>
+  <p>ok</p>
+</top>

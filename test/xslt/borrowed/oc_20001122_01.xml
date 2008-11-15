@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?> 
+
+                            <!DOCTYPE addressbook > 
+
+                            <addressbook> 
+                            <entry> 
+                            <firstname>Alexandre</firstname> 
+                            <lastname>FAYOLLE</lastname> 
+                            </entry> 
+                            <entry> 
+                            <firstname>Nicolas</firstname> 
+                            <lastname>CHAUVAT</lastname> 
+                            </entry> 
+                            </addressbook>

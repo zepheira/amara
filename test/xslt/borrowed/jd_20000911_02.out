@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<model>
+  <statement>
+    <subject>anonymous:id1</subject>
+    <predicate>http://www.w3.org/1999/02/22-rdf-syntax-ns#li</predicate>
+    <object type='resource'>http://foo.org/foo.html</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id1</subject>
+    <predicate>http://www.w3.org/1999/02/22-rdf-syntax-ns#li</predicate>
+    <object type='resource'>http://bar.org/bar.html</object>
+  </statement>
+</model>

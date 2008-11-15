@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<table>
+  <tr>
+    <th align="left">1</th>
+    <td width="99%">one</td>
+  </tr>
+  <tr>
+    <th align="left">2</th>
+    <td width="99%">two</td>
+  </tr>
+  <tr>
+    <th align="left">3</th>
+    <td width="99%">three</td>
+  </tr>
+  <tr>
+    <th align="left">4</th>
+    <td width="99%">four</td>
+  </tr>
+  <tr>
+    <th align="left">5</th>
+    <td width="99%">five</td>
+  </tr>
+  <tr>
+    <th align="left">6</th>
+    <td width="99%">six</td>
+  </tr>
+</table>

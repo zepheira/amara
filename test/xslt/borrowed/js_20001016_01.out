@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
+    <title>Sorting an RTF</title>
+  </head>
+  <body>
+    <table border='1'>
+      <tr>
+        <th>Name/Version</th>
+        <th>Price / Curr</th>
+        <th>Price (USD)</th>
+      </tr>
+      <tr>
+        <td valign='top'>Second prod</td>
+        <td align='right'>115.95 / GBP</td>
+        <td align='right'>170.77</td>
+      </tr>
+      <tr>
+        <td valign='top'>Third prod</td>
+        <td align='right'>29.95 / EU</td>
+        <td align='right'>25.89</td>
+      </tr>
+      <tr>
+        <td valign='top'>First prod</td>
+        <td align='right'>29.95 / USD</td>
+        <td align='right'>29.95</td>
+      </tr>
+      <tr>
+        <td valign='top'>Fourth prod</td>
+        <td align='right'>50.00 / USD</td>
+        <td align='right'>50.00</td>
+      </tr>
+    </table>
+  </body>
+</html>

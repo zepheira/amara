@@ -1,0 +1,12 @@
+<demo type="notwf">
+<description>Document with erroneous attributes</description>
+<doc>
+{errors}
+        {wrong_char a<error>*</error>b = "23432"/}
+        {mismatched_separator value = <error>"</error>12<error>'</error>/}
+        {wrong_separator_type  value="aa<error>"</error>aa"/}
+        {wrong_separator_type  value='bb<error>'</error>bb'/}
+        {wrong_start <error>XML</error>-ID = "xml234"/}
+{/errors}
+</doc>
+</demo>

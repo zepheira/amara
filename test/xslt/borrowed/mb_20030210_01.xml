@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <title>Test</title>
+  </head>
+  <body>
+    <h1>Test</h1>
+    <p>XML Line 1<br/>XML Line 2<br xmlns=""/>XML Line 3 after HTML br</p>
+    <script language="JavaScript">
+        /*
+            1 &amp; 2 are &lt; 3 but > 0
+        */
+</script>
+    <p xmlns="">HTML line 1<br/>HTML line 2<script language="JavaScript">
+        /*
+            1 &amp; 2 are &lt; 3 but > 0
+        */
+</script></p>
+  </body>
+</html>

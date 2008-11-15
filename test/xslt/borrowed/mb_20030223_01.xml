@@ -1,0 +1,11 @@
+<skills>
+    <skill mark="excellent" name="excellentskill"/>
+    <skill mark="excellent" name="excellent skill"/>
+    <skill mark="good" name="goodskill"/>
+    <skill mark="good" name="goodskill"/>
+    <skill mark="basic" name="basicskill"/>
+    <skill mark="basic" name="basicskill"/>
+    <skill mark="excellent" name="excellentskill"/>
+    <skill mark="good" name="goodskill"/>
+    <skill mark="basic" name="basicskill"/>
+</skills>

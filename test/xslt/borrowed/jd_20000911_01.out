@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<model>
+  <statement>
+    <subject>anonymous:id1</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>JavaWorld</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id1</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://www.javaworld.com</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id1</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/description</predicate>
+    <object type='literal'>
+      Add JavaWorld to your My Netscape page! The
+      JavaWorld channel lets you stay on top of the latest
+      developer tips, tutorials, news, and resources offered by
+      JavaWorld.
+    </object>
+  </statement>
+  <statement>
+    <subject>anonymous:id2</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>JavaWorld Logo</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id2</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/url</predicate>
+    <object type='literal'>http://www.javaworld.com/icons/jw-mynetscape.gif</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id2</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://www.javaworld.com</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id3</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>"Streaming JavaWorld" -- the streaming audio news and talk for Java project managers</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id3</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://www.javaworld.com/common/jw-streaming.html?myns</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id4</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>Streaming JavaWord: An audio program for Java project managers and programmers</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id4</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://www.javaworld.com/common/jw-streaming.html?myns</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id5</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>Programming Java Devices: An Overview</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id5</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://www.javaworld.com/jw-07-1999/jw-07-device.html?myns</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id6</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/title</predicate>
+    <object type='literal'>GO!</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id6</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/description</predicate>
+    <object type='literal'>Search JavaWorld</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id6</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/name</predicate>
+    <object type='literal'>col=jw&amp;qt</object>
+  </statement>
+  <statement>
+    <subject>anonymous:id6</subject>
+    <predicate>http://my.netscape.com/rdf/simple/0.9/link</predicate>
+    <object type='literal'>http://search.javaworld.com/query.html</object>
+  </statement>
+</model>

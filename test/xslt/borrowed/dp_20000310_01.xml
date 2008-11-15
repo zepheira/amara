@@ -1,0 +1,31 @@
+<?xml version='1.0'?>
+
+<!DOCTYPE ns1:ns-test [
+<!ELEMENT ns1:ns-test (block)+>
+<!ATTLIST ns-test  xmlns:ns1 CDATA #FIXED "http://ns1.com"
+          
+>
+<!ELEMENT ns2:block (para)+>
+<!ATTLIST block  xmlns:ns2 CDATA #FIXED "http://ns2.com"
+>
+<!ELEMENT para (#PCDATA)>
+<!ATTLIST para id ID #IMPLIED
+               another CDATA #IMPLIED>]>
+
+<ns1:ns-test xmlns:ns1= "http://ns1.com">
+
+  <block>
+    <para>Para in block 1, main document namespace </para>
+  </block>
+
+  <ns2:block xmlns:ns2="http://ns2.com">
+    <para>Para in block 2</para>
+  </ns2:block>
+
+    <ns3:block xmlns:ns3="http://ns3.com">
+      <long:para xmlns:long="A long namespace uri">Para in block
+3</long:para>
+    </ns3:block>
+
+
+</ns1:ns-test>

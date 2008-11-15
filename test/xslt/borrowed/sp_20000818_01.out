@@ -1,0 +1,70 @@
+<html>
+  <body>
+    <h1>XSL Numbering test</h1>
+    <blockquote>
+      <p>For  '':
+            <ul>
+          <li>'single' number = 1</li>
+          <li>'multiple' number = 1.</li>
+          <li>'any' number = 1</li>
+        </ul>
+      </p>
+      <p>For  '1':
+            <ul>
+          <li>'single' number = 1</li>
+          <li>'multiple' number = 1.</li>
+          <li>'any' number = 1</li>
+        </ul>
+      </p>BlahBlahBlah
+      <p>For  '1.a':
+        <ul>
+          <li>'single' number = 1</li>
+          <li>'multiple' number = 1.1.</li>
+          <li>'any' number = 2</li>
+        </ul>
+      </p>Nojasdsa
+      <p>For  '1.a.a':
+        <ul>
+          <li>'single' number = 1</li>
+          <li>'multiple' number = 1.1.1.</li>
+          <li>'any' number = 3</li>
+        </ul>
+      </p>BKjasda
+      <p>For  '1.a.b':
+        <ul>
+          <li>'single' number = 2</li>
+          <li>'multiple' number = 1.1.2.</li>
+          <li>'any' number = 4</li>
+        </ul>
+      </p>BKjasda
+      <p>For  '1.b':
+        <ul>
+          <li>'single' number = 2</li>
+          <li>'multiple' number = 1.2.</li>
+          <li>'any' number = 5</li>
+        </ul>
+      </p>kjhkdsfsdfdBlahBlahBlah
+      <p>For  '2':
+        <ul>
+          <li>'single' number = 2</li>
+          <li>'multiple' number = 2.</li>
+          <li>'any' number = 6</li>
+        </ul>
+      </p>Blah                
+      <p>For  '':
+        <ul>
+          <li>'single' number = 2</li>
+          <li>'multiple' number = 2.</li>
+          <li>'any' number = 2</li>
+        </ul>
+      </p>Blah
+      <p>For  '1':
+        <ul>
+          <li>'single' number = 1</li>
+          <li>'multiple' number = 1.</li>
+          <li>'any' number = 7</li>
+        </ul>
+      </p>Blah
+    </blockquote>
+  </body>
+</html>

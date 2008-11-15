@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tag>Namespace:http://ns1.com</tag>
+<tag>name: ns1:ns-test</tag>
+<tag>local-name: ns-test</tag>
+<tag>Content: 
+
+  </tag>
+
+  <tag>Namespace: Null namespace</tag>
+<tag>name: block</tag>
+<tag>local-name: block</tag>
+<tag>Content: 
+    </tag>
+    <tag>Namespace: Null namespace</tag>
+<tag>name: para</tag>
+<tag>local-name: para</tag>
+<tag>Content: Para in block 1, main document namespace </tag>
+  
+
+  <tag>Namespace:http://ns2.com</tag>
+<tag>name: ns2:block</tag>
+<tag>local-name: block</tag>
+<tag>Content: 
+    </tag>
+    <tag>Namespace: Null namespace</tag>
+<tag>name: para</tag>
+<tag>local-name: para</tag>
+<tag>Content: Para in block 2</tag>
+  
+
+    <tag>Namespace:http://ns3.com</tag>
+<tag>name: ns3:block</tag>
+<tag>local-name: block</tag>
+<tag>Content: 
+      </tag>
+      <tag>Namespace:A long namespace uri</tag>
+<tag>name: long:para</tag>
+<tag>local-name: para</tag>
+<tag>Content: Para in block
+3</tag>
+    
+
+

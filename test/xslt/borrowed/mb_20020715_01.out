@@ -1,0 +1,18 @@
+Element: docu
+# of descendants: 4
+-----------------------------
+Comment: quotation
+# of descendants: 0
+-----------------------------
+Element: t
+# of descendants: 1
+-----------------------------
+Attribute: xml:lang
+# of descendants: 0
+-----------------------------
+Text node: To be or not to be
+# of descendants: 0
+-----------------------------
+P.I. node: that-is-the
+# of descendants: 0
+-----------------------------

@@ -1,0 +1,27 @@
+<x>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+	<xsd:element name="swissBankAccountNo" type="xsd:string"/>
+</xsd:schema>
+
+<schema xmlns="http://www.w3.org/1999/XMLSchema">
+	<element name="luxembourgBankAccountNo" type="string"/>
+</schema>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+	<xsd:element name="englishBankAccountNo" type="xsd:string2"/>
+</xsd:schema>
+
+<schema xmlns="http://www.w3.org/1999/XMLSchema">
+	<element name="frenchBankAccountNo" type="string2"/>
+</schema>
+
+<xsd:schema xmlns:xsd="file:/notschema">
+	<xsd:element name="swissBankAccountNo2" type="xsd:string"/>
+</xsd:schema>
+
+<schema xmlns="file:/notschema">
+	<element name="luxembourgBankAccountNo2" type="string"/>
+</schema>
+
+</x>

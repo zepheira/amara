@@ -1,0 +1,11 @@
+
+<doc xmlns="http://one">
+<head>test</head>
+<section>
+<head>one</head>
+<p>this paragraph
+this paragraph</p>
+<p>another paragraph
+another paragraph</p>
+</section>
+</doc>

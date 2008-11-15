@@ -1,0 +1,18 @@
+<AAA> 
+            <XXX/>
+           <BBB bb = "1" ccc="OOOOO"> 
+                <CCC uuu="234">c11 </CCC> 
+                <CCC ccc="ZZZ">c12 </CCC> 
+                <CCC ccc="XXX">c13 </CCC> 
+            </BBB> 
+           <BBB bb = "2" > 
+                <CCC>c21 </CCC> 
+                <CCC ccc="AAA">c22 </CCC> 
+                <CCC ccc="XXX">c23 </CCC> 
+            </BBB> 
+           <BBB bb = "2" > 
+                <CCC>c31</CCC> 
+                <CCC>c32</CCC> 
+                <CCC sss="WWWW">c33</CCC>
+            </BBB> 
+ </AAA>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<two:html xmlns:one='http://one' xmlns:two='http://two'>
+  <two:head>
+    <two:title>test</two:title>
+  </two:head>
+  <two:body>
+    <two:h1>test</two:h1>
+    <two:h2>one</two:h2>
+    <two:p>this paragraph
+this paragraph</two:p>
+    <two:p>another paragraph
+another paragraph</two:p>
+  </two:body>
+</two:html>

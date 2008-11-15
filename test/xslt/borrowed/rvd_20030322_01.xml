@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cities>
+  <city name="Barcelona" country="Espana"/>
+  <city name="Paris" country="France"/>
+  <city name="Roma" country="Italia"/>
+  <city name="Madrid" country="Espana"/>
+  <city name="Milano" country="Italia"/>
+  <city name="Firenze" country="Italia"/>
+  <city name="Napoli" country="Italia"/>
+  <city name="Lyon" country="France"/>
+</cities>

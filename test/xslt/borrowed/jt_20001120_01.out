@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+   String value of NaN: NaN
+   String value of boolean value of NaN: false
+   String value of boolean value of string value of NaN: true
+   String value of numerical value of boolean value of NaN: 0
+   String value of numerical value of boolean value of string value of NaN: 1"""
+
+   saxon_expected = """   String value of NaN: NaN
+   String value of boolean value of NaN: false
+   String value of boolean value of string value of NaN: true
+   String value of numerical value of boolean value of NaN: 0
+   String value of numerical value of boolean value of string value of NaN: 1

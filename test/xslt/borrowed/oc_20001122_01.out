@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'>
+    <title>Address Book Test</title>
+  </head>
+  <body>
+    <p>My friends are: 
+                            <ul>
+        <li>Alexandre FAYOLLE</li>
+        <li>Nicolas CHAUVAT</li>
+      </ul>
+    </p>
+  </body>
+</html>

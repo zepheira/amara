@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'>
+    <title>Cars Pool Management</title>
+    <meta content='text/html' http-equiv='content-type'>
+  </head>
+  <body bgcolor='#FFFFFF'>
+    <h1>Cars Pool Management</h1>
+    <table cellpadding='3' border='1'>
+      <tr>
+        <td>State</td>
+        <td>Brand</td>
+        <td>Type</td>
+        <td>Registration Number</td>
+      </tr>
+      <tr>
+        <td><b>Free</b></td>
+        <td>Ferrari</td>
+        <td>F40</td>
+        <td>459 CBO 75</td>
+      </tr>
+      <tr>
+        <td>
+        Used
+      </td>
+        <td>Porsche</td>
+        <td>911</td>
+        <td>347 CQQ 75</td>
+      </tr>
+    </table>
+  </body>
+</html>

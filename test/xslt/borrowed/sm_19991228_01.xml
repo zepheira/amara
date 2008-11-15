@@ -1,0 +1,6 @@
+<doc>
+  <p>This is some text.</p>
+  <programlisting><![CDATA[This is a paragraph
+  with some newlines
+  does it work?]]></programlisting>
+</doc>

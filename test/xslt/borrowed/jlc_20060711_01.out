@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hello>foo := `b'
+  foo := `c'
+  foo := `b'
+  foo := `c'
+  thing := `a'
+  thing := `b'
+  thing := `c'
+  thing := `a'
+  thing := `a'
+  </hello>

@@ -1,0 +1,1 @@
+<condition>car[@price &lt; 1000]</condition>

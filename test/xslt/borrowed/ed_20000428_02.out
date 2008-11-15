@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss><channel xmlns='http://my.netscape.com/rdf/simple/0.9/'>
+    <title>JavaWorld</title>
+    <link>http://www.javaworld.com</link>
+    <description>
+      Add JavaWorld to your My Netscape page! The
+      JavaWorld channel lets you stay on top of the latest
+      developer tips, tutorials, news, and resources offered by
+      JavaWorld.
+    </description>
+  <image>
+    <title>JavaWorld Logo</title>
+    <url>http://www.javaworld.com/icons/jw-mynetscape.gif</url>
+    <link>http://www.javaworld.com</link>
+  </image><item>
+    <title>"Streaming JavaWorld" -- the streaming audio news and talk for Java project managers</title>
+    <link>http://www.javaworld.com/common/jw-streaming.html?myns</link>
+  </item><item>
+    <title>Streaming JavaWord: An audio program for Java project managers and programmers</title>
+    <link>http://www.javaworld.com/common/jw-streaming.html?myns</link>
+  </item><item>
+    <title>Programming Java Devices: An Overview</title>
+    <link>http://www.javaworld.com/jw-07-1999/jw-07-device.html?myns</link>
+  </item></channel></rss>

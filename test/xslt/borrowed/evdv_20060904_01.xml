@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice>
+   <TotalAmount>10000</TotalAmount>
+   <InvoiceRow>  
+     <RowAmount>3000</RowAmount>
+   </InvoiceRow>
+   <InvoiceRow>  
+     <RowAmount>7000</RowAmount>
+   </InvoiceRow>
+</Invoice>

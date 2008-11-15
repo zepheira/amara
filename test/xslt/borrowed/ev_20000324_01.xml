@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<b ident="0" cr="1">
+    <w value="this"/>
+    <w value="is"/>
+    <w value="a"/>
+    <w value="list"/>
+    <w value=":"/>
+    <b ident="0" cr="1">
+        <w value="."/>
+        <b ident="1" cr="0">
+            <w value="itemmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"/>
+            <w value="1"/>
+        </b>
+    </b>
+    <b ident="0" cr="1">
+        <w value="."/>
+        <b ident="1" cr="0">
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="item"/>
+            <w value="2"/>
+        </b>
+    </b>
+    <w value="end"/>
+    <w value="of"/>
+    <w value="the"/>
+    <w value="list"/>
+    <b ident="1" cr="1">
+        <w value="indentation"/>
+    </b>
+</b>

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<exp value='5'>
+      <add-exp value='5'>
+        <add-exp value='2'>
+          <mult-exp value='2'>
+            <primary-exp value='2'>
+              <literal value='2'/>
+            </primary-exp>
+          </mult-exp>
+        </add-exp>
+        <op-add/>
+        <mult-exp value='3'>
+          <primary-exp value='3'>
+            <literal value='3'/>
+          </primary-exp>
+        </mult-exp>
+      </add-exp>
+    </exp>

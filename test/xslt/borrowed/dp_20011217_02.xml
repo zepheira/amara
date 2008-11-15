@@ -1,0 +1,3 @@
+<elem xmlns="http:default.com" xmlns:foo="http://foo.com">
+  <foo:child/>
+</elem>

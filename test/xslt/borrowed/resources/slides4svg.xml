@@ -1,0 +1,131 @@
+<?xml version='1.0'?>
+<!--
+<!DOCTYPE slideshow SYSTEM "slides.dtd">
+-->
+<slideshow> 
+ 
+<title>Introduction to SVG</title>
+
+<metadata>
+  <speaker>Uche Ogbuji</speaker>
+	<jobTitle>Principal Consultant</jobTitle>
+  <organization>Fourthought Inc.</organization>
+  <presentationDate>2000-09-25</presentationDate>
+  <presentationLocation>Boulder, CO</presentationLocation>
+  <occasion>Front Range XML Keiretsu</occasion>
+</metadata>
+
+<slideset> 
+ 
+  <title>Background and Motivation</title>
+ 
+	<slide id="I.1">
+		<title>Why Yet Another Graphics Format?</title>
+
+		<item>Leveraging the existing XML technology base</item>
+		<item>Integrating graphics into the semantic Web</item>
+        <speakerNote>Talk about RDF, XLink, XSLT, DOM, etc.</speakerNote>
+		<item>Giving browsers access to image <emphasis>internals</emphasis></item>
+        <item>Supporting the next generation of browsers</item>
+	</slide>
+
+</slideset> 
+ 
+<slideset> 
+ 
+    <title>The ABCs of SVG</title>
+
+	<slide id="II.1">
+		<title>SVG Features</title>
+
+		<heading>Basic Features</heading>
+		<bulletlist>
+			<item>Coordinate spaces and transforms</item>
+			<item>Graphics primitives: ellipses, polygons, polylines, curves, etc.</item>
+			<item>Stylesheets: CSS, XSL, etc.</item>
+		</bulletlist>
+
+		<heading>Advanced Features</heading>
+		<bulletlist>
+			<item>Raster filter effects</item>
+			<item>Alpha masking</item>
+			<item>Animation</item>
+			<item>Zooming and Panning</item>
+			<item>Scripting and extensibility</item>
+		</bulletlist>
+
+	</slide>
+
+	<slide id="II.2">
+		<title>SVG Sample Source</title>
+
+        <preformatted>
+<![CDATA[
+<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20000802//EN" 
+ "http://www.w3.org/TR/2000/CR-SVG-20000802/DTD/svg-20000802.dtd"
+>
+<svg width="800" height="800">
+  <desc>SVG Sample for SunWorld Article</desc>
+
+  <style type="text/css">
+    .Lagos { fill: white; stroke: green; stroke-width: 30 }
+    .ViaAppia { fill: none; stroke: black; stroke-width: 10 }
+    .OrthoLogos { font-size: 32; font-family: helvetica }
+  </style>
+
+  <ellipse transform="translate(500 200)" rx="250" ry="100"
+           style="fill: brown; stroke: yellow; stroke-width: 10"/>
+
+  <polygon transform="translate(100 200) rotate(45)"
+           class="Lagos"
+           points="350,75 379,161 469,161 397,215 423,301 350,250 277,
+                   301 303,215 231,161 321,161"/>
+
+  <text class="OrthoLogos" x="400" y="400">TO KALON</text>
+
+  <path class="ViaAppia" d="M500,600 C500,500 650,500 650,600
+                            S800,700 800,600"/>
+</svg>
+]]>
+        </preformatted>
+
+	</slide>
+
+	<slide id="II.3">
+		<title>SVG Sample Output</title>
+		<graphic file="sample.svg" width="800" height="800"/>
+	</slide>
+
+</slideset> 
+
+<slideset> 
+ 
+  <title>The SVG Community</title>
+ 
+	<slide id="III.1">
+		<title>Some SVG Resources</title>
+
+        <item><link href="http://www.w3.org/Graphics/SVG">The W3C's SVG Page</link></item>
+        <item><link href="http://dmoz.org/Computers/Data_Formats/Graphics/Vector/SVG/">OpenDirectory SVG Links</link></item>
+        <item><link href="http://www.sun.com/xml/developers/svg-slidetoolkit/">How to make slides like these</link></item>
+	</slide>
+
+	<slide id="III.2">
+		<title>Quote Them on it</title>
+
+        <para>"Over twenty organizations, including Sun Microsystems, Adobe, Apple, IBM, and Kodak, have been involved in defining SVG."<emphasis role="note"> -- Vincent J. Hardy, Sun</emphasis></para>
+
+        <para>"I have been working with computer graphics for
+over 25 years and split an immense amount of blood on the floor at
+midnight. With SVG I can now do almost anything I want [except for 3D - in
+which I also have a molecular interest]. And I suspect that I can stick
+with it for the foreseeable future." <emphasis role="note">-- Peter Murray-Rust, XML-DEV Founder</emphasis></para>
+        <para>"I envision a day where we have XHTML Web pages with SVG as the "chrome" of our interfaces--defining the buttons, the layers, the coloring, and the grid--where we can actually use a language that's XML-based rather than theses separate GIF files that can take so long to download. That's certainly one vision; that vision not just extending on the Web, on a monitor, but wireless onto my Palm Pilot or to print and other output as well." <emphasis role="note">-- Steve Mulder, Razorfish</emphasis></para>
+
+	</slide>
+
+</slideset> 
+
+</slideshow>
+

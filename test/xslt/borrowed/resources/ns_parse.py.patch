@@ -1,0 +1,38 @@
+*** python-xml-0.5.1/demo/xbel/ns_parse.py	Wed Dec  2 05:34:02 1998--- 4TH/demo/xbel/ns_parse.py	Thu Mar  9 10:04:06 2000
+***************
+*** 8,13 ****
+--- 8,23 ----
+  import bookmark
+  import string
+  
++ escape_attrval = {
++     '"': '&quot;',
++     '&': '&amp;'
++ }
++ 
++ def EscapeString(escape_dict, text):
++     for k in escape_dict.keys():
++     	text = string.replace(text, k, escape_dict[k])
++     return text
++ 
+  # --- SAX handler for Netscape bookmarks
+  
+  class NetscapeHandler(saxlib.HandlerBase):
+***************
+*** 40,46 ****
+              if d.has_key('last_modified'): self.modified=d["last_modified"]
+              else: self.modified = None
+              
+!             self.url=d["href"]
+          elif name=='title':  # Could equally use h1 element
+              self.cur_elem = 'title'
+              self.bms.owner = ""
+--- 50,56 ----
+              if d.has_key('last_modified'): self.modified=d["last_modified"]
+              else: self.modified = None
+              
+!             self.url=EscapeString(escape_attrval, d["href"])
+          elif name=='title':  # Could equally use h1 element
+              self.cur_elem = 'title'
+              self.bms.owner = ""
+

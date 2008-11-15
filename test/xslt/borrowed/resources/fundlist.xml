@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FundList>
+	<Fund rowid="1">
+		<fundName>Sarah's MoneyMarket Fund</fundName>
+		<allocCategory>Cash</allocCategory>
+		<assetClass>MoneyMarket</assetClass>
+		<capitalization/>
+		<id>12845</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="2">
+		<fundName>Bob's MoneyMarket Fund</fundName>
+		<allocCategory>Cash</allocCategory>
+		<assetClass>MoneyMarket</assetClass>
+		<capitalization/>
+		<id>11475</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="3">
+		<fundName>Will's Fund</fundName>
+		<allocCategory>Domestic Equity</allocCategory>
+		<assetClass>Growth</assetClass>
+		<capitalization>Small Cap</capitalization>
+		<id>12345</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="4">
+		<fundName>John's Fund</fundName>
+		<allocCategory>Domestic Equity</allocCategory>
+		<assetClass>Growth</assetClass>
+		<capitalization>Small Cap</capitalization>
+		<id>11445</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="5">
+		<fundName>Patrick's Fund</fundName>
+		<allocCategory>Domestic Equity</allocCategory>
+		<assetClass>Value</assetClass>
+		<capitalization>Medium Cap</capitalization>
+		<id>12378</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="6">
+		<fundName>Alex's Fund</fundName>
+		<allocCategory>Domestic Equity</allocCategory>
+		<assetClass>Aggressive Growth</assetClass>
+		<capitalization>Medium Cap</capitalization>
+		<id>17378</id>
+		<percent>0</percent>
+		<risk>5</risk>
+	</Fund>
+	<Fund rowid="7">
+		<fundName>Pablo's Fund</fundName>
+		<allocCategory>International Equity</allocCategory>
+		<assetClass>Growth</assetClass>
+		<capitalization>Small Cap</capitalization>
+		<id>12345</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="8">
+		<fundName>Pierre's Fund</fundName>
+		<allocCategory>International Equity</allocCategory>
+		<assetClass>Growth</assetClass>
+		<capitalization>Small Cap</capitalization>
+		<id>11645</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="9">
+		<fundName>Bharat's Fund</fundName>
+		<allocCategory>International Equity</allocCategory>
+		<assetClass>Value</assetClass>
+		<capitalization>Small Cap</capitalization>
+		<id>12378</id>
+		<percent>0</percent>
+		<risk>5</risk>
+	</Fund>
+	<Fund rowid="10">
+		<fundName>Onikaru's Fund</fundName>
+		<allocCategory>International Equity</allocCategory>
+		<assetClass>Value</assetClass>
+		<capitalization>Large Cap</capitalization>
+		<id>13474</id>
+		<percent>0</percent>
+		<risk>4</risk>
+	</Fund>
+	<Fund rowid="11">
+		<fundName>Gunther's Fund</fundName>
+		<allocCategory>International Equity</allocCategory>
+		<assetClass>Aggressive Growth</assetClass>
+		<capitalization>Medium Cap</capitalization>
+		<id>17378</id>
+		<percent>0</percent>
+		<risk>5</risk>
+	</Fund>
+</FundList>

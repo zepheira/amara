@@ -1,0 +1,6 @@
+<x>
+<thing><quantity> 1</quantity><price> 2</price></thing>
+<thing><quantity> 4</quantity><price> 5</price></thing>
+<thing><quantity> 3</quantity><price>10</price></thing>
+<thing><quantity> 2</quantity><price> 1</price></thing>
+</x>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b>
+  <b>
+    <b>
+      <b>
+        <node v="1"/>
+      </b>
+      <b>
+        <node v="2"/>
+      </b>
+    </b>
+    <b>
+      <b>
+        <node v="3"/>
+      </b>
+      <b>
+        <node v="4"/>
+      </b>
+    </b>
+  </b>
+  <b>
+    <b>
+      <b>
+        <node v="5"/>
+      </b>
+      <b>
+        <node v="6"/>
+      </b>
+    </b>
+    <b>
+      <b>
+        <node v="7"/>
+      </b>
+      <b>
+        <node v="8"/>
+      </b>
+    </b>
+  </b>
+</b>

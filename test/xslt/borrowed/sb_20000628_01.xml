@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<list>
+    <item a="1" include="yes"/>
+    <item a="2" include="no"/>
+    <item a="3" include="no"/>
+    <item a="4" include="no"/>
+    <item a="5" include="yes"/>
+    <item a="6" include="yes"/>
+    <item a="7" include="yes"/>
+</list>
