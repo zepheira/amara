@@ -64,7 +64,8 @@ class filesource(testsource):
             # it is relative to the calling module
             module = sys._getframe(1).f_globals['__name__']
             module = sys.modules[module]
-            path = os.path.join(os.path.dirname(module.__file__), path)
+            moduledir = os.path.dirname(os.path.abspath(module.__file__))
+            path = os.path.join(moduledir, path)
         testsource.__init__(self, path, None, validate, xinclude)
 
 class stringsource(testsource):
