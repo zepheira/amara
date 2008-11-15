@@ -1,0 +1,30 @@
+
+var g_books = [
+
+    , {
+id: 1,
+name: 'Code Generation in Action',
+first: 'Jack',
+last: 'Herrington',
+publisher: 'Manning'
+}
+  
+    , {
+id: 2,
+name: 'PHP Hacks',
+first: 'Jack',
+last: 'Herrington',
+publisher: 'O\'Reilly'
+}
+  
+    , {
+id: 3,
+name: 'Podcasting Hacks',
+first: 'Jack',
+last: 'Herrington',
+publisher: 'O\'Reilly'
+}
+  
+
+];
+  

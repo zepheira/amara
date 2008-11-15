@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE document>
+
+<document>
+  <doc>
+    <div>doc1-div1</div>
+    <div>doc1-div2</div>
+  </doc>
+  <doc>
+    <div>doc2-div1</div>
+  </doc>
+  <doc>
+    <div>doc3-div1</div>
+    <div>doc3-div2</div>
+    <div>doc3-div3</div>
+  </doc>
+</document>

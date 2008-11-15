@@ -1,0 +1,50 @@
+
+EXSLT 1.9
+In pattern exslt:revision and count(dc:title) > 1:
+   A rdf:Description element with exslt:revision must contain no more than one dc:title element.
+In pattern exslt:revision and count(dc:rights) > 1:
+   A rdf:Description element with exslt:revision must contain no more than one dc:rights element.
+In pattern exslt:version and dc:creator:
+   A rdf:Description element with exslt:version must contain at least one dc:creator element.
+In pattern exslt:version and dc:date:
+   A rdf:Description element with exslt:version must contain one dc:date element.
+In pattern exslt:version and dc:description:
+   A rdf:Description element with exslt:version must contain one dc:description element.
+In pattern exslt:revision and count(dc:title) > 1:
+   A rdf:Description element with exslt:revision must contain no more than one dc:title element.
+In pattern exslt:revision and count(dc:rights) > 1:
+   A rdf:Description element with exslt:revision must contain no more than one dc:rights element.
+In pattern @function:
+   A exslt:implementation element must have a function attribute.
+In pattern @algorithm:
+   A exslt:implementation element must have an algorithm attribute.
+In pattern @function:
+   A exslt:implementation element must have a function attribute.
+In pattern @algorithm:
+   A exslt:implementation element must have an algorithm attribute.
+In pattern @function:
+   A exslt:implementation element must have a function attribute.
+In pattern @algorithm:
+   A exslt:implementation element must have an algorithm attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @template:
+   A exslt:use-case element must have a template attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @template:
+   A exslt:use-case element must have a template attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @template:
+   A exslt:use-case element must have a template attribute.
+In pattern @result:
+   A exslt:use-case element must have a result attribute.
+In pattern @function:
+   A exslt:use-case element must have a function attribute.
+In pattern @result:
+   A exslt:use-case element must have a result attribute.
