@@ -7,9 +7,9 @@ import warnings
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource
 
-
 def __bootstrap__(module_dict):
-    borrowed_dir = os.path.join(os.path.dirname(__file__), 'borrowed')
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    borrowed_dir = os.path.join(module_dir, 'borrowed')
     for source in glob.iglob(os.path.join(borrowed_dir, '*.xml')):
         basename, ext = os.path.splitext(source)
         transform = basename + '.xslt'
