@@ -2,6 +2,7 @@
 # test/xslt/__init__.py
 import os
 import sys
+import difflib
 
 from amara import Error
 from amara.lib import inputsource, iri, treecompare

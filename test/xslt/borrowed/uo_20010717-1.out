@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<z:doc xmlns:z="http://example.com/z" xmlns:exslt="http://www.oracle.com/XSL/Transform/java/" exslt:dummy="">
+  <hello/>
+</z:doc>

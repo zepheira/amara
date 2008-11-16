@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/' name='EndorsementSearch' targetNamespace='http://namespaces.snowboard-info.com' xmlns='http://schemas.xmlsoap.org/wsdl/' xmlns:esxsd='http://schemas.snowboard-info.com/EndorsementSearch.xsd' xmlns:es='http://www.snowboard-info.com/EndorsementSearch.wsdl'>
+  <types>
+    <schema xmlns='http://www.w3.org/1999/XMLSchema' targetNamespace='http://namespaces.snowboard-info.com'>
+      <element name='GetEndorsingBoarder'>
+        <complexType>
+          <sequence>
+            <element name='manufacturer' type='string'/>
+            <element name='model' type='string'/>
+          </sequence>
+        </complexType>
+      </element>
+      <element name='GetEndorsingBoarderResponse'>
+        <complexType>
+          <all>
+            <element name='endorsingBoarder' type='string'/>
+          </all>
+        </complexType>
+      </element>
+      <element name='GetEndorsingBoarderFault'>
+        <complexType>
+          <all>
+            <element name='errorMessage' type='string'/>
+          </all>
+        </complexType>
+      </element>
+    </schema>
+  </types>
+  <rdf:RDF xmlns:wsdl='http://schemas.xmlsoap.org/wsdl/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+    <message rdf:ID='GetEndorsingBoarderRequest' name='GetEndorsingBoarderRequest'>
+      <part element='esxsd:GetEndorsingBoarder' name='body'/>
+    </message>
+    <message rdf:ID='GetEndorsingBoarderResponse' name='GetEndorsingBoarderResponse'>
+      <part element='esxsd:GetEndorsingBoarderResponse' name='body'/>
+    </message>
+    <portType rdf:ID='GetEndorsingBoarderPortType' name='GetEndorsingBoarderPortType'>
+      <operation rdf:ID='GetEndorsingBoarder' name='GetEndorsingBoarder'>
+        <input message='es:GetEndorsingBoarderRequest'/>
+        <output message='es:GetEndorsingBoarderResponse'/>
+        <fault message='es:GetEndorsingBoarderFault'/>
+      </operation>
+    </portType>
+    <binding rdf:ID='EndorsementSearchSoapBinding' type='es:GetEndorsingBoarderPortType' name='EndorsementSearchSoapBinding'>
+      <soap:binding transport='http://schemas.xmlsoap.org/soap/http' style='document'/>
+      <operation rdf:ID='GetEndorsingBoarder' name='GetEndorsingBoarder'>
+        <soap:operation soapAction='http://www.snowboard-info.com/EndorsementSearch'/>
+        <input>
+        <soap:body use='literal' namespace='http://schemas.snowboard-info.com/EndorsementSearch.xsd'/>
+      </input>
+        <output>
+        <soap:body use='literal' namespace='http://schemas.snowboard-info.com/EndorsementSearch.xsd'/>
+      </output>
+        <fault>
+        <soap:body use='literal' namespace='http://schemas.snowboard-info.com/EndorsementSearch.xsd'/>
+      </fault>
+      </operation>
+    </binding>
+    <service rdf:ID='EndorsementSearchService' name='EndorsementSearchService'>
+      <documentation>snowboarding-info.com Endorsement Service</documentation>
+      <port rdf:ID='GetEndorsingBoarderPort' binding='es:EndorsementSearchSoapBinding' name='GetEndorsingBoarderPort'>
+        <soap:address location='http://www.snowboard-info.com/EndorsementSearch'/>
+      </port>
+    </service>
+  </rdf:RDF>
+</definitions>

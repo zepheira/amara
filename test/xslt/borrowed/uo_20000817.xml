@@ -1,0 +1,291 @@
+<?xml version="1.0" ?>
+
+<!--
+	===========================================================================
+								RSS VALIDATOR
+						A Schematron Schema For RSS 0.91
+
+								Version 1.0
+	===========================================================================
+
+	===========================================================================
+	DESCRIPTION:
+	===========================================================================
+
+	This file comprises a Schematron[1] schema for the RSS content syndication
+	format [2]. The validation rules for the schema have been compiled from
+	the DTD and available supporting documentation [2,3,4].
+
+	To use the validator you need the following:
+		- A XSLT processor (the schema was developed using XT [5])
+		- The Schematron XSLT application [1].
+
+	The schema is run through the Schematron application which outputs an XSLT
+	stylesheet which can then be used to validate RSS files.
+
+	Please provide any comments or feedback on this validator to
+	leigh@xmlhack.com
+
+	===========================================================================
+	REFERENCES:
+	===========================================================================
+
+	[1]. http://www.ascc.net/xml/resource/schematron/schematron.html
+	[2]. http://backend.userland.com/rss091
+	[3]. http://my.netscape.com/publish/help/mnn20/quickstart.html
+	[4]. http://my.netscape.com/publish/formats/rss-0.91.dtd
+
+
+	===========================================================================
+	LICENSE:
+	===========================================================================
+
+	The contents are dedicated to the public domain by the author,
+	Leigh Dodds <leigh@xmlhack.com>, except that Leigh Dodds retains the moral
+	right to be known as the author.
+
+	===========================================================================
+
+-->
+
+<schema xmlns='http://www.ascc.net/xml/schematron'>
+
+	<pattern name="Structural Validation">
+
+		<rule context="rss">
+			<assert test="@version">An RSS version identifier should be supplied</assert>
+			<report test="@version != 0.91">This Schematron validator is for RSS 0.91 only</report>
+			<assert test="count(channel) = 1">An RSS element can only contain a single channel element</assert>
+		</rule>
+
+		<rule context="channel">
+			<assert test="title">You must provide a title for your channel</assert>
+			<assert test="link">You must provide a link for your channel</assert>
+			<assert test="description">You must provide a description of your channel</assert>
+			<assert test="language">You must specify the language in which the content of
+			your channel is written.</assert>
+			<assert test="count(copyright) &lt; 2">Only one copyright element should be
+			supplied per channel</assert>
+			<assert test="count(image) &lt; 2">Only one image element should be supplied per channel</assert>
+			<assert test="count(textinput) &lt; 2">Only one textinput element can be supplied per channel</assert>
+			<assert test="count(skipHours) &lt; 2">One one skipHours element can be supplied per channel</assert>
+			<assert test="count(skipDays) &lt; 2">One one skipDays element can be supplied per channel</assert>
+			<assert test="managingEditor">You should provide an email address for
+			the managing editor of your channel</assert>
+			<assert test="webMaster">You should provide an email address for
+			the webmaster of your channel</assert>
+		</rule>
+
+		<rule context="skipHours">
+			<assert test="count(hour) &gt; 0">The skipHours element should contain a least one
+			hour element</assert>
+		</rule>
+
+		<rule context="skipDays">
+			<assert test="count(day) &gt; 0">The skipDays element should contain a least one
+			day element</assert>
+		</rule>
+
+		<rule context="title|description|link">
+			<assert test="parent::channel or parent::image or parent::item or parent::textinput">
+			A <name/> element can only be contained with a channel, image, item or textinput element.
+			</assert>
+			<report test="child::*">A <name/> element cannot contain sub-elements, remove any
+			additional markup</report>
+		</rule>
+
+		<rule context="name">
+			<assert test="parent::textinput">A name element can only be contained within a
+			textinput element</assert>
+		</rule>
+
+		<rule context="url">
+			<assert test="parent::image">A url element can only be contained within an
+			image element</assert>
+		</rule>
+
+		<rule context="width">
+			<assert test="parent::image">A width element can only be contained within
+			an image element</assert>
+		</rule>
+
+		<rule context="height">
+			<assert test="parent::image">A height element can only be contained within
+			an image element</assert>
+		</rule>
+
+		<rule context="image">
+			<assert test="title">Images must have titles. The title is used for the
+			ALT text of the image.</assert>
+			<assert test="count(width) = count(height)">Width and Height elements should be balanced</assert>
+			<assert test="url">This image does not have a url</assert>
+		</rule>
+
+		<rule context="textinput">
+			<assert test="title">A textinput must have a title. It is used to label the submit
+			button for the field</assert>
+			<assert test="name">A textinput must have a name. It is used to identify the input
+			element in the form</assert>
+			<assert test="link">A textinput must have a link. It is used to identify the target
+			to which the form is sent</assert>
+		</rule>
+
+		<rule context="item">
+			<assert test="parent::channel">An item element can only occur within a channel element</assert>
+			<assert test="title">You must provide a title for this item</assert>
+			<assert test="link">You must provide a link for this item</assert>
+		</rule>
+
+		<rule context="width">
+			<assert test="preceding::height or following::height">A width should be accompanied
+			by a height</assert>
+		</rule>
+
+		<rule context="height">
+			<assert test="preceding::width or following::width">A height should be accompanied
+			by a width</assert>
+		</rule>
+
+
+	</pattern>
+
+	<pattern name="Content Validation" see="http://backend.userland.com/rss091">
+
+		<rule context="language">
+			<assert test="string-length(.) &gt; 0">You must specify a valid language code
+			within a language element</assert>
+			<assert test=". = 'af' or . = 'sq' or . = 'eu' or . = 'be' or . = 'bg' or . = 'ca' or
+						  . = 'zh-cn' or . = 'zh-tw' or . = 'hr' or . = 'cs' or . = 'da' or . = 'nl' or
+						  . = 'nl-be' or . = 'nl-nl' or . = 'en' or . = 'en-au' or . = 'en-bz' or
+						  . = 'en-ca' or . = 'en-ie' or . = 'en-jm' or . = 'en-nz' or . = 'en-ph' or
+						  . = 'en-za' or . = 'en-tt' or . = 'en-gb' or . = 'en-us' or . = 'en-zw' or
+						  . = 'fo' or . = 'fi' or . = 'fr' or . = 'fr-be' or . = 'fr-ca' or . = 'fr-fr' or
+						  . = 'fr-lu' or . = 'fr-mc' or . = 'fr-ch' or . = 'gl' or . = 'gd' or . = 'de' or
+						  . = 'de-at' or . = 'de-de' or . = 'de-li' or . = 'de-lu' or . = 'de-ch' or
+						  . = 'el' or . = 'hu' or . = 'is' or . = 'in' or . = 'ga' or . = 'it' or
+						  . = 'it-it' or . = 'it-ch' or . = 'ja' or . = 'ko' or . = 'mk' or . = 'no' or
+						  . = 'pl' or . = 'pt' or . = 'pt-br' or . = 'pt-pt' or . = 'ro' or . = 'ro-mo' or
+						  . = 'ro-ro' or . = 'ru' or . = 'ru-mo' or . = 'ru-ru' or . = 'sr' or . = 'sk' or
+						  . = 'sl' or . = 'es' or . = 'es-ar' or . = 'es-bo' or . = 'es-cl' or . = 'es-co' or
+						  . = 'es-cr' or . = 'es-do' or . = 'es-ec' or . = 'es-sv' or . = 'es-gt' or . = 'es-hn' or
+						  . = 'es-mx' or . = 'es-ni' or . = 'es-pa' or . = 'es-py' or . = 'es-pe' or . = 'es-pr' or
+						  . = 'es-es' or . = 'es-uy' or . = 'es-ve' or . = 'sv' or . = 'sv-fi' or . = 'sv-se' or . = 'tr' or
+						  . = 'uk'">Invalid language code</assert>
+		</rule>
+
+		<rule context="link">
+			<assert test="starts-with(., 'http://') or starts-with(., 'ftp://')">Links should only be
+			made to http or ftp resources.</assert>
+		</rule>
+
+		<rule context="skipHours">
+			<assert test="count(hour) &lt; 25">There is a limit of 24 hour elements within a
+			<name/> element</assert>
+		</rule>
+
+		<rule context="hour">
+			<assert test="number(.) &gt; 0 and number(.) &lt; 24">Hour values should be in
+			the range 0-23</assert>
+		</rule>
+
+		<rule context="skipDays">
+			<assert test="count(day) &lt; 8">There is a limit of 7 day elements within a
+			<name /> element</assert>
+		</rule>
+
+		<rule context="day">
+			<assert test=". = 'Monday' or . = 'Tuesday' or . = 'Wednesday' or
+						  . = 'Thursday' or . = 'Friday' or
+						  . = 'Saturday' or . = 'Sunday'">Days should be listed as Monday,
+						  Tuesday, Wednesday, Thursday, Friday, Saturday and Sunday</assert>
+		</rule>
+
+		<rule context="image">
+			<assert test="height">An image height has not been supplied.
+			A default height of 31 pixels will be assumed</assert>
+			<assert test="width">An image width has not been supplied.
+			A default width of 88 pixels will be assumed</assert>
+			<assert test="url">This image does not have a url</assert>
+		</rule>
+
+		<rule context="width">
+			<assert test="string-length(.) &gt; 0">Width elements should not be empty</assert>
+		</rule>
+
+		<rule context="height">
+			<assert test="string-length(.) &gt; 0">Height elements should not be empty</assert>
+		</rule>
+
+	</pattern>
+
+	<pattern name="Field Lengths" see="http://backend.userland.com/rss091">
+
+		<rule context="channel">
+			<report test="rating and
+						  ((string-length(.) &lt; 20 or
+						    string-length(.) &gt; 500))">Supplied PICS ratings
+						    must be between 20-500 characters in length</report>
+		</rule>
+
+
+		<rule context="link">
+			<assert test="string-length(.) &gt; 1 and
+						  string-length(.) &lt; 500">Link urls must be
+						  between 1-500 characters in length.</assert>
+		</rule>
+
+		<rule context="width">
+			<assert test="number(.) &lt; 144 and
+						  number(.) &gt; 0">Images width must be
+						  between 1-144 pixels</assert>
+		</rule>
+
+		<rule context="height">
+			<assert test="number(.) &lt; 400 and
+						  number(.) &gt; 0">Images height must be
+						  between 1-400 pixels</assert>
+		</rule>
+
+		<rule context="title">
+			<assert test="string-length(.) &gt; 1 and
+						  string-length(.) &lt; 100">Titles must be
+						  between 1-100 characters in length</assert>
+		</rule>
+
+		<rule context="description">
+			<report test="parent::channel and
+						  (string-length(.) = 0 or
+						   string-length(.) &gt; 500)">Channel descriptions must be
+						   between 1-500 characters in length</report>
+
+			<report test="parent::item and
+						  (string-length(.) = 0 or
+						   string-length(.) &gt; 500)">Item descriptions must be
+						   between 1-500 characters in length</report>
+
+			<report test="parent::image and
+						  (string-length(.) = 0 or
+						   string-length(.) &gt; 100)">Image descriptions must be
+						   between 1-100 characters in length</report>
+
+			<report test="parent::textinput and
+						  (string-length(.) = 0 or
+						   string-length(.) &gt; 500)">Textinput descriptions must be
+						   between 1-500 characters in length</report>
+		</rule>
+
+		<rule context="copyright|pubDate|lastBuildDate|managingEditor|webMaster">
+			<assert test="string-length(.) &gt; 1 and
+						  string-length(.) &lt; 100"><name /> elements must be
+						  between 1-100 characters in length</assert>
+		</rule>
+
+		<rule context="url">
+			<assert test="string-length(.) &gt; 0">url elements must not be empty</assert>
+		</rule>
+
+
+
+	</pattern>
+
+</schema>

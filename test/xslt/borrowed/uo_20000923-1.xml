@@ -1,0 +1,289 @@
+<article xmlns="http://docbook.org/docbook/xml/4.0/namespace">
+<artheader>
+<title>Practical XML with Linux, Part 3: A survey of the tools</title><author>Uche Ogbuji</author>
+</artheader>
+
+<sect1>
+
+<para>
+On re-reading my first two XML articles, just over a year ago in this journal and in its sister, Sunworld, I'm struck by how much they represented a justification of XML as the great tin opener of closed data formats.  In under a year, it looks as if all the light-bulbs went on at once.  XML is in the computer news every day, every company seems to be scrambling to ink XML into their brochures, and XML standards organizations such as the World-Wide Web consortium (W3C) practically have to turn people away.  At this point I hardly think any more justification of XML for open data exchange is required.  It's pretty much a fact of information technology.  The remaining questions are how to use XML to solve real problems better than with any other means.
+</para>
+
+<para>
+As I mentioned in my most recent article, the W3C and other standards organizations are working very quickly to complete specifications for technologies complementary to XML.  I mentioned namespaces, which are a key facility for managing global names and are now used in almost every XML technology.  I also mentioned DOM and XSLT.  Since then, XLink, XPointer, XML Schemas, SVG and other specs are almost complete.  I shall discuss these later in the series as well as RDF, Schematron and other beasts in the XML menagerie.  The XML community has also matured greatly, and as one example, there are many new, high-quality information and news sites, some of which I list in Resources section.  If you are highly interested in XML, I highly recommend regular visits to xmlhack, in particular.
+</para>
+
+</sect1>
+
+<sect1>
+<title>The Triumph of Open Standards</title>
+
+<para>
+The most amazing thing about XML's incredible rise, in my opinion sharper than that of the PC, Java, or even the Web, is the fact that it has remained as open as when it started.  Even though XML in its early days was positioned as a tool for encouraging data interchange by providing both human and machine readibility, odds always were that a powerful company, or group of companies would foul the waters.  Many vertical industries such as the automobile inustry (which recently surprised analysts by announcing a huge, XML-driven on-line exchange), health-care and chemicals have been moving to XML as data-exchange format.  If the likes of Microsoft (early and on-going XML champion) and Oracle, could co-opt standards for XML processing, they could gain even more domination than they currently had in such industries, all under the guise of openness.  The perfect monopolistic trojan horse.
+</para>
+
+<para>
+And this was never just an idle menace.  Last year, Microsoft nearly suceeded in derailing XSLT by bundling a mutation of XSLT into its Internet Explorer 5 browser which was different from the emerging standards, and laden with Microsoft extensions.  Many Linux advocates cried loudly over Microsoft's "embrace-extend-extinguish" move on Kerberos, but this was a weak jab compared to the MS-XSL ploy.  Since Internet Explorer is by far the most popular browser, Microsoft ensured that most of the world's experience of XSLT came through their own proprietary version, and nearly made this proprietary version the de-facto standard.  There was many a flame-war on the xsl-list mailing list (see Resources) when IE users arrived in droves asking questions about what they perceived to be proper XSLT.
+</para>
+
+<para>
+But then something surprising happened.  Microsoft started to hear loudly and clearly from its customers that they didn't want an MS flavor of XSLT.  They wanted the standard.  The first signs of this were that Microsoft slowly started migrating to the standard in Internet Explorer updates.  Then MS developers announced publicly that their design goal was now full compliance with the XSLT standard.  Finally, after some prodding on xsl-list, several of Microsoft's developers admitted that they had been receiving numerous e-mail messages asking them to get in line.
+</para>
+
+<para>
+Now I know Linux users aren't used to expecting such sophistication and independent thought from large numbers of MS users, and I'm no exception to that (possibly bigoted) attitude.  I credit this remarkable episode to the power of the promise of openness in XML.  Of course, this doesn't prevent Microsoft from amusing gaffes such as claiming to have invented XML (as reported by The Washington Post in May), but such things are far less dangerous than standards pollution..
+</para>
+
+<para>
+Similar stories are repeated over and over throughout XML's brief history.  In fact, Microsoft, not having learned all its lessons from the XSLT fiasco, is currently being bludgeoned into abandoning its proprietary XML schema format, XML-Data, in favor of XML Schemas, which has come almost all the way through the W3C standards track.  The battle hit fever pitch with Microsoft's loud announcement of BizTalk, an ambitious repository and toolkit for XML schemas.  But day by day, it looks more as if the open standard will win out.
+</para>
+
+<para>
+But enough about the wide, wild world.  Let's have a look at what's happening at home.  Another striking change from my first XML article in these Web pages is that I pretty much had to apologize for the lack of XML tools for Linux.  This problem has been corrected to an astonishing degree.
+</para>
+
+<para>
+This article briefly introduces a selection of XML tools for Linux in a few basic categories: parsers, web servers, application servers, GUIs and bare-bones tools.  Most users' introduction to XML will be for purposes of better managing Web pages, from which they may choose to migrate to complete, all-inclusive appication servers or construct custom systems from the various XML toolkits available and the usual UNIX duct tape and wire ties.  In all cases there is usually some content to manage, and though you may see no reason to leave the world of Emacs or vi to churn out documents, since content-managers are often non-technical, it's a very good thing that there is a good selection of GUI XML editors for all tastes.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Just the Parsers, Ma'am</title>
+
+<para>
+XML processing starts with the parser, and Linux has many to choose from.  Basically all you have to do is pick a language.  C, C++, Java, Python, PHP, Perl, TCL, or even Javascript (and this is hardly an exhaustive list).  The next thing to choose is whether and how to validate your XML documents.  Validation is the process of ensuring that all the elements and attributes in an XML document conform to a schema.  The traditional XML validation method is the Document-Type Definition (DTD).  The W3C, as I mentioned, has almost completed XML Schemas, which have the advantages of XML format (DTDs are in a different format) and "modern" data-typing, with the disadvantage of complexity and immaturity.
+</para>
+
+<para>
+C users are well served by the old standby from James Clark, Expat, which is a barebones parser and arguably the fastest in existence, but provides no validation.  Significantly, almost every language under the sun, from Python to Eiffel, provides a front-end to Expat.  But even Expat is facing some tough "coopetition" from entries such as the capable libxml project, led by Daniel Viellard of the W3C.  This library, most prominently used in GNOME, offers many options for fine-tuning parsing, and supports DTD validation.  There is also Richard Tobin's RXP, which supports DTD.  C++ users have Xerces-C++, which is based on XML4C code IBM donated to the Apache/XML project.  Xerces-C++ supports both DTD and Schemas.  In fact, if you want to start using XML Schemas in Linux, Xerces is probably your best bet.  Individual efforts include Michael Fink's xmlpp, which is quite new and doesn't support validation.
+</para>
+
+<para>
+There is a Java version of Xerces with similar pedigree.  Java users are pretty much drowned in choice.  The media has made much of the "marriage" between Java and XML, but the most likely explanation for the huge number of XML tools for Java is that XML emerged right as Java was cresting as a programming language.  Besides Xerces-J, there are Java parsers from Oracle, Sun, DataChannel, and others.  Individual efforts include Thomas Weidenfeller's XMLtp (Tiny XML Parser), which is designed for embedding into other Java apps (as was the pioneering but now moribund Aelfred from Microstar).  Mr. Weidenfeller also provides one of the neatest summaries of OSS license I've seen: "Do what you like with the software, but don't sue me".  Then there is The Wilson Partnership's MinML, designed to be even smaller, for use in embedded systems.
+</para>
+
+<para>
+Python still has the growing and evolving PyXML package as well as my own company's 4Suite.  XML considerations are helping shape many grand trends of Python such as unicode support and improved memory-management.  The perl community has definitely taken to XML.  The main parser is, appropriately, XML::Parser, but you can pretty much take any XML buzzword, prepend "XML::", and find a corresponding perl package.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Serving up XML Pages</title>
+
+<para>
+XML's early promise to the media was as a way to tame the Web.  Structured documents, separation of content from presentation, and more manageable searching and autonomous Web agents.  Some of this has been drowned out by all the recent interest in XML for database integration and message-based middleware, but XML is still an excellent way to manage structured content on the Web.  And Linux is a pretty good operating system on which to host the content. 
+</para>
+
+<para>
+The big dog among the XML Web servers is also the well known big dog of Web servers, period.  Apache is absolutely swarming with XML activity lately.  I've already mentioned Xerces, the XML parser from the Apache/XML project.  There is also an XSLT processor, Xalan, with roots in IBM/Lotus's LotusXSL.  There is also Formatting-Object Processor (FOP), a tool for converting XML documents to the popular PDF document, by way of XSL formatting objects, a special XML vocabulary for presentation.  Apache has added support for the Simple Object Access Protocol (SOAP), an XML messaging protocol that can be used to make HTTP-based queries to a server in an XML format.  As a side note, SOAP, and open protocol, is heavily contributed to and championed by Microsoft, in one of the many positive contributions that company has made to XML while not trying to embrace and extend.
+</para>
+
+<para>
+These bits and pieces are combined into an Apache-based XML Web publishing solution called Cocoon.  Cocoon allows XML documents to be developed, and then published on the Web, for wireless applications through Wireless Application Protocol (WAP), and to print-ready PDF format through FOP.
+</para>
+
+<para>
+Perl hackers already have the proliferation of "XML::*" packages I've already mentioned, but Matt Sergeant has also put together a comprehensive toolkit for XML processing: Axkit.  Axkit is specialized for use with Apache and mod_perl, and provides XSLT transformation as well as other non-standard transform approaches such as "XPathScript".
+</para>
+
+</sect1>
+
+<sect1>
+<title>Full-blown application servers</title>
+
+<para>
+Enterprises that want an end-to-end solution for developing and deploying applications using XML data have several options under Linux.  Application servers build on basic Web servers such as described above by adding database integration, version control, distributed transactions and other such facilities.
+</para>
+
+<para>
+The grey and respectable Hewelett Packard found an open-source, Web-hip side with its e-speak project, a tool for distributed XML applications with Java, Python and C APIs for development and extension.
+</para>
+
+<para>
+A smaller company that has found the advantages of open-source for promoting its XML services is Lutris, Inc., developers of Enhydra.  Enhydra, about which I've reported in a previous LinuxWorld article, is a Java application server for XML processing.  It has some neat innovations such as XMLC, a way to "compile" XML into an intermediate binary form for efficient processing.  It is also one of the first open-source implementations of Java 2's Enterprise Edition services, including Enterprise JavaBeans.
+</para>
+
+<para>
+XML Blaster is a messaging-oriented middleware (MOM) suite for XML applications.  It uses an XML transport in a publish/subscribe system for exchanging text and binary data.  It uses CORBA for network and inter-process communication and supports components written in Java, Perl, Python and TCL.
+</para>
+
+<para>
+Conglomerate, developed by Styx, is a somewhat less ambitious but interesting project for an XML application server more attuned for document management.  It includes a nifty GUI editor and provides a proprietary transformation language that can generate HTML, TeX and other formats.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Oo-wee!  GUI!</title>
+
+<para>
+One area in which I lamented Linux's lag in XML tools last year was in the area of GUI browsers and editors.  While I personally use a 4XSLT script and XEmacs for these respective tasks, I frequently work with clients who want to use more friendly GUIs for XML editing and ask whether my preferred Linux platform has anything available.  Fortunately, there are more choices than ever on our favorite OS.  Again much of the succour comes in the form of Java's cross-platform GUI support.
+</para>
+
+<para>
+GEXml is a Java XML editor which allows programmers use pluggable Java modules for editing their own special tag sets.  It uses a pretty standard layout for XML editors: a multi-pane window with a section for the tree-view, and sections for attributes and a section for CDATA.
+</para>
+
+<para>
+Merlot, by Channelpoint, Inc., is another Java-based XML editor that emphasizes modeling XML documents around their DTDs, abstracting the actual XML file from the user.  It supports pluggable extension modules for custom DTDs.
+</para>
+
+<para>
+Lunatech's Morphon is yet another DTD-based XML editor and modeling tool.  Hopefully all these DTD-based tools will expand to accommodate XML schemas and other validation methods as well in order to make life easier for those of us who use XML namespaces.  Morphon is similar to the other editors described here with a couple of nice twists: it allows you to specify cascading stylesheets for the editor appearance and document preview, and it mixes the ubiquitous tree view with a friendly view of the XML document being edited.  Morphon, however, is not open-source, though available for Linux.
+</para>
+
+<para>
+IBM's Alphaworks keeps on churning out free (beer) XML tools, one of which, XML Viewer, allows users to view XML documents using (once again) the tree-view and specialized panes for element and attribute data.  XML Viewer is written in Java.  It also allows linking the XML source and DTD to allow viewing such items as element and attribute definitions.  There is also XSL Editor, a specialized java-based XML editor for XSLT stylesheets.  It also incorporates advanced features such as syntax highlighting and an XSLT debugger.
+</para>
+
+<para>
+TreeNotes is an XML text editor that uses a series of widgets to open up XML's tree structure, elements and attributes, and of course character data, to editing.
+</para>
+
+<para>
+DocZilla is an interesting project: an extension of the Mozilla project for Web-based XML document applications.  It promises XML browsing support on par with Internet Explorer's including an extension and plug-in framework.  DocZilla started out very strongly, but now seems to have lagged a bit.  Part of the reason might be that Mozilla is increasing its XML focus.  Mozilla has always supported XML+Cascading Style-Sheets (CSS), but now, with Transformiix (an XSLT processor for Mozilla) and other such projects, it is making its own bid to replace Explorer as king of XML browsers.
+</para>
+
+<para>
+There is also KXMLViewer, a KDE XML viewer written in Python, but I'll cover this in more detail when I discuss GNOME and KDE XML support in a coming article in this series.
+</para>
+
+</sect1>
+
+<sect1>
+<title>In the Hacker Spirit</title>
+
+<para>
+So we've looked at lumbering app servers and pretty GUI tools.  All very nice for easing into XML, but we all know that Linux (and UNIX) users typically prefer sterner stuff.  Small, manageable, versatile, no-nonsense packages that can be strung together to get a larger job done.  Luckily for the desperate hacker, the nuts-and-bolts toolkit is growing just as quickly as the rest of XML space.
+</para>
+
+<para>
+A key and quite mature entry is LT XML, developed by the Edinburgh Language Technology Group.  LT XML is a set of stand-along tools and libraries for C programmers using XML.  It supports both tree-based and stream-oriented processing, covering a wide variety of application types.  The LT XML repertoire would be quite familiar and pleasant to those who love nothing more than to string together GNU textutils to produce some neat text transformation.  There is the mandatory XML-aware grep, sggrep (the "sg" for SGML), as well as sgsort, sgcount, sgtoken, etc, which should be self-explanatory.  Python bindings for LT XML should be available by the time you read this.
+</para>
+
+<para>
+Speaking of grep, there is also fxgrep, a powerful XML querying tool written in Standard ML, a well-regarded functional programming language from Bell Labs (XML provides a rather fitting problem space for functional languages).  fxgrep uses the XML parser fxp, also written in SML.  fxgrep supports specialized XML searching and query using its own pattern syntax.
+</para>
+
+<para>
+Paul Tchistopolskii makes clear there is no mistake as to his target user-base for Ux: "Ux is UNIX, revisited with XML".  Ux is a set of small XML components written in Java (OK, we're leaking some UNIX heritage right there).  The components are designed to be piped together for database storage and extraction, XSLT transformation, query, etc.
+</para>
+
+<para>
+Pyxie is an XML parsing and processing toolkit in Python by Sean McGrath and highlighted in his book, <emph>XML Processing with Python</emph>.  Pyxie's main distiction is that it builds on earlier work by James Clark by focusing on a line-based view of XML rather than the "natural" tokens that emerge from the spec.  This can provide a useful optimization if occasional complications.
+</para>
+
+<para>
+For those looking askance at XML in a TeX environment, IBM's Alphaworks might have a useful introduction.  TeXML is a tool that allows you to define an XSLT transform for converting XML files to a specialized vocabulary, the results of which are converted to TeX.  Also, thanks to Alphaworks, there is an XML diff as well as a grep.  XML Tree Diff shows the differences between documents based on their DOM tree representation.  It's more of a collection of Javabeans for performing diffs than a stand-alone application, but it's relatively straightforward to use.
+</para>
+
+<para>
+And there is my own company's 4Suite, a set of libraries for Python users to construct their own XML applications using DOM, XPath and XSLT, among other tools.  I covered 4XSLT in my last XML article (though the spec and 4XSLT have changed since then), and 4Suite libraries are now standard components in the Python XML distribution.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Conclusion</title>
+
+<para>
+Hopefully this tour will help find XML resources for Linux users of all levels.  In upcoming articles (hopefully not as delayed as this one), I shall cover XML and Databases, XML and KDE/GNOME, and mnore topics on how to put XML to work in a Linux environment.
+</para>
+
+<para>
+By the way this very article is available in XML form (using the DocBook standard).  I've also put up a simplified DocBook XSLT stylesheet that can be used to render this article to HTML (see Resources for both).  Note that I use the "doc" file extension for DocBook files.  I encourage you to use DocBook (O'Reilly and Associates publishes an excellent book on the topic by Norman Walsh) and the ".doc" extension, chopping at the hegemony of the proprietary Microsoft Word format.  Just another small way XML can open up data to the world.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Resources</title>
+
+<sect2>
+<title>Parsers</title>
+
+<glosslist>
+<glossterm>Expat</glossterm><glossdef>http://www.jclark.com/xml/expat.html</glossdef>
+<glossterm>Xerces C++</glossterm><glossdef>http://xml.apache.org/xerces-c/index.html</glossdef>
+<glossterm>Xerces-Java</glossterm><glossdef>http://xml.apache.org/xerces-j/index.html</glossdef>
+<glossterm>xmlpp</glossterm><glossdef>http://www.vividos.de/xmlpp/</glossdef>
+<glossterm>libxml</glossterm><glossdef>http://www.xmlsoft.org/</glossdef>
+<glossterm>RXP</glossterm><glossdef>http://www.cogsci.ed.ac.uk/~richard/rxp.html</glossdef>
+<glossterm>XMLtp</glossterm><glossdef>http://mitglied.tripod.de/xmltp/</glossdef>
+<glossterm>MinML</glossterm><glossdef>http://www.wilson.co.uk/xml/minml.htm</glossdef>
+</glosslist>
+
+</sect2>
+
+<sect2>
+<title>Web Servers</title>
+
+<glosslist>
+<glossterm>Axkit</glossterm><glossdef>http://axkit.org/</glossdef>
+<glossterm>XML/Apache</glossterm><glossdef>http://xml.apache.org</glossdef>
+</glosslist>
+
+</sect2>
+
+<sect2>
+<title>App Servers</title>
+
+<glosslist>
+<glossterm>Conglomerate</glossterm><glossdef>http://www.conglomerate.org/</glossdef>
+<glossterm>e-speak</glossterm><glossdef>http://www.e-speak.net/</glossdef>
+<glossterm>Enhydra</glossterm><glossdef>http://www.enhydra.org/</glossdef>
+<glossterm>XML Blaster</glossterm><glossdef>http://www.xmlBlaster.org/</glossdef>
+</glosslist>
+
+</sect2>
+
+<sect2>
+<title>Low-Level Tools</title>
+
+<glosslist>
+<glossterm>LT XML</glossterm><glossdef>http://www.ltg.ed.ac.uk/software/xml/index.html</glossdef>
+<glossterm>fxgrep</glossterm><glossdef>http://www.informatik.uni-trier.de/~neumann/Fxgrep/</glossdef>
+<glossterm>Ux</glossterm><glossdef>http://www.pault.com/Ux/</glossdef>
+<glossterm>Pyxie</glossterm><glossdef>http://www.digitome.com/pyxie.html</glossdef>
+</glosslist>
+
+</sect2>
+
+<sect2>
+<title>GUIs</title>
+
+<glosslist>
+<glossterm>TreeNotes</glossterm><glossdef>http://pikosoft.dragontiger.com/en/treenotes/</glossdef>
+<glossterm>DocZilla</glossterm><glossdef>http://www.doczilla.com/</glossdef>
+<glossterm>GEXml</glossterm><glossdef>http://gexml.cx/</glossdef>
+<glossterm>Merlot</glossterm><glossdef>http://www.merlotxml.org/</glossdef>
+<glossterm>Morphon</glossterm><glossdef>http://www.morphon.com/</glossdef>
+</glosslist>
+
+</sect2>
+
+<sect2>
+<title>Et Cetera</title>
+
+<glosslist>
+<glossterm>There is more to XML than roll-your-own HTML</glossterm><glossdef>http://www.linuxworld.com/linuxworld/lw-1999-03/lw-03-xml.html</glossdef>
+<glossterm>Practical XML with Linux, Part 1</glossterm><glossdef>http://www.linuxworld.com/linuxworld/lw-1999-09/lw-09-xml2.html</glossdef>
+<glossterm>The xsl-list mailing list</glossterm><glossdef>http://www.mulberrytech.com/xsl/xsl-list</glossdef>
+<glossterm>DocBook and stylesheet for this article</glossterm><glossdef>http://www.Fourthought.com/Publications/lw-xml2</glossdef>
+<glossterm>The Apache/XML Project</glossterm><glossdef>http://xml.apache.org/</glossdef>
+<glossterm>SOAP</glossterm><glossdef>http://www.w3.org/TR/SOAP/</glossdef>
+<glossterm>xmlhack</glossterm><glossdef>http://www.xmlhack.com</glossdef>
+<glossterm>XML Pit Stop</glossterm><glossdef>http://www.xmlpitstop.com/</glossdef>
+<glossterm>xslt.com</glossterm><glossdef>http://www.xslt.com</glossdef>
+<glossterm>XML Times</glossterm><glossdef>http://www.xmltimes.com/</glossdef>
+<glossterm>The XML Cover Pages</glossterm><glossdef>http://www.oasis-open.org/cover</glossdef>
+<glossterm>IBM's Alphaworks (including XML Viewer, XSL Edirot, XML Tree Diff and TeXML)</glossterm><glossdef>http://alphaworks.ibm.com</glossdef>
+</glosslist>
+
+</sect2>
+
+</sect1>
+
+</article>
