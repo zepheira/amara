@@ -122,14 +122,14 @@ class bound_element(object):
 
     def __set__(self, obj, value):
         target = self.__get__(obj, None)
-        #replicate old __setattr__ effects here
         for child in target.xml_children:
             target.xml_remove(child)
         target.xml_append(value)
         return
 
     def __delete__(self, obj):
-        #replicate old __delattr__ effects here
+        target = self.__get__(obj, None)
+        obj.xml_remove(target)
         return
 
 
