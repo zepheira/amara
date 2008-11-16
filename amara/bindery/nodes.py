@@ -121,7 +121,11 @@ class bound_element(object):
             return obj.xml_model.element_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
-        #replicate old __delattr__ effects here
+        target = self.__get__(obj, None)
+        #replicate old __setattr__ effects here
+        for child in target.xml_children:
+            target.xml_remove(child)
+        target.xml_append(value)
         return
 
     def __delete__(self, obj):
