@@ -12,7 +12,7 @@ from amara.test.xslt import xslt_test, filesource, stringsource
 raise Exception, "Test not yet ported."
 
 from Ft.Lib import Uri
-INC_PATH = Uri.OsPathToUri('Xml/Xslt/Borrowed/etc/', attemptAbsolute=1)
+INC_PATH = Uri.OsPathToUri('Xml/Xslt/Borrowed/resources/', attemptAbsolute=1)
 
 class test_xslt_nested_imports_with_names_that_clash_across_import_precedence_mb_20020527(xslt_test):
     source = stringsource("<foo/>")
