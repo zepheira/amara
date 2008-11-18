@@ -77,7 +77,6 @@ typedef struct {
   int generator;
 
   /* SAX properties */
-  PyObject *whitespace_rules;
   PyObject *yield_result;
   NodeObject *dom_node;
   PyObject *decl_handler;
@@ -1614,9 +1613,6 @@ XMLPARSER_METHOD_DEF(parse)
   if (!PyArg_ParseTuple(args, "O:parse", &source))
     return NULL;
 
-//  status = Expat_SetWhitespaceRules(self->reader, self->whitespace_rules);
-//  if (status == EXPAT_STATUS_ERROR) return NULL;
-
   if (self->dom_node) {
     /* walk over a DOM, ignoring the source argument */
     status = ParseDOM(self);
@@ -1823,12 +1819,7 @@ XMLPARSER_METHOD_DEF(getProperty)
   else if (PyObject_RichCompareBool(propertyname, property_whitespace_rules,
                                     Py_EQ)) {
     /* XSLT-style whitespace stripping rules */
-    if (self->whitespace_rules == NULL) {
-      value = PyList_New((Py_ssize_t)0);
-    } else {
-      Py_INCREF(self->whitespace_rules);
-      value = self->whitespace_rules;
-    }
+    value = ExpatReader_GetWhitespaceStripping(self->reader);
   }
   else if (PyObject_RichCompareBool(propertyname, property_yield_result,
                                     Py_EQ)) {
@@ -1946,23 +1937,13 @@ XMLPARSER_METHOD_DEF(setProperty)
   }
   else if (PyObject_RichCompareBool(propertyname, property_whitespace_rules,
                                     Py_EQ)) {
+    ExpatStatus status;
     /* XSLT-style whitespace stripping rules */
-    if (value == Py_None) {
-      Py_XDECREF(self->whitespace_rules);
-      self->whitespace_rules = NULL;
-    }
-    else if (PyList_Check(value)) {
-      Py_XDECREF(self->whitespace_rules);
-      if (PyList_GET_SIZE(value) == 0) {
-        self->whitespace_rules = NULL;
-      } else {
-        Py_INCREF(value);
-        self->whitespace_rules = value;
-      }
-    }
-    else {
-      return SAXNotSupportedException("whitespace-rules must be a list");
-    }
+    if (value == Py_None)
+      value = NULL;
+    status = ExpatReader_SetWhitespaceStripping(self->reader, value);
+    if (status == EXPAT_STATUS_ERROR)
+      return NULL;
   }
   else {
     PyObject *repr = PyObject_Repr(propertyname);
@@ -2106,7 +2087,6 @@ parser_dealloc(XMLParserObject *self)
   PyObject_GC_UnTrack(self);
 
   Py_XDECREF(self->dom_node);
-  Py_XDECREF(self->whitespace_rules);
   Py_XDECREF(self->yield_result);
   Py_XDECREF(self->lexical_handler);
   Py_XDECREF(self->decl_handler);

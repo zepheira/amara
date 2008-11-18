@@ -185,11 +185,30 @@ reader_set_param_entity(ReaderObject *self, PyObject *v, void *arg)
   return 0;
 }
 
+static PyObject *
+reader_get_stripping(ReaderObject *self, void *arg)
+{
+  return ExpatReader_GetWhitespaceStripping(self->reader);
+}
+
+static int
+reader_set_stripping(ReaderObject *self, PyObject *v, void *arg)
+{
+  ExpatStatus status;
+
+  status = ExpatReader_SetWhitespaceStripping(self->reader, v);
+  if (status == EXPAT_STATUS_ERROR)
+    return -1;
+  return 0;
+}
+
 static PyGetSetDef reader_getset[] = {
   { "validation",
     (getter)reader_get_validation, (setter)reader_set_validation },
   { "external_parameter_entities",
     (getter)reader_get_param_entity, (setter)reader_set_param_entity },
+  { "whitespace_stripping",
+    (getter)reader_get_stripping, (setter)reader_set_stripping },
   { NULL }
 };
 

@@ -292,6 +292,10 @@ extern "C" {
   int ExpatReader_GetParamEntityParsing(ExpatReader *reader);
   void ExpatReader_SetParamEntityParsing(ExpatReader *reader, int parsing);
 
+  PyObject *ExpatReader_GetWhitespaceStripping(ExpatReader *reader);
+  ExpatStatus ExpatReader_SetWhitespaceStripping(ExpatReader *reader,
+                                                 PyObject *sequence);
+
   PyObject *ExpatReader_GetBase(ExpatReader *reader);
   unsigned long ExpatReader_GetLineNumber(ExpatReader *reader);
   unsigned long ExpatReader_GetColumnNumber(ExpatReader *reader);

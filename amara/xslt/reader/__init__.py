@@ -22,9 +22,7 @@ __all__ = ['stylesheet_reader']
 # Whitespace stripping rules for a stylesheet:
 #   preserve all whitespace within xsl:text elements;
 #   strip whitespace from all other elements
-STYLESHEET_WHITESPACE_RULES = [(XSL_NAMESPACE, 'text', False),
-                               (None, '*', True)]
-
+_XSLT_WHITESPACE_STRIPPING = ((XSL_NAMESPACE, 'text', False), (None, '*', True))
 
 # pseudo-nodes for save/restore of variable bindings
 class push_variables_node(xslt_node):
@@ -650,8 +648,9 @@ class stylesheet_reader(object):
             # XSLT 2.0 [3.4] Whitespace Stripping.
             # e.g. xsl:stylesheet, xsl:apply-templates, xsl:choose
             #self._debug_validation(content_model.TEXT_NODE)
-            if (content_model.EMPTY in parent_state.validation or
-                not isspace(data)):
+            #if (content_model.EMPTY in parent_state.validation or
+            #    not isspace(data)):
+            if 1:
                 if len(data) > 10:
                     data = data[:10] + '...'
                 raise XsltParserException(XsltError.ILLEGAL_TEXT_CHILD_PARSE,
@@ -885,7 +884,7 @@ class stylesheet_reader(object):
 
         # Always set whitespace rules property
         parser.setProperty(sax.PROPERTY_WHITESPACE_RULES,
-                           STYLESHEET_WHITESPACE_RULES)
+                           _XSLT_WHITESPACE_STRIPPING)
         for propertyname, value in properties:
             parser.setProperty(propertyname, value)
 

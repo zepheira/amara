@@ -699,8 +699,9 @@ static PyObject *builder_parse(PyObject *inputSource, ParseFlags flags,
   FILE *stream = PySys_GetFile("stderr", stderr);
   PySys_WriteStderr("builder_parse(source=");
   PyObject_Print(inputSource, stream, 0);
-  PySys_WriteStderr(", flags=%d, factories=%p, asEntity=%d, namespaces=",
-                    flags, factories, asEntity);
+  PySys_WriteStderr(", flags=%d, entity_factory=", flags);
+  PyObject_Print(entity_factory, stream, 0);
+  PySys_WriteStderr(", asEntity=%d, namespaces=", asEntity);
   PyObject_Print(namespaces, stream, 0);
   PySys_WriteStderr("\n");
 #endif

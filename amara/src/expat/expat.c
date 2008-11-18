@@ -163,6 +163,24 @@ typedef struct Context {
 } while(0)
 
 
+enum NameTestType {
+  ELEMENT_TEST,
+  NAMESPACE_TEST,
+  EXPANDED_NAME_TEST,
+};
+
+typedef struct {
+  enum NameTestType test_type;
+  PyObject *test_namespace;
+  PyObject *test_name;
+  PyObject *preserve_flag;
+} WhitespaceRule;
+
+typedef struct {
+  int size;
+  WhitespaceRule items[1];
+} WhitespaceRules;
+
 struct ExpatReaderStruct {
   /* event filtering */
   ExpatFilter *filters;         /* array of event filters */
@@ -187,6 +205,9 @@ struct ExpatReaderStruct {
   Stack *xml_base_stack;        /* current base URI w/xml:base support */
   Stack *xml_lang_stack;        /* XInclude language fixup (xml:lang) */
   Stack *xml_space_stack;       /* indicates xml:space='preserve' */
+
+  WhitespaceRules *whitespace_rules;  /* array of stripping rules */
+  Stack *preserve_whitespace_stack;   /* whitespace stripping allowed */
 };
 
 #define ExpatReader_HasFlag(p,f) ((((ExpatReader *)(p))->flags & (f)) == (f))
@@ -1020,6 +1041,148 @@ create_name(ExpatReader *reader, const XML_Char *triplet)
   return ExpatName_FROM_OBJECT(obj);
 }
 
+Py_LOCAL_INLINE(PyObject *)
+intern_string(ExpatReader *reader, PyObject *obj)
+{
+  PyObject *unicode = PyUnicode_FromObject(obj);
+  PyObject *result;
+  if (unicode == NULL)
+    return NULL;
+  result = LOOKUP_UNICODE(reader->unicode_cache,
+                          (XML_Char *)PyUnicode_AS_UNICODE(unicode),
+                          (size_t)PyUnicode_GET_SIZE(unicode));
+  Py_DECREF(unicode);
+  return result;
+}
+
+/** Whitespace Stripping **********************************************/
+
+Py_LOCAL_INLINE(WhitespaceRules *)
+create_whitespace_rules(ExpatReader *reader, PyObject *sequence)
+{
+  int i, length, nbytes;
+  WhitespaceRules *rules;
+
+  if (sequence == NULL) {
+    PyErr_BadInternalCall();
+    return NULL;
+  }
+
+  sequence = PySequence_Tuple(sequence);
+  if (sequence == NULL)
+    return NULL;
+  length = PyTuple_GET_SIZE(sequence);
+  nbytes = SIZEOF_INT + (sizeof(WhitespaceRule) * length);
+  rules = (WhitespaceRules *)PyObject_MALLOC(nbytes);
+  if (rules == NULL) {
+    Py_DECREF(sequence);
+    PyErr_NoMemory();
+    return NULL;
+  }
+  memset(rules, '\0', nbytes);
+  rules->size = length;
+
+  for (i = 0; i < length; i++) {
+    PyObject *namespace_uri, *local_name, *flag;
+    if (!PyArg_UnpackTuple(PyTuple_GET_ITEM(sequence, i), NULL, 3, 3,
+                           &namespace_uri, &local_name, &flag))
+      goto error;
+    /* Each strip element specifies a NS and a local name,
+       The localname can be a name or *
+       If the localname is * then the NS could be None.
+       ns:local is a complete match
+       ns:* matches any element in the given namespace
+       * matches any element.
+
+       NOTE:  There are precedence rules to stripping as (according to XSLT)
+       the matches should be treated as node tests.  The precedence is based
+       on level of specificity.  This code assumes the list of white space
+       rules has already been sorted by precedence.
+    */
+    switch (PyObject_RichCompareBool(local_name, asterisk_string, Py_EQ)) {
+    case 1:
+      if (namespace_uri == Py_None) {
+        /* rule matches every element */
+        rules->items[i].test_type = ELEMENT_TEST;
+      } else {
+        /* rule matches any element in the target namespace */
+        namespace_uri = intern_string(reader, namespace_uri);
+        if (namespace_uri == NULL)
+          goto error;
+        rules->items[i].test_type = NAMESPACE_TEST;
+        rules->items[i].test_namespace = namespace_uri;
+      }
+      break;
+    case 0:
+      namespace_uri = intern_string(reader, namespace_uri);
+      if (namespace_uri == NULL)
+        goto error;
+      local_name = intern_string(reader, local_name);
+      if (local_name == NULL)
+        goto error;
+      rules->items[i].test_type = EXPANDED_NAME_TEST;
+      rules->items[i].test_namespace = namespace_uri;
+      rules->items[i].test_name = local_name;
+      break;
+    default:
+      goto error;
+    }
+    switch (PyObject_IsTrue(flag)) {
+    case 1:
+      rules->items[i].preserve_flag = Py_False;
+      break;
+    case 0:
+      rules->items[i].preserve_flag = Py_True;
+      break;
+    default:
+      goto error;
+    }
+  }
+  Py_DECREF(sequence);
+  return rules;
+
+error:
+  PyObject_FREE(rules);
+  Py_DECREF(sequence);
+  return NULL;
+}
+
+Py_LOCAL_INLINE(void)
+destroy_whitespace_rules(WhitespaceRules *rules)
+{
+  /* all test values are borrowed references from the unicode intern table */
+  PyObject_FREE(rules);
+}
+
+Py_LOCAL_INLINE(PyObject *)
+is_whitespace_preserving(ExpatReader *reader, PyObject *namespaceURI,
+                         PyObject *localName)
+{
+  WhitespaceRules *rules = reader->whitespace_rules;
+  register WhitespaceRule *rule;
+  register size_t size;
+
+  /* NOTE: We can use exact pointer compares as the names are interned */
+  if (rules != NULL) {
+    for (size = rules->size, rule = rules->items; size > 0; size--, rule++) {
+      switch (rule->test_type) {
+      case EXPANDED_NAME_TEST:
+        if (rule->test_name != localName)
+          break;
+        /* else, fall through for namespace-uri test */
+      case NAMESPACE_TEST:
+        if (rule->test_namespace != namespaceURI)
+          break;
+        /* else, fall through to handle match */
+      case ELEMENT_TEST:
+        return rule->preserve_flag;
+      }
+    }
+  }
+  /* by default, all elements are whitespace-preserving */
+  return Py_True;
+}
+
 /** Character Data Buffering ******************************************/
 
 /* These routines are used to ensure that all character data is reported
@@ -1103,7 +1266,7 @@ charbuf_flush(ExpatReader *reader)
   if (i == len) {
     /* Only bother creating a PyUnicodeObject from the data if we are
      * going to be preserving it. */
-    if (Stack_PEEK(reader->xml_space_stack) == Py_True) {
+    if (Stack_PEEK(reader->preserve_whitespace_stack) == Py_True) {
       /* Intern the all-whitespace data as it will be helpful
        * for those "pretty printed" XML documents. */
       data = XMLChar_DecodeSizedInterned(str, len, reader->unicode_cache);
@@ -1851,7 +2014,7 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
   const XML_Char **ppattr;
   ExpatName *name;
   ExpatAttribute *attrs, *attr;
-  PyObject *xml_base, *xml_lang, *xml_space, *xml_id;
+  PyObject *xml_base, *xml_lang, *xml_space, *xml_id, *preserve_whitespace;
   int id_index;
   size_t i, attrs_size;
 
@@ -2059,6 +2222,17 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
     xml_id = NULL;
   }
 
+  /** XSLT Whitespace Stripping *********************************/
+
+  preserve_whitespace = is_whitespace_preserving(reader,
+                                                 name->namespaceURI,
+                                                 name->localName);
+  if (xml_space == Py_True)
+    preserve_whitespace = Py_True;
+  Stack_Push(reader->preserve_whitespace_stack, preserve_whitespace);
+
+  /** Callback **************************************************/
+
   status = ExpatFilter_StartElement(reader->context->filters,
                                     name, attrs, attrs_size);
   if (status == EXPAT_STATUS_ERROR)
@@ -2119,6 +2293,9 @@ static void expat_EndElement(ExpatReader *reader, const XML_Char *expat_name)
   Py_DECREF(temp);
 
   temp = Stack_Pop(reader->xml_space_stack);
+  Py_DECREF(temp);
+
+  temp = Stack_Pop(reader->preserve_whitespace_stack);
   Py_DECREF(temp);
 }
 
@@ -3811,6 +3988,11 @@ ExpatReader_New(ExpatFilter *filters[], size_t nfilters)
     goto error;
   Stack_Push(reader->xml_space_stack, Py_False); /* xml:space='default' */
 
+  /* whitespace preserving state stack */
+  if ((reader->preserve_whitespace_stack = Stack_New()) == NULL)
+    goto error;
+  Stack_Push(reader->preserve_whitespace_stack, Py_True);
+
   return reader;
 
 memory_error:
@@ -3825,6 +4007,11 @@ ExpatReader_Del(ExpatReader *reader)
 {
   if (reader->context) {
    destroy_contexts(reader);
+  }
+
+  if (reader->preserve_whitespace_stack) {
+    Stack_Del(reader->preserve_whitespace_stack);
+    reader->preserve_whitespace_stack = NULL;
   }
 
   if (reader->xml_space_stack) {
@@ -3899,6 +4086,68 @@ ExpatReader_SetParamEntityParsing(ExpatReader *reader, int doParamEntityParsing)
     else
       ExpatReader_ClearFlag(reader, ExpatReader_PARAM_ENTITY_PARSING);
   }
+}
+
+PyObject *
+ExpatReader_GetWhitespaceStripping(ExpatReader *reader)
+{
+  WhitespaceRules *rules = reader->whitespace_rules;
+  PyObject *sequence, *item;
+  size_t size, i;
+
+  if (rules == NULL)
+    return PyTuple_New(0);
+  size = rules->size;
+  sequence = PyTuple_New(size);
+  if (sequence == NULL)
+    return NULL;
+  for (i = 0; i < size; i++) {
+    WhitespaceRule *rule = &rules->items[i];
+    switch (rule->test_type) {
+    case EXPANDED_NAME_TEST:
+      item = PyTuple_Pack(3, rule->test_namespace, rule->test_name,
+                          rule->preserve_flag);
+      break;
+    case NAMESPACE_TEST:
+      item = PyTuple_Pack(3, rule->test_namespace, asterisk_string,
+                          rule->preserve_flag);
+      break;
+    case ELEMENT_TEST:
+      item = PyTuple_Pack(3, Py_None, asterisk_string, rule->preserve_flag);
+      break;
+    default:
+      PyErr_BadInternalCall();
+      item = NULL;
+    }
+    if (item == NULL) {
+      Py_DECREF(sequence);
+      return NULL;
+    }
+    PyTuple_SET_ITEM(sequence, i, item);
+  }
+  return sequence;
+}
+
+ExpatStatus
+ExpatReader_SetWhitespaceStripping(ExpatReader *reader, PyObject *seq)
+{
+  /* do not allowing changing after parsing has begun */
+  if (reader->context == NULL) {
+    WhitespaceRules *rules;
+    if (seq == NULL) {
+      rules = NULL;
+    } else {
+      rules = create_whitespace_rules(reader, seq);
+      if (rules == NULL) {
+        return EXPAT_STATUS_ERROR;
+      }
+    }
+    if (reader->whitespace_rules != NULL) {
+      destroy_whitespace_rules(reader->whitespace_rules);
+    }
+    reader->whitespace_rules = rules;
+  }
+  return EXPAT_STATUS_OK;
 }
 
 /** ExpatReader_Parse *************************************************/
