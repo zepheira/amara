@@ -61,10 +61,8 @@ static PyMethodDef namespace_methods[] = {
   { #name, T_OBJECT, offsetof(NamespaceObject, member), RO }
 
 static PyMemberDef namespace_members[] = {
-  Namespace_MEMBER(nodeName, name),
-  Namespace_MEMBER(localName, name),
-  Namespace_MEMBER(nodeValue, value),
-  Namespace_MEMBER(value, value),
+  Namespace_MEMBER(xml_local, name),
+  Namespace_MEMBER(xml_value, value),
   { NULL }
 };
 

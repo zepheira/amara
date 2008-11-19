@@ -104,9 +104,12 @@ class name_function(builtin_function):
                 return datatypes.EMPTY_STRING
             node = arg0[0]
 
-        if isinstance(node, (tree.element, tree.attribute,
-                             tree.processing_instruction, tree.namespace)):
+        if isinstance(node, (tree.element, tree.attribute)):
             return datatypes.string(node.xml_qname)
+        elif isinstance(node, tree.processing_instruction):
+            return datatypes.string(node.xml_target)
+        elif isinstance(node, tree.namespace):
+            return datatypes.string(node.xml_local)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
@@ -128,10 +131,10 @@ class local_name_function(name_function):
                 return datatypes.EMPTY_STRING
             node = arg0[0]
 
-        if isinstance(node, (tree.element, tree.attribute)):
+        if isinstance(node, (tree.element, tree.attribute, tree.namespace)):
             return datatypes.string(node.xml_local)
-        elif isinstance(node, (tree.processing_instruction, tree.namespace)):
-            return datatypes.string(node.xml_qname)
+        elif isinstance(node, tree.processing_instruction):
+            return datatypes.string(node.xml_target)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
