@@ -26,20 +26,17 @@ class avt_expression(expression):
             else:
                 parts[pos] = u'%s'
                 args.append(part)
-        if self._args:
-            format = u''.join(parts)
-            self._format = format.__mod__
-        else:
+        self._format = u''.join(parts)
+        if not self._args:
             # use empty format args to force '%%' replacement
-            self._format = format % ()
+            self._format %= ()
         return
 
     def evaluate_as_string(self, context):
-        if self._args:
-            return self._format(arg.evaluate_as_string(context)
-                                for arg in self._args)
-        else:
+        if not self._args:
             return self._format
+        return self._format % tuple(arg.evaluate_as_string(context)
+                                    for arg in self._args)
     evaluate = evaluate_as_string
 
     def __str__(self):
