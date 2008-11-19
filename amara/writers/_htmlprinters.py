@@ -6,6 +6,7 @@ This module supports document serialization in HTML syntax.
 
 import re
 
+from amara.lib.xmlstring import isspace
 from amara.writers import _xmlstream, htmlentities
 from amara.writers._xmlprinters import xmlprinter
 
@@ -300,7 +301,7 @@ class htmlprettyprinter(htmlprinter):
         if namespace is None:
             key = name.lower()
         else:
-            key = None
+            key = '#bogus'
 
         # Get the inline flag for this element
         inline = key in self._inline_elements
@@ -344,7 +345,8 @@ class htmlprettyprinter(htmlprinter):
         return
 
     def text(self, data, disable_escaping=False):
-        self._indent_end_tag = False
+        # OK to indent end-tag if just whitespace is written
+        self._indent_end_tag = isspace(data)
         htmlprinter.text(self, data, disable_escaping)
 
     def processing_instruction(self, target, data):

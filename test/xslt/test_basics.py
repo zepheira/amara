@@ -20,18 +20,22 @@ class test_basics_1(xslt_test):
   <body>
     <h1>Tabulate Just Names and Phone Numbers</h1>
     <table>
+\x20\x20\x20\x20
       <tr>
         <td align='center'><b>Pieter Aaron</b></td>
         <td>(Work) 404-555-1234<br>(Fax) 404-555-4321<br>(Pager) 404-555-5555</td>
       </tr>
+\x20\x20\x20\x20
       <tr>
         <td align='center'><b>Emeka Ndubuisi</b></td>
         <td>(Work) 767-555-7676<br>(Fax) 767-555-7642<br>(Pager) 800-SKY-PAGEx767676</td>
       </tr>
+\x20\x20\x20\x20
       <tr>
         <td align='center'><b>Vasia Zhugenev</b></td>
         <td>(Work) 000-987-6543<br>(Cell) 000-000-0000</td>
       </tr>
+
     </table>
   </body>
 </html>"""
@@ -85,12 +89,16 @@ class test_basics_2(xslt_test):
   <BODY>
     <H1>Tabulate just the Names</H1>
     <TABLE>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Pieter Aaron</B></TD>404-555-1234404-555-4321404-555-5555</TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Emeka Ndubuisi</B></TD>767-555-7676767-555-7642800-SKY-PAGEx767676</TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Vasia Zhugenev</B></TD>000-987-6543000-000-0000</TR>
+
     </TABLE>
   </BODY>
 </HTML>"""
@@ -246,12 +254,16 @@ class test_basics_4(xslt_test):
   <BODY>
     <H1>Tabulate just the Names</H1>
     <TABLE>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Pieter Aaron</B></TD>404-555-1234404-555-4321404-555-5555</TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Emeka Ndubuisi</B></TD>767-555-7676767-555-7642800-SKY-PAGEx767676</TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Vasia Zhugenev</B></TD>000-987-6543000-000-0000</TR>
+
     </TABLE>
   </BODY>
 </HTML>"""
@@ -315,45 +327,42 @@ class test_basics_6(xslt_test):
     '''
     Basic output parameter test, 1
     '''
-    source = stringsource('<div><img src="x"/></div>')
+    source = stringsource('<div><hr noshade="noshade"/></div>')
     transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="yes"')
     expected = """<?xml version="1.0" encoding="UTF-8"?>
 <div>
-    <img src="x"/>
+  <hr noshade="noshade"/>
 </div>"""
 
 class test_basics_7(xslt_test):
-    source = stringsource('<div><img src="x"/></div>')
+    source = stringsource('<div><hr noshade="noshade"/></div>')
     transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="no"')
     expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div><img src="x"/></div>"""
+<div><hr noshade="noshade"/></div>"""
 
 class test_basics_8(xslt_test):
-    source = stringsource('<div><img src="x"/></div>')
+    source = stringsource('<div><hr noshade="noshade"/></div>')
     transform = stringsource(OUTPUT_TEMPLATE%'method="xml"')
     expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div><img src="x"/></div>"""
+<div><hr noshade="noshade"/></div>"""
 
 class test_basics_9(xslt_test):
-    source = stringsource('<div><img src="x"/></div>')
+    source = stringsource('<div><hr noshade="noshade"/></div>')
     transform = stringsource(OUTPUT_TEMPLATE%'method="html" indent="no"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div><img src="x"></img></div>"""
+    expected = """<div><hr noshade></div>"""
 
 class test_basics_10(xslt_test):
-    source = stringsource('<div><img src="x"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="yes"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div>
-   <img src="x"></img>
+    source = stringsource('<div><hr noshade="noshade"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="html" indent="yes"')
+    expected = """<div>
+  <hr noshade>
 </div>"""
 
 class test_basics_11(xslt_test):
-    source = stringsource('<div><img src="x"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="xml"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div>
-   <img src="x"></img>
+    source = stringsource('<div><hr noshade="noshade"/></div>')
+    transform = stringsource(OUTPUT_TEMPLATE%'method="html"')
+    expected = """<div>
+  <hr noshade>
 </div>"""
 
 if __name__ == '__main__':

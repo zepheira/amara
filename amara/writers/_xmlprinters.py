@@ -112,7 +112,7 @@ class xmlprinter(object):
         if one remained open. Writes the xmlns attributes for the given
         sequence of prefix/namespace-uri pairs, and invokes attribute() as
         neeeded to write the given sequence of attribute qname/value pairs.
-        
+
         Note, the `namespace` argument is ignored in this class.
         """
         write_ascii, write_escape, write_encode = (

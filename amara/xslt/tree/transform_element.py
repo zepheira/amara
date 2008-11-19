@@ -181,9 +181,9 @@ class transform_element(xslt_element):
             if cdata_elements:
                 self.output_parameters.cdata_section_elements += cdata_elements
             if indent is not None:
-                self.output_parameters.doctype_public = doctype_public
+                self.output_parameters.indent = indent
             if media_type is not None:
-                self.output_parameters.doctype_public = doctype_public
+                self.output_parameters.media_type = media_type
             if byte_order_mark is not None:
                 self.output_parameters.byte_order_mark = byte_order_mark
             if canonical_form is not None:

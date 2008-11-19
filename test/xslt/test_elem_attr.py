@@ -41,15 +41,19 @@ version="1.0">
   </HEAD>
   <BODY>
     <TABLE>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Pieter Aaron</B></TD>
       </TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Emeka Ndubuisi</B></TD>
       </TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Vasia Zhugenev</B></TD>
       </TR>
+
     </TABLE>
   </BODY>
 </HTML>"""
