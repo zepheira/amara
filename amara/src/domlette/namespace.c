@@ -15,9 +15,6 @@ namespace_init(NamespaceObject *self, PyObject *prefix, PyObject *namespaceURI)
     Py_DECREF(self);
     return NULL;
   }
-  if (prefix == Py_None)
-    prefix = empty_string;
-
   self->hash = NamespaceMap_GetHash(prefix);
   if (self->hash == -1) {
     Py_DECREF(self);
