@@ -35,8 +35,8 @@ class choose_element(xslt_element):
         if not choices:
             raise XsltException(XsltError.CHOOSE_REQUIRES_WHEN)
         if isinstance(choices[-1], otherwise_element):
-            choices = choices[:-1]
             self._otherwise = choices[-1]
+            choices = choices[:-1]
         else:
             self._otherwise = None
         self._choices = [ (child, child._test.evaluate_as_boolean)
@@ -45,8 +45,7 @@ class choose_element(xslt_element):
 
     def instantiate(self, context):
         for child, test in self._choices:
-            context.instruction = child
-            context.namespaces = child.namespaces
+            context.instruction, context.namespaces = child, child.namespaces
             if test(context):
                 chosen = child
                 break
@@ -55,7 +54,6 @@ class choose_element(xslt_element):
             chosen = self._otherwise
             if not chosen:
                 return
-
         return chosen.process_children(context)
 
     #def __getstate__(self):

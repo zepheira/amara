@@ -47,15 +47,19 @@ version="1.0">
   </HEAD>
   <BODY>
     <TABLE>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Pieter Aaron</B>: Employee 1</TD>
       </TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Emeka Ndubuisi</B>: Employee 2</TD>
       </TR>
+\x20\x20\x20\x20
       <TR>
         <TD ALIGN='CENTER'><B>Vasia Zhugenev</B>: Other Employee</TD>
       </TR>
+
     </TABLE>
   </BODY>
 </HTML>"""
