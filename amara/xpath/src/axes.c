@@ -697,7 +697,6 @@ static PyTypeObject followingsibling_axis_type = {
 
 typedef struct {
   PyObject_HEAD
-  ElementObject *element;
   PyObject *namespaces;
   Py_ssize_t pos;
 } namespace_axis;
@@ -717,8 +716,6 @@ static PyObject *namespace_axis_new(PyTypeObject *type, PyObject *args,
     return NULL;
   }
   if (Element_Check(node)) {
-    axis->element = Element(node);
-    Py_INCREF(axis->element);
     axis->namespaces = Element_InscopeNamespaces(Element(node));
     if (axis->namespaces == NULL) {
       Py_DECREF(axis);
@@ -731,7 +728,6 @@ static PyObject *namespace_axis_new(PyTypeObject *type, PyObject *args,
 
 static void namespace_axis_dealloc(namespace_axis *self)
 {
-  Py_CLEAR(self->element);
   Py_CLEAR(self->namespaces);
   self->ob_type->tp_free(self);
 }
@@ -741,9 +737,7 @@ static PyObject *namespace_axis_next(namespace_axis *self)
   if (self->namespaces != NULL) {
     NamespaceObject *node;
     while ((node = NamespaceMap_Next(self->namespaces, &self->pos))) {
-      node = Namespace_New(Namespace_GET_NAME(node), Namespace_GET_VALUE(node));
-      assert(Node_GET_PARENT(node) == NULL);
-      Node_SET_PARENT(node, (NodeObject *)self->element);
+      Py_INCREF(node);
       return (PyObject *)node;
     }
     Py_CLEAR(self->namespaces);
