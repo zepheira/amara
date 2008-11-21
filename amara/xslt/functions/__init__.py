@@ -10,6 +10,8 @@ from amara.namespaces import XSL_NAMESPACE, EXTENSION_NAMESPACE
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
 
+import _functions
+
 __all__ = ('document_function', 'key_function', 'format_number_function',
            'current_function', 'unparsed_entity_uri_function',
            'generate_id_function', 'system_property_function',
@@ -91,7 +93,8 @@ class format_number_function(builtin_function):
                                        self, name=qname)
         else:
             format = None
-        return datatypes.string(FormatNumber(number, pattern, format))
+        result = _functions.decimal_format(number, pattern, format)
+        return datatypes.string(result)
 
 
 class current_function(builtin_function):
