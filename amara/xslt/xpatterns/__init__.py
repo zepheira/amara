@@ -6,6 +6,7 @@ Implement Patterns according to the XSLT spec
 
 from amara import tree
 from amara.xpath.locationpaths import nodetests
+from amara.xslt import XsltError
 
 child_axis = tree.element
 attribute_axis = tree.attribute
@@ -92,6 +93,7 @@ class predicated_test(nodetests.node_test):
         self._node_test = node_test
         self._predicates = predicates
         self.name_key = node_test.name_key
+        self.node_type = node_test.node_type
         return
 
     def match(self, context, node, principal_type):
