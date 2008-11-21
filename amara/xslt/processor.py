@@ -577,9 +577,8 @@ class processor(object):
             raise RuntimeError(MessageSource.EXPRESSION_POSITION_INFO % (
                 instruction.baseUri, instruction.lineNumber,
                 instruction.columnNumber, instruction.nodeName, strerror))
-        finally:
-            writer = context.pop_writer()
-            assert writer is result.writer
+        writer = context.pop_writer()
+        assert writer is result.writer
 
         # Perform cleanup
         self.transform.root.teardown()
