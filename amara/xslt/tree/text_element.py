@@ -21,10 +21,11 @@ class text_element(xslt_element):
         return
 
     def instantiate(self, context):
-        if self._value:
+        value = self._value
+        if value:
             if self._disable_output_escaping:
-                context.text(self._value, False)
+                context.text(value, False)
             else:
-                context.text(self._value)
+                context.text(value)
         return
 
