@@ -29,7 +29,7 @@ _template_location = operator.attrgetter('baseUri', 'lineNumber',
 
 def _fixup_aliases(node, aliases):
     for child in node:
-        if isinstance(child, literal_element):
+        if isinstance(child, literal_element.literal_element):
             child.fixup_aliases(aliases)
             _fixup_aliases(child, aliases)
         elif isinstance(child, xslt_element):
@@ -236,7 +236,7 @@ class transform_element(xslt_element):
                 namespace = element.namespaces[element._stylesheet_prefix]
                 if namespace not in aliases:
                     mapped[namespace] = True
-                    result_prefix = alias._result_prefix
+                    result_prefix = element._result_prefix
                     result_namespace = element.namespaces[result_prefix]
                     aliases[namespace] = (result_namespace, result_prefix)
                 # It is an error for a namespace URI to be mapped to multiple
@@ -249,7 +249,9 @@ class transform_element(xslt_element):
             _fixup_aliases(self, aliases)
 
         # - process the `xsl:attribute-set` elements
-        elements = top_level_elements['attribute-set']
+        sets = self.attribute_sets = {}
+        for element in top_level_elements['attribute-set']:
+            sets[element._name] = element
 
         # - process the `xsl:param` and `xsl:variable` elements
         index, self._variables = {}, variable_elements[:]
