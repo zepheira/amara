@@ -20,5 +20,5 @@ class with_param_element(xslt_element):
 
     def setup(self):
         if not self._select:
-            self._select = rtf_expression(self.children)
+            self._select = rtf_expression(self)
         return

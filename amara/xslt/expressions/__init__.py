@@ -3,29 +3,22 @@
 import operator
 
 class rtf_expression:
-    def __init__(self, nodes):
-        self.nodes = nodes
+    def __init__(self, instruction):
+        self.instruction = instruction
 
     def evaluate(self, context):
-        processor = context.processor
-        processor.pushResultTree(context.currentInstruction.baseUri)
+        context.push_tree_writer(self.instruction.baseUri)
         try:
-            for child in self.nodes:
-                child.instantiate(context, processor)
-            result = processor.popResult()
+            self.instruction.process_children(context)
         finally:
-            #FIXME: This causes assertion error to be thrown in the event
-            #of an exception in instantiating child nodes, which
-            #masks the true exception.  Find a better way to clean up --UO
-            #result = processor.popResult()
-            pass
-        return result
+            writer = context.pop_writer()
+        return writer.get_result()
 
     def pprint(self, indent=''):
         print indent + str(self)
 
     def __str__(self):
-        return '<RtfExpr at %x: %s>' % (id(self), self.nodes)
+        return '<rtf_expression at %x: %s>' % (id(self), self.instruction)
 
 
 class sorted_expression:
