@@ -4,7 +4,7 @@
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:output method="text"/>
-<xsl:include href="test/xslt/borrowed/resources/wc.xslt"/>
+<xsl:include href="resources/wc.xslt"/>
 
 <xsl:variable name="nwords">
   <xsl:call-template name="word-count">

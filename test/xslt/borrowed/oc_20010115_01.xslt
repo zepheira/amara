@@ -3,7 +3,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="1.0">
 
-  <xsl:import href="test/xslt/borrowed/resources/pool-comm.xsl"/>
+  <xsl:import href="resources/pool-comm.xsl"/>
 
   <xsl:output method="html" 
               version="4.0" 

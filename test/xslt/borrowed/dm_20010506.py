@@ -21,7 +21,7 @@ class test_xslt_import_with_variables_dm_20010506(xslt_test):
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version='1.0'>
 
-  <xsl:import href="Xml/Xslt/Borrowed/dm_20010506.xslt"/>
+  <xsl:import href="dm_20010506.xslt"/>
 
   <xsl:variable name="section.autolabel" select="1" />
   <xsl:variable name="html.stylesheet">book.xsl</xsl:variable>
@@ -39,7 +39,7 @@ class test_xslt_import_with_params_dm_20010506(xslt_test):
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version='1.0'>
 
-  <xsl:import href="Xml/Xslt/Borrowed/dm_20010506.xslt"/>
+  <xsl:import href="dm_20010506.xslt"/>
 
   <xsl:param name="section.autolabel" select="1" />
   <xsl:param name="html.stylesheet">book.xsl</xsl:param>
@@ -55,7 +55,7 @@ class test_xslt_include_with_variables_dm_20010506(xslt_error):
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version='1.0'>
 
-  <xsl:include href="Xml/Xslt/Borrowed/dm_20010506.xslt"/>
+  <xsl:include href="dm_20010506.xslt"/>
 
   <xsl:variable name="section.autolabel" select="1" />
   <xsl:variable name="html.stylesheet">book.xsl</xsl:variable>
@@ -73,7 +73,7 @@ class test_xslt_include_with_params_dm_20010506(xslt_error):
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version='1.0'>
 
-  <xsl:include href="Xml/Xslt/Borrowed/dm_20010506.xslt"/>
+  <xsl:include href="dm_20010506.xslt"/>
 
   <xsl:param name="section.autolabel" select="1" />
   <xsl:param name="html.stylesheet">book.xsl</xsl:param>
