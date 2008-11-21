@@ -55,14 +55,14 @@ class htmlprinter(xmlprinter):
         Handles a doctype event.
 
         Extends the overridden method by adding support for the case
-        when there is a publicId and no systemId, which is allowed in
+        when there is a publicid and no systemid, which is allowed in
         HTML but not in XML.
         """
         if publicid and not systemid:
             self.write_ascii('<!DOCTYPE ')
             self.write_encode(name, 'document type name')
             self.write_ascii(' PUBLIC "')
-            self.write_encode(publicId, 'document type public-id')
+            self.write_encode(publicid, 'document type public-id')
             self.write_ascii('">\n')
         else:
             xmlprinter.doctype(self, name, publicid, systemid)
