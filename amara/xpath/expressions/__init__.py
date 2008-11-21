@@ -13,8 +13,11 @@ class expression(object):
 
     return_type = datatypes.xpathobject
 
+    class __metaclass__(type):
+        pass
+
     def compile(self, compiler):
-        raise NotImplementedError(self.__class__.__name__)
+        raise NotImplementedError('%s.compile' % (self.__class__.__name__,))
 
     def compile_as_boolean(self, compiler):
         """Compiles the expression into a boolean result."""

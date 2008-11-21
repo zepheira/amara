@@ -4,7 +4,7 @@
 Implementation of `xsl:fallback` element.
 """
 
-from amara.xslt import XsltError
+from amara.xslt import XsltError, XsltRuntimeError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 
 __all__ = (
@@ -22,6 +22,7 @@ class fallback_element(xslt_element):
 
 class _undefined_element(xslt_element):
 
+    content_model = content_model.template
     _error_code = XsltError.INTERNAL_ERROR
 
     def setup(self):
@@ -33,7 +34,8 @@ class _undefined_element(xslt_element):
         context.namespaces = self.namespaces
 
         if not self._fallback:
-            raise XsltError(self._error_code, self, element=self.nodeName)
+            raise XsltRuntimeError(self._error_code, self,
+                                   element=self.nodeName)
 
         for fallback in self._fallback:
             fallback.process_children(context)

@@ -11,7 +11,7 @@ from amara.xpath.functions import builtin_function
 __all__ = ('number_function', 'sum_function', 'floor_function', 
            'ceiling_function', 'round_function')
 
-           
+
 class number_function(builtin_function):
     """Function: <number> number(<object>?)"""
     name = 'number'
@@ -23,10 +23,10 @@ class number_function(builtin_function):
         arg0, = self._args
         if arg0 is None:
             return datatypes.number(context.node)
-        return arg.evaluate_as_number(context)
+        return arg0.evaluate_as_number(context)
     evaluate = evaluate_as_number
 
-    
+
 class sum_function(builtin_function):
     """Function: <number> sum(<node-set>)"""
     name = 'sum'

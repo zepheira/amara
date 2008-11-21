@@ -24,8 +24,7 @@ class function_call(expression):
         if name in cls._builtins:
             cls = cls._builtins[name]
         elif 1:
-            from amara.xpath.functions import function_callN
-            cls = function_callN
+            cls = extension_function
         elif not args:
             cls = function_call0
         else:
@@ -129,8 +128,8 @@ class extension_function(function_call):
         try:
             func = compiler.functions[expanded]
         except KeyError:
-            name = u':'.join(self._name).encode('unicode_escape')
-            raise XPathError(XPathError.UNDEFINED_FUNCTION, name=name)
+            raise XPathError(XPathError.UNDEFINED_FUNCTION,
+                             function=u':'.join(self._name))
 
         # If this is a Python function, we can verify the arguments. If it is
         # just any callable, no verification will happen and TypeErrors will

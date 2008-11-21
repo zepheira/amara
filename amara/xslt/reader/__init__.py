@@ -13,7 +13,7 @@ from amara import sax
 from amara.lib import IriError, inputsource
 from amara.lib.xmlstring import isspace
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE, XSL_NAMESPACE
-from amara.xslt import XsltError, XsltTypeError
+from amara.xslt import XsltError, XsltStaticError
 #from amara.xslt import builtinextelements, exslt
 from amara.xslt.tree import *
 
@@ -37,7 +37,7 @@ class push_variables_node(xslt_node):
     def instantiate(self, context):
         variables = context.variables
         self._scope.append(variables)
-        context.varBindings = variables.copy()
+        context.variables = variables.copy()
         return
 
 class pop_variables_node(xslt_node):
@@ -194,10 +194,10 @@ class stylesheet_reader(object):
         that this use case may also disappear and then so will this function.
         You have been warned.
         """
-        self._extElements.update(elementMapping)
+        self._extelements.update(elementMapping)
         for name in elementMapping:
-            if name in self._extensionElementCache:
-                del self._extensionElementCache[name]
+            if name in self._extelement_cache:
+                del self._extelement_cache[name]
         return
 
     # -- ContentHandler interface --------------------------------------
@@ -349,8 +349,8 @@ class stylesheet_reader(object):
                     xsl_class = _element_classes[local]
                 except KeyError:
                     if not state.forwardsCompatible:
-                        raise XsltParserException(XsltError.XSLT_ILLEGAL_ELEMENT,
-                                                  self._locator, local)
+                        raise XsltStaticError(XsltError.XSLT_ILLEGAL_ELEMENT,
+                                              parent_state.node, element=local)
                     xsl_class = fallback_elements.undefined_xslt_element
                     validation_token = content_model.RESULT_ELEMENT
                 else:
@@ -362,17 +362,17 @@ class stylesheet_reader(object):
         elif namespace in state.extensionNamespaces:
             try:
                 ext_class, validation, legal_attrs = \
-                    self._extensionElementCache[expandedName]
+                    self._extelement_cache[expandedName]
             except KeyError:
                 try:
-                    ext_class = self._extElements[expandedName]
+                    ext_class = self._extelements[expandedName]
                 except KeyError:
                     ext_class = fallback_elements.undefined_extension_element
-                validation = ext_class.content.compile()
-                legal_attrs = ext_class.legalAttrs
+                validation = ext_class.content_model.compile()
+                legal_attrs = ext_class.attribute_types
                 if legal_attrs is not None:
-                    legal_attrs = ext_class.legalAttrs.items()
-                self._extensionElementCache[expandedName] = (
+                    legal_attrs = legal_attrs.items()
+                self._extelement_cache[expandedName] = (
                     ext_class, validation, legal_attrs)
             validation_token = content_model.RESULT_ELEMENT
         else:
@@ -386,22 +386,13 @@ class stylesheet_reader(object):
             next = parent_state.validation[validation_token]
         except KeyError:
             #self._debug_validation(expandedName)
-            parent = parent_state.node
-            if parent is self._stylesheet:
-                if (XSL_NAMESPACE, 'import') == expandedName:
-                    raise XsltParserException(XsltError.ILLEGAL_IMPORT,
-                                              self._locator)
-            elif parent.expandedName == (XSL_NAMESPACE, 'choose'):
-                if (XSL_NAMESPACE, 'otherwise') == expandedName:
-                    raise XsltParserException(XsltError.ILLEGAL_CHOOSE_CHILD,
-                                              self._locator)
             # ignore whatever elements are defined within an undefined
             # element as an exception will occur when/if this element
             # is actually instantiated
-            if parent.__class__ is not UndefinedExtensionElement:
-                raise XsltParserException(XsltError.ILLEGAL_ELEMENT_CHILD,
-                                          self._locator, qualifiedName,
-                                          parent.xml_qname)
+            if not isinstance(parent_state.node,
+                              fallback_elements.undefined_extension_element):
+                raise XsltStaticError(XsltError.ILLEGAL_ELEMENT_CHILD,
+                                      parent_state.node, element=qualifiedName)
         else:
             # save this state for next go round
             parent_state.validation = next
@@ -427,15 +418,16 @@ class stylesheet_reader(object):
                     value = attribs[attr_expanded]
                     del attribs[attr_expanded]
                 elif attr_info.required:
-                    raise XsltParserException(
-                        XsltError.MISSING_REQUIRED_ATTRIBUTE,
-                        self._locator, qualifiedName, attr_name)
+                    raise XsltStaticError(XsltError.MISSING_REQUIRED_ATTRIBUTE,
+                                          instance, element=qualifiedName,
+                                          attribute=attr_name)
                 else:
                     value = None
                 try:
                     value = attr_info.prepare(instance, value)
                 except XsltError, e:
-                    raise self._mutate_exception(e, qualifiedName)
+                    #raise self._mutate_exception(e, qualifiedName)
+                    raise
 
                 if standand_attributes:
                     self._stylesheet = instance
@@ -453,9 +445,9 @@ class stylesheet_reader(object):
                     attr_ns, attr_name = expanded
                     if attr_ns is None:
                         if not state.forwardsCompatible:
-                            raise XsltParserException(
-                                XsltError.ILLEGAL_NULL_NAMESPACE_ATTR,
-                                self._locator, attr_name, qualifiedName)
+                            raise XsltStaticError(
+                                XsltError.ILLEGAL_NULL_NAMESPACE_ATTR, instance,
+                                attribute=attr_name, element=qualifiedName)
                     else:
                         instance.setAttribute(attr_ns, attr_name,
                                               attribs[expanded])
@@ -474,15 +466,16 @@ class stylesheet_reader(object):
                         value = attribs[attr_expanded]
                         del attribs[attr_expanded]
                     elif attr_info.required:
-                        raise XsltParserException(
-                            XsltError.MISSING_REQUIRED_ATTRIBUTE,
-                            self._locator, qualifiedName, attr_name)
+                        raise XsltStaticError(
+                            XsltError.MISSING_REQUIRED_ATTRIBUTE, instance,
+                            element=qualifiedName, attribute=attr_name)
                     else:
                         value = None
                     try:
                         value = attr_info.prepare(instance, value)
                     except XsltError, e:
-                        raise self._mutate_exception(e, qualifiedName)
+                        #raise self._mutate_exception(e, qualifiedName)
+                        raise
                     if '-' in attr_name:
                         attr_name = attr_name.replace('-', '_')
                     inst_dict['_' + attr_name] = value
@@ -494,9 +487,9 @@ class stylesheet_reader(object):
                     attr_ns, attr_name = expanded
                     value = attribs[expanded]
                     if validate_attributes and attr_ns is None:
-                        raise XsltParserException(
-                            XsltError.ILLEGAL_NULL_NAMESPACE_ATTR, self._locator,
-                            attr_name, qualifiedName)
+                        raise XsltStaticError(
+                            XsltError.ILLEGAL_NULL_NAMESPACE_ATTR, instance,
+                            attribute=attr_name, element=qualifiedName)
                     elif attr_ns == XSL_NAMESPACE:
                         self._handle_result_element_attr(state, instance,
                                                          qualifiedName,
@@ -526,9 +519,8 @@ class stylesheet_reader(object):
             # Check for top-level result-element in null namespace
             if parent_state.node is self._stylesheet and \
                    not namespace and not state.forwardsCompatible:
-                raise XsltParserException(XsltError.ILLEGAL_ELEMENT_CHILD,
-                                          self._locator, qualifiedName,
-                                          parent_state.node.nodeName)
+                raise XsltStaticError(XsltError.ILLEGAL_ELEMENT_CHILD,
+                                      parent_state.node, element=qualifiedName)
         return
 
     def endElementNS(self, expandedName, qualifiedName,
@@ -549,8 +541,9 @@ class stylesheet_reader(object):
             state.validation[content_model.END_ELEMENT]
         except KeyError:
             if expandedName == (XSL_NAMESPACE, u'choose'):
-                raise XsltParserException(XsltError.CHOOSE_REQUIRES_WHEN,
-                                          self._locator)
+                raise XsltStaticError(XsltError.MISSING_REQUIRED_ELEMENT,
+                                      element, element=element.nodeName,
+                                      child='xsl:when')
             raise
 
         # ----------------------------------------------------------
@@ -580,8 +573,8 @@ class stylesheet_reader(object):
             try:
                 version = element._version
             except AttributeError:
-                raise XsltParserException(XsltError.LITERAL_RESULT_MISSING_VERSION,
-                                          self._locator)
+                raise XsltStaticError(XsltError.LITERAL_RESULT_MISSING_VERSION,
+                                      element)
 
             # Reset the root's validation as it has already seen an element.
             parent_state.validation = _XSLT_ROOT_VALIDATION
@@ -615,9 +608,8 @@ class stylesheet_reader(object):
                     if self._import_index > existing:
                         self._global_vars[name] = self._import_index
                     elif self._import_index == existing:
-                        raise XsltParserException(
-                            XsltError.DUPLICATE_TOP_LEVEL_VAR,
-                            self._locator, name)
+                        raise XsltStaticError(XsltError.DUPLICATE_TOP_LEVEL_VAR,
+                                              element, variable=name)
                 else:
                     self._global_vars[name] = self._import_index
             else:
@@ -625,8 +617,8 @@ class stylesheet_reader(object):
                 # it is safe to ignore import precedence here
                 local_vars = parent_state.localVariables
                 if name in local_vars:
-                    raise XsltParserException(XsltError.ILLEGAL_SHADOWING,
-                                              self._locator, name)
+                    raise XsltStaticError(XsltError.ILLEGAL_SHADOWING,
+                                          element, variable=name)
                 # Copy on use
                 if local_vars is stack[-2].localVariables:
                     local_vars = local_vars.copy()
@@ -653,9 +645,9 @@ class stylesheet_reader(object):
             if 1:
                 if len(data) > 10:
                     data = data[:10] + '...'
-                raise XsltParserException(XsltError.ILLEGAL_TEXT_CHILD_PARSE,
-                                          self._locator, repr(data),
-                                          parent_state.node.nodeName)
+                raise XsltStaticError(XsltError.ILLEGAL_TEXT_CHILD,
+                                      parent_state.node, data=data,
+                                      element=parent_state.node.nodeName)
             #self._debug_validation(content_model.TEXT_NODE)
         else:
             # update validation
@@ -682,17 +674,16 @@ class stylesheet_reader(object):
             #    except (OSError, IriError):
             #        pass
             #else:
-            if 1:
-                raise XsltTypeError(XsltError.INCLUDE_NOT_FOUND, element,
-                                    uri=href, base=self._locator.getSystemId())
+            raise XsltStaticError(XsltError.INCLUDE_NOT_FOUND, element,
+                                  uri=href, base=self._locator.getSystemId())
 
         # XSLT Spec 2.6.1, Detect circular references in stylesheets
         # Note, it is NOT an error to include/import the same stylesheet
         # multiple times, rather that it may lead to duplicate definitions
         # which are handled regardless (variables, params, templates, ...)
         if new_source.uri in self._visited_stylesheet_uris:
-            raise XsltTypeError(XsltError.CIRCULAR_INCLUDE, element,
-                                uri=new_source.uri)
+            raise XsltStaticError(XsltError.CIRCULAR_INCLUDE, element,
+                                  uri=new_source.uri)
         self.parse(new_source)
 
         self._import_index += is_import
@@ -712,9 +703,8 @@ class stylesheet_reader(object):
                 try:
                     uri = instance.namespaces[prefix]
                 except KeyError:
-                    raise XsltParserException(XsltError.UNDEFINED_PREFIX,
-                                              self._locator,
-                                              prefix or '#default')
+                    raise XsltStaticError(XsltError.UNDEFINED_PREFIX, instance,
+                                          prefix=prefix or '#default')
                 ext[uri] = True
 
                 # remove all matching namespace URIs
@@ -728,9 +718,8 @@ class stylesheet_reader(object):
                 try:
                     uri = instance.namespaces[prefix]
                 except KeyError:
-                    raise XsltParserException(XsltError.UNDEFINED_PREFIX,
-                                              self._locator,
-                                              prefix or '#default')
+                    raise XsltStaticError(XsltError.UNDEFINED_PREFIX, instance,
+                                          prefix=prefix or '#default')
                 # remove all matching namespace URIs
                 for output_prefix, output_uri in out.items():
                     if output_uri == uri:
@@ -750,9 +739,9 @@ class stylesheet_reader(object):
         try:
             attr_info = _RESULT_ELEMENT_XSL_ATTRS[attributeName]
         except KeyError:
-            raise XsltParserException(XsltError.ILLEGAL_XSL_NAMESPACE_ATTR,
-                                      self._locator, attributeName,
-                                      elementName)
+            raise XsltStaticError(XsltError.ILLEGAL_XSL_NAMESPACE_ATTR,
+                                  instance, attribute=attributeName,
+                                  element=elementName)
         value = attr_info.prepare(instance, value)
         self._handle_standard_attr(state, instance, attributeName, value)
         return
@@ -773,9 +762,9 @@ class stylesheet_reader(object):
         print '='*60
         print 'parent =',parent
         print 'parent class =',parent.__class__
-        print 'parent content =', parent.content
+        print 'parent content =', parent.content_model
         print 'initial validation'
-        pprint(parent.content.compile())
+        pprint(parent.content_model.compile())
         print 'current validation'
         pprint(state.validation)
         if token:

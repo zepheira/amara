@@ -22,7 +22,7 @@ class builtin_function(function_call):
     arguments = (Ellipsis,)
     defaults = ()
 
-    class __metaclass__(type):
+    class __metaclass__(function_call.__metaclass__):
         if __debug__:
             def __new__(cls, name, bases, namespace):
                 assert 'name' in namespace

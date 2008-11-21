@@ -6,7 +6,7 @@ Implementation of `xsl:apply-templates` instruction
 
 from amara.namespaces import XSL_NAMESPACE
 from amara.xpath import XPathError
-from amara.xslt import XsltError, XsltTypeError
+from amara.xslt import XsltError, XsltStaticError
 from amara.xslt.tree import xslt_element, content_model, attribute_types
 from amara.xslt.tree.sort_element import sort_element
 from amara.xslt.tree.with_param_element import with_param_element
@@ -51,8 +51,8 @@ class apply_templates_element(xslt_element):
               nodes = self._select.evaluate_as_nodeset(context)
             except TypeError:
                 raise
-                raise XsltTypeError(XsltError.INVALID_APPLY_TEMPLATES_SELECT,
-                                    self)
+                raise XsltStaticError(XsltError.INVALID_APPLY_TEMPLATES_SELECT,
+                                      self)
         else:
             nodes = context.node.xml_children
 

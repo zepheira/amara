@@ -40,6 +40,7 @@ class for_each_element(xslt_element):
             try:
               nodes = self._select.evaluate_as_nodeset(context)
             except TypeError:
+                raise
                 raise XsltError(XsltError.INVALID_FOREACH_NODESET, self)
         else:
             nodes = context.node.xml_children

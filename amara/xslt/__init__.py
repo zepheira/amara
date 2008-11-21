@@ -27,9 +27,10 @@ class XsltError(Error):
     DUPLICATE_NAMESPACE_ALIAS = 31
 
     # misc element validation
-    ILLEGAL_ELEMENT_CHILD = 50
-    ILLEGAL_TEXT_CHILD_PARSE = 51
-    UNDEFINED_PREFIX = 52
+    MISSING_REQUIRED_ELEMENT = 50
+    ILLEGAL_ELEMENT_CHILD = 51
+    ILLEGAL_TEXT_CHILD = 52
+    UNDEFINED_PREFIX = 53
 
     # misc attribute validation
     MISSING_REQUIRED_ATTRIBUTE = 70
@@ -57,14 +58,14 @@ class XsltError(Error):
     APPLYIMPORTS_WITH_NULL_CURRENT_TEMPLATE = 100
 
     # xsl:import and xsl:include
-    ILLEGAL_IMPORT = 110
+    #ILLEGAL_IMPORT = 110
     #IMPORT_NOT_FOUND = 111
     INCLUDE_NOT_FOUND = 112
     CIRCULAR_INCLUDE = 113
 
     # xsl:choose, xsl:when and xsl:otherwise
     ILLEGAL_CHOOSE_CHILD = 120
-    CHOOSE_REQUIRES_WHEN = 121
+    #CHOOSE_REQUIRES_WHEN = 121
     #CHOOSE_WHEN_AFTER_OTHERWISE = 122
     #CHOOSE_MULTIPLE_OTHERWISE = 123
     #WHEN_MISSING_TEST = 124
@@ -96,9 +97,6 @@ class XsltError(Error):
 
     # xsl:copy-of
     #COPYOF_MISSING_SELECT = 190
-
-    # xsl:text
-    ILLEGAL_TEXT_CHILD = 200
 
     # xsl:apply-template
     #ILLEGAL_APPLYTEMPLATE_CHILD = 210
@@ -186,8 +184,8 @@ class XsltError(Error):
             #    'Stylesheet %(uri)s, document root element must have a'
             #    ' version attribute.  (see XSLT 1.0 sec. 2.2)'),
             XsltError.LITERAL_RESULT_MISSING_VERSION: _(
-                'Document root element must have a xsl:version attribute. '
-                ' (see XSLT 1.0 sec. 2.3).'),
+                "Document root element must have a 'xsl:version' attribute "
+                "(see XSLT 1.0 sec. 2.3)"),
             XsltError.STYLESHEET_PARSE_ERROR: _(
                 'Error parsing stylesheet %(uri)s: %(text)s'),
             XsltError.SOURCE_PARSE_ERROR: _(
@@ -204,25 +202,31 @@ class XsltError(Error):
             XsltError.CIRCULAR_VARIABLE: _(
                 'Circular variable reference error (see XSLT 1.0 sec. 11.4) for variable or parameter: %(name)s'),
             XsltError.DUPLICATE_TOP_LEVEL_VAR: _(
-                'Top level variable %s has duplicate definitions with the same import precedence.  (see XSLT 1.0 sec. 11)'),
+                'Top level variable %(variable)s has duplicate definitions '
+                'with the same import precedence.  (see XSLT 1.0 sec. 11)'),
             XsltError.DUPLICATE_NAMESPACE_ALIAS: _(
                 'The namespace for "%s" has duplicate namespace aliases defined with the same import precedence.  (see XSLT 1.0 sec. 2.6.2)'),
 
             # misc element validation
+            XsltError.MISSING_REQUIRED_ELEMENT: _(
+                "Element '%(element)s' missing required element '%(child)s'"),
             XsltError.ILLEGAL_ELEMENT_CHILD: _(
-                "Illegal child '%(child)s' within element '%(element)s'"),
-            XsltError.ILLEGAL_TEXT_CHILD_PARSE: _(
-                "Illegal literal text %s within element '%s'"),
+                "Element '%(element)s' not allowed here"),
+            XsltError.ILLEGAL_TEXT_CHILD: _(
+                "Illegal literal text %(data)r within element '%(element)s'"),
             XsltError.UNDEFINED_PREFIX: _(
-                "Undefined namespace prefix '%s'"),
+                "Undefined namespace prefix '%(prefix)s'"),
 
             # misc attribute validation
             XsltError.MISSING_REQUIRED_ATTRIBUTE: _(
-                "Element '%s' missing required attribute '%s'"),
+                "Element '%(element)s' missing required attribute "
+                "'%(attribute)s'"),
             XsltError.ILLEGAL_NULL_NAMESPACE_ATTR: _(
-                "Illegal null-namespace attribute '%s' on element '%s'."),
+                "Illegal null-namespace attribute '%(attribute)s' on "
+                "element '%(element)s'"),
             XsltError.ILLEGAL_XSL_NAMESPACE_ATTR: _(
-                "Illegal xsl-namespace attribute '%s' on element '%s'."),
+                "Illegal xsl-namespace attribute '%(attribute)s' on "
+                "element '%(element)s'"),
             XsltError.INVALID_ATTR_CHOICE: _(
                 "Illegal attribute value '%s', must be one of '%s'"),
             XsltError.INVALID_CHAR_ATTR: _(
@@ -250,7 +254,8 @@ class XsltError(Error):
             XsltError.INVALID_AVT: _(
                 'Malformed attribute value template: "%s" in the element at %s, line %s, column %s\n  %s'),
             XsltError.INVALID_PATTERN: _(
-                'Malformed pattern: "%s" in the element at %s, line %s, column %s\n  %s'),
+                'XPattern expression syntax error at line %(line)d, '
+                'column %(column)d: %(text)s'),
             XsltError.INVALID_EXPRESSION: _(
                 'Malformed expression: "%s" in the element at %s, line %s, column %s\n  %s'),
             #XsltError.PATTERN_SYNTAX: _(
@@ -267,10 +272,10 @@ class XsltError(Error):
                 ' (see XSLT Spec)'),
 
             # xsl:import and xsl:include
-            XsltError.ILLEGAL_IMPORT: _(
-                'xsl:import is not allowed here (xsl:import must be at top '
-                'level and precede all other XSLT top-level instructions). '
-                '(see XSLT 1.0 sec. 2.6.2)'),
+            #XsltError.ILLEGAL_IMPORT: _(
+            #    'xsl:import is not allowed here (xsl:import must be at top '
+            #    'level and precede all other XSLT top-level instructions). '
+            #    '(see XSLT 1.0 sec. 2.6.2)'),
             #XsltError.IMPORT_NOT_FOUND: _(''),
             XsltError.INCLUDE_NOT_FOUND: _(
                 "Unable to retrieve the stylesheet '%(uri)s', "
@@ -281,9 +286,9 @@ class XsltError(Error):
 
             # xsl:choose, xsl:when and xsl:otherwise
             XsltError.ILLEGAL_CHOOSE_CHILD: _('FIXME'),
-            XsltError.CHOOSE_REQUIRES_WHEN: _(
-                'xsl:choose must have at least one xsl:when child '
-                '(see XSLT 1.0 sec. 9.2)'),
+            #XsltError.CHOOSE_REQUIRES_WHEN: _(
+            #    'xsl:choose must have at least one xsl:when child '
+            #    '(see XSLT 1.0 sec. 9.2)'),
             #XsltError.CHOOSE_WHEN_AFTER_OTHERWISE: _(
             #    "'xsl:choose' cannot have 'xsl:when' child after "
             #    "'xsl:otherwise' child (see XSLT 1.0 sec. 9.2)"),
@@ -344,9 +349,6 @@ class XsltError(Error):
             # xsl:copy-of
             #XsltError.COPYOF_MISSING_SELECT: _('Empty "copy-of" requires "select" attribute (see XSLT 1.0 sec. 11.3)'),
 
-            # xsl:text
-            XsltError.ILLEGAL_TEXT_CHILD: _('xsl:text cannot have any child elements" (see XSLT 1.0 sec. 7.2)'),
-
             # xsl:apply-templates
             #XsltError.ILLEGAL_APPLYTEMPLATE_CHILD: _('apply-templates child must be with-param or sort. (see XSLT Spec 5.4)'),
             #XsltError.ILLEGAL_APPLYTEMPLATE_MODE: _('apply-templates mode must be a QName. (see XSLT Spec 5.4)'),
@@ -361,7 +363,7 @@ class XsltError(Error):
             # xsl:param and xsl:variable
             #XsltError.ILLEGAL_PARAM: _('xsl:param elements must be the first children of xsl:template (see XSLT 1.0 sec. 11).'),
             #XsltError.ILLEGAL_PARAM_PARENT: _('Uri: %s line %s col: %s\n   xsl:param can only appear at top level or as the child of an xsl:template (see XSLT 1.0 sec. 11).'),
-            XsltError.ILLEGAL_SHADOWING: _('Illegal shadowing of %s.  An xsl:param or xsl:variable may not shadow another variable not at top level (see XSLT 1.0 sec. 11).'),
+            XsltError.ILLEGAL_SHADOWING: _('Illegal shadowing of %(variable)s.  An xsl:param or xsl:variable may not shadow another variable not at top level (see XSLT 1.0 sec. 11).'),
             XsltError.VAR_WITH_CONTENT_AND_SELECT: _('Illegal binding of of %s.  An xsl:param or xsl:variable may not have both a select attribute and non-empty content. (see XSLT 1.0 sec. 11.2).'),
 
             # xsl:message
@@ -399,9 +401,11 @@ class XsltError(Error):
             XsltError.NONTEXT_IN_COMMENT: _('Nodes other than text nodes created during xsl:comment instantiation. (see XSLT 1.0 sec. 7.4)'),
 
             # xsl:fallback and forwards-compatible processing
-            XsltError.FWD_COMPAT_WITHOUT_FALLBACK: _('No xsl:fallback instruction found for element %r processed in forward-compatible mode.'),
-            XsltError.UNKNOWN_EXTENSION_ELEMENT:
-            _('No implementation for extension element %r, %r'),
+            XsltError.FWD_COMPAT_WITHOUT_FALLBACK: _(
+                "No 'xsl:fallback' instruction found for element '%(element)s' "
+                "processed in forward-compatible mode."),
+            XsltError.UNKNOWN_EXTENSION_ELEMENT: _(
+                "'No implementation for extension element '%(element)s'"),
 
             # built-in functions and XSLT-specific extension functions
             XsltError.DOC_FUNC_EMPTY_NODESET: _('Second argument to document(), if given, must be a non-empty node-set. (see XSLT 1.0 sec. 12.1 erratum E14)'),
@@ -420,7 +424,7 @@ class XsltError(Error):
         }
 
 
-class XsltTypeError(XsltError, TypeError):
+class XsltStaticError(XsltError, TypeError):
     def __init__(self, code, xslt_element, **kwords):
         XsltError.__init__(self, code, **kwords)
         # Just save the information needed from `xslt_element`
