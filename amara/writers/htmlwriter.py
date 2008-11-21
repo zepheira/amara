@@ -43,7 +43,7 @@ class htmlwriter(xmlwriter):
         params = self.output_parameters
         params.setdefault('media_type', 'text/html')
         version = params.setdefault('version', '4.0').encode('ascii')
-        encoding = params.setdefault('encoding', 'iso-8859-1')
+        encoding = params.setdefault('encoding', 'iso-8859-1').encode('ascii')
         indent = params.setdefault('indent', True)
         if indent:
             printer_class = htmlprettyprinter

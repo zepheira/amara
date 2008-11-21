@@ -381,8 +381,8 @@ static PyObject *treewriter_attribute(TreeWriterObject *self,
   return Py_None;
 }
 
-static PyObject *treewriter_characters(TreeWriterObject *self, PyObject *args,
-                                       PyObject *kwds)
+static PyObject *treewriter_text(TreeWriterObject *self, PyObject *args,
+                                 PyObject *kwds)
 {
   Py_UNICODE *buffer = self->buffer;
   Py_ssize_t size;
@@ -390,7 +390,7 @@ static PyObject *treewriter_characters(TreeWriterObject *self, PyObject *args,
   PyObject *data, *disable_escaping=Py_False;
   static char *kwlist[] = { "data", "disable_escaping", NULL };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:characters", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:text", kwlist,
                                    &data, &disable_escaping)) {
     return NULL;
   }
@@ -414,7 +414,7 @@ static PyObject *treewriter_characters(TreeWriterObject *self, PyObject *args,
    * store the previous and start fresh. */
   escape_output = PyObject_Not(disable_escaping);
   if (escape_output != self->escape_output) {
-    if (escape_output < 0 || complete_text(self) < 0) {
+    if (escape_output < 0 || (self->buffer_size && complete_text(self) < 0)) {
       Py_DECREF(data);
       return NULL;
     }
@@ -542,7 +542,7 @@ static struct PyMethodDef treewriter_methods[] = {
   TreeWriter_METHOD(start_element, METH_KEYWORDS),
   TreeWriter_METHOD(end_element, METH_KEYWORDS),
   TreeWriter_METHOD(attribute, METH_KEYWORDS),
-  TreeWriter_METHOD(characters, METH_KEYWORDS),
+  TreeWriter_METHOD(text, METH_KEYWORDS),
   TreeWriter_METHOD(processing_instruction, METH_KEYWORDS),
   TreeWriter_METHOD(comment, METH_KEYWORDS),
   { NULL }
