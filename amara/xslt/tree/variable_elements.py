@@ -33,10 +33,8 @@ class variable_element(xslt_element):
             result = self._select.evaluate(context)
         elif self.children:
             context.push_tree_writer(self.base_uri)
-            try:
-                self.process_children(context)
-            finally:
-                writer = context.pop_writer()
+            self.process_children(context)
+            writer = context.pop_writer()
             result = writer.get_result()
         else:
             result = u""
