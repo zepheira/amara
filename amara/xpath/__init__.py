@@ -200,7 +200,7 @@ class context(writer):
             for child in node:
                 self.copy_node(child)
         elif isinstance(node, tree.namespace):
-            self.namespace(node.xml_qname, node.value)
+            self.namespace(node.xml_name, node.xml_value)
         else:
             pass
         return

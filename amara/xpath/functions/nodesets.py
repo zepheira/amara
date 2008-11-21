@@ -109,7 +109,7 @@ class name_function(builtin_function):
         elif isinstance(node, tree.processing_instruction):
             return datatypes.string(node.xml_target)
         elif isinstance(node, tree.namespace):
-            return datatypes.string(node.xml_local)
+            return datatypes.string(node.xml_name)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
@@ -131,10 +131,12 @@ class local_name_function(name_function):
                 return datatypes.EMPTY_STRING
             node = arg0[0]
 
-        if isinstance(node, (tree.element, tree.attribute, tree.namespace)):
+        if isinstance(node, (tree.element, tree.attribute)):
             return datatypes.string(node.xml_local)
         elif isinstance(node, tree.processing_instruction):
             return datatypes.string(node.xml_target)
+        elif isinstance(node, tree.namespace):
+            return datatypes.string(node.xml_name)
         return datatypes.EMPTY_STRING
     evaluate = evaluate_as_string
 
@@ -159,7 +161,7 @@ class namespace_uri_function(name_function):
         try:
             namespace_uri = node.xml_namespace
         except AttributeError:
-            # not a Node
+            # not a named node
             return datatypes.EMPTY_STRING
         # namespaceURI could be None
         if namespace_uri:
