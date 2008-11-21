@@ -209,17 +209,24 @@ PyTypeObject DomletteProcessingInstruction_Type = {
 
 int DomletteProcessingInstruction_Init(PyObject *module)
 {
-  PyObject *value;
+  PyObject *dict, *value;
 
   DomletteProcessingInstruction_Type.tp_base = &DomletteNode_Type;
   if (PyType_Ready(&DomletteProcessingInstruction_Type) < 0)
     return -1;
+  dict = DomletteProcessingInstruction_Type.tp_dict;
 
   value = PyString_FromString("processing-instruction");
   if (value == NULL)
     return -1;
-  if (PyDict_SetItemString(DomletteProcessingInstruction_Type.tp_dict,
-                           "xml_type", value))
+  if (PyDict_SetItemString(dict, "xml_type", value))
+    return -1;
+  Py_DECREF(value);
+  /* add the "typecode" character for use with `xml_nodeid` */
+  value = PyString_FromString("p");
+  if (value == NULL)
+    return -1;
+  if (PyDict_SetItemString(dict, "xml_typecode", value) < 0)
     return -1;
   Py_DECREF(value);
 

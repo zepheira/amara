@@ -6,6 +6,7 @@
 static PyObject *newobj_function;
 static PyObject *xml_namespace_string;
 static PyObject *base_string;
+static PyObject *typecode_string;
 static PyObject *is_absolute_function;
 static PyObject *absolutize_function;
 static PyObject *deepcopy_function;
@@ -473,11 +474,148 @@ static PyObject *get_following_sibling(PyObject *self, void *arg)
   return DOMException_InvalidStateErr("lost from parent");
 }
 
+Py_LOCAL_INLINE(int)
+generate_id(NodeObject *node, PyObject *buffer)
+{
+  NodeObject *parent;
+  PyObject *typecode, *index;
+  Py_ssize_t pos;
+
+  assert(node != NULL && buffer != NULL && PyList_CheckExact(buffer));
+
+  parent = Node_GET_PARENT(node);
+  if (parent != NULL) {
+    if (generate_id(parent, buffer) < 0)
+      return -1;
+    typecode = _PyType_Lookup(node->ob_type, typecode_string);
+    if (typecode == NULL)
+      return -1;
+    if (PyList_Append(buffer, typecode) < 0)
+      return -1;
+    if (Element_Check(parent)) {
+      if (Attr_Check(node)) {
+        PyObject *nodemap = Element_ATTRIBUTES(node);
+        AttrObject *attr;
+        /* `nodemap` should not be NULL as the attribute `node` claims to be
+         * owned by the element `parent`. */
+        assert(nodemap != NULL);
+        pos = 0;
+        while ((attr = AttributeMap_Next(nodemap, &pos)) != NULL) {
+          if (attr == (AttrObject *)node)
+            break;
+        }
+        assert(attr != NULL);
+      }
+      else if (Namespace_Check(node)) {
+        PyObject *nodemap = Element_NAMESPACES(node);
+        NamespaceObject *decl;
+        /* `nodemap` should not be NULL as the namespace `node` claims to be
+         * owned by the element `parent`. */
+        assert(nodemap != NULL);
+        pos = 0;
+        while ((decl = NamespaceMap_Next(nodemap, &pos)) != NULL) {
+          if (decl == (NamespaceObject *)node)
+            break;
+        }
+        assert(decl != NULL);
+      } else {
+        pos = Container_Index(parent, node);
+      }
+    } else {
+      pos = Container_Index(parent, node);
+    }
+    if (pos < 0)
+      return -1;
+    index = PyString_FromFormat("%zd", pos);
+    if (index == NULL)
+      return -1;
+    if (PyList_Append(buffer, index) < 0) {
+      Py_DECREF(index);
+      return -1;
+    }
+    Py_DECREF(index);
+  } else {
+    /* the top of the tree */
+    typecode = _PyType_Lookup(node->ob_type, typecode_string);
+    if (typecode == NULL)
+      return -1;
+    if (PyList_Append(buffer, typecode) < 0)
+      return -1;
+    if (Entity_Check(node)) {
+      index = PyObject_Str(Entity_GET_INDEX(node));
+    } else {
+      /* a tree fragment; just use its id() */
+      PyObject *id = PyLong_FromVoidPtr(node);
+      if (id == NULL)
+        return -1;
+      index = PyObject_Str(id);
+      Py_DECREF(id);
+    }
+    if (index == NULL)
+      return -1;
+    if (PyList_Append(buffer, index) < 0) {
+      Py_DECREF(index);
+      return -1;
+    }
+    Py_DECREF(index);
+  }
+  return 0;
+}
+
+static PyObject *get_id(PyObject *obj, void *arg)
+{
+  PyObject *buffer, *item, *result=NULL;
+  Py_ssize_t i, n, size;
+  char *p;
+
+  buffer = PyList_New(0);
+  if (buffer == NULL)
+    return NULL;
+  if (generate_id(Node(obj), buffer) < 0)
+    goto finally;
+
+  n = PyList_GET_SIZE(buffer);
+  if (n == 1) {
+    result = PyList_GET_ITEM(buffer, 0);
+    Py_INCREF(result);
+  } else {
+    for (size = 0, i = 0; i < n; i++) {
+      item = PyList_GET_ITEM(buffer, i);
+      if (!PyString_Check(item)) {
+        PyErr_Format(PyExc_TypeError,
+                     "sequence item %zd: expected string, %s found",
+                     i, item->ob_type->tp_name);
+        goto finally;
+      }
+      size += PyString_GET_SIZE(item);
+      if (size < 0 || size > PY_SSIZE_T_MAX) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "join() result is too long for a Python string");
+        goto finally;
+      }
+    }
+    result = PyString_FromStringAndSize(NULL, size);
+    if (result == NULL)
+      goto finally;
+    p = PyString_AS_STRING(result);
+    for (i = 0; i < n; i++) {
+      item = PyList_GET_ITEM(buffer, i);
+      size = PyString_GET_SIZE(item);
+      Py_MEMCPY(p, PyString_AS_STRING(item), size);
+      p += size;
+    }
+  }
+finally:
+  Py_DECREF(buffer);
+  return result;
+}
+
 static PyGetSetDef node_getset[] = {
   { "xml_root",               get_root },
   { "xml_base",               get_base_uri },
   { "xml_preceding_sibling",  get_preceding_sibling },
   { "xml_following_sibling",  get_following_sibling },
+  { "xml_nodeid",             get_id },
   { NULL }
 };
 
@@ -828,6 +966,16 @@ int DomletteNode_Init(PyObject *module)
   if (PyDict_SetItemString(dict, "xml_type", value) < 0)
     return -1;
   Py_DECREF(value);
+  /* add the "typecode" character for use with `xml_nodeid` */
+  typecode_string = PyString_FromString("xml_typecode");
+  if (typecode_string == NULL)
+    return -1;
+  value = PyString_FromString("x");
+  if (value == NULL)
+    return -1;
+  if (PyDict_SetItem(dict, typecode_string, value) < 0)
+    return -1;
+  Py_DECREF(value);
 
   import = PyImport_ImportModule("amara.namespaces");
   if (import == NULL) return -1;
@@ -849,6 +997,7 @@ void DomletteNode_Fini(void)
   Py_DECREF(newobj_function);
   Py_DECREF(xml_namespace_string);
   Py_DECREF(base_string);
+  Py_DECREF(typecode_string);
   Py_DECREF(is_absolute_function);
   Py_DECREF(absolutize_function);
   Py_DECREF(deepcopy_function);

@@ -48,6 +48,7 @@ extern "C" {
   int Container_Remove(NodeObject *self, NodeObject *child);
   int Container_Insert(NodeObject *self, Py_ssize_t where, NodeObject *child);
   int Container_Replace(NodeObject *self, NodeObject *old, NodeObject *new);
+  Py_ssize_t Container_Index(NodeObject *self, NodeObject *child);
 
 #endif /* Domlette_BUILDING_MODULE */
 

@@ -116,6 +116,34 @@ try_dispatch_event(NodeObject *self, PyObject *event, NodeObject *target)
   return 0;
 }
 
+Py_LOCAL_INLINE(Py_ssize_t)
+container_index(NodeObject *self, NodeObject *child,
+                Py_ssize_t start, register Py_ssize_t stop)
+{
+  register NodeObject **nodes = Container_GET_NODES(self);
+  register Py_ssize_t count = Container_GET_COUNT(self);
+  register Py_ssize_t index;
+
+  if (start < 0) {
+    start += count;
+    if (start < 0)
+      start = 0;
+  }
+  if (stop < 0) {
+    stop += count;
+    if (stop < 0)
+      stop = 0;
+  } else if (stop > count) {
+    stop = count;
+  }
+  for (index = start; index < stop; index++) {
+    if (nodes[index] == child)
+      return index;
+  }
+  PyErr_Format(PyExc_ValueError, "child not in children");
+  return -1;
+}
+
 /** Public C API ******************************************************/
 
 void _Container_Del(NodeObject *node)
@@ -358,6 +386,13 @@ int Container_Replace(NodeObject *self, NodeObject *oldChild,
   return try_dispatch_event(self, inserted_event, newChild);
 }
 
+Py_ssize_t Container_Index(NodeObject *self, NodeObject *child)
+{
+  if (!ensure_arguments(self, child))
+    return -1;
+  return container_index(self, child, 0, Container_GET_COUNT(self));
+}
+
 /** Python Methods ****************************************************/
 
 static char xml_normalize_doc[] = "\
@@ -506,23 +541,11 @@ static PyObject *xml_index(NodeObject *self, PyObject *args)
                         &DomletteNode_Type, &child,
                         _PyEval_SliceIndex, &start,
                         _PyEval_SliceIndex, &stop))
-  if (start < 0) {
-    start += Container_GET_COUNT(self);
-    if (start < 0)
-      start = 0;
-  }
-  if (stop < 0) {
-    stop += Container_GET_COUNT(self);
-    if (stop < 0)
-      stop = 0;
-  } else if (stop > Container_GET_COUNT(self)) {
-    stop = Container_GET_COUNT(self);
-  }
-  for (index = start; index < stop; index++) {
-    if (Container_GET_CHILD(self, index) == child)
-      return PyInt_FromSsize_t(index);
-  }
-  return PyErr_Format(PyExc_ValueError, "child not in children");
+  index = container_index(self, child, start, stop);
+  if (index < 0)
+    return PyErr_Format(PyExc_ValueError, "child not in children");
+  else
+    return PyInt_FromSsize_t(index);
 }
 
 static char xml_child_inserted_doc[] = "xml_child_inserted(target)\n\n\

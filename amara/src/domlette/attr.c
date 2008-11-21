@@ -398,6 +398,13 @@ int DomletteAttr_Init(PyObject *module)
   if (PyDict_SetItemString(dict, "xml_type", value))
     return -1;
   Py_DECREF(value);
+  /* add the "typecode" character for use with `xml_nodeid` */
+  value = PyString_FromString("a");
+  if (value == NULL)
+    return -1;
+  if (PyDict_SetItemString(dict, "xml_typecode", value) < 0)
+    return -1;
+  Py_DECREF(value);
 
   /* Until the DTD information is used, assume it was from the document */
   if (PyDict_SetItemString(dict, "xml_specified", Py_True))
