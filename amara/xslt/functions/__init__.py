@@ -125,10 +125,13 @@ class generate_id_function(builtin_function):
     """Function: <string> generate-id(nodeset?)"""
     name = 'generate-id'
     arguments = (datatypes.nodeset,)
+    defaults = (None,)
     return_type = datatypes.string
 
     def evaluate_as_string(self, context):
         arg0, = self._args
+        if arg0 is None:
+            return datatypes.string(context.node.xml_nodeid)
         for node in arg0.evaluate_as_nodeset(context):
             return datatypes.string(node.xml_nodeid)
         return datatypes.EMPTY_STRING
