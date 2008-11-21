@@ -1,5 +1,5 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:variable name="other" select="document('Xml/Xslt/Borrowed/jlc_20060711.xml',/)"/>
+  <xsl:variable name="other" select="document('jlc_20060711.xml',/)"/>
   <xsl:variable name="main" select="/"/>
 
   <xsl:template match="/">
