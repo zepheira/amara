@@ -25,15 +25,8 @@ class copy_element(xslt_element):
         if isinstance(node, tree.element):
             # Namespace nodes are automatically copied as well
             # See XSLT 1.0 Sect 7.5
-            nodemap = node.xmlns_attributes
-            if nodemap:
-                namespaces = {}
-                for (xmlns_uri, prefix), value in nodemap.iteritems():
-                    namespaces[prefix] = value
-            else:
-                namespaces = None
             context.start_element(node.xml_qname, node.xml_namespace,
-                                  namespaces)
+                                  node.xmlns_attributes.copy())
             if self._use_attribute_sets:
                 attribute_sets = context.transform.attribute_sets
                 for name in self._use_attribute_sets:
