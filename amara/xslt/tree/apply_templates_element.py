@@ -29,10 +29,8 @@ class apply_templates_element(xslt_element):
         for child in self.children:
             if isinstance(child, sort_element):
                 sort_keys.append(child)
-            else:
-                assert isinstance(child, with_param_element)
+            elif isinstance(child, with_param_element):
                 params.append((child, child._name, child._select))
-
         if sort_keys:
             self._select = sorted_expression(self._select, sort_keys)
         return
@@ -40,13 +38,11 @@ class apply_templates_element(xslt_element):
     def instantiate(self, context):
         params = {}
         for param, name, select in self._params:
-            context.instruction = param
-            context.namespaces = param.namespaces
+            context.instruction, context.namespaces = param, param.namespaces
             params[name] = select.evaluate(context)
 
         if self._select:
-            context.instruction = self
-            context.namespaces = self.namespaces
+            context.instruction, context.namespaces = self, self.namespaces
             try:
               nodes = self._select.evaluate_as_nodeset(context)
             except TypeError:
@@ -57,5 +53,5 @@ class apply_templates_element(xslt_element):
             nodes = context.node.xml_children
 
         # Process the selected nodes using `self._mode`
-        context.transform.apply_templates(context, nodes, self._mode)
+        context.transform.apply_templates(context, nodes, self._mode, params)
         return
