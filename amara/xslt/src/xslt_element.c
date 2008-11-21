@@ -628,6 +628,14 @@ static PyObject *get_attributes(XsltElementObject *self, void *arg)
 
 static PyObject *get_last_instruction(XsltElementObject *self, void *arg)
 {
+  Py_ssize_t size = self->count;
+  if (size > 0) {
+    XsltNodeObject *node = self->nodes[size-1];
+    if (XsltElement_Check(node)) {
+      Py_INCREF(node);
+      return (PyObject *)node;
+    }
+  }
   Py_INCREF(Py_None);
   return Py_None;
 }
