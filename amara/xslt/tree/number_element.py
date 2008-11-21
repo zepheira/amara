@@ -4,6 +4,7 @@
 Implementation of the `xsl:number` element.
 """
 
+from amara import tree
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError, numbers
 from amara.xslt.tree import xslt_element, content_model, attribute_types
@@ -113,14 +114,15 @@ class number_element(xslt_element):
                 # 'single' without count or from attributes
                 value = 1
                 prev = node.xml_preceding_sibling
-                type_ = node.xml_node_type
-                expanded = (node.xml_namespace, node.xml_local)
+                node_type = node.xml_type
+                node_name = node.xml_name
                 while prev:
-                    if prev.xml_node_type == type_ and \
-                       (prev.xml_namespace, prev.xml_local) == expanded:
+                    if prev.xml_type == node_type and \
+                       prev.xml_name == node_name:
                         value += 1
                     prev = prev.xml_preceding_sibling
-                result = formatter.format(value, grouping_size, separator)
+                result = formatter.format(value, letter_value, grouping,
+                                          separator)
         # add the resulting formatted value(s) to the result tree
         context.text(result)
         return
@@ -154,14 +156,12 @@ class number_element(xslt_element):
         return value
 
     def _multiple_values(self, context, node):
-        if not self._count:
-            if not node.xml_local:
-                # text, comment and processing instruction
-                count = NodeTypeTest(node)
+        count = self._count
+        if not count:
+            if isinstance(node, (tree.element, tree.attribute)):
+                count = name_pattern(node.xml_type, node.xml_name)
             else:
-                count = NameTest(node)
-        else:
-            count = self._count
+                count = type_pattern(node.xml_type)
 
         values = []
         while node:
@@ -174,14 +174,12 @@ class number_element(xslt_element):
         return values
 
     def _any_value(self, context, node):
-        if not self._count:
-            if not node.xml_local:
-                # text, comment and processing instruction
-                count = NodeTypeTest(node)
+        count = self._count
+        if not count:
+            if isinstance(node, (tree.element, tree.attribute)):
+                count = name_pattern(node.xml_type, node.xml_name)
             else:
-                count = NameTest(node)
-        else:
-            count = self._count
+                count = type_pattern(node.xml_type)
 
         value = 0
         while node:
@@ -189,34 +187,36 @@ class number_element(xslt_element):
                 break
             if count.match(context, node):
                 value += 1
-            if not node.xml_preceding_sibling:
+            next = node.xml_preceding_sibling
+            if not next:
                 node = node.xml_parent
             else:
-                node = node.xml_preceding_sibling
-                while node.xml_last_child:
-                    node = node.xml_last_child
+                node = next
+                next = getattr(node, 'xml_last_child', None)
+                while next:
+                    node = next
+                    next = getattr(node, 'xml_last_child', None)
         return value
 
 
-class node_type_test:
-    def __init__(self, node):
-        self.xml_node_type = node.xml_node_type
+class type_pattern:
+    def __init__(self, xml_type):
+        self.xml_type = xml_type
         return
 
     def match(self, context, node):
-        return (node.xml_node_type == self.xml_node_type)
+        return (node.xml_type == self.xml_type)
 
-class name_test:
-    def __init__(self, node):
-        self.xml_node_type = node.xml_node_type
-        self.xml_local = node.xml_local
-        self.xml_namespace = node.xml_namespace
+
+class name_pattern:
+    def __init__(self, xml_type, xml_name):
+        self.xml_type = xml_type
+        self.xml_name = xml_name
         return
 
     def match(self, context, node):
-        return (node.xml_node_type == self.xml_node_type and
-                node.xml_local == self.xml_local and
-                node.xml_namespace == self.xml_namespace)
+        return (node.xml_type == self.xml_type and
+                node.xml_name == self.xml_name)
 
 ##Note: emacs can uncomment the ff automatically.
 

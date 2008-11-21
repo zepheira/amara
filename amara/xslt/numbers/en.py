@@ -1,6 +1,7 @@
 ########################################################################
 # amara/xslt/numbers/en.py
 
+from amara.xpath import datatypes
 from amara.xslt.numbers import formatter
 
 ASCII_DIGITS = '0123456789'
@@ -8,6 +9,8 @@ ASCII_LOWER = 'abcdefghijklmnopqrstuvwxyz'
 ASCII_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 class english_formatter(formatter):
+
+    language = 'en'
 
     _roman_digits = _roman_upper, _roman_lower = [], []
     for multiplier, combining in ((1, ''), (1000, u'\u0305')):
@@ -36,15 +39,16 @@ class english_formatter(formatter):
     def _format(self, number, token, letter_value, separator, grouping):
         if token in ('I', 'i') and letter_value != 'alphabetic':
             # roman numerals
-            if not (0 < number < self._roman_max):
-                return '%d' % number
-            result = []
-            for bound, digits in self._roman_digits[token == 'i']:
-                if number > bound:
-                    index, number = divmod(number, bound)
-                    result.append(digits[index])
-                last_digits = digits
-            result = u''.join(result)
+            if 0 < number < self._roman_max:
+                result = []
+                for bound, digits in self._roman_digits[token == 'i']:
+                    if number > bound:
+                        index, number = divmod(number, bound)
+                        result.append(digits[index])
+                    last_digits = digits
+                result = u''.join(result)
+            else:
+                result = '%d' % number
         elif token in ('A', 'a'):
             # alphabetic numbering
             alphabet = ASCII_LOWER if token == 'a' else ASCII_UPPER
@@ -66,5 +70,4 @@ class english_formatter(formatter):
                     groups.append(result[start:])
                     result = separator.join(groups)
 
-        return result
-
+        return datatypes.string(result)
