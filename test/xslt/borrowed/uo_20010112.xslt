@@ -14,7 +14,7 @@
   <xsl:template match = "/">
     <xsl:value-of select='name(/*)'/>
     <xsl:text>&#10;</xsl:text>
-    <xsl:value-of select='name(document("http://4suite.org/4Suite.xsa")/*)'/>
+    <xsl:value-of select='name(document("resources/4Suite.xsa")/*)'/>
     <xsl:text>&#10;</xsl:text>
   </xsl:template>
 
