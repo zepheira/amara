@@ -494,7 +494,7 @@ generate_id(NodeObject *node, PyObject *buffer)
       return -1;
     if (Element_Check(parent)) {
       if (Attr_Check(node)) {
-        PyObject *nodemap = Element_ATTRIBUTES(node);
+        PyObject *nodemap = Element_ATTRIBUTES(parent);
         AttrObject *attr;
         /* `nodemap` should not be NULL as the attribute `node` claims to be
          * owned by the element `parent`. */
@@ -507,7 +507,7 @@ generate_id(NodeObject *node, PyObject *buffer)
         assert(attr != NULL);
       }
       else if (Namespace_Check(node)) {
-        PyObject *nodemap = Element_NAMESPACES(node);
+        PyObject *nodemap = Element_NAMESPACES(parent);
         NamespaceObject *decl;
         /* `nodemap` should not be NULL as the namespace `node` claims to be
          * owned by the element `parent`. */
