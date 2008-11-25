@@ -7,7 +7,7 @@ Behavior of node copy to result tree
     xmlns:regex="http://exslt.org/regular-expressions"
     xmlns:js="http://muttmansion.com"
     extension-element-prefixes="func">
-    
+
   <xsl:output method="text" />
 
   <func:function name="js:escape">

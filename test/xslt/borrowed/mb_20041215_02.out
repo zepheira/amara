@@ -5,8 +5,8 @@
       <z:foo xmlns:z="planetz" a="b">sometext<bar>moretext</bar>
       </z:foo>
     </zz:MatchSet>
-    <zz:MatchSet value="sometext">sometext</zz:MatchSet>
     <zz:MatchSet value="moretext">
-      <bar xmlns:z="planetz">moretext</bar>moretext</zz:MatchSet>
+      <bar xmlns:z="planetz">moretext</bar>
+    </zz:MatchSet>
   </zz:Key>
 </zz:KeyDump>

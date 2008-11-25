@@ -5,7 +5,7 @@
   extension-element-prefixes="f">
 
   <xsl:output method="xml" encoding="us-ascii" indent="yes"/>
-  
+
   <xsl:key name="foo" match="@*|*" use="."/>
 
   <xsl:template match="/">

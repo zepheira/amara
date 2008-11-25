@@ -7,7 +7,7 @@
   exclude-result-prefixes="exsl">
 
   <xsl:output method="xml" encoding="us-ascii" indent="yes"/>
-  
+
   <xsl:key name="foo" match="node()" use="."/>
   <xsl:key name="bar" match="*" use="."/>
 
