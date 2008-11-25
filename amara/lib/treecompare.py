@@ -98,7 +98,7 @@ def xml_diff(expected, compared, whitespace=True):
         # Limit the search for DOCTYPE to the content before the first element.
         # If no elements exist, it *MUST* be a parsed entity.
         match = _starttag_find(expected)
-        if not match or _doctype_find(expected, 0, match.start()):
+        if not match or not _doctype_find(expected, 0, match.start()):
             sequencer = _entity_sequence
     expected = sequencer(expected, whitespace)
     compared = sequencer(compared, whitespace)
