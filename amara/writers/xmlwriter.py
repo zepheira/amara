@@ -84,8 +84,10 @@ class xmlwriter(streamwriter):
                                       self._canonical_form)
 
         if not omit_decl:
-            self._printer.start_document(version.encode('ascii'),
-                                         self.output_parameters.standalone)
+            standalone = self.output_parameters.standalone
+            if standalone is not None:
+                standalone = standalone and 'yes' or 'no'
+            self._printer.start_document(version.encode('ascii'), standalone)
 
         self._namespaces = [{None: None,
                              'xml': XML_NAMESPACE,
