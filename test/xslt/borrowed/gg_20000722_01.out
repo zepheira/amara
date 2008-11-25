@@ -1,1 +1,116 @@
-<HTML xmlns:ot="http://namespaces.opentechnology.org/talk" xmlns:dc="http://purl.org/metadata/dublin_core">\n  <HEAD>\n    <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">\n    <TITLE>Test Skin</TITLE>\n  </HEAD>\n  <BODY>\n\n\n\n    <DIV ALIGN="CENTER">Privacy, Part Two: Unwanted Gaze</DIV>\n    <TABLE WIDTH="100%" BORDER="0">\n      <TR>\n        <TD WIDTH="50%" ALIGN="LEFT"></TD>\n        <TD WIDTH="50%" ALIGN="RIGHT">2003-02-30 13:59:23-07:00</TD>\n      </TR>\n    </TABLE>\n    <DIV ALIGN="JUSTIFY">\nThis is an example content:\nA growing number of lawyers and scholars, including Rosen, say they now\nbelieve that fundamental changes in Net architecture are necessary to\nprotect constitutional values and restore the notion of the "inviolate\npersonality" to the private lives of Americans. These would include\ncopyright management systems to protect the right to read anonymously,\npermitting individuals to pay with untraceable digital cash; prohibiting\nthe collection and disclosure of identifying information without the\nreader's knowledge, or using digital certificates to create psudonymous\ndownloading.\n\nTo Rosen, author of Gaze, cyberspace is posing a greater menace to\nprivacy by the day. He details the l998 forced resignation of Harvard\nDivinity School dean Ronald F. Thiemann, who downloaded pornography onto\nhis university-owned home computer. A Harvard technician installing a\ncomputer with more memory at the dean's residence was transferring files\nfrom the old computer to the new one and noticed thousands of\npornographic pictures. Although none of the pictures appeared to involve\nminors, the technician told his supervisor. University administrators\nasked the dean to step down.\n\nHarvard justified its decision by claiming that Divinity School rules\nprohibited personal use of university computers in any way that clashed\nwith its educational mission. But the dean was using his computer at\nhome, not work. And no student or colleague suggested he had improperly\nbehaved in any way as head of the Divinity School. His work was never\nquestioned. It's ludicrous to suggest that the school would have fired\nhim if he'd been downloading sports scores or bidding for furniture on\neBay. But although he'd committed no crime and performed well in his\njob, he was forced out in disgrace, while his intimate communications\nwere discussed in public.\n\n\nShould free citizens in a democratic society have to spend money for\n"nyms" to preserve the privacy they ought to be -- and once were --\naccorded in law? How many millions of computer users will even know of\nthis new technology, or have the money to use it?  Rosen's implication\nis that even if software caused the problem, then software will clean\nup.\n\nHis assurances seem a bit "gee-whiz." But to ignore them cynically on\nthat basis, or to trust them completely, ignores the history of\ntechnology. What people can create, others can and will undo. Technology\nthat can be used will be used. In an otherwise powerful book, he also\nglosses over powerful incentives for eliminating privacy in cyberspace.\nFirst, the megacorporations dominating media, business and government\nwill continue to aggressively explore ways of tracking potential\ncustomers as Net use grows. Secondly, law enforcement agencies like the\nFBI have been fighting for decades for the right to deploy tracking\nprograms like "Carnivore" (see part one) and are hardly likely to back\noff.\n\n  \n<BR>\n      <BR>\n    </DIV>\n    <DIV ALIGN="JUSTIFY">\n     This is an example of a description:\n     Can pseudonymous downloading, "snoop-proof" e-mail, digital pseuds called\n     "nyms," PDA-like machines, allegedly untraceable digi-cash and other\n     changes in software and the architecture of cyberspace, restore some\n     privacy and restore the idea of the "Inviolate Personality?" Part Two\n     in a series based on Jeffrey Rosen's new book, "The Unwanted Gaze: The\n     Destruction of Privacy in America."\n  \n      <BR>\n      <BR>\n    </DIV>\n\n\n    <DIV ALIGN="CENTER">4Suite 5.3.8 Released</DIV>\n    <TABLE WIDTH="100%" BORDER="0">\n      <TR>\n        <TD WIDTH="50%" ALIGN="LEFT"></TD>\n        <TD WIDTH="50%" ALIGN="RIGHT">2003-11-19 13:59:23-07:00</TD>\n      </TR>\n    </TABLE>\n    <DIV ALIGN="JUSTIFY">Fourthought, Inc. today announced\n  the latest version of their XML middleware suite,\n  4Suite.  This latest version adds support for\n  the latest XSLT 2.3 Recommendation and\n  DOM Level 7.\n  \n      <BR>\n      <BR>\n    </DIV>\n    <DIV ALIGN="JUSTIFY">\n     Can pseudonymous downloading, "snoop-proof" e-mail, digital pseuds\n     called "nyms," PDA-like machines, allegedly untraceable digi-cash\n     and other changes in software and the architecture of cyberspace,\n     restore some privacy and restore the idea of the "Inviolate\n     Personality?" Part Two in a series based on Jeffrey Rosen's new\n     book, "The Unwanted Gaze: The Destruction of Privacy in America."\n  \n      <BR>\n      <BR>\n    </DIV>\n\n\n  </BODY>\n</HTML>
+<HTML xmlns:ot="http://namespaces.opentechnology.org/talk" xmlns:dc="http://purl.org/metadata/dublin_core">
+  <HEAD>
+    <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+    <TITLE>Test Skin</TITLE>
+  </HEAD>
+  <BODY>
+
+
+
+    <DIV ALIGN="CENTER">Privacy, Part Two: Unwanted Gaze</DIV>
+    <TABLE WIDTH="100%" BORDER="0">
+      <TR>
+        <TD WIDTH="50%" ALIGN="LEFT"></TD>
+        <TD WIDTH="50%" ALIGN="RIGHT">2003-02-30 13:59:23-07:00</TD>
+      </TR>
+    </TABLE>
+    <DIV ALIGN="JUSTIFY">This is an example content:
+A growing number of lawyers and scholars, including Rosen, say they now
+believe that fundamental changes in Net architecture are necessary to
+protect constitutional values and restore the notion of the "inviolate
+personality" to the private lives of Americans. These would include
+copyright management systems to protect the right to read anonymously,
+permitting individuals to pay with untraceable digital cash; prohibiting
+the collection and disclosure of identifying information without the
+reader's knowledge, or using digital certificates to create psudonymous
+downloading.
+
+To Rosen, author of Gaze, cyberspace is posing a greater menace to
+privacy by the day. He details the l998 forced resignation of Harvard
+Divinity School dean Ronald F. Thiemann, who downloaded pornography onto
+his university-owned home computer. A Harvard technician installing a
+computer with more memory at the dean's residence was transferring files
+from the old computer to the new one and noticed thousands of
+pornographic pictures. Although none of the pictures appeared to involve
+minors, the technician told his supervisor. University administrators
+asked the dean to step down.
+
+Harvard justified its decision by claiming that Divinity School rules
+prohibited personal use of university computers in any way that clashed
+with its educational mission. But the dean was using his computer at
+home, not work. And no student or colleague suggested he had improperly
+behaved in any way as head of the Divinity School. His work was never
+questioned. It's ludicrous to suggest that the school would have fired
+him if he'd been downloading sports scores or bidding for furniture on
+eBay. But although he'd committed no crime and performed well in his
+job, he was forced out in disgrace, while his intimate communications
+were discussed in public.
+
+
+Should free citizens in a democratic society have to spend money for
+"nyms" to preserve the privacy they ought to be -- and once were --
+accorded in law? How many millions of computer users will even know of
+this new technology, or have the money to use it?  Rosen's implication
+is that even if software caused the problem, then software will clean
+up.
+
+His assurances seem a bit "gee-whiz." But to ignore them cynically on
+that basis, or to trust them completely, ignores the history of
+technology. What people can create, others can and will undo. Technology
+that can be used will be used. In an otherwise powerful book, he also
+glosses over powerful incentives for eliminating privacy in cyberspace.
+First, the megacorporations dominating media, business and government
+will continue to aggressively explore ways of tracking potential
+customers as Net use grows. Secondly, law enforcement agencies like the
+FBI have been fighting for decades for the right to deploy tracking
+programs like "Carnivore" (see part one) and are hardly likely to back
+off.
+
+<BR>
+      <BR>
+    </DIV>
+    <DIV ALIGN="JUSTIFY">
+     This is an example of a description:
+     Can pseudonymous downloading, "snoop-proof" e-mail, digital pseuds called
+     "nyms," PDA-like machines, allegedly untraceable digi-cash and other
+     changes in software and the architecture of cyberspace, restore some
+     privacy and restore the idea of the "Inviolate Personality?" Part Two
+     in a series based on Jeffrey Rosen's new book, "The Unwanted Gaze: The
+     Destruction of Privacy in America."
+
+      <BR>
+      <BR>
+    </DIV>
+
+
+    <DIV ALIGN="CENTER">4Suite 5.3.8 Released</DIV>
+    <TABLE WIDTH="100%" BORDER="0">
+      <TR>
+        <TD WIDTH="50%" ALIGN="LEFT"></TD>
+        <TD WIDTH="50%" ALIGN="RIGHT">2003-11-19 13:59:23-07:00</TD>
+      </TR>
+    </TABLE>
+    <DIV ALIGN="JUSTIFY">Fourthought, Inc. today announced
+  the latest version of their XML middleware suite,
+  4Suite.  This latest version adds support for
+  the latest XSLT 2.3 Recommendation and
+  DOM Level 7.
+
+      <BR>
+      <BR>
+    </DIV>
+    <DIV ALIGN="JUSTIFY">
+     Can pseudonymous downloading, "snoop-proof" e-mail, digital pseuds
+     called "nyms," PDA-like machines, allegedly untraceable digi-cash
+     and other changes in software and the architecture of cyberspace,
+     restore some privacy and restore the idea of the "Inviolate
+     Personality?" Part Two in a series based on Jeffrey Rosen's new
+     book, "The Unwanted Gaze: The Destruction of Privacy in America."
+
+      <BR>
+      <BR>
+    </DIV>
+
+
+  </BODY>
+</HTML>
