@@ -14,7 +14,7 @@ from amara.lib import IriError, inputsource
 from amara.lib.xmlstring import isspace
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara.xslt import XsltError, XsltStaticError
-#from amara.xslt import builtinextelements, exslt
+from amara.xslt import extensions, exslt
 from amara.xslt.tree import *
 
 __all__ = ['stylesheet_reader']
@@ -169,8 +169,8 @@ class stylesheet_reader(object):
         self._document_state_stack = []
         self._element_state_stack = []
         self._extelements = {}
-        #self._extelements.update(Exslt.ExtElements)
-        #self._extelements.update(BuiltInExtElements.ExtElements)
+        self._extelements.update(exslt.extension_elements)
+        self._extelements.update(extensions.extension_elements)
         self._extelement_cache = {}
         return
 
