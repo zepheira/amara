@@ -11,9 +11,10 @@ Project home, documentation, distributions: http://4suite.org/
 from amara._xmlstring import splitqname
 from amara.lib.iri import uridict
 from amara.xpath import XPathError, context
-from amara.xslt import functions
-#from amara.xslt import xsltfunctions, builtinextfunctions, exslt
+from amara.xslt import functions, exslt, extensions
 
+# Attempt to use the internal `dictproxy` type to make the global variables
+# read-only.
 try:
     import ctypes
 except ImportError:
@@ -29,9 +30,8 @@ __all__ = ['xsltcontext']
 class xsltcontext(context):
 
     functions = context.functions.copy()
-    #functions.update(xsltfunctions.corefunctions)
-    #functions.update(exslt.extfunctions)
-    #functions.update(builtinextfunctions.extfunctions)
+    functions.update(exslt.extension_functions)
+    functions.update(extensions.extension_functions)
 
     instruction = None
     template = None
@@ -50,6 +50,7 @@ class xsltcontext(context):
         self.processor = processor
         self.mode = mode
         self.documents = uridict()
+        self.keys = {}
         return
 
     def get(self):
@@ -66,10 +67,16 @@ class xsltcontext(context):
             self.documents[document_uri] = document
         return
 
+    def update_keys(self):
+        for key_table in self.keys.itervalues():
+            for document in self.documents.itervalues():
+                keys = key_table[document]
+        return
+
     def message(self, message):
         self.processor.message(message)
 
-    def expandname(self, name):
+    def expand_qname(self, name):
         if not name: return None
         prefix, name = splitqname(name)
         if prefix:

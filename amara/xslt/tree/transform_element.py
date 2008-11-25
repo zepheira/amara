@@ -13,7 +13,7 @@ from gettext import gettext as _
 from amara.namespaces import XMLNS_NAMESPACE, XSL_NAMESPACE
 from amara import tree, xpath
 from amara.writers import outputparameters
-from amara.xpath import XPathError
+from amara.xpath import XPathError, datatypes
 from amara.xslt import XsltError, xsltcontext
 from amara.xslt.tree import (xslt_element, content_model, attribute_types,
                              literal_element, variable_elements)
@@ -23,6 +23,9 @@ __all__ = ['match_tree', 'transform_element']
 
 TEMPLATE_CONFLICT_LOCATION = _(
     'In stylesheet %s, line %s, column %s, pattern %r')
+
+BUILTIN_TEMPLATE_WITH_PARAMS = _(
+    'Built-in template invoked with parameters that will be ignored.')
 
 _template_location = operator.attrgetter('baseUri', 'lineNumber',
                                          'columnNumber', '_match')
@@ -39,47 +42,131 @@ def _fixup_aliases(node, aliases):
 
 # The dispatch table is first keyed by mode, then keyed by node type. If an
 # element type, it is further keyed by the name test.
-def _dispatch_table():
-    class type_dispatch_table(collections.defaultdict):
-        def __missing__(self, type_key):
-            if type_key == tree.element.xml_type:
-                value = self[type_key] = collections.defaultdict(list)
+class _type_dispatch_table(dict):
+    def __missing__(self, type_key):
+        if type_key == tree.element.xml_typecode:
+            value = self[type_key] = collections.defaultdict(list)
+        else:
+            value = self[type_key] = []
+        return value
+
+
+class _key_dispatch_table(dict):
+
+    __slots__ = ('_match_table', '_matches_attribute')
+
+    _unpack_key = operator.attrgetter('_match', '_use', 'namespaces')
+    _unpack_pattern = operator.attrgetter('node_test', 'axis_type', 'node_type')
+
+    def __init__(self, keys):
+        match_table = _type_dispatch_table()
+        for key in keys:
+            match, use, namespaces = self._unpack_key(key)
+            for pattern in match:
+                node_test, axis_type, node_type = self._unpack_pattern(pattern)
+                info = (node_test, axis_type, namespaces, use)
+                # Add the template rule to the dispatch table
+                type_key = node_type.xml_typecode
+                if type_key == tree.element.xml_typecode:
+                    # Element types are further keyed by the name test.
+                    name_key = node_test.name_key
+                    if name_key:
+                        prefix, local = name_key
+                        # Unprefixed names are in the null-namespace
+                        try:
+                            namespace = prefix and namespaces[prefix]
+                        except KeyError:
+                            raise XPathError(XPathError.UNDEFINED_PREFIX,
+                                            prefix=prefix)
+                        else:
+                            name_key = namespace, local
+                    match_table[type_key][name_key].append(info)
+                else:
+                    # Every other node type gets lumped into a single list
+                    # for that node type
+                    match_table[type_key].append(info)
+        # Now expanded the tables and convert to regular dictionaries to
+        # prevent inadvertant growth when non-existant keys are used.
+        # Add those patterns that don't have a distinct type:
+        #   node(), id() and key() patterns
+        any_patterns = match_table[tree.node.xml_typecode]
+        match_table = self._match_table = dict(match_table)
+        for type_key, patterns in match_table.iteritems():
+            if type_key == tree.element.xml_typecode:
+                # Add those that are wildcard tests ('*' and 'prefix:*')
+                wildcard_names = patterns[None]
+                name_table = match_table[type_key] = dict(patterns)
+                for name_key, patterns in name_table.iteritems():
+                    if name_key is not None:
+                        patterns.extend(wildcard_names)
+                    patterns.extend(any_patterns)
+                    name_table[name_key] = tuple(patterns)
             else:
-                value = self[type_key] = []
-            return value
-    return collections.defaultdict(type_dispatch_table)
+                patterns.extend(any_patterns)
+                match_table[type_key] = tuple(patterns)
+        self._matches_attribute = tree.attribute.xml_typecode in match_table
 
+    def _match_nodes(self, context, nodes):
+        initial_focus = context.node, context.position, context.size
+        context.size = len(nodes)
+        position = 1
+        for node in nodes:
+            context.node = context.current_node = node
+            context.position = position
+            position += 1
+            # Get the possible maches for `node`
+            type_key = node.xml_typecode
+            type_table = self._match_table
+            if type_key in type_table:
+                if type_key == tree.element.xml_typecode:
+                    element_table = type_table[type_key]
+                    name_key = node.xml_name
+                    if name_key in element_table:
+                        matches = element_table[name_key]
+                    else:
+                        matches = element_table[None]
+                else:
+                    matches = type_table[type_key]
+            else:
+                matches = type_table[tree.node.xml_typecode]
 
-def match_tree(patterns, context):
-    """
-    Returns all nodes, from context on down, that match the patterns
-    """
-    state = context.copy()
+            for pattern, axis_type, namespaces, use_expr in matches:
+                context.namespaces = namespaces
+                if pattern.match(context, node, axis_type):
+                    focus = context.node, context.position, context.size
+                    context.node, context.position, context.size = node, 1, 1
+                    value = use_expr.evaluate(context)
+                    if isinstance(value, datatypes.nodeset):
+                        for value in value:
+                            yield datatypes.string(value), node
+                    else:
+                        yield datatypes.string(value), node
+                    context.node, context.position, context.size = focus
 
-    # Save these before any changes are made to the context
-    children = context.node.xml_children
-    attributes = context.node.xml_attributes
+            if isinstance(node, tree.element):
+                for item in self._match_nodes(context, node.xml_children):
+                    yield item
+                if self._matches_attribute and node.xml_attributes:
+                    attributes = tuple(node.xml_attributes.nodes())
+                    for item in self._match_nodes(context, attributes):
+                        yield item
+            elif isinstance(node, tree.entity):
+                for item in self._match_nodes(context, node.xml_children):
+                    yield item
+        context.node, context.position, context.size = initial_focus
+        return
 
-    matched = patterns.xsltKeyPrep(context, context.node)
-
-    pos = 1
-    size = len(children)
-    for node in children:
-        context.node, context.position, context.size = node, pos, size
-        map(lambda x, y: x.extend(y), matched, match_tree(patterns, context))
-        pos += 1
-
-    if attributes:
-        size = len(attributes)
-        pos = 1
-        for node in attributes.nodes():
-            context.node, context.position, context.size = node, pos, size
-            map(lambda x, y: x.extend(y),
-                matched, patterns.xsltKeyPrep(context, node))
-            pos += 1
-
-    context.set(state)
-    return matched
+    def __missing__(self, key):
+        assert isinstance(key, tree.entity), key
+        values = collections.defaultdict(set)
+        context = xsltcontext.xsltcontext(key, 1, 1)
+        for value, node in self._match_nodes(context, [key]):
+            values[value].add(node)
+        # Now store the unique nodes as an XPath nodeset
+        values = self[key] = dict(values)
+        for value, nodes in values.iteritems():
+            values[value] = datatypes.nodeset(nodes)
+        return values
 
 
 class transform_element(xslt_element):
@@ -97,12 +184,15 @@ class transform_element(xslt_element):
     space_rules = None
     decimal_formats = None
     namespace_aliases = None
+    attribute_sets = None
     match_templates = None
     named_templates = None
     parameters = None
     variables = None
     global_variables = None
     initial_functions = None
+
+    builtin_param_warning = True
 
     def setup(self, _param_element=variable_elements.param_element):
         """
@@ -191,13 +281,12 @@ class transform_element(xslt_element):
 
         # - process the `xsl:key` elements
         # Group the keys by name
-        keys = top_level_elements['key']
+        elements = top_level_elements['key']
         name_key = operator.attrgetter('_name')
-        keys.sort(key=name_key)
-        self._keys = {}
-        getter = operator.attrgetter('_match', '_use', 'namespaces')
-        for name, keys in itertools.groupby(keys, name_key):
-            self._keys[name] = map(getter, keys)
+        elements.sort(key=name_key)
+        keys = self._keys = {}
+        for name, elements in itertools.groupby(elements, name_key):
+            keys[name] = tuple(elements)
 
         # - process the `xsl:decimal-format` elements
         formats = self.decimal_formats = {}
@@ -268,7 +357,7 @@ class transform_element(xslt_element):
                                     if isinstance(element, _param_element))
 
         # - process the `xsl:template` elements
-        match_templates = _dispatch_table()
+        match_templates = collections.defaultdict(_type_dispatch_table)
         named_templates = self.named_templates = {}
         elements = top_level_elements['template']
         elements.reverse()
@@ -289,8 +378,8 @@ class transform_element(xslt_element):
                     info = ((precedence, template_priority, position),
                             node_test, axis_type, element)
                     # Add the template rule to the dispatch table
-                    type_key = node_type.xml_type
-                    if issubclass(node_type, tree.element):
+                    type_key = node_type.xml_typecode
+                    if type_key == tree.element.xml_typecode:
                         # Element types are further keyed by the name test.
                         name_key = node_test.name_key
                         if name_key:
@@ -326,10 +415,10 @@ class transform_element(xslt_element):
         for mode, type_table in match_templates.iteritems():
             # Add those patterns that don't have a distinct type:
             #   node(), id() and key() patterns
-            any_patterns = type_table[tree.node.xml_type]
+            any_patterns = type_table[tree.node.xml_typecode]
             type_table = match_templates[mode] = dict(type_table)
             for type_key, patterns in type_table.iteritems():
-                if type_key == tree.element.xml_type:
+                if type_key == tree.element.xml_typecode:
                     # Add those that are wildcard tests ('*' and 'prefix:*')
                     wildcard_names = patterns[None]
                     name_table = type_table[type_key] = dict(patterns)
@@ -397,63 +486,22 @@ class transform_element(xslt_element):
             # Try again, but this time processing only the ones that
             # referenced, as of yet, undefined variables.
             elements, deferred = deferred, []
+
+        for name, keys in self._keys.iteritems():
+            context.keys[name] = _key_dispatch_table(keys)
         return
 
-    def updateKey(self, doc, keyName, processor):
-        """
-        Update a particular key for a new document
-        """
-        from pprint import pprint
-        if doc not in processor.keys:
-            processor.keys[doc] = {}
-        if keyName not in processor.keys[doc]:
-            key_values = processor.keys[doc][keyName] = {}
-        else:
-            key_values = processor.keys[doc][keyName]
-        try:
-            keys = self._keys[keyName]
-        except KeyError:
-            return
-
-        # Find the matching nodes using all matching xsl:key elements
-        updates = {}
-        for key in keys:
-            match_pattern, use_expr, namespaces = key
-            context = xsltcontext.xslt_context(
-                doc, 1, 1, processorNss=namespaces, processor=processor,
-                extFunctionMap=self.initialFunctions)
-            patterns = PatternList([match_pattern], namespaces)
-            matched = match_tree(patterns, context)[0]
-            for node in matched:
-                state = context.copy()
-                context.node = node
-                key_value_list = use_expr.evaluate(context)
-                if not isinstance(key_value_list, list):
-                    key_value_list = [key_value_list]
-                for key_value in key_value_list:
-                    if key_value not in updates:
-                        updates[key_value] = [node]
-                    else:
-                        updates[key_value].append(node)
-                context.set(state)
-
-        # Put the updated results in document order with duplicates removed
-        for key_value in updates:
-            if key_value in key_values:
-                nodes = Set.Union(key_values[key_value], updates[key_value])
-            else:
-                nodes = Set.Unique(updates[key_value])
-            key_values[key_value] = nodes
-        return
-
-    def updateAllKeys(self, context, processor):
+    def update_keys(self, context):
         """
         Update all the keys for all documents in the context
         Only used as an override for the default lazy key eval
         """
-        for keyName in self._keys:
-            for doc in context.documents.values():
-                self.updateKey(doc, keyName, processor)
+        node = context.node
+        for doc in context.documents.itervalues():
+            context.node = doc
+            for key_name in self._keys:
+                self.update_key(context, key_name)
+        context.node = node
         return
 
     ############################# Exit Routines #############################
@@ -501,21 +549,21 @@ class transform_element(xslt_element):
             position += 1
 
             # Get the possible template rules for `node`
-            node_type = node.xml_type
+            type_key = node.xml_typecode
             if mode in self.match_templates:
                 type_table = self.match_templates[mode]
-                if node_type in type_table:
-                    if node_type == tree.element.xml_type:
-                        element_table = type_table[node_type]
+                if type_key in type_table:
+                    if type_key == tree.element.xml_typecode:
+                        element_table = type_table[type_key]
                         name = node.xml_name
                         if name in element_table:
                             template_rules = element_table[name]
                         else:
                             template_rules = element_table[None]
                     else:
-                        template_rules = type_table[node_type]
+                        template_rules = type_table[type_key]
                 else:
-                    template_rules = type_table[tree.node.xml_type]
+                    template_rules = type_table[tree.node.xml_typecode]
             else:
                 template_rules = ()
 
@@ -572,9 +620,9 @@ class transform_element(xslt_element):
                     context.variables = variables
             else:
                 # Nothing matched, use builtin templates
-                if params and not self._builtInWarningGiven:
-                    self.warning(MessageSource.BUILTIN_TEMPLATE_WITH_PARAMS)
-                    self._builtInWarningGiven = True
+                if params and self.builtin_param_warning:
+                    context.processor.warning(BUILTIN_TEMPLATE_WITH_PARAMS)
+                    self.builtin_param_warning = False
                 if isinstance(node, (tree.element, tree.entity)):
                     self.apply_templates(context, node.xml_children)
                 elif isinstance(node, (tree.text, tree.attribute)):
