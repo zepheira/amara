@@ -238,7 +238,7 @@ class XsltError(Error):
             XsltError.INVALID_ID_ATTR: _(
                 "Invalid ID attribute value '%s'"),
             XsltError.INVALID_QNAME_ATTR: _(
-                "Invalid QName attribute value '%s'"),
+                "Invalid QName attribute value '%(value)s'"),
             XsltError.INVALID_NCNAME_ATTR: _(
                 "Invalid NCName attribute value '%s'"),
             XsltError.INVALID_PREFIX_ATTR: _(
@@ -413,7 +413,7 @@ class XsltError(Error):
             #XsltError.KEY_WITH_RTF_CONTEXT: _('key() must not be invoked when the context node comes from the result tree (probably due to an earlier invokation of node-set()).'),
             #XsltError.WRONG_NUMBER_OF_ARGUMENTS: _('A built-in or extension function was called with the wrong number of arguments.'),
             XsltError.WRONG_ARGUMENT_TYPE: _('A built-in or extension function was called with the wrong type of argument(s).'),
-            XsltError.INVALID_QNAME_ARGUMENT: _('A built-in or extension function requiring a QName argument was called with this non-QName value: "%s".'),
+            XsltError.INVALID_QNAME_ARGUMENT: _('A built-in or extension function requiring a QName argument was called with this non-QName value: "%(value)s".'),
 
             # EXSLT messages use 3000-3999; see Exslt/MessageSource.py
 
