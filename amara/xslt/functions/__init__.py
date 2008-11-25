@@ -6,6 +6,7 @@ XSLT expression nodes that evaluate function calls.
 
 import amara
 from amara.lib import iri
+from amara.lib.xmlstring import isqname
 from amara.namespaces import XSL_NAMESPACE, EXTENSION_NAMESPACE
 from amara.xpath import datatypes
 from amara.xpath.functions import builtin_function
@@ -68,7 +69,34 @@ class key_function(builtin_function):
 
     def evaluate_as_nodeset(self, context):
         arg0, arg1 = self._args
-        return datatypes.nodeset()
+        # Get the key table
+        key_name = arg0.evaluate_as_string(context)
+        if not isqname(key_name):
+            raise XsltRuntimeError(XsltError.INVALID_QNAME_ARGUMENT,
+                                   context.instruction, value=key_name)
+        key_name = context.expand_qname(key_name)
+        try:
+            key_documents = context.keys[key_name]
+        except KeyError:
+            # Unknown key name
+            return datatypes.nodeset()
+        else:
+            key_values = key_documents[context.node.xml_root]
+        # Get the lookup value
+        value = arg1.evaluate(context)
+        if isinstance(value, datatypes.nodeset):
+            result = []
+            for value in value:
+                value = datatypes.string(value)
+                if value in key_values:
+                    result.extend(key_values[value])
+        else:
+            value = datatypes.string(value)
+            if value in key_values:
+                result = key_values[value]
+            else:
+                result = ()
+        return datatypes.nodeset(result)
     evaluate = evaluate_as_nodeset
 
 
