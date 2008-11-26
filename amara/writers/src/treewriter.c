@@ -436,16 +436,8 @@ static PyObject *treewriter_text(TreeWriterObject *self, PyObject *args,
   buffer += self->buffer_size;
 
   /* store the new data */
-  size = PyUnicode_GET_SIZE(data);
-  if (size < 16) {
-    Py_ssize_t i;
-    for (i = 0; i < size; i++) {
-      *buffer++ = PyUnicode_AS_UNICODE(data)[i];
-    }
-  } else {
-    memcpy(buffer, PyUnicode_AS_UNICODE(data), size * sizeof(Py_UNICODE));
-  }
-  self->buffer_size += size;
+  Py_UNICODE_COPY(buffer, PyUnicode_AS_UNICODE(data), PyUnicode_GET_SIZE(data));
+  self->buffer_size = size;
 
   Py_INCREF(Py_None);
   return Py_None;
