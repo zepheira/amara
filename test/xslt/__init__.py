@@ -116,21 +116,21 @@ class xslt_test(test_case):
         return
 
     def _assert_result(self, result):
-        #method = result.parameters.method
-        #expected, compared = self.expected, result
-        #if method == (None, 'xml'):
-        #    diff = treecompare.xml_diff(expected, compared)
-        #elif method == (None, 'html'):
-        #    diff = treecompare.html_diff(expected, compared)
-        #else:
-        #    assert method == (None, 'text'), method
-        #    expected = expected.splitlines()
-        #    compared = compared.splitlines()
-        #    diff = difflib.unified_diff(expected, compared,
-        #                                'expected', 'compared',
-        #                                n=2, lineterm='')
-        #diff = '\n'.join(diff)
-        #self.assertFalse(diff, msg=(None, diff))
+        method = result.parameters.method
+        omit_decl = result.parameters.omit_xml_declaration
+        expected, compared = self.expected, result
+        if method == (None, 'xml') and not omit_decl:
+            diff = treecompare.xml_diff(expected, compared)
+        elif method == (None, 'html'):
+            diff = treecompare.html_diff(expected, compared)
+        else:
+            expected = expected.splitlines()
+            compared = compared.splitlines()
+            diff = difflib.unified_diff(expected, compared,
+                                        'expected', 'compared',
+                                        n=2, lineterm='')
+        diff = '\n'.join(diff)
+        self.assertFalse(diff, msg=(None, diff))
         gc.collect()
 
     def test_processor(self):
