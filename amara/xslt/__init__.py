@@ -160,7 +160,15 @@ class XsltError(Error):
     WRONG_ARGUMENT_TYPE = 2001
     INVALID_QNAME_ARGUMENT = 2002
 
-    # EXSLT messages use 3000-3999; see Exslt/MessageSource.py
+    # EXSLT messages use 3000-3999
+    UNSUPPORTED_DOCUMENT_URI_SCHEME = 3000
+    ABORTED_EXSLDOCUMENT_OVERWRITE = 3010
+    NO_EXSLTDOCUMENT_BASE_URI = 3020
+
+    ILLEGAL_DURATION_FORMAT = 3100
+
+    RESULT_NOT_IN_FUNCTION = 3200
+    ILLEGAL_RESULT_SIBLINGS = 3201
 
     # built-in output methods
     RESTRICTED_OUTPUT_VIOLATION = 7000
@@ -415,7 +423,31 @@ class XsltError(Error):
             XsltError.WRONG_ARGUMENT_TYPE: _('A built-in or extension function was called with the wrong type of argument(s).'),
             XsltError.INVALID_QNAME_ARGUMENT: _('A built-in or extension function requiring a QName argument was called with this non-QName value: "%(value)s".'),
 
-            # EXSLT messages use 3000-3999; see Exslt/MessageSource.py
+            # EXSLT messages use 3000-3999
+            XsltError.UNSUPPORTED_DOCUMENT_URI_SCHEME: _(
+                "Amara's implementation of `exsl:document` only supports an "
+                "href value having the 'file' URI scheme, which may be "
+                "implicit. Scheme '%(scheme)s' was found."),
+            XsltError.ABORTED_EXSLDOCUMENT_OVERWRITE: _(
+                "An attempt was made to write to '%(filename)s', which "
+                "already exists.  The attempt to save the contents of this "
+                "file to '%(backup)s' also failed, and so the instruction has "
+                "been aborted.  If you are sure it is OK to overwrite this "
+                "file, please indicate this by adding the `f:overwrite-okay` "
+                "attribute to the `exsl:document` instruction."),
+            XsltError.NO_EXSLTDOCUMENT_BASE_URI: _(
+                "An `exsl:document` element referred to a relative reference "
+                "'%(uriref)s', but there is no explicit output document to "
+                "provide a base URI in order to resolve this relative "
+                "reference."),
+            XsltError.ILLEGAL_DURATION_FORMAT: _(
+                "Duration string '%(duration)s' not in `xs:duration` format."),
+            XsltError.RESULT_NOT_IN_FUNCTION: _(
+                "An EXSLT `func:result` element must occur within a "
+                "`func:function` element."),
+            XsltError.ILLEGAL_RESULT_SIBLINGS: _(
+                "An EXSLT `func:result` element must not have following "
+                "sibling elements besides `xsl:fallback.`"),
 
             # built-in output methods
             XsltError.RESTRICTED_OUTPUT_VIOLATION: _('The requested output of element "%s" is forbidden according to output restrictions'),
