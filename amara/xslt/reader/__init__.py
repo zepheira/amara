@@ -27,7 +27,7 @@ _XSLT_WHITESPACE_STRIPPING = ((XSL_NAMESPACE, 'text', False), (None, '*', True))
 # pseudo-nodes for save/restore of variable bindings
 class push_variables_node(xslt_node):
 
-    isPseudoNode = True
+    pseudo_node = True
 
     def __init__(self, root, scope):
         xslt_node.__init__(self, root)
@@ -42,7 +42,7 @@ class push_variables_node(xslt_node):
 
 class pop_variables_node(xslt_node):
 
-    isPseudoNode = True
+    pseudo_node = True
 
     def __init__(self, root, scope):
         xslt_node.__init__(self, root)
@@ -400,13 +400,12 @@ class stylesheet_reader(object):
         # ----------------------------------------------------------
         # create the instance defining this element
         klass = (xsl_class or ext_class or _literal_element)
-        state.node = instance = klass(self._root, namespace, local,
-                                      qualifiedName)
+        state.node = instance = klass(self._root, expandedName, qualifiedName,
+                                      state.currentNamespaces)
         instance.baseUri = self._locator.getSystemId()
         instance.lineNumber = self._locator.getLineNumber()
         instance.columnNumber = self._locator.getColumnNumber()
         instance.importIndex = self._import_index
-        instance.namespaces = state.currentNamespaces
 
         if xsl_class: # -- XSLT element --------------------------------
             # Handle attributes in the null-namespace

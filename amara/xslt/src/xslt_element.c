@@ -521,11 +521,11 @@ static struct PyMethodDef element_methods[] = {
   { #name, type, offsetof(XsltElementObject, name), flags }
 
 static struct PyMemberDef element_members[] = {
-  XsltElement_MEMBER(baseUri, T_OBJECT, 0),
   XsltElement_MEMBER(expanded_name, T_OBJECT, READONLY),
   XsltElement_MEMBER(nodeName, T_OBJECT, READONLY),
   XsltElement_MEMBER(attributes, T_OBJECT, READONLY),
-  XsltElement_MEMBER(namespaces, T_OBJECT, 0),
+  XsltElement_MEMBER(namespaces, T_OBJECT, READONLY),
+  XsltElement_MEMBER(baseUri, T_OBJECT, 0),
   XsltElement_MEMBER(lineNumber, T_INT, 0),
   XsltElement_MEMBER(columnNumber, T_INT, 0),
   XsltElement_MEMBER(import_precedence, T_INT, 0),
@@ -720,14 +720,16 @@ static void element_dealloc(XsltElementObject *self)
 static int element_init(XsltElementObject *self, PyObject *args,
                         PyObject *kwds)
 {
-  PyObject *root, *namespaceUri, *localName, *nodeName;
-  PyObject *expanded_name, *attributes, *temp;
-  static char *kwlist[] = { "root", "namespaceUri", "localName", "nodeName",
-                            NULL };
+  PyObject *root, *expanded_name, *qname, *namespaces=NULL, *attributes=NULL;
+  PyObject *temp;
+  static char *kwlist[] = { "root", "expanded_name", "qname",
+                            "namespaces", "attributes", NULL };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OOO:XsltElement", kwlist,
-                                   &XsltRoot_Type, &root, &namespaceUri,
-                                   &localName, &nodeName))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO|O!O!:XsltElement", kwlist,
+                                   &XsltRoot_Type, &root,
+                                   &expanded_name, &qname,
+                                   &PyDict_Type, &namespaces,
+                                   &PyDict_Type, &attributes))
     return -1;
 
   temp = XsltNode_ROOT(self);
@@ -735,29 +737,31 @@ static int element_init(XsltElementObject *self, PyObject *args,
   XsltNode_ROOT(self) = root;
   Py_DECREF(temp);
 
-  expanded_name = PyTuple_New(2);
-  if (expanded_name == NULL) {
-    return -1;
-  }
-  Py_INCREF(namespaceUri);
-  PyTuple_SET_ITEM(expanded_name, 0, namespaceUri);
-  Py_INCREF(localName);
-  PyTuple_SET_ITEM(expanded_name, 1, localName);
   temp = self->expanded_name;
+  Py_INCREF(expanded_name);
   self->expanded_name = expanded_name;
   Py_DECREF(temp);
 
   temp = self->nodeName;
-  Py_INCREF(nodeName);
-  self->nodeName = nodeName;
+  Py_INCREF(qname);
+  self->nodeName = qname;
   Py_DECREF(temp);
 
-  attributes = PyDict_New();
-  if (attributes == NULL)
-    return -1;
-  temp = self->attributes;
-  self->attributes = attributes;
-  Py_DECREF(temp);
+  if (namespaces != NULL) {
+    namespaces = PyDictProxy_New(namespaces);
+    if (namespaces == NULL)
+      return -1;
+    temp = self->namespaces;
+    self->namespaces = namespaces;
+    Py_DECREF(temp);
+  }
+
+  if (attributes != NULL) {
+    temp = self->attributes;
+    Py_INCREF(attributes);
+    self->attributes = attributes;
+    Py_DECREF(temp);
+  }
 
   return 0;
 }

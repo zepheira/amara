@@ -163,10 +163,19 @@ static PyObject *node_isLastChild(PyObject *self, PyObject *args)
       if (self == sibling)
         result = Py_True;
       else if (result == Py_True) {
-        int is_pseudo_node;
-        if (is_pseudo_node == 0) {
-          result = Py_False;
+        PyObject *pseudo_node = PyObject_GetAttrString(sibling, "pseudo_node");
+        if (pseudo_node == NULL)
+          return NULL;
+        switch (PyObject_IsTrue(pseudo_node)) {
+        case 0:
+          Py_DECREF(pseudo_node);
+          Py_RETURN_FALSE;
+        case 1:
+          Py_DECREF(pseudo_node);
           break;
+        default:
+          Py_DECREF(pseudo_node);
+          return NULL;
         }
       }
     }
@@ -617,7 +626,7 @@ int XsltNode_Init(PyObject *module)
   if (PyDict_SetItemString(dict, "import_precedence", constant)) return -1;
   Py_DECREF(constant);
 
-  if (PyDict_SetItemString(dict, "isPseudoNode", Py_False)) return -1;
+  if (PyDict_SetItemString(dict, "pseudo_node", Py_False)) return -1;
 
   if (PyDict_SetItemString(dict, "__metaclass__", (PyObject *)&xslt_metaclass))
     return -1;
