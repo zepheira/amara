@@ -191,7 +191,7 @@ class context(writer):
         elif isinstance(node, tree.attribute):
             self.attribute(node.xml_qname, node.xml_value, node.xml_namespace)
         elif isinstance(node, tree.text):
-            self.text(node.xml_value, node.xsltOutputEscaping)
+            self.text(node.xml_value, not node.xsltOutputEscaping)
         elif isinstance(node, tree.processing_instruction):
             self.processing_instruction(node.xml_target, node.xml_data)
         elif isinstance(node, tree.comment):
