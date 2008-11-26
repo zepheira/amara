@@ -67,6 +67,7 @@ class test_apply_templates_3(test_apply_templates_1):
       <xsl:with-param name='foo' select='1'/>
     </xsl:apply-templates>
   </xsl:template>
+  <xsl:template match='text()'/>
   <xsl:template match='item'>
     <xsl:param name='foo'/>
     <xsl:value-of select='concat($foo,.)'/>
@@ -92,6 +93,7 @@ class test_apply_templates_4(test_apply_templates_1):
       <xsl:with-param name='foo' select='1'/>
     </xsl:apply-templates>
   </xsl:template>
+  <xsl:template match='text()'/>
   <xsl:template match='item'>
     <xsl:param name='foo'/>
     <xsl:value-of select='concat($foo,.)'/>
