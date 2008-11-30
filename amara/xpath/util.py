@@ -249,3 +249,84 @@ def indexer(source, expressions, output=None):
     if output:
         output.bottom()
 
+
+#Mapping from node type to XPath node test function name
+OTHER_NODES = {
+    tree.text.xml_type: u'text',
+    tree.comment.xml_type: u'comment',
+    tree.processing_instruction.xml_type: u'processing-instruction',
+    }
+
+
+FULL_NS_FORM = u'*[namespace-uri()="%s" and local-name()="%s"]'
+
+def abspath(node, prefixes=None):
+    #based on code developed by Florian Bosch on XML-SIG
+    #http://mail.python.org/pipermail/xml-sig/2004-August/010423.html
+    #Significantly enhanced to use Unicode properly, support more
+    #node types, use safer node type tests, etc.
+    """
+    Return an XPath expression that provides a unique path to
+    the given node (supports elements, attributes, root nodes,
+    text nodes, comments and PIs) within a document
+
+    if the document uses the default namespace, the result might use
+    a long form for element name tests, applying the namespace-uri()
+    and local-name() XPath functions.  You can avoid this by passing in
+    a namespace hints dictionary (prefixes).
+
+    prefixes - optional hint dictionary from prefix to namespace;
+               used to reconcile default namespace usage
+    """
+    if node.xml_type == tree.element.xml_type:
+        count = 1
+        #Count previous siblings with same node name
+        previous = node.xml_preceding_sibling
+        while previous:
+            if ((previous.xml_namespace, previous.xml_local)
+                == (node.xml_namespace, node.xml_local)):
+                count += 1
+            previous = previous.xml_preceding_sibling
+        nametest = node.xml_qname
+        if node.xml_namespace and not node.xml_prefix:
+            _prefixes = node.xml_namespaces.copy()
+            if prefixes is not None:
+                _prefixes.update(prefixes)
+            #nicer code, but maybe slower than iterating items()
+            #nss = dict([(n,p) for (p,n) in prefixes.items()])
+            #must provide a prefix for XPath
+            prefix = None
+            for prefix, ns in _prefixes.iteritems():
+                if node.xml_namespace == ns and prefix:
+                    nametest = prefix + u':' + node.xml_qname
+                    break
+            else:
+                nametest = FULL_NS_FORM%(node.xml_namespace, node.xml_local)
+        step = u'%s[%i]' % (nametest, count)
+        ancestor = node.xml_parent
+    elif node.xml_type == tree.attribute.xml_type:
+        step = u'@%s' % (node.xml_qname)
+        ancestor = node.xml_parent
+    elif node.xml_type in OTHER_NODES:
+        #Text nodes, comments and PIs
+        count = 1
+        #Count previous siblings of the same node type
+        previous = node.xml_preceding_sibling
+        while previous:
+            if previous.xml_type == node.xml_type: count += 1
+            previous = previous.xml_preceding_sibling
+        test_func = OTHER_NODES[node.xml_type]
+        step = u'%s()[%i]' % (test_func, count)
+        ancestor = node.xml_parent
+    elif not node.xml_parent:
+        #Root node
+        step = u''
+        ancestor = node
+    else:
+        raise TypeError('Unsupported node type for abspath')
+    if ancestor.xml_parent:
+        return abspath(ancestor, prefixes) + u'/' + step
+    else:
+        return u'/' + step
+
+
