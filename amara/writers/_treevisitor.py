@@ -167,9 +167,12 @@ class visitor:
                 attributes[attr.xml_qname] = attr.xml_value
 
         # The element's namespaceURI/prefix mapping takes precedence
-        if node.xml_namespace or current_nss.get(u'', 0):
-            if current_nss.get(node.xml_prefix or u'', 0) != node.xml_namespace:
-                namespaces[node.xml_prefix or u''] = node.xml_namespace or u""
+        #if node.xml_namespace or current_nss.get(u'', 0):
+            #if current_nss.get(node.xml_prefix or u'', 0) != node.xml_namespace:
+            #    namespaces[node.xml_prefix or u''] = node.xml_namespace or u""
+        if node.xml_namespace or namespaces.get(None, 0):
+            if namespaces.get(node.xml_prefix or None, 0) != node.xml_namespace:
+                namespaces[node.xml_prefix or None] = node.xml_namespace or u""
 
         #The 
         kill_prefixes = []

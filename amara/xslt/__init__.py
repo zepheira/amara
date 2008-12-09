@@ -537,37 +537,37 @@ def launch(*args, **kwargs):
 
 
 class Usage(Exception):
-	def __init__(self, msg):
-		self.msg = msg
+    def __init__(self, msg):
+        self.msg = msg
 
 
 def main(argv=None):
-	if argv is None:
-		argv = sys.argv
-	try:
-		try:
-			opts, args = getopt.getopt(argv[1:], "hD:v", ["help", "define="])
-		except getopt.error, msg:
-			raise Usage(msg)
-	
-		# option processing
-		kwargs = {}
-		for option, value in opts:
-			if option == "-v":
-				verbose = True
-			if option in ("-h", "--help"):
-				raise Usage(help_message)
-			if option in ("-D", "--define"):
-			    kwargs.setdefault('define', []).append(value)
-	
-	except Usage, err:
-		print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-		print >> sys.stderr, "\t for help use --help"
-		return 2
+    if argv is None:
+        argv = sys.argv
+    try:
+        try:
+            opts, args = getopt.getopt(argv[1:], "hD:v", ["help", "define="])
+        except getopt.error, msg:
+            raise Usage(msg)
+    
+        # option processing
+        kwargs = {}
+        for option, value in opts:
+            if option == "-v":
+                verbose = True
+            if option in ("-h", "--help"):
+                raise Usage(help_message)
+            if option in ("-D", "--define"):
+                kwargs.setdefault('define', []).append(value)
+    
+    except Usage, err:
+        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
+        print >> sys.stderr, "\t for help use --help"
+        return 2
 
-	launch(*args, **kwargs)
+    launch(*args, **kwargs)
 
 
 if __name__ == "__main__":
-	sys.exit(main())
+    sys.exit(main())
 
