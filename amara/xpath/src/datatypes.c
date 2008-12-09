@@ -1297,12 +1297,66 @@ static PyIntObject _Boolean_Constants[] = {
   { PyObject_HEAD_INIT(&XPathBoolean_Type) 1 }, /* Boolean_True */
 };
 
-/** XPathBoolean *****************************************************/
+/** node-set type ****************************************************/
 
+static char nodeset_doc[] = "Represents the XPath node-set data type.";
+
+static PyObject *NodeSet_New(Py_ssize_t size)
+{
+  PyObject *op = PyList_New(size);
+  if (op) {
+    /* Swap `PyList_Type` for `XPathNodeSet_Type` */
+    _Py_ForgetReference(op);
+    PyObject_INIT(op, &XPathNodeSet_Type);
+  }
+  return op;
+}
+
+static PyObject *nodeset_new(PyTypeObject *type, PyObject *args,
+                             PyObject *kwds)
+{
+  static char *kwlist[] = { "sequence", NULL };
+  PyObject *arg = NULL;
+  PyObject *self;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:nodeset", kwlist, &arg))
+    return NULL;
+
+  if (arg) {
+    if (NodeSet_Check(arg)) {
+      Py_INCREF(arg);
+      return arg;
+    }
+    if (Node_Check(arg)) {
+      PyErr_Format(PyExc_TypeError, "cannot convert '%s' object to nodeset",
+                   arg->ob_type->tp_name);
+      return NULL;
+    }
+  }
+
+  self = type->tp_alloc(type, 0);
+  if (self != NULL) {
+    if (PyList_Type.tp_init(self, args, kwds) < 0 ||
+        PyList_Sort(self) < 0) {
+      Py_DECREF(self);
+      self = NULL;
+    }
+  }
+  return self;
+}
+
+static int nodeset_init(PyObject *self, PyObject *args, PyObject *kwds)
+{
+  /* Prevent list.__init__ from creating a copy of the input. */
+  return 0;
+}
+
+/* Both `tp_print` and `tp_repr` need to be defined because `PyList_Type`
+ * has them defined. */
 static int nodeset_print(PyObject *self, FILE *fp, int flags)
 {
   int rc;
-  fputs("NodeSet(", fp);
+  fputs("nodeset(", fp);
   rc = PyList_Type.tp_print(self, fp, flags);
   if (rc != 0) return rc;
   fputs(")", fp);
@@ -1313,9 +1367,9 @@ static PyObject *nodeset_repr(PyObject *self)
 {
   PyObject *repr;
   if (PyList_GET_SIZE(self) == 0) {
-    repr = PyString_FromString("NodeSet()");
+    repr = PyString_FromString("nodeset()");
   } else {
-    repr = PyString_FromString("NodeSet(");
+    repr = PyString_FromString("nodeset(");
     if (repr) {
       PyObject *tmp = PyList_Type.tp_repr(self);
       if (tmp == NULL) {
@@ -1505,51 +1559,164 @@ static PyObject *nodeset_richcompare(PyObject *v, PyObject *w, int op)
   }
 }
 
-static PyMethodDef nodeset_methods[] = {
-  { "asNodeSet", object_as_self, METH_NOARGS, NULL },
-  { NULL }
+static PyObject *
+nodeset_concat(PyObject *a, PyObject *b)
+{
+  XPathNodeSetObject *self=(XPathNodeSetObject *)a;
+  XPathNodeSetObject *other=(XPathNodeSetObject *)b;
+  XPathNodeSetObject *np;
+  Py_ssize_t size, i;
+  PyObject **src, **dst, *item;
+  if (!NodeSet_Check(b)) {
+    PyErr_Format(PyExc_TypeError,
+                 "can only concatenate nodeset (not %s) to nodeset",
+                 b == Py_None ? "None" : b->ob_type->tp_name);
+    return NULL;
+  }
+  size = self->ob_size + other->ob_size;
+  if (size < 0)
+    return PyErr_NoMemory();
+  np = (XPathNodeSetObject *)NodeSet_New(size);
+  if (np == NULL)
+    return NULL;
+  src = self->ob_item;
+  dst = np->ob_item;
+  for (i = 0; i < self->ob_size; i++) {
+    item = src[i];
+    Py_INCREF(item);
+    dst[i] = item;
+  }
+  src = other->ob_item;
+  dst += i;
+  for (i = 0; i < other->ob_size; i++) {
+    item = src[i];
+    Py_INCREF(item);
+    dst[i] = item;
+  }
+  return (PyObject *)np;
+}
+
+static PyObject *
+nodeset_repeat(PyObject *a, Py_ssize_t n)
+{
+  XPathNodeSetObject *self=(XPathNodeSetObject *)a;
+  XPathNodeSetObject *np;
+  Py_ssize_t size, i, j;
+  PyObject **src, **dst;
+  if (n < 0)
+    n = 0;
+  size = self->ob_size * n;
+  if (n && size/n != self->ob_size)
+    return PyErr_NoMemory();
+  if (size == 0)
+    return NodeSet_New(0);
+  np = (XPathNodeSetObject *)NodeSet_New(size);
+  if (np == NULL)
+    return NULL;
+  src = self->ob_item;
+  dst = np->ob_item;
+  if (self->ob_size == 1) {
+    PyObject *item = src[0];
+    for (i = 0; i < n; i++) {
+      dst[i] = item;
+      Py_INCREF(item);
+    }
+  } else {
+    for (i = 0; i < n; i++) {
+      for (j = 0; j < self->ob_size; j++) {
+        *dst = src[j];
+        Py_INCREF(*dst);
+        dst++;
+      }
+    }
+  }
+  return (PyObject *)np;
+}
+
+static PyObject *
+nodeset_slice(PyObject *op, Py_ssize_t ilow, Py_ssize_t ihigh)
+{
+  XPathNodeSetObject *self=(XPathNodeSetObject *)op;
+  XPathNodeSetObject *np;
+  PyObject **src, **dest, *item;
+  Py_ssize_t i, len;
+
+  if (ilow < 0)
+    ilow = 0;
+  else if (ilow > self->ob_size)
+    ilow = self->ob_size;
+  if (ihigh < ilow)
+    ihigh = ilow;
+  else if (ihigh > self->ob_size)
+    ihigh = self->ob_size;
+  len = ihigh - ilow;
+  np = (XPathNodeSetObject *)NodeSet_New(len);
+  if (np == NULL)
+    return NULL;
+  src = self->ob_item + ilow;
+  dest = np->ob_item;
+  for (i = 0; i < len; i++) {
+    item = src[i];
+    Py_INCREF(item);
+    dest[i] = item;
+  }
+  return (PyObject *)np;
+}
+
+static PySequenceMethods nodeset_as_sequence = {
+  /* sq_length         */ (lenfunc) 0,
+  /* sq_concat         */ (binaryfunc) nodeset_concat,
+  /* sq_repeat         */ (ssizeargfunc) nodeset_repeat,
+  /* sq_item           */ (ssizeargfunc) 0,
+  /* sq_slice          */ (ssizessizeargfunc) nodeset_slice,
+  /* sq_ass_item       */ (ssizeobjargproc) 0,
+  /* sq_ass_slice      */ (ssizessizeobjargproc) 0,
+  /* sq_contains       */ (objobjproc) 0,
+  /* sq_inplace_concat */ (binaryfunc) 0,
+  /* sq_inplace_repeat */ (ssizeargfunc) 0,
 };
 
-static PyObject *nodeset_new(PyTypeObject *type, PyObject *args,
-                             PyObject *kwds)
+static PyObject *
+nodeset_subscript(PyObject *op, PyObject *item)
 {
-  static char *kwlist[] = { "sequence", NULL };
-  PyObject *arg = NULL;
-  PyObject *self;
+  XPathNodeSetObject *self=(XPathNodeSetObject *)op;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:NodeSet", kwlist, &arg))
-    return NULL;
+  if (PySlice_Check(item)) {
+    Py_ssize_t start, stop, step, slicelength, cur, i;
+    PyObject *result, **src, **dest;
 
-  if (arg) {
-    if (NodeSet_Check(arg)) {
-      Py_INCREF(arg);
-      return arg;
-    }
-    if (Node_Check(arg)) {
-      PyErr_Format(PyExc_TypeError, "cannot convert '%s' object to node-set",
-                   arg->ob_type->tp_name);
+    if (PySlice_GetIndicesEx((PySliceObject*)item, self->ob_size,
+                             &start, &stop, &step, &slicelength) < 0)
       return NULL;
-    }
-  }
 
-  self = type->tp_alloc(type, 0);
-  if (self != NULL) {
-    if (PyList_Type.tp_init(self, args, kwds) < 0 ||
-        PyList_Sort(self) < 0) {
-      Py_DECREF(self);
-      self = NULL;
+    if (slicelength <= 0)
+      return NodeSet_New(0);
+
+    result = NodeSet_New(slicelength);
+    if (result) {
+      src = self->ob_item;
+      dest = ((XPathNodeSetObject *)result)->ob_item;
+      for (cur = start, i = 0; i < slicelength; cur += step, i++) {
+        item = src[cur];
+        Py_INCREF(item);
+        dest[i] = item;
+      }
     }
+    return result;
+  } else {
+    return PyList_Type.tp_as_mapping->mp_subscript(op, item);
   }
-  return self;
 }
 
-static int nodeset_init(PyObject *self, PyObject *args, PyObject *kwds)
-{
-  /* Prevent list.__init__ from creating a copy of the input. */
-  return 0;
-}
+static PyMappingMethods nodeset_as_mapping = {
+  /* mp_length        */ (lenfunc) 0,
+  /* mp_subscript     */ (binaryfunc) nodeset_subscript,
+  /* mp_ass_subscript */ (objobjargproc) 0,
+};
 
-static char nodeset_doc[] = "Represents the XPath NodeSet data type.";
+static PyMethodDef nodeset_methods[] = {
+  { NULL }
+};
 
 static PyTypeObject XPathNodeSet_Type = {
   /* PyObject_HEAD     */ PyObject_HEAD_INIT(NULL)
@@ -1564,8 +1731,8 @@ static PyTypeObject XPathNodeSet_Type = {
   /* tp_compare        */ (cmpfunc) 0,
   /* tp_repr           */ (reprfunc) nodeset_repr,
   /* tp_as_number      */ (PyNumberMethods *) 0,
-  /* tp_as_sequence    */ (PySequenceMethods *) 0,
-  /* tp_as_mapping     */ (PyMappingMethods *) 0,
+  /* tp_as_sequence    */ (PySequenceMethods *) &nodeset_as_sequence,
+  /* tp_as_mapping     */ (PyMappingMethods *) &nodeset_as_mapping,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
   /* tp_str            */ (reprfunc) nodeset_repr,
