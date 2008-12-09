@@ -40,6 +40,7 @@ typedef enum {
 ParseFlags default_parse_flags = PARSE_FLAGS_EXTERNAL_ENTITIES;
 
 static PyObject *empty_args_tuple;
+static PyObject *empty_string;
 static PyObject *gc_enable_function;
 static PyObject *gc_disable_function;
 static PyObject *gc_isenabled_function;
@@ -313,6 +314,8 @@ builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
   fprintf(stderr, ")\n");
 #endif
 
+  if (uri == Py_None)
+    uri = empty_string;
   if (PyDict_SetItem(state->new_namespaces, prefix, uri) < 0)
     return EXPAT_STATUS_ERROR;
 
@@ -803,6 +806,9 @@ int DomletteBuilder_Init(PyObject *module)
   empty_args_tuple = PyTuple_New(0);
   if (empty_args_tuple == NULL) return -1;
 
+  empty_string = XmlString_FromASCII("");
+  if (empty_string == NULL) return -1;
+
   import = PyImport_ImportModule("gc");
   if (import == NULL) return -1;
 #define GET_GC_FUNC(NAME)                                       \
@@ -829,6 +835,7 @@ int DomletteBuilder_Init(PyObject *module)
 void DomletteBuilder_Fini(void)
 {
   Py_DECREF(empty_args_tuple);
+  Py_DECREF(empty_string);
   Py_DECREF(gc_enable_function);
   Py_DECREF(gc_disable_function);
   Py_DECREF(gc_isenabled_function);
