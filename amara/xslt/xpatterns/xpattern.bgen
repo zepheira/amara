@@ -438,6 +438,9 @@
         <begin>INITIAL</begin> <!-- switch to XPath parsing -->
         <token>@ASCII@</token>
       </pattern>
+
+      <!-- ignore all whitespace -->
+      <pattern expression='{S}+'/>
     </scope>
 
     <?include ../../xpath/parser/xpath_lexer_patterns.bgen.frag?>
