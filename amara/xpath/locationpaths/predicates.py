@@ -18,7 +18,6 @@ __all__ = ['predicates', 'predicate']
 
 class predicates(tuple):
     def __init__(self, *args):
-        tuple.__init__(self, *args)
         self.select = pathiter(pred.select for pred in self).select
         return
 
