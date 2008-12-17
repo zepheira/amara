@@ -96,7 +96,7 @@ class proxywriter(streamwriter):
         # Attempt to switch to the "true" writer as soon as possible
         if output_parameters.method:
             return cls._lookup(output_parameters)(output_parameters, stream)
-        return streamwriter.__new__(cls, output_parameters, stream)
+        return object.__new__(cls)
 
     def __init__(self, output_parameters, stream):
         streamwriter.__init__(self, output_parameters, stream)

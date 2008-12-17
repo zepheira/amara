@@ -192,5 +192,3 @@ class _userwriter(object):
                    verbatim into the output, after testing for wellp-formedness
         """
         raise NotImplementedErr
-
-

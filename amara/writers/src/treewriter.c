@@ -563,6 +563,12 @@ static void treewriter_dealloc(TreeWriterObject *self)
   self->ob_type->tp_free((PyObject *)self);
 }
 
+static PyObject *
+treewriter_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+  return type->tp_alloc(type, 0);
+}
+
 static int
 treewriter_init(TreeWriterObject *self, PyObject *args, PyObject *kwds)
 {
@@ -647,7 +653,7 @@ static PyTypeObject TreeWriter_Type = {
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) treewriter_init,
   /* tp_alloc          */ (allocfunc) 0,
-  /* tp_new            */ (newfunc) 0,
+  /* tp_new            */ (newfunc) treewriter_new,
   /* tp_free           */ 0,
 };
 
