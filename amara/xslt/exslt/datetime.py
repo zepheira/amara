@@ -3,6 +3,7 @@
 """
 EXSLT - Dates an Times (http://www.exslt.org/date/index.html)
 """
+import re
 import calendar
 
 from amara.xpath import datatypes
@@ -29,10 +30,14 @@ def date_function(context, date=None):
 
     Implements version 2.
     """
-    try:
-        datetime = _coerce(context, date, ('dateTime', 'date'))
-    except ValueError:
-        return datatypes.EMPTY_STRING
+    if date is None:
+        datetime = _datetime.now()
+    else:
+        try:
+            datetime = _datetime.parse(date.evaluate_as_string(context),
+                                       ('dateTime', 'date'))
+        except ValueError:
+            return datatypes.EMPTY_STRING
     return datatypes.string(u'%-.4d-%02d-%02d%s' % (datetime.year,
                                                     datetime.month,
                                                     datetime.day,
@@ -319,7 +324,7 @@ def second_in_minute_function(context, time=None):
 _re_SimpleDateFormat = re.compile(r"(?P<symbol>([GyMdhHmsSEDFwWakKz])\2*)"
                                   r"|'(?P<escape>(?:[^']|'')*)'")
 
-def FormatDate(context, datetime, pattern):
+def format_date_function(context, datetime, pattern):
     """
     The date:format-date function formats a date/time according to a pattern.
 
@@ -472,7 +477,7 @@ def FormatDate(context, datetime, pattern):
     return datatypes.string(_re_SimpleDateFormat.sub(repl, pattern))
 
 
-def WeekInMonth(context, dateTime=None):
+def week_in_month_function(context, date=None):
     """
     The date:week-in-month function returns the week in a month of a date as
     a number. If no argument is given, then the current local date/time, as
@@ -494,7 +499,7 @@ def WeekInMonth(context, dateTime=None):
     return (week_offset / 7) + (week_offset % 7 and 2 or 1)
 
 
-def Difference(context, start, end):
+def difference_function(context, start, end):
     """
     The date:difference function returns the difference between the first date
     and the second date as a duration in string form.
@@ -509,7 +514,7 @@ def Difference(context, start, end):
     return unicode(_difference(start, end))
 
 
-def Add(context, dateTime, duration):
+def add_function(context, date, duration):
     """
     The date:add function returns the result of adding a duration to a dateTime.
 
@@ -522,7 +527,7 @@ def Add(context, dateTime, duration):
     except ValueError:
         return u''
 
-    result = _DateTime()
+    result = _datetime()
     # Get the "adjusted" duration values
     if duration.negative:
         years, months, days, hours, minutes, seconds = (-duration.years,
@@ -609,7 +614,7 @@ def Add(context, dateTime, duration):
     return result
 
 
-def AddDuration(context, duration1, duration2):
+def add_duration_function(context, duration1, duration2):
     """
     The date:add-duration function returns the duration resulting from adding
     two durations together.
@@ -628,7 +633,7 @@ def AddDuration(context, duration1, duration2):
     return unicode(duration)
 
 
-def Sum(context, nodeset):
+def sum_function(context, nodeset):
     """
     The date:sum function adds a set of durations together. The string values
     of the nodes in the node set passed as an argument are interpreted as
@@ -648,7 +653,7 @@ def Sum(context, nodeset):
     return unicode(duration)
 
 
-def Seconds(context, string=None):
+def seconds_function(context, string=None):
     """
     The date:seconds function returns the number of seconds specified by the
     argument string. If no argument is given, then the current local
@@ -657,7 +662,7 @@ def Seconds(context, string=None):
     Implements version 1.
     """
     if string is None:
-        string = str(_DateTime.now())
+        string = str(_datetime.now())
     else:
         string = Conversions.StringValue(string)
 
@@ -667,7 +672,7 @@ def Seconds(context, string=None):
             duration = _Duration.parse(string)
         else:
             # its a dateTime
-            dateTime = _DateTime.parse(string, ('dateTime', 'date',
+            dateTime = _datetime.parse(string, ('dateTime', 'date',
                                                 'gYearMonth', 'gYear'))
             duration = _difference(_EPOCH, dateTime)
     except ValueError:
@@ -685,7 +690,7 @@ def Seconds(context, string=None):
     return seconds
 
 
-def Duration(context, seconds=None):
+def duration_function(context, seconds=None):
     """
     The date:duration function returns a duration string representing the
     number of seconds specified by the argument string. If no argument is
@@ -710,6 +715,314 @@ def Duration(context, seconds=None):
     duration = _Duration(negative=(seconds < 0), seconds=abs(seconds))
     return unicode(duration)
 
+
+## Internals ##########################################################
+
+class _datetime(object):
+    """
+    INTERNAL: representation of an exact point on a timeline.
+    """
+
+    __slots__ = ('year', 'month', 'day', 'hour', 'minute', 'second', 'timezone')
+
+    patterns = {
+        'year'     : '[-]?[0-9]{4,}',
+        'month'    : '[0-9]{2}',
+        'day'      : '[0-9]{2}',
+        'hour'     : '[0-9]{2}',
+        'minute'   : '[0-9]{2}',
+        'second'   : '[0-9]{2}(?:[.][0-9]+)?',
+        'timezone' : 'Z|[-+][0-9]{2}:[0-9]{2}'
+        }
+    for name, pattern in patterns.iteritems():
+        patterns[name] = '(?P<%s>%s)' % (name, pattern)
+    del name, pattern
+
+    datatypes = {
+        'dateTime'   : '%(date)sT%(time)s',
+        'date'       : '%(year)s-%(month)s-%(day)s',
+        'time'       : '%(hour)s:%(minute)s:%(second)s',
+        'gYearMonth' : '%(year)s-%(month)s',
+        'gYear'      : '%(year)s',
+        'gMonthDay'  : '--%(month)s-%(day)s',
+        'gMonth'     : '--%(month)s',
+        'gDay'       : '---%(day)s',
+        }
+    datatypes['dateTime'] = datatypes['dateTime'] % datatypes
+    for name, pattern in datatypes.iteritems():
+        pattern = '^' + pattern + '%(timezone)s?$'
+        datatypes[name] = re.compile(pattern % patterns)
+    del name, pattern
+
+    def parse(cls, string, datatypes=None):
+        if not datatypes:
+            datatypes = cls.datatypes
+        for name in datatypes:
+            try:
+                regexp = cls.datatypes[name]
+            except KeyError:
+                raise RuntimeException('unsupported datatype: %r' % name)
+            match = regexp.match(string)
+            if match:
+                return cls(**match.groupdict())
+        raise ValueError('invalid date/time literal: %r' % string)
+    parse = classmethod(parse)
+
+    def now(cls):
+        year, month, day, hour, minute, second  = time.gmtime()[:6]
+        return cls(year=year, month=month, day=day, hour=hour, minute=minute,
+                   second=second, timezone='Z')
+    now = classmethod(now)
+
+    def __init__(self, year=None, month=None, day=None, hour=None,
+                 minute=None, second=None, timezone=None):
+        self.year = year and int(year)
+        self.month = month and int(month)
+        self.day = day and int(day)
+        self.hour = hour and int(hour)
+        self.minute = minute and int(minute)
+        self.second = second and float(second)
+        self.timezone = timezone and unicode(timezone)
+        return
+
+    def utcoffset(self):
+        """
+        Returns the offset from UTC in minutes.
+        """
+        if not self.timezone:
+            offset = None
+        elif self.timezone == 'Z':
+            offset = 0
+        else:
+            # timezone is in +/-HH:MM format
+            hours, minutes = map(int, self.timezone.split(':'))
+            if hours < 0:
+                offset = hours * 60 - minutes
+            else:
+                offset = hours * 60 + minutes
+        return offset
+
+    def __str__(self):
+        if not self.second:
+            second_as_string = '00'
+        elif self.second < 10:
+            second_as_string = '0%.12g' % self.second
+        else:
+            second_as_string = '%.12g' % self.second
+        return '%-.4d-%02d-%02dT%02d:%02d:%s%s' % (self.year or 0,
+                                                   self.month or 0,
+                                                   self.day or 0,
+                                                   self.hour or 0,
+                                                   self.minute or 0,
+                                                   second_as_string,
+                                                   self.timezone or '')
+
+    def __repr__(self):
+        return '%s(%r, %r, %r, %r, %r, %r, %r)' % (
+            self.__class__.__name__, self.year, self.month, self.day,
+            self.hour, self.minute, self.second, self.timezone)
+
+
+_EPOCH = _datetime.parse('1970-01-01T00:00:00Z')
+
+
+class _Duration(object):
+
+    __slots__ = ('negative', 'years', 'months', 'days', 'hours', 'minutes',
+                 'seconds')
+
+    regexp = re.compile('^(?P<negative>[-])?P(?:(?P<years>[0-9]+)Y)?'
+                        '(?:(?P<months>[0-9]+)M)?(?:(?P<days>[0-9]+)D)?'
+                        '(?P<time>T(?:(?P<hours>[0-9]+)H)?'
+                        '(?:(?P<minutes>[0-9]+)M)?'
+                        '(?:(?P<seconds>[0-9]+(?:[.][0-9]+)?)S)?)?$')
+
+    def parse(cls, string):
+        match = cls.regexp.match(string)
+        if match:
+            parts = match.groupdict()
+            # Verify that if the time designator is given, there is at least
+            # one time component as well.  This cannot be done easily with
+            # just the RE.
+            time = parts['time']
+            try:
+                time is None or time[1]
+            except IndexError:
+                # Fall through to the ValueError below
+                pass
+            else:
+                del parts['time']
+                return cls(**parts)
+        raise ValueError('invalid duration literal: %r' % string)
+    parse = classmethod(parse)
+
+    def __init__(self, negative=None, years=None, months=None, days=None,
+                 hours=None, minutes=None, seconds=None):
+        self.negative = negative and True or False
+        self.years = years and int(years) or 0
+        self.months = months and int(months) or 0
+        self.days = days and int(days) or 0
+        self.hours = hours and int(hours) or 0
+        self.minutes = minutes and int(minutes) or 0
+        self.seconds = seconds and float(seconds) or 0
+
+        # Normalize the values to range
+        minutes, self.seconds = divmod(self.seconds, 60)
+        hours, self.minutes = divmod(self.minutes + int(minutes), 60)
+        days, self.hours = divmod(self.hours + hours, 24)
+        self.days += days
+        years, self.months = divmod(self.months, 12)
+        self.years += years
+        return
+
+    def __repr__(self):
+        return '%s(%r, %r, %r, %r, %r, %r, %r)' % (
+            self.__class__.__name__, self.negative, self.years, self.months,
+            self.days, self.hours, self.minutes, self.seconds)
+
+    def __str__(self):
+        have_time = (self.hours or self.minutes or self.seconds)
+        # Always format the duration in minimized form
+        if not (self.years or self.months or self.days or have_time):
+            # at least one designator MUST be present (arbitrary decision)
+            return 'PT0S'
+        parts = [self.negative and '-P' or 'P']
+        if self.years:
+            parts.append('%dY' % self.years)
+        if self.months:
+            parts.append('%dM' % self.months)
+        if self.days:
+            parts.append('%dD' % self.days)
+        if have_time:
+            parts.append('T')
+        if self.hours:
+            parts.append('%dH' % self.hours)
+        if self.minutes:
+            parts.append('%dM' % self.minutes)
+        if self.seconds:
+            parts.append('%0.12gS' % self.seconds)
+        return ''.join(parts)
+
+
+def _coerce(obj, datatypes):
+    """
+    INTERNAL: converts an XPath object to a `_datetime` instance.
+    """
+    if obj is None:
+        obj = _datetime.now()
+    elif not isinstance(obj, _datetime):
+        obj = _datetime.parse(Conversions.StringValue(obj), datatypes)
+    return obj
+
+
+def _daysInMonth(year, month):
+    """
+    INTERNAL: calculates the number of days in a month for the given date.
+    """
+    days = (None, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)[month]
+    if month == 2 and calendar.isleap(year):
+        days += 1
+    return days
+
+
+def _dayInYear(year, month, day):
+    """
+    INTERNAL: calculates the ordinal date for the given date.
+    """
+    days = (None, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334)[month]
+    if month > 2 and calendar.isleap(year):
+        days += 1
+    return days + day
+
+
+def _julianDay(year, month, day):
+    """
+    INTERNAL: calculates the Julian day (1-1-1 is day 1) for the given date.
+    """
+    date = _dayInYear(year, month, day)
+    year -= 1
+    return year*365 + (year / 4) - (year / 100) + (year / 400) + date
+
+
+def _dayOfWeek(year, month, day):
+    """
+    INTERNAL: calculates the day of week (0=Sun, 6=Sat) for the given date.
+    """
+    return _julianDay(year, month, day) % 7
+
+
+def _difference(start, end):
+    """
+    INTERNAL: subtracts the end date from the start date.
+    """
+    if type(start.timezone) is not type(end.timezone):
+        raise TypeError('cannot subtract dateTimes with timezones and '
+                        'dateTimes without timezones')
+
+    years = end.year - start.year
+    negative = start.year > end.year
+    # If the least specific format is xs:gYear, just subtract the years.
+    if start.month is None or end.month is None:
+        return _Duration(negative=negative, years=abs(years))
+
+    # If the least specific format is xs:gYearMonth, just subtract the years
+    # and months.
+    if start.day is None or end.day is None:
+        months = abs(end.month - start.month + (years * 12))
+        years, months = divmod(months, 12)
+        negative = negative or (start.month > end.month)
+        return _Duration(negative=negative, years=years, months=months)
+
+    start_days = _julianDay(start.year, start.month, start.day)
+    end_days = _julianDay(end.year, end.month, end.day)
+    days = end_days - start_days
+    negative = start_days > end_days
+
+    # If the least specific format is xs:date, just subtract the days
+    if start.hour is None or end.hour is None:
+        return _Duration(negative=negative, days=abs(days))
+
+    # They both are in the xs:dateTime format, continue to subtract the time.
+    start_secs = start.hour * 3600 + start.minute * 60 + start.second
+    end_secs = end.hour * 3600 + end.minute * 60 + end.second
+    seconds = abs(end_secs - start_secs + (days * 86400))
+    if start.timezone:
+        # adjust seconds to be UTC
+        assert end.timezone
+        # Note, utcoffset() returns minutes
+        seconds += (end.utcoffset() - start.utcoffset()) * 60
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    negative = negative or (start_secs > end_secs)
+    return _Duration(negative=negative, days=days, hours=hours,
+                     minutes=minutes, seconds=seconds)
+
+
+def _addDurations(*durations):
+    """
+    INTERNAL: returns a new duration from the sum of the sequence of durations
+    """
+    if not durations:
+        raise ValueError('no durations')
+
+    months, seconds = 0, 0
+    for duration in durations:
+        other_months = duration.years * 12 + duration.months
+        other_seconds = (duration.days * 86400 + duration.hours * 3600 +
+                         duration.minutes * 60 + duration.seconds)
+        if duration.negative:
+            months -= other_months
+            seconds -= other_seconds
+        else:
+            months += other_months
+            seconds += other_seconds
+
+    if (months < 0 and seconds > 0) or (months > 0 and seconds < 0):
+        raise ValueError('months/seconds sign mismatch')
+
+    return _Duration(negative=(months < 0 or seconds < 0),
+                     months=abs(months), seconds=abs(seconds))
 
 ## XSLT Extension Module Interface ####################################
 
