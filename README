@@ -1,8 +1,45 @@
-Amara 2
-=======
-
-http://wiki.xml3k.org/Amara2
+Amara XML Toolkit 2.0a1 (released 17 December 2008)
+===================================================
 
 A library for XML processing in Python, designed to balance the native idioms
 of Python with the native character of XML.
+
+http://wiki.xml3k.org/Amara2
+
+Amara 2.0 is part of Akara 2.0, an overall data processing platform that replaces 4Suite.
+
+http://wiki.xml3k.org/Akara
+
+License
+-------
+
+Amara is open source, provided under the Apache 2.0 license.
+See the files LICENSE and NOTICE for details.
+
+Installation
+------------
+
+Amara requires Python 2.5 or more recent.  It supports setuptools and easy_install,
+so you can just do the following:
+
+easy_install amara
+
+If this does not work you are probably not set up for easy_install and I
+suggest you follow the simple instructions at
+
+http://peak.telecommunity.com/DevCenter/EasyInstall
+
+If you prefer not to use easy_install, install the Amara package using the usual:
+
+python setup.py install
+
+Or a Windows installer, or other method.
+
+Documentation
+-------------
+
+Eventually most distributions/binary packages will allow you to install documentation,
+but for now consult the wiki, starting at
+
+http://wiki.xml3k.org/Amara2
 
