@@ -12,10 +12,10 @@ import cStringIO, traceback
 
 #from amara.xpath import RuntimeException as XPathRuntimeException
 from amara.xpath import datatypes, parser
-from amara.xpath.parser import parse as parse_xpath
+from amara.xpath.parser import _parse as parse_xpath
 
-from amara.xslt import XsltError
-from amara.xslt.xpatterns import parse as parse_xpattern
+from amara.xslt import XsltError, XsltStaticError, XsltRuntimeError
+from amara.xslt.xpatterns import _parse as parse_xpattern
 
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 from amara.lib.xmlstring import isqname, splitqname
@@ -483,10 +483,10 @@ class pattern(attribute_type):
                 return None
         try:
             return parse_xpattern(value)
-        except SyntaxError, error:
-            raise XsltError(XsltError.INVALID_PATTERN, value,
-                                element.baseUri, element.lineNumber,
-                                element.columnNumber, str(error))
+        except XsltError, err:
+            if err.__class__ is XsltError:
+                XsltRuntimeError.update_error(err, element)
+            raise
 
 class tokens(token):
     """

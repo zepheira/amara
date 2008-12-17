@@ -146,22 +146,23 @@ class id_key_test(nodetests.node_test):
         return str(self._function)
 
 
-import _parser
-class parser(_parser.parser):
+import _parser as _xpatternparser
+class parser(_xpatternparser.parser):
 
-    _parse = _parser.parser.parse
+    _parse = _xpatternparser.parser.parse
 
     def parse(self, expr):
         """Parses the string `expr` into an AST"""
         try:
             return self._parse(expr)
-        except _parser.error, error:
+        except _xpatternparser.error, error:
             raise XsltError(XsltError.INVALID_PATTERN, line=error.lineno,
                             column=error.offset, text=error.msg)
 
-
-parse = parser().parse
+_parser = parser()
+_parse = _parser._parse
+parse = _parser.parse
 
 if __name__ == '__main__':
     import sys
-    sys.exit(_parser.console().cmdloop())
+    sys.exit(_xpatternparser.console().cmdloop())

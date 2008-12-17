@@ -47,12 +47,10 @@ class XsltError(Error):
     INVALID_NMTOKEN_ATTR = 81
     QNAME_BUT_NOT_NCNAME = 82
     AVT_SYNTAX = 83
-    AVT_EMPTY = 84
+    PATTERN_SYNTAX = 84
     INVALID_AVT = 85
     INVALID_PATTERN = 86
     INVALID_EXPRESSION = 87
-    #PATTERN_SYNTAX = 88
-    #PATTERN_SEMANTIC = 89
 
     # xsl:apply-imports
     APPLYIMPORTS_WITH_NULL_CURRENT_TEMPLATE = 100
@@ -257,22 +255,13 @@ class XsltError(Error):
                 "QName allowed but not NCName, '%s' found"),
             XsltError.AVT_SYNTAX: _(
                 'Unbalanced curly braces ({}) in attribute value template. (see XSLT 1.0 sec. 7.6.2)'),
-            XsltError.AVT_EMPTY: _(
-                'No expression in attribute value template.'),
             XsltError.INVALID_AVT: _(
-                'Malformed attribute value template: "%s" in the element at %s, line %s, column %s\n  %s'),
+                "Malformed attribute value template '%(text)s'"),
             XsltError.INVALID_PATTERN: _(
                 'XPattern expression syntax error at line %(line)d, '
                 'column %(column)d: %(text)s'),
             XsltError.INVALID_EXPRESSION: _(
-                'Malformed expression: "%s" in the element at %s, line %s, column %s\n  %s'),
-            #XsltError.PATTERN_SYNTAX: _(
-            #    'Syntax error in pattern at location %s '
-            #    '(XPattern production number: %d).'),
-            #XsltError.PATTERN_SEMANTIC: _(
-            #    'Parse tree error in pattern at location %s (XPattern '
-            #    'production number: %d, error type: %s, error value: %s, '
-            #    'traceback:\n%s'),
+                "Malformed XPath expression '%(text)s'"),
 
             # xsl:apply-imports
             XsltError.APPLYIMPORTS_WITH_NULL_CURRENT_TEMPLATE: _(
@@ -472,6 +461,15 @@ class XsltStaticError(XsltError, TypeError):
 
 
 class XsltRuntimeError(XsltError, RuntimeError):
+
+    @classmethod
+    def update_error(cls, error, xslt_element):
+        error.__class__ = cls
+        error.uri = xslt_element.baseUri
+        error.lineno = xslt_element.lineNumber
+        error.offset = xslt_element.columnNumber
+        error.tagname = xslt_element.nodeName
+
     def __init__(self, code, xslt_element, **kwords):
         XsltError.__init__(self, code, **kwords)
         # Just save the information needed from `xslt_element`

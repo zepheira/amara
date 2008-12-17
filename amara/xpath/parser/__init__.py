@@ -15,7 +15,9 @@ class xpathparser(_xpathparser.parser):
             raise XPathError(XPathError.SYNTAX, line=error.lineno, 
                              column=error.offset, text=error.msg)
 
-parse = xpathparser().parse
+_parser = xpathparser()
+_parse = _parser._parse
+parse = _parser.parse
 
 if __name__ == '__main__':
     import sys
