@@ -5,6 +5,7 @@ from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 
 class Error(Exception):
 
+    message = ''
     _message_table = None
 
     # defer localization of the messages until needed
