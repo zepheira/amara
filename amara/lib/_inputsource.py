@@ -1,6 +1,7 @@
 #amara.lib._inputsource
 #Named with _ to avoid clash with amara.lib.inputsource class
 
+import os
 from cStringIO import StringIO
 from uuid import UUID, uuid1, uuid4
 
@@ -36,7 +37,7 @@ class _inputsource(InputSource):
         elif isxml(arg):
             uri = uri or uuid4().urn
             stream = StringIO(arg)
-        elif iri.is_absolute(arg): #or not os.path.isfile(arg):
+        elif iri.is_absolute(arg) and not os.path.isfile(arg):
             uri = arg
             stream = iri.DEFAULT_RESOLVER.resolve(uri)
         else:
