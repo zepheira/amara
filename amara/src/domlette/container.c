@@ -540,6 +540,7 @@ static PyObject *xml_index(NodeObject *self, PyObject *args)
                         &DomletteNode_Type, &child,
                         _PyEval_SliceIndex, &start,
                         _PyEval_SliceIndex, &stop))
+    return NULL;
   index = container_index(self, child, start, stop);
   if (index < 0)
     return PyErr_Format(PyExc_ValueError, "child not in children");
