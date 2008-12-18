@@ -75,7 +75,7 @@ int ContentModel_AddTransition(PyObject *self,
   PyObject *state_number;
 
   if (from_state > ContentModel_Size(self)) {
-    PyErr_Format(PyExc_SystemError, "state %d out of bounds", from_state);
+    PyErr_Format(PyExc_SystemError, "state %zd out of bounds", from_state);
     return -1;
   }
 
