@@ -53,7 +53,7 @@ StateTable *StateTable_New(int size)
 
 void StateTable_Del(StateTable *table)
 {
-  int i;
+  size_t i;
   StateEntry *state = table->states;
 
   for (i = 0; i < table->size; i++) {
@@ -71,7 +71,7 @@ int StateTable_AddState(StateTable *table, void *data, StateDataFree destruct)
   StateEntry *states;
   size_t new_allocated;
   size_t allocated, newsize;
-  StateId newstate = (int)table->size;
+  StateId newstate = (StateId)table->size;
 
 #ifdef DEBUG_STATE_TABLE
   fprintf(stderr, "StateTable_AddState(%p) => %4d\n", table, newstate);
@@ -82,7 +82,7 @@ int StateTable_AddState(StateTable *table, void *data, StateDataFree destruct)
   */
   allocated = table->allocated;
   states = table->states;
-  if (newstate >= allocated) {
+  if (newstate >= (StateId)allocated) {
     /* This over-allocates proportional to the list size, making room
      * for additional growth.  The over-allocation is mild, but is
      * enough to give linear-time amortized behavior over a long
@@ -106,7 +106,7 @@ int StateTable_AddState(StateTable *table, void *data, StateDataFree destruct)
     table->allocated = new_allocated;
     table->states = states;
     table->size = newsize;
-  } else if (newstate >= table->size) {
+  } else if (newstate >= (StateId)table->size) {
     table->size = newstate + 1;
   }
 
@@ -128,11 +128,11 @@ int StateTable_SetTransition(StateTable *table, StateId from, EventId event,
   fprintf(stderr, "StateTable_SetTransition(%p, %4d, %20s, %4d)\n",
           table, from, event_names[event], to);
 #endif
-  if (from > table->size) {
+  if (from > (StateId)table->size) {
     PyErr_Format(PyExc_RuntimeError, "Initial state %d is undefined", from);
     return -1;
   }
-  else if (to > table->size) {
+  else if (to > (StateId)table->size) {
     PyErr_Format(PyExc_RuntimeError, "Final state %d is undefined", to);
     return -1;
   }
@@ -165,7 +165,7 @@ StateId StateTable_Transit(StateTable *table, EventId event)
 
 void *StateTable_GetStateData(StateTable *table, StateId state)
 {
-  if (state < 0 || state > table->size) {
+  if (state < 0 || state > (StateId)table->size) {
     PyErr_Format(PyExc_ValueError, "state %d out of bounds", state);
     return NULL;
   }

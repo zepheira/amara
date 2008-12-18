@@ -261,7 +261,7 @@ static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
   PyObject *handler = self->handlers[Handler_StartElement];
   PyObject *args, *result;
 #if defined(DEBUG_SAX)
-  int i;
+  size_t i;
   Debug_Print("--- sax_StartElement(%p, name=", self);
   Debug_PrintObject(name->qualifiedName);
   Debug_Print(", atts={");

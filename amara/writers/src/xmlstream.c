@@ -52,13 +52,13 @@ static PyObject *ascii_string;
 
 /** XmlStream internal functions **************************************/
 
-Py_LOCAL(Py_ssize_t)
+static Py_ssize_t
 write_none(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   return n;
 }
 
-Py_LOCAL(Py_ssize_t)
+static Py_ssize_t
 write_file(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   size_t byteswritten;
@@ -75,7 +75,7 @@ write_file(XmlStreamObject *self, const char *s, Py_ssize_t n)
   return n;
 }
 
-Py_LOCAL(Py_ssize_t)
+static Py_ssize_t
 write_cStringIO(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   if (PycStringIO->cwrite((PyObject *)self->stream, (char *)s, n) != n) {
@@ -85,7 +85,7 @@ write_cStringIO(XmlStreamObject *self, const char *s, Py_ssize_t n)
   return n;
 }
 
-Py_LOCAL(Py_ssize_t)
+static Py_ssize_t
 write_other(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   PyObject *result;

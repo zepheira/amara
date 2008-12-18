@@ -1247,7 +1247,7 @@ charbuf_flush(ExpatReader *reader)
 {
   const XML_Char *str = reader->buffer;
   register size_t len = reader->buffer_used;
-  register int i;
+  register size_t i;
   PyObject *data;
   ExpatStatus status;
 
