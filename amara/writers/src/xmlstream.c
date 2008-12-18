@@ -34,7 +34,7 @@ typedef struct XmlStreamObject {
 
   FILE *fp;
   PyObject *write;
-  int (*write_func)(struct XmlStreamObject *, const char *, int);
+  Py_ssize_t (*write_func)(struct XmlStreamObject *, const char *, Py_ssize_t);
 
   PyObject *encode;
   unsigned long flags;
@@ -52,16 +52,16 @@ static PyObject *ascii_string;
 
 /** XmlStream internal functions **************************************/
 
-Py_LOCAL(int)
-write_none(XmlStreamObject *self, const char *s, int n)
+Py_LOCAL(Py_ssize_t)
+write_none(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   return n;
 }
 
-Py_LOCAL(int)
-write_file(XmlStreamObject *self, const char *s, int n)
+Py_LOCAL(Py_ssize_t)
+write_file(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
-  int byteswritten;
+  size_t byteswritten;
 
   Py_BEGIN_ALLOW_THREADS
   byteswritten = fwrite(s, sizeof(char), n, self->fp);
@@ -75,8 +75,8 @@ write_file(XmlStreamObject *self, const char *s, int n)
   return n;
 }
 
-Py_LOCAL(int)
-write_cStringIO(XmlStreamObject *self, const char *s, int  n)
+Py_LOCAL(Py_ssize_t)
+write_cStringIO(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   if (PycStringIO->cwrite((PyObject *)self->stream, (char *)s, n) != n) {
     return -1;
@@ -85,8 +85,8 @@ write_cStringIO(XmlStreamObject *self, const char *s, int  n)
   return n;
 }
 
-Py_LOCAL(int)
-write_other(XmlStreamObject *self, const char *s, int  n)
+Py_LOCAL(Py_ssize_t)
+write_other(XmlStreamObject *self, const char *s, Py_ssize_t n)
 {
   PyObject *result;
 
@@ -138,11 +138,11 @@ encode_unicode(XmlStreamObject *self, PyObject *unicode)
   return data;
 }
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(Py_ssize_t)
 write_encode(XmlStreamObject *self, PyObject *string, PyObject *where)
 {
   PyObject *data;
-  int result;
+  Py_ssize_t result;
 
   data = encode_unicode(self, string);
   if (!data) {
@@ -171,7 +171,7 @@ write_encode(XmlStreamObject *self, PyObject *string, PyObject *where)
     return -1;
   }
 
-  result = self->write_func(self, PyString_AS_STRING(data), 
+  result = self->write_func(self, PyString_AS_STRING(data),
                             PyString_GET_SIZE(data));
   Py_DECREF(data);
   return result;
@@ -182,7 +182,7 @@ write_escaped(XmlStreamObject *self, PyObject *unicode)
 {
   PyObject *data;
   Py_UNICODE *unistr;
-  int size;
+  Py_ssize_t size;
   char charref[14]; /* charref: 10 digits (32-bits) plus '&#' and ';\0' */
 
   data = encode_unicode(self, unicode);
@@ -227,11 +227,11 @@ write_escaped(XmlStreamObject *self, PyObject *unicode)
   return 0;
 }
 
-Py_LOCAL_INLINE(int)
+Py_LOCAL_INLINE(Py_ssize_t)
 write_ascii(XmlStreamObject *self, PyObject *string)
 {
   PyObject *unicode;
-  int result;
+  Py_ssize_t result;
 
   if (self->flags & XMLSTREAM_FLAGS_ASCII_SAFE)
     /* shortcut, write it directly */
@@ -428,7 +428,7 @@ static PyObject *xmlstream_write_escape(XmlStreamObject *self, PyObject *args)
   EntityMapObject *entities;
   PyObject *newstr = NULL;
   Py_UNICODE *p, *chunk_start;
-  int size;
+  Py_ssize_t size;
   Py_ssize_t chunk_size;
 
   if (!PyArg_ParseTuple(args, "UO!:writeEscape", &string,
@@ -496,14 +496,14 @@ static PyObject *xmlstream_write_escape(XmlStreamObject *self, PyObject *args)
         Py_INCREF(repl);
       } else {
         /* a callable that generates the replacement string */
-        repl = PyObject_CallFunction(repl, "Oi", string, 
+        repl = PyObject_CallFunction(repl, "Oi", string,
                                      (p - PyUnicode_AS_UNICODE(string)));
         if (repl == NULL) {
           Py_DECREF(string);
           return NULL;
         } else if (!PyString_Check(repl)) {
           PyErr_Format(PyExc_TypeError,
-                       "expected string, but %.200s found", 
+                       "expected string, but %.200s found",
                        repl->ob_type->tp_name);
           Py_DECREF(repl);
           Py_DECREF(string);
@@ -559,7 +559,7 @@ static PyObject *xmlstream_repr(XmlStreamObject *self)
   if (repr == NULL)
     return NULL;
 
-  sprintf(buf, "<%s at %p, stream=%.256s, encoding='%.128s'>", 
+  sprintf(buf, "<%s at %p, stream=%.256s, encoding='%.128s'>",
           self->ob_type->tp_name, self, PyString_AsString(repr),
           PyString_AsString(self->encoding));
   Py_DECREF(repr);
@@ -701,7 +701,7 @@ entitymap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
       }
     } else {
       PyErr_Format(PyExc_TypeError,
-                   "expected string of length 1, but %.200s found", 
+                   "expected string of length 1, but %.200s found",
                    key->ob_type->tp_name);
       Py_DECREF(self);
       return NULL;
@@ -715,8 +715,8 @@ entitymap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
       Py_DECREF(self);
       return NULL;
     } else if (!(PyString_Check(value) || PyCallable_Check(value))) {
-      PyErr_Format(PyExc_TypeError, 
-                   "expected string or callable object, but %.200s found", 
+      PyErr_Format(PyExc_TypeError,
+                   "expected string or callable object, but %.200s found",
                    value->ob_type->tp_name);
       Py_DECREF(value);
       Py_DECREF(seq);

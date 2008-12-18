@@ -21,7 +21,7 @@ static PyObject *xslt_newobj(PyObject *module, PyObject *args)
 {
   PyObject *cls, *newargs, *obj;
   PyTypeObject *type;
-  int n;
+  Py_ssize_t n;
 
   n = PyTuple_Size(args);
   if (n < 1) {

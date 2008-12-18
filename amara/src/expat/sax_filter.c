@@ -255,7 +255,7 @@ static ExpatStatus sax_EndNamespaceDecl(void *userData, PyObject *prefix)
 }
 
 static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
-                                    ExpatAttribute atts[], int natts)
+                                    ExpatAttribute atts[], size_t natts)
 {
   XMLParserObject *self = (XMLParserObject *) userData;
   PyObject *handler = self->handlers[Handler_StartElement];

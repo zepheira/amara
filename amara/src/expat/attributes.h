@@ -8,9 +8,9 @@ extern "C" {
 #include "Python.h"
 #include "expat_interface.h"
 
-  PyObject *Attributes_New(ExpatAttribute atts[], int length);
+  PyObject *Attributes_New(ExpatAttribute atts[], Py_ssize_t length);
 
-  int Attributes_SetItem(PyObject *attributes, 
+  int Attributes_SetItem(PyObject *attributes,
                          PyObject *namespaceURI, PyObject *localName,
                          PyObject *qualifiedName, PyObject *value);
 

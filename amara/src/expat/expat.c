@@ -177,7 +177,7 @@ typedef struct {
 } WhitespaceRule;
 
 typedef struct {
-  int size;
+  Py_ssize_t size;
   WhitespaceRule items[1];
 } WhitespaceRules;
 
@@ -406,7 +406,7 @@ FUNCTION_TEMPLATE(StartDocument, start_document,
 FUNCTION_TEMPLATE(EndDocument, end_document,
                   (PROTO0), (ARGS0), state->depth--)
 FUNCTION_TEMPLATE(StartElement, start_element,
-                  (PROTO0, ExpatName *name, ExpatAttribute atts[], int natts),
+                  (PROTO0, ExpatName *name, ExpatAttribute atts[], size_t natts),
                   (ARGS0, name, atts, natts), state->depth++)
 FUNCTION_TEMPLATE(EndElement, end_element,
                   (PROTO0, ExpatName *name), (ARGS0, name), state->depth--)
@@ -1060,7 +1060,8 @@ intern_string(ExpatReader *reader, PyObject *obj)
 Py_LOCAL_INLINE(WhitespaceRules *)
 create_whitespace_rules(ExpatReader *reader, PyObject *sequence)
 {
-  int i, length, nbytes;
+  Py_ssize_t i, length;
+  size_t nbytes;
   WhitespaceRules *rules;
 
   if (sequence == NULL) {
@@ -1072,7 +1073,8 @@ create_whitespace_rules(ExpatReader *reader, PyObject *sequence)
   if (sequence == NULL)
     return NULL;
   length = PyTuple_GET_SIZE(sequence);
-  nbytes = SIZEOF_INT + (sizeof(WhitespaceRule) * length);
+  assert(length >= 0);
+  nbytes = SIZEOF_INT + (sizeof(WhitespaceRule) * (size_t)length);
   rules = (WhitespaceRules *)PyObject_MALLOC(nbytes);
   if (rules == NULL) {
     Py_DECREF(sequence);
@@ -1244,7 +1246,7 @@ Py_LOCAL(ExpatStatus)
 charbuf_flush(ExpatReader *reader)
 {
   const XML_Char *str = reader->buffer;
-  register int len = reader->buffer_used;
+  register size_t len = reader->buffer_used;
   register int i;
   PyObject *data;
   ExpatStatus status;
@@ -1304,10 +1306,10 @@ charbuf_flush(ExpatReader *reader)
   (((reader)->buffer_used) ? charbuf_flush(reader) : EXPAT_STATUS_OK)
 
 Py_LOCAL_INLINE(ExpatStatus)
-charbuf_resize(ExpatReader *reader, int new_size)
+charbuf_resize(ExpatReader *reader, size_t new_size)
 {
   XML_Char *buffer = reader->buffer;
-  int nbytes = ROUND_UP(new_size * sizeof(XML_Char));
+  size_t nbytes = ROUND_UP(new_size * sizeof(XML_Char));
 
   buffer = (XML_Char *)PyMem_Realloc(buffer, nbytes);
   if (buffer == NULL) {
@@ -1320,11 +1322,11 @@ charbuf_resize(ExpatReader *reader, int new_size)
 }
 
 Py_LOCAL_INLINE(ExpatStatus)
-charbuf_write(ExpatReader *reader, const XML_Char *data, int len)
+charbuf_write(ExpatReader *reader, const XML_Char *data, size_t len)
 {
   XML_Char *buffer;
-  register int new_len = reader->buffer_used + len;
-  register int size = reader->buffer_size;
+  register size_t new_len = reader->buffer_used + len;
+  register size_t size = reader->buffer_size;
 
   if (len == 0) return EXPAT_STATUS_OK;
 
@@ -1426,7 +1428,7 @@ create_parser(ExpatReader *reader)
 
 /* optimized routine for reading from real file objects */
 /* callback functions cannot be declared Py_LOCAL */
-static int read_file(PyObject *file, char *buffer, int length)
+static Py_ssize_t read_file(PyObject *file, char *buffer, int length)
 {
   FILE *fp = (FILE *) file;
   size_t bytes_read;
@@ -1447,10 +1449,10 @@ static int read_file(PyObject *file, char *buffer, int length)
 
 /* optimized routine for reading from cStringIO objects */
 /* callback functions cannot be declared Py_LOCAL */
-static int read_stringio(PyObject *stream, char *buffer, int length)
+static Py_ssize_t read_stringio(PyObject *stream, char *buffer, int length)
 {
   char *data;
-  int bytes_read;
+  Py_ssize_t bytes_read;
 
   bytes_read = PycStringIO->cread(stream, &data, length);
 
@@ -1462,7 +1464,7 @@ static int read_stringio(PyObject *stream, char *buffer, int length)
 
 /* generic routine for reading from any Python object */
 /* callback functions cannot be declared Py_LOCAL */
-static int read_object(PyObject *stream, char *buffer, int length)
+static Py_ssize_t read_object(PyObject *stream, char *buffer, int length)
 {
   PyObject *str;
   char *data;
@@ -1546,10 +1548,10 @@ process_error(ExpatReader *reader)
  Py_LOCAL_INLINE(ExpatStatus)
 continue_parsing(ExpatReader *reader)
 {
-  int (*read_func)(PyObject *, char *, int);
+  Py_ssize_t (*read_func)(PyObject *, char *, int);
   PyObject *read_arg;
   enum XML_Status status;
-  int bytes_read;
+  Py_ssize_t bytes_read;
 
   Debug_ParserFunctionCall(continue_parsing, reader);
 
@@ -1581,7 +1583,7 @@ continue_parsing(ExpatReader *reader)
 
     Debug_ParserFunctionCall(XML_ParseBuffer, reader);
 
-    status = XML_ParseBuffer(reader->context->parser, bytes_read,
+    status = XML_ParseBuffer(reader->context->parser, (int)bytes_read,
                              bytes_read == 0);
 
     Debug_ReturnStatus(XML_ParseBuffer, status);
@@ -1852,7 +1854,7 @@ validate_attribute(ExpatReader *reader, PyObject *attribute_type,
 
 Py_LOCAL_INLINE(ExpatStatus)
 validate_attributes(ExpatReader *reader, PyObject *element_type,
-                    ExpatAttribute *attributes, int nattributes)
+                    ExpatAttribute *attributes, size_t nattributes)
 {
   PyObject *attribute_type, *attribute_name;
   ExpatAttribute *attribute;
@@ -1903,7 +1905,7 @@ validate_attributes(ExpatReader *reader, PyObject *element_type,
 
 Py_LOCAL_INLINE(ExpatStatus)
 validate_element(ExpatReader *reader, ExpatName *element,
-                 ExpatAttribute *attributes, int nattributes)
+                 ExpatAttribute *attributes, size_t nattributes)
 {
   DTD *dtd = reader->context->dtd;
   PyObject *element_type;
@@ -1993,7 +1995,7 @@ validate_element(ExpatReader *reader, ExpatName *element,
 }
 
 Py_LOCAL_INLINE(ExpatStatus)
-resize_attribute_list(ExpatReader *reader, int size)
+resize_attribute_list(ExpatReader *reader, size_t size)
 {
   ExpatAttribute *attrs = reader->attrs;
   int new_size = ROUND_UP(size);
@@ -2015,7 +2017,7 @@ static void expat_StartElement(ExpatReader *reader, const XML_Char *expat_name,
   ExpatName *name;
   ExpatAttribute *attrs, *attr;
   PyObject *xml_base, *xml_lang, *xml_space, *xml_id, *preserve_whitespace;
-  int id_index;
+  Py_ssize_t id_index;
   size_t i, attrs_size;
 
   Debug_Print("=== StartElement(context=");
@@ -2643,7 +2645,7 @@ static void expat_SkippedEntity(ExpatReader *reader,
 
   if (is_parameter_entity) {
     /* The SAX spec requires to report skipped PEs with a '%' */
-    int len = XMLChar_Len(entityName);
+    size_t len = XMLChar_Len(entityName);
     XML_Char *temp = (XML_Char *) PyObject_MALLOC(sizeof(XML_Char) * (len+1));
     if (temp == NULL) {
       stop_parsing(reader);
@@ -2672,11 +2674,11 @@ static void expat_SkippedEntity(ExpatReader *reader,
 
 Py_LOCAL(ExpatStatus)
 parse_content(ExpatReader *reader, PyObject *model, XML_Content *content,
-              int initial_state, int final_state);
+              Py_ssize_t initial_state, Py_ssize_t final_state);
 
 Py_LOCAL_INLINE(ExpatStatus)
 parse_name(ExpatReader *reader, PyObject *model, XML_Content *content,
-           int initial_state, int final_state)
+           Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   PyObject *token;
   int rv;
@@ -2696,11 +2698,11 @@ parse_name(ExpatReader *reader, PyObject *model, XML_Content *content,
 
 Py_LOCAL_INLINE(ExpatStatus)
 parse_seq(ExpatReader *reader, PyObject *model, XML_Content *content,
-          int initial_state, int final_state)
+          Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   register unsigned int i;
   register unsigned int last;
-  int next_state;
+  Py_ssize_t next_state;
 
   last = content->numchildren - 1;
   for (i = 0; i < last; i++) {
@@ -2725,7 +2727,7 @@ parse_seq(ExpatReader *reader, PyObject *model, XML_Content *content,
 
 Py_LOCAL_INLINE(ExpatStatus)
 parse_choice(ExpatReader *reader, PyObject *model, XML_Content *content,
-             int initial_state, int final_state)
+             Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   register unsigned int i;
   register unsigned int last;
@@ -2742,9 +2744,9 @@ parse_choice(ExpatReader *reader, PyObject *model, XML_Content *content,
 
 Py_LOCAL(ExpatStatus)
 parse_content(ExpatReader *reader, PyObject *model, XML_Content *content,
-              int initial_state, int final_state)
+              Py_ssize_t initial_state, Py_ssize_t final_state)
 {
-  int s1, s2;
+  Py_ssize_t s1, s2;
   ExpatStatus status;
 
   switch (content->quant) {
@@ -3313,7 +3315,7 @@ static void expat_EntityDecl(ExpatReader *reader, const XML_Char *entityName,
 {
   DTD *dtd = reader->context->dtd;
   PyObject *python_entityName;
-  int len;
+  size_t len;
   ExpatStatus status;
 
 #ifdef DEBUG_CALLBACKS
@@ -3819,7 +3821,7 @@ static int expat_UnknownEncoding(void *arg, const XML_Char *name,
     /* treat non-string results as invalid value */
     if (PyString_Check(PyTuple_GET_ITEM(result, 0))) {
       int c = (unsigned char) *PyString_AS_STRING(PyTuple_GET_ITEM(result, 0));
-      int n = PyString_GET_SIZE(PyTuple_GET_ITEM(result, 0));
+      int n = (int)PyString_GET_SIZE(PyTuple_GET_ITEM(result, 0));
       if (n == 1) {
         /* one-to-one replacement */
         info->map[c] = unichr;

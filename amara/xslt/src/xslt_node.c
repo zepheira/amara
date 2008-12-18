@@ -18,7 +18,7 @@ static PyObject *newobj_function;
 static int node_pretty_print(XsltNodeObject *self, int level)
 {
   PyObject *str;
-  int i, size;
+  Py_ssize_t i, size;
   XsltNodeObject *child;
 
   str = PyObject_Str((PyObject *) self);
@@ -74,7 +74,7 @@ int XsltNode_Link(XsltNodeObject *self, XsltNodeObject *child)
 {
   PyObject *temp, *callable;
   PyObject *root = XsltNode_ROOT(self);
-  struct { PyObject *attribute; PyObject *instructions; } 
+  struct { PyObject *attribute; PyObject *instructions; }
     *table, update_table[] = {
       { does_validate_string, XsltRoot_VALIDATE_INSTRUCTIONS(root) },
       { does_prime_string, XsltRoot_PRIME_INSTRUCTIONS(root) },
@@ -155,7 +155,7 @@ static PyObject *node_isLastChild(PyObject *self, PyObject *args)
     result = (self == XsltRoot_STYLESHEET(parent)) ? Py_True : Py_False;
   }
   else if (XsltElement_Check(parent)) {
-    int i, count = XsltElement_GET_COUNT(parent);
+    Py_ssize_t i, count = XsltElement_GET_COUNT(parent);
     result = Py_False;
     for (i = 0; i < count; i++) {
       PyObject *sibling;

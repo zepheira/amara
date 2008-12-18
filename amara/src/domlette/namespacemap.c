@@ -265,7 +265,7 @@ NamespaceMap_SetNode(PyObject *self, NamespaceObject *node)
     PyErr_BadInternalCall();
     return -1;
   }
-  hash = Namespace_GET_HASH(node);
+  hash = (long)Namespace_GET_HASH(node);
   name = Namespace_GET_NAME(node);
   entry = get_entry(nm, hash, name);
   old_node = nm->nm_table[entry];
@@ -284,7 +284,7 @@ NamespaceMap_SetNode(PyObject *self, NamespaceObject *node)
   Node_SET_PARENT(node, (NodeObject *)nm->nm_owner);
   Py_INCREF(nm->nm_owner);
   Py_XDECREF(temp);
-  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size, but 
+  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size, but
    * it's also possible for the dict to shrink. */
   if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
     if (resize_table(nm) < 0)

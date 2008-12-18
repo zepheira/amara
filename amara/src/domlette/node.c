@@ -25,7 +25,7 @@ NodeObject *_Node_New(PyTypeObject *type)
   else {
     memset(obj, '\0', size);
     PyObject_INIT(obj, type);
-    _PyObject_GC_TRACK(obj);
+    PyObject_GC_Track(obj);
   }
   return (NodeObject *)obj;
 }
@@ -53,7 +53,7 @@ void _Node_Dump(char *msg, NodeObject *self)
             "  GC refs:  %" PY_FORMAT_SIZE_T "d\n"
             "  parent  : %p\n",
             self->ob_type == NULL ? "NULL" : self->ob_type->tp_name,
-            self->ob_refcnt, 
+            self->ob_refcnt,
             PyObject_IS_GC((PyObject *)self) ? _Py_AS_GC(self)->gc.gc_refs : 0,
             Node_GET_PARENT(self));
     if (Container_Check(self)) {
@@ -675,7 +675,7 @@ static PyObject *node_richcompare(NodeObject *a, NodeObject *b, int op)
 {
   PyObject *doc_a, *doc_b, *result;
   NodeObject *parent_a, *parent_b;
-  int depth_a, depth_b;
+  Py_ssize_t depth_a, depth_b;
 
   /* Make sure both arguments are cDomlette nodes */
   if (!(Node_Check(a) && Node_Check(b))) {

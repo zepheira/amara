@@ -12,8 +12,8 @@ struct StateTableStruct {
   /* The first member must be current so that the StateTable_GetState()
      macro works. */
   StateId current;
-  int size;
-  int allocated;
+  size_t size;
+  size_t allocated;
   StateEntry *states;
 };
 
@@ -70,8 +70,8 @@ int StateTable_AddState(StateTable *table, void *data, StateDataFree destruct)
 {
   StateEntry *states;
   size_t new_allocated;
-  int allocated, newsize;
-  StateId newstate = table->size;
+  size_t allocated, newsize;
+  StateId newstate = (int)table->size;
 
 #ifdef DEBUG_STATE_TABLE
   fprintf(stderr, "StateTable_AddState(%p) => %4d\n", table, newstate);

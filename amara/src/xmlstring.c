@@ -40,8 +40,8 @@ Project home, documentation, distributions: http://4suite.org/\n\
 static PyObject *XmlStrip(PyUnicodeObject *str, int left, int right)
 {
   Py_UNICODE *p = PyUnicode_AS_UNICODE(str);
-  int start = 0;
-  int end = PyUnicode_GET_SIZE(str);
+  Py_ssize_t start = 0;
+  Py_ssize_t end = PyUnicode_GET_SIZE(str);
 
   if (left)
     while (start < end && IS_XMLSPACE(p[start]))
@@ -56,7 +56,7 @@ static PyObject *XmlStrip(PyUnicodeObject *str, int left, int right)
     Py_INCREF(str);
     return (PyObject *) str;
   }
-  return PySequence_GetSlice((PyObject *)str, (Py_ssize_t)start, (Py_ssize_t)end);
+  return PySequence_GetSlice((PyObject *)str, start, end);
 }
 
 static PyObject *NormalizeSpace(PyObject *str)
@@ -327,21 +327,21 @@ static int IsNCName(PyObject *str)
 static int SplitQName(PyObject *qualifiedName, PyObject **prefix,
                       PyObject **localName)
 {
-  int i;
   Py_UNICODE colon = ':';
   Py_ssize_t len = PyUnicode_GET_SIZE(qualifiedName);
   const Py_UNICODE *p = PyUnicode_AS_UNICODE(qualifiedName);
+  Py_ssize_t i;
 
   for (i = 0; i < len; i++) {
     if (p[i] == colon) {
       PyObject *u, *v;
-      u = PyUnicode_FromUnicode(p, (Py_ssize_t)i);
+      u = PyUnicode_FromUnicode(p, i);
       if (u == NULL) {
         return 0;
       }
       /* skip over the colon */
       i++;
-      v = PyUnicode_FromUnicode((p + i), (Py_ssize_t)(len - i));
+      v = PyUnicode_FromUnicode((p + i), (len - i));
       if (v == NULL) {
         Py_DECREF(u);
         return 0;

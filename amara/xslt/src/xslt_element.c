@@ -315,7 +315,7 @@ static char getstate_doc[] = "helper for pickle";
 static PyObject *element_getstate(XsltElementObject *self, PyObject *args)
 {
   PyObject *state, *temp;
-  int i;
+  Py_ssize_t i;
 
   if (!PyArg_ParseTuple(args, ":__getstate__"))
     return NULL;

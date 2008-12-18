@@ -210,7 +210,7 @@ filter_EndDocument(void *arg)
 
 static ExpatStatus
 filter_StartElement(void *arg, ExpatName *name, ExpatAttribute atts[],
-                    int natts)
+                    size_t natts)
 {
   FilterObject *self = (FilterObject *)arg;
   PyObject *handler, *args, *result;

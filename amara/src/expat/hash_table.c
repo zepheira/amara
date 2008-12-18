@@ -119,7 +119,7 @@ PyObject *HashTable_Lookup(HashTable *self, const XML_Char *str, size_t len,
                                                    Py_ssize_t len, void *arg),
                            void *buildarg)
 {
-  register int i = len;
+  register Py_ssize_t i = len;
   register const XML_Char *p = str;
   register long hash;
   HashTableEntry *entry;

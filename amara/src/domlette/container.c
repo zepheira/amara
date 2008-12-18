@@ -424,12 +424,11 @@ static PyObject *xml_normalize(NodeObject *self, PyObject *args)
     if (Text_Check(current)) {
       /* Loop over the following siblings */
       for (i++; i < count; count--) {
-        NodeObject *next = Container_GET_CHILD(self, i);
-        if (!Text_Check(next)) 
-          break;
-        /* Adjacent Text nodes; merge their data. */
         PyObject *current_value, *next_value, *new_value;
         Py_UNICODE *raw_value;
+        NodeObject *next = Container_GET_CHILD(self, i);
+        if (!Text_Check(next)) break;
+        /* Adjacent Text nodes; merge their data. */
         current_value = Text_GET_VALUE(current);
         next_value = Text_GET_VALUE(next);
         new_value = PyUnicode_FromUnicode(NULL,
@@ -499,7 +498,7 @@ static PyObject *xml_insert(NodeObject *self, PyObject *args)
   Py_ssize_t index;
   NodeObject *child;
 
-  if (!PyArg_ParseTuple(args, "nO!:xml_insert", &index, 
+  if (!PyArg_ParseTuple(args, "nO!:xml_insert", &index,
                         &DomletteNode_Type, &child))
     return NULL;
 

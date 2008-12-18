@@ -427,7 +427,7 @@ static PyObject *descendant_axis_next(descendant_axis *self)
 {
   PyObject *stack, *nodeiter, *node;
   iternextfunc iternext;
-  int depth;
+  Py_ssize_t depth;
 
   stack = self->stack;
   for (depth = self->depth; depth >= 0; depth--) {
@@ -595,8 +595,8 @@ static PyTypeObject descendant_self_axis_type = {
 typedef struct {
   PyObject_HEAD
   NodeObject *parent;
-  int index;
-  int count;
+  Py_ssize_t index;
+  Py_ssize_t count;
 } followingsibling_axis;
 
 static PyObject *followingsibling_axis_new(PyTypeObject *type, PyObject *args,

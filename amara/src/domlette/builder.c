@@ -324,7 +324,7 @@ builder_NamespaceDecl(void *arg, PyObject *prefix, PyObject *uri)
 
 static ExpatStatus
 builder_StartElement(void *userState, ExpatName *name,
-                     ExpatAttribute atts[], int natts)
+                     ExpatAttribute atts[], size_t natts)
 {
   ParserState *state = (ParserState *)userState;
   PyObject *attribute_factory=NULL;
@@ -354,7 +354,7 @@ builder_StartElement(void *userState, ExpatName *name,
     if (elem == NULL)
       return EXPAT_STATUS_ERROR;
     if (!Element_Check(elem)) {
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
                    "xml_element_factory should return element, not %s",
                    elem->ob_type->tp_name);
       Py_DECREF(elem);
@@ -389,7 +389,7 @@ builder_StartElement(void *userState, ExpatName *name,
 
   /** attributes *******************************************************/
 
-  for (i = 0; i < natts; i++) {
+  for (i = 0; i < (Py_ssize_t)natts; i++) {
     AttrObject *attr = Element_AddAttribute(elem, atts[i].namespaceURI,
                                             atts[i].qualifiedName,
                                             atts[i].localName, atts[i].value);
@@ -427,7 +427,7 @@ builder_EndElement(void *userState, ExpatName *name)
   node = context->node;
 
   /* Set the element's children */
-  switch (_Container_SetChildren(node, context->children, 
+  switch (_Container_SetChildren(node, context->children,
                                  context->children_size)) {
     case 0:
       break;
@@ -494,7 +494,7 @@ builder_Characters(void *userState, PyObject *data)
     if (node == NULL)
       return EXPAT_STATUS_ERROR;
     if (!Text_Check(node)) {
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
                    "xml_text_factory should return text, not %s",
                    node->ob_type->tp_name);
       Py_DECREF(node);
@@ -535,7 +535,7 @@ builder_ProcessingInstruction(void *userState, PyObject *target, PyObject *data)
     if (node == NULL)
       return EXPAT_STATUS_ERROR;
     if (!Text_Check(node)) {
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
                    "xml_processing_instruction_factory should return "
                    "processing_instruction, not %s",
                    node->ob_type->tp_name);
@@ -574,7 +574,7 @@ builder_Comment(void *userState, PyObject *data)
     if (node == NULL)
       return EXPAT_STATUS_ERROR;
     if (!Text_Check(node)) {
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
                    "xml_comment_factory should return comment, not %s",
                    node->ob_type->tp_name);
       Py_DECREF(node);

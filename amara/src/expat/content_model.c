@@ -42,10 +42,10 @@ PyObject *ContentModel_New(void)
 }
 
 
-int ContentModel_NewState(PyObject *self)
+Py_ssize_t ContentModel_NewState(PyObject *self)
 {
   PyObject *state;
-  int state_number;
+  Py_ssize_t state_number;
 
   /* a "state" is nothing more than a dictionary of transitions */
   state = PyDict_New();
@@ -67,8 +67,8 @@ int ContentModel_NewState(PyObject *self)
 
 int ContentModel_AddTransition(PyObject *self,
                                PyObject *event,
-                               int from_state,
-                               int to_state)
+                               Py_ssize_t from_state,
+                               Py_ssize_t to_state)
 {
   PyObject *state;
   PyObject *transitions;
@@ -79,7 +79,7 @@ int ContentModel_AddTransition(PyObject *self,
     return -1;
   }
 
-  state_number = PyInt_FromLong(to_state);
+  state_number = PyInt_FromSsize_t(to_state);
   if (state_number == NULL) {
     return -1;
   }
@@ -112,8 +112,8 @@ int ContentModel_AddTransition(PyObject *self,
 
 
 int ContentModel_AddEpsilonMove(PyObject *self,
-                                int from_state,
-                                int to_state)
+                                Py_ssize_t from_state,
+                                Py_ssize_t to_state)
 {
   return ContentModel_AddTransition(self, epsilon_event, from_state,
                                     to_state);
@@ -129,7 +129,7 @@ static int add_to_epsilon_closure(PyObject *model, PyObject *state_set,
                                   PyObject *state_num)
 {
   PyObject *state, *transitions;
-  int i;
+  Py_ssize_t i;
 
   if (PyDict_GetItem(state_set, state_num) == NULL) {
     if (PyDict_SetItem(state_set, state_num, Py_True) < 0) {
@@ -171,7 +171,7 @@ static int set_epsilon_closure(PyObject *model, PyObject *state_set,
                                PyObject *states)
 {
   PyObject *epsilon_set;
-  int i;
+  Py_ssize_t i;
 
   for (i = 0; i < PyList_GET_SIZE(states); i++) {
     epsilon_set = epsilon_closure(model, PyList_GET_ITEM(states, i));
@@ -242,7 +242,7 @@ static PyObject *map_old_to_new(PyObject *dfa,
     Py_DECREF(key);
     Py_DECREF(new_state);
 
-    key = PyInt_FromLong(DFA_Size(dfa));
+    key = PyInt_FromSsize_t(DFA_Size(dfa));
     if (PyDict_SetItem(new_to_old_map, key, state_set) < 0) {
       Py_DECREF(key);
       return NULL;
@@ -280,7 +280,7 @@ PyObject *ContentModel_Compile(PyObject *model)
   PyObject *initial_state;
   PyObject *state_set;
   PyObject *new_state;
-  int final_state, dfa_state;
+  Py_ssize_t final_state, dfa_state;
 
   final_state = ContentModel_NewState(model);
   if (final_state < 0)
@@ -326,7 +326,7 @@ PyObject *ContentModel_Compile(PyObject *model)
     PyObject *temp;
     Py_ssize_t i;
 
-    new_state = PyInt_FromLong(dfa_state);
+    new_state = PyInt_FromSsize_t(dfa_state);
     if (new_state == NULL) goto error;
 
     state_set = PyDict_GetItem(new_to_old_map, new_state);
@@ -432,11 +432,11 @@ static PyTypeObject ContentModel_Type;
 
 Py_LOCAL(int)
 compile_content(PyObject *model, ContentModelObject *content,
-                int initial_state, int final_state);
+                Py_ssize_t initial_state, Py_ssize_t final_state);
 
 Py_LOCAL_INLINE(int)
 compile_name(PyObject *model, ContentModelObject *content,
-             int initial_state, int final_state)
+             Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   return ContentModel_AddTransition(model, content->content, initial_state,
                                     final_state);
@@ -444,11 +444,11 @@ compile_name(PyObject *model, ContentModelObject *content,
 
 Py_LOCAL_INLINE(int)
 compile_seq(PyObject *model, ContentModelObject *content,
-            int initial_state, int final_state)
+            Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   PyObject *seq;
   ContentModelObject *item;
-  int i, size, next_state;
+  Py_ssize_t i, size, next_state;
 
   seq = content->content;
   size = PyTuple_GET_SIZE(seq);
@@ -475,11 +475,11 @@ compile_seq(PyObject *model, ContentModelObject *content,
 
 Py_LOCAL_INLINE(int)
 compile_alt(PyObject *model, ContentModelObject *content,
-            int initial_state, int final_state)
+            Py_ssize_t initial_state, Py_ssize_t final_state)
 {
   PyObject *seq;
   ContentModelObject *item;
-  int i, size;
+  Py_ssize_t i, size;
 
   seq = content->content;
   size = PyTuple_GET_SIZE(seq);
@@ -494,9 +494,9 @@ compile_alt(PyObject *model, ContentModelObject *content,
 
 Py_LOCAL(int)
 compile_content(PyObject *model, ContentModelObject *content,
-                int initial_state, int final_state)
+                Py_ssize_t initial_state, Py_ssize_t final_state)
 {
-  int s1, s2, retval;
+  Py_ssize_t s1, s2;
 
   switch (content->quant) {
   case CONTENT_QUANT_OPT:
@@ -532,13 +532,16 @@ compile_content(PyObject *model, ContentModelObject *content,
     }
     switch (content->type) {
     case CONTENT_TYPE_NAME:
-      retval = compile_name(model, content, s1, s2);
+      if (compile_name(model, content, s1, s2) < 0)
+      	return -1;
       break;
     case CONTENT_TYPE_SEQ:
-      retval = compile_seq(model, content, s1, s2);
+      if (compile_seq(model, content, s1, s2) < 0)
+      	return -1;
       break;
     case CONTENT_TYPE_ALT:
-      retval = compile_alt(model, content, s1, s2);
+      if (compile_alt(model, content, s1, s2) < 0)
+      	return -1;
       break;
     default:
       PyErr_Format(PyExc_SystemError, "invalid type %d", content->type);

@@ -72,7 +72,7 @@ extern "C" {
                                     void *arg,
                                     ExpatName *name,
                                     ExpatAttribute atts[],
-                                    int natts);
+                                    size_t natts);
 
   /* name is a PyUnicodeObject */
   typedef ExpatStatus (*ExpatEndElementHandler)(

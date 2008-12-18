@@ -55,7 +55,7 @@ typedef struct {
 typedef struct {
   PyObject *pattern;
   Py_UNICODE *prefix, *suffix;
-  int prefixSize, suffixSize;
+  Py_ssize_t prefixSize, suffixSize;
 } PatternParts;
 
 typedef struct {
@@ -224,8 +224,8 @@ static char *parse_pattern(PyObject *fullpattern, FormatInfo *info,
   char inPositive = 1;     /* boolean */
   char hasNegative = 0;    /* boolean */
 
-  int start = 0;
-  int end = PyUnicode_GET_SIZE(fullpattern);
+  Py_ssize_t start = 0;
+  Py_ssize_t end = PyUnicode_GET_SIZE(fullpattern);
 
   do {
     char inQuote = 0;
@@ -249,8 +249,8 @@ static char *parse_pattern(PyObject *fullpattern, FormatInfo *info,
      * occupied by phase 1.  This is used during the processing of the
      * second pattern (the one representing negative numbers) to ensure
      * that no deviation exists in phase 1 between the two patterns. */
-    int phaseOneStart = 0;
-    int phaseOneLength = 0;
+    Py_ssize_t phaseOneStart = 0;
+    Py_ssize_t phaseOneLength = 0;
 
     /* The affix is either the prefix or the suffix. */
     Py_UNICODE *prefix = pattern + start;
@@ -259,7 +259,7 @@ static char *parse_pattern(PyObject *fullpattern, FormatInfo *info,
     Py_UNICODE *prefixEnd = NULL;
     Py_UNICODE *suffixEnd = suffix;
 
-    int pos;
+    Py_ssize_t pos;
 
     for (pos = start; pos < end; pos++) {
       Py_UNICODE ch = pattern[pos];

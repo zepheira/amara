@@ -6,7 +6,7 @@ typedef struct {
   PyObject_HEAD
   PyObject *values;
   PyObject *qnames;
-  int length;
+  Py_ssize_t length;
 } AttributesObject;
 
 /* Empty attributes reuse scheme to save calls to malloc and free */
@@ -328,11 +328,11 @@ static PyTypeObject Attributes_Type = {
 /** Public Interface **************************************************/
 
 PyObject *
-Attributes_New(ExpatAttribute atts[], int length)
+Attributes_New(ExpatAttribute atts[], Py_ssize_t length)
 {
   PyObject *values, *qnames, *expandedName;
   AttributesObject *self;
-  register int i;
+  register Py_ssize_t i;
 
   if (num_free_attrs) {
     num_free_attrs--;
@@ -382,7 +382,7 @@ Attributes_SetItem(PyObject *attributes,
   int has_key;
 
   expandedName = PyTuple_Pack(2, namespaceURI, localName);
-  if (expandedName == NULL) 
+  if (expandedName == NULL)
     return -1;
 
   has_key = PyDict_GetItem(self->values, expandedName) != NULL;

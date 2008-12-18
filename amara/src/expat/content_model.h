@@ -13,16 +13,16 @@ extern "C" {
 
   PyObject *ContentModel_New(void);
 
-  int ContentModel_NewState(PyObject *self);
+  Py_ssize_t ContentModel_NewState(PyObject *self);
 
   int ContentModel_AddTransition(PyObject *self,
                                  PyObject *token,
-                                 int from_state,
-                                 int to_state);
+                                 Py_ssize_t from_state,
+                                 Py_ssize_t to_state);
 
   int ContentModel_AddEpsilonMove(PyObject *self,
-                                  int from_state,
-                                  int to_state);
+                                  Py_ssize_t from_state,
+                                  Py_ssize_t to_state);
 
   PyObject *ContentModel_Compile(PyObject *self);
 

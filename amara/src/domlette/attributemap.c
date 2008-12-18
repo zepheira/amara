@@ -309,7 +309,7 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
     return -1;
   }
   /* locate an entry in the table for the namespace/name key */
-  hash = Attr_GET_HASH(node);
+  hash = (long)Attr_GET_HASH(node);
   name = Attr_GET_LOCAL_NAME(node);
   namespace = Attr_GET_NAMESPACE_URI(node);
   entry = get_entry(nm, hash, name, namespace);
@@ -336,7 +336,7 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
                            (NodeObject *)node) < 0)
       return -1;
   }
-  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size, 
+  /* If fill >= 2/3 size, adjust size.  Normally, this doubles the size,
    * but it's also possible for the dict to shrink. */
   if (nm->nm_used*3 >= (nm->nm_mask+1)*2) {
     if (resize_table(nm) < 0)
