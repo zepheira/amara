@@ -382,7 +382,7 @@ class entity_base(container_mixin, tree.entity):
             xml_namespaces.update(dict(e.xml_namespaces.items()))
         return xml_namespaces
 
-    def xml_pyname(self, ns, local, exclude=()):
+    def xml_pyname(self, ns, local, parent=None):
         '''
         generate a Python ID (as a *string*) from an XML universal name
 
@@ -394,11 +394,18 @@ class entity_base(container_mixin, tree.entity):
             python_id = self._names[(local, ns)]
         except KeyError:
             python_id = str(self.PY_REPLACE_PAT.sub('_', local))
-            if python_id in RESERVED_NAMES:
-                python_id = python_id + '_'
+            while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
+                python_id += '_'
             self._names[(local, ns)] = python_id
-        while python_id in exclude or python_id in self.xml_exclude_pnames:
-            python_id += '_'
+        if parent:
+            name_checks_out = False
+            while name_checks_out:
+                obj = getattr(self, pname, None)
+                if not obj or obj.xml_name != (ns, local):
+                    name_checks_out = True
+                    break
+                python_id += '_'
+            
         return python_id
 
     def xml_xname(self, python_id):
