@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import unittest
 from amara.lib import testsupport
 from amara.bindery import parse

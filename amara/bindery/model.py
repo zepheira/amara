@@ -170,8 +170,18 @@ class content_model:
         metadata = []
         def handle_element(elem, resource):
             #print elem.xml_name, (elem.xml_model.metadata_resource_expr, elem.xml_model.metadata_rel_expr, elem.xml_model.metadata_value_expr)
+            new_resource = None
             if elem.xml_model.metadata_resource_expr:
-                resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
+                new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
+            if elem.xml_model.metadata_rel_expr:
+                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
+                if self.metadata_value_expr:
+                    val = datatypes.string(elem.xml_select(elem.xml_model.metadata_value_expr))
+                elif new_resource is not None:
+                    val = new_resource
+                else:
+                    val = elem.xml_select(u'string(.)')
+                metadata.append((unicode(resource), unicode(rel), simplify(val)))
                 #Basically expandqname first
                 #prefix, local = splitqname(rattr)
                 #try:
@@ -179,10 +189,7 @@ class content_model:
                 #    resource = ns + local
                 #except KeyError:
                 #    resource = rattr
-            if elem.xml_model.metadata_rel_expr:
-                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
-                val = datatypes.string(elem.xml_select(elem.xml_model.metadata_value_expr)) if self.metadata_value_expr else elem.xml_select(u'string(.)')
-                metadata.append((unicode(resource), unicode(rel), simplify(val)))
+            if new_resource is not None: resource = new_resource
             for child in elem.xml_elements:
                 handle_element(child, resource)
             return

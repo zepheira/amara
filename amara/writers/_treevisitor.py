@@ -95,9 +95,9 @@ class visitor:
         self.printer.start_document()
         if node.xml_system_id:
             for child in node.xml_children:
-                if child.xml_type == tree.entity.xml_type:
+                if child.xml_type == tree.element.xml_type:
+                    self.printer.doctype(child.xml_qname, node.xml_public_id, node.xml_system_id)
                     break
-            self.printer.doctype(child.xml_qname, node.xml_public_id, node.xml_system_id)
         #hasDocTypeNode = False
         #if hasattr(node, 'doctype'):
             # DOM Level 1/2/3

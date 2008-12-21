@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<atom:feed xmlns:atom="http://www.w3.org/2005/Atom">
+  <atom:title type="text">Copia</atom:title>
+  <atom:subtitle type="html">
+Ogbujis on just about everything
+</atom:subtitle>
+  <atom:id>http://copia.ogbuji.net/blog/</atom:id>
+  <atom:link href="http://copia.ogbuji.net/blog/" type="text/html" rel="alternate"/>
+  <atom:link href="http://copia.ogbuji.net/blog/index.atom" type="application/atom+xml" rel="self"/>
+  <atom:author>
+<atom:name>Uche and Chimezie Ogbuji</atom:name>
+<atom:uri>http://copia.ogbuji.net/blog/</atom:uri>
+<atom:email>uche@ogbuji.net</atom:email>
+</atom:author>
+  <atom:rights>Copyright 2005-2008 Uche and Chimezie Ogbuji. This work is licensed under the Creative Commons Attribution-ShareAlike 2.0 License.</atom:rights>
+  <atom:generator version="0.5" uri="http://xml3k.org/BrightContent">
+Bright Content
+</atom:generator>
+<atom:updated>2008-12-19T22:17:54Z</atom:updated>
+
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:gr="http://www.google.com/schemas/reader/atom/">
+  <id gr:original-id="http://delicious.com/url/64d757753bddb73e706619af52a7e3c3#chimezie">tag:google.com,2005:reader/item/d3e20092dcf98104</id>
+  <category term="user/15841987604404046553/state/com.google/read" scheme="http://www.google.com/reader/" label="read"/>
+  <category term="python" scheme="http://delicious.com/chimezie/"/>
+  <category term="parallel" scheme="http://delicious.com/chimezie/"/>
+  <category term="concurrency" scheme="http://delicious.com/chimezie/"/>
+  <category term="library" scheme="http://delicious.com/chimezie/"/>
+  <category term="software" scheme="http://delicious.com/chimezie/"/>
+  <category term="scripting" scheme="http://delicious.com/chimezie/"/>
+  <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">NetWorkSpaces for Python</div></title>
+  <published>2008-12-19T22:17:54Z</published>
+  <updated>2008-12-19T22:17:54Z</updated>
+  <link href="http://nws-py.sourceforge.net/" type="text/html" rel="alternate"/>
+  <summary xml:base="http://delicious.com/chimezie" type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>"NetWorkSpaces (NWS) is a new way to write parallel programs. It allows you to take advantage of multicore and multiprocessors computers, as well as clusters, using scripting languages such as Python, R, and Matlab.."</p>
+    <span>
+      <a href="http://delicious.com/post?url=http%3A%2F%2Fnws-py.sourceforge.net%2F&amp;title=NetWorkSpaces%20for%20Python&amp;copyuser=chimezie&amp;copytags=python+parallel+concurrency+library+software+scripting&amp;jump=yes&amp;partner=delrss&amp;src=feed_google" rel="nofollow" title="add this bookmark to your collection at http://delicious.com">
+        <img width="10" alt="http://delicious.com" src="http://l.yimg.com/hr/10374/img/delicious.small.gif" border="0" height="10"/>
+      </a>
+        - Saved by 
+      <a href="http://delicious.com/chimezie" title="visit chimezie's bookmarks at Delicious">chimezie</a>
+        - <a href="http://delicious.com/url/64d757753bddb73e706619af52a7e3c3" rel="self" title="view more details on this bookmark at Delicious">More about this bookmark</a>
+    </span></div>
+  </summary>
+  <author>
+      <name>chimezie</name>
+  </author>
+  <source gr:stream-id="feed/http://feeds.delicious.com/v2/rss/chimezie">
+    <id>tag:google.com,2005:reader/feed/http://feeds.delicious.com/v2/rss/chimezie</id>
+    <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Delicious/chimezie</div></title>
+    <link href="http://delicious.com/chimezie" type="text/html" rel="alternate"/>
+  </source>
+</entry>
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:gr="http://www.google.com/schemas/reader/atom/">
+  <id gr:original-id="http://chimezie.posterous.com/ngozichukwunyere-isabella-cele">tag:google.com,2005:reader/item/adf61b3270626409</id>
+  <category term="user/15841987604404046553/state/com.google/read" scheme="http://www.google.com/reader/" label="read"/>
+  <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Ngozi Isabella (Chioma) Ogbuji</div></title>
+  <published>2008-12-12T05:11:00Z</published>
+  <updated>2008-12-12T05:11:00Z</updated>
+  <link href="http://chimezie.posterous.com/ngozichukwunyere-isabella-cele" type="text/html" rel="alternate"/>
+  <media:group>
+    <media:content url="http://posterous.com/getfile/files.posterous.com/chimezie/mVrE6bEx6vnZZZ2jN54G80fGAGRS7FBws8B5pcwsA0jeiLQFE3btLGAeQ7kI/ngozi-portrait.jpg"/>
+  </media:group>
+  <summary xml:base="http://chimezie.posterous.com/" type="xhtml">
+    <div xmlns="http://www.w3.org/1999/xhtml"><p>
+	</p><p>Initial 'portrait' shot of the new baby!</p>
+    <p/><p>
+    <a href="http://posterous.com/getfile/files.posterous.com/chimezie/SR7bJBcQGOKk097DDiD2f10BYVIAac5iVOKXbKvrd9AAw0e9AUjXt0jP69A4/ngozi-portrait.jpg.scaled.1000.jpg">
+      <img width="375" src="http://posterous.com/getfile/files.posterous.com/chimezie/2RGOhiBApu4p7HJQqu4fS1W6VJDkJ4jsnVVxgOYq49biaIrCQe4zqV1KTNnr/ngozi-portrait.jpg.scaled.500.jpg" height="500"/>
+    </a>
+    </p>
+    <p/>
+    <p>Ngozi(chukwu.nyere) means the blessing that God (or heaven/celestial, by my interpretation) gave. Â My name (Chimezie) is an Igbo invokation for "(May) God resolve". Â My interpretation substitutes the 'abstract' notion of the celestial for the word God. Â My name was an invokation by my father to resolve things and after everything that has transpired, Ngozi is the gift or blessing that may bring about this resolution. Â My dad prefers to call her Chioma. Â It means 'good god.' Â Again, substituting the idea of the celetrial (as a stark contrast to phenomena of the 'terrestrial' ) for the Islamic/Judeo-Christian notion of God/god, you have the idea of a benevolent circumstance or fate. Â </p>
+<p><a href="http://kwenu.com">Kwenu.com</a> has a nice volume of decent translations of Igbo <a href="http://kwenu.com/afamefune/afamefune.htm">names</a>. Â In fact, it also has a nice overview of the concept of "Chi" in Igbo mythology. Â Ironically, this concept as a strong correlation with my understanding of how the celestial interacts with the terrestrial, the rule of natural law, and how it relates to myself and humans in general. Â The chinese word <a href="http://en.wikipedia.org/wiki/Qi" title="Qi">"Chi"</a> has similar connotation:</p>
+<blockquote>
+<p><span style="font-family:-webkit-sans-serif;font-size:13px;line-height:19px">the life-process or â€œflowâ€� of energy that sustains living beings are found in many belief systems, especially inÂ <a href="http://en.wikipedia.org/wiki/Asia" title="Asia">Asia</a>.</span></p>
+</blockquote>
+<p>Igbo mythology and ancient Indo-Chinese spiritual philosophy have much in common, so I guess in the end it is not so odd that I have come to find myself practicing Indo-Chinese spiritual philosophy as a way to understand the crazy world that I live in. Â Their themes appeal to me in the sameÂ long-lastingÂ way that the meanings invoked by the names of my children appeal to me.</p>
+<p>I have a flickr <a href="http://www.flickr.com/photos/39486537@N00/sets/72157611149457824/" title="Ngozi Flickr Album">album set</a> of our (Roschella and I) favorite pictures of her</p>
+	
+<p/>
+
+<p><a href="http://chimezie.posterous.com/ngozichukwunyere-isabella-cele">Permalink</a> 
+
+	| <a href="http://chimezie.posterous.com/ngozichukwunyere-isabella-cele#comment">Leave a commentÂ Â Â»</a>
+
+</p></div></summary>
+  <author>
+    <name>(author unknown)</name>
+  </author>
+  <source gr:stream-id="feed/http://chimezie.posterous.com/rss.xml">
+    <id>tag:google.com,2005:reader/feed/http://chimezie.posterous.com/rss.xml</id>
+    <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Chimezie's posterous</div></title>
+    <link href="http://chimezie.posterous.com" type="text/html" rel="alternate"/>
+  </source>
+</entry>
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:gr="http://www.google.com/schemas/reader/atom/">
+  <id gr:original-id="tag:broadcast.oreilly.com,2008://53.34123">tag:google.com,2005:reader/item/be4753c398d71469</id>
+  <category term="user/15841987604404046553/state/com.google/read" scheme="http://www.google.com/reader/" label="read"/>
+  <category term="4suite" scheme="http://www.sixapart.com/ns/types#tag" label="4suite"/>
+  <category term="amara" scheme="http://www.sixapart.com/ns/types#tag" label="amara"/>
+  <category term="python" scheme="http://www.sixapart.com/ns/types#tag" label="python"/>
+  <category term="springframework" scheme="http://www.sixapart.com/ns/types#tag" label="spring framework"/>
+  <category term="xml" scheme="http://www.sixapart.com/ns/types#tag" label="xml"/>
+  <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Spring Python and Amara</div></title>
+  <published>2008-11-12T14:18:18Z</published>
+  <updated>2008-11-13T05:13:44Z</updated>
+  <link href="http://broadcast.oreilly.com/2008/11/spring-python-and-amara.html" type="text/html" rel="alternate"/>
+  <content xml:base="http://broadcast.oreilly.com/" xml:lang="en" type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Spring Python is an offshoot of the Java-based Spring Framework and Spring Security for Python. Version 0.8.0 is out and, and it builds on my favorite FLOSS project, Amara.</div></content>
+  <author>
+    <name>Uche Ogbuji</name>
+    <email>uche@ogbuji.net</email>
+  </author>
+  <source gr:stream-id="feed/http://broadcast.oreilly.com/uche-ogbuji/atom.xml">
+    <id>tag:google.com,2005:reader/feed/http://broadcast.oreilly.com/uche-ogbuji/atom.xml</id>
+    <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Uche Ogbuji on O'Reilly Broadcast</div></title>
+    <link href="http://broadcast.oreilly.com/" type="text/html" rel="alternate"/>
+  </source>
+</entry>
+<entry xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:gr="http://www.google.com/schemas/reader/atom/">
+  <id gr:original-id="http://ma.gnolia.com/people/Uche/bookmarks/coscoscadad">tag:google.com,2005:reader/item/d7b7962b10727506</id>
+  <category term="user/15841987604404046553/state/com.google/read" scheme="http://www.google.com/reader/" label="read"/>
+  <category term="books" scheme="http://ma.gnolia.com/tags"/>
+  <category term="news" scheme="http://ma.gnolia.com/tags"/>
+  <category term="culture" scheme="http://ma.gnolia.com/tags"/>
+  <category term="nigeria" scheme="http://ma.gnolia.com/tags"/>
+  <category term="igbo" scheme="http://ma.gnolia.com/tags"/>
+  <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Celebrating â€œThings Fall Apartâ€� | A golden jubilee | The Economist</div></title>
+  <published>2008-11-09T16:28:19Z</published>
+  <updated>2008-11-09T16:28:19Z</updated>
+  <link href="http://ma.gnolia.com/people/Uche/bookmarks/coscoscadad" type="text/html" rel="alternate"/>
+  <link href="http://www.economist.com/books/displaystory.cfm?story_id=12459705" rel="related"/>
+  <summary xml:base="http://ma.gnolia.com/rss/full/people/Uche" type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>
+<a href="http://www.economist.com/books/displaystory.cfm?story_id=12459705"><img src="http://scst.srv.girafa.com/srv/i?i=sc010159&amp;r=economist.com/books/displaystory.cfm&amp;s=1236898eb2fc8ced" alt="Celebrating â€œThings Fall Apartâ€� | A golden jubilee | The Economist"/></a></p>
+                
+<p>A reflection on Chinua Achebe's iconic novel approach its 50th anniversary.  Interesting quote: '[Achebe's] next project will be to translate â€œThings Fall Apartâ€� into his native Ibo for the first time.'  Apparently this won't be Central Igbo, but the Ogidi dialect, with other dialects used when appropriate by setting and character.  I'll look forward to working my way through that.</p>
+
+<p>Saved By: <a href="http://ma.gnolia.com/people/Uche" title="Visit Uche Ogbuji on Ma.gnolia">Uche Ogbuji</a> | <a href="http://ma.gnolia.com/people/Uche/bookmarks/coscoscadad" title="View Celebrating â€œThings Fall Apartâ€� | A golden jubilee | The Economist on Ma.gnolia">View Details</a> | <a href="http://ma.gnolia.com/bookmarks/coscoscadad/thanks/feed/confirm">Give Thanks</a></p>
+
+<p><strong>Tags:</strong> <a href="http://ma.gnolia.com/people/Uche/tags/books" rel="tag" title="Find Uche bookmarks tagged 'books'">books</a>, <a href="http://ma.gnolia.com/people/Uche/tags/news" rel="tag" title="Find Uche bookmarks tagged 'news'">news</a>, <a href="http://ma.gnolia.com/people/Uche/tags/culture" rel="tag" title="Find Uche bookmarks tagged 'culture'">culture</a>, <a href="http://ma.gnolia.com/people/Uche/tags/nigeria" rel="tag" title="Find Uche bookmarks tagged 'nigeria'">nigeria</a>, <a href="http://ma.gnolia.com/people/Uche/tags/igbo" rel="tag" title="Find Uche bookmarks tagged 'igbo'">igbo</a></p></div></summary>
+  <author>
+    <name>Uche</name>
+    <uri>http://uche.ogbuji.net</uri>
+  </author>
+  <source gr:stream-id="feed/http://ma.gnolia.com/rss/full/people/Uche">
+    <id>tag:google.com,2005:reader/feed/http://ma.gnolia.com/rss/full/people/Uche</id>
+    <title type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml">Ma.gnolia: Uche Ogbuji's Bookmarks</div></title>
+    <link href="http://ma.gnolia.com/rss/full/people/Uche" type="text/html" rel="alternate"/>
+  </source>
+</entry>
+</atom:feed>

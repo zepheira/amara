@@ -154,6 +154,8 @@ class bound_attribute(object):
         return
 
 
+ELEMENT_TYPE = tree.element.xml_type
+
 class container_mixin(object):
     xml_model_ = None
 
@@ -221,13 +223,15 @@ class container_mixin(object):
         return
 
     def xml_find_named_child(self, ns, local, childiter=None):
+        #This function is very heavily used, and should be carefully optimized
         found = False
         #could use dropwhile (with negation)...
         #self.children = dropwhile(lambda c, n=self.name: (c.xml_namespace, c.xml_name) != n, self.children)
         childiter = iter(self.xml_children) if childiter is None else childiter
+        name = (ns, local)
         while not found:
             child = childiter.next() #Will raise StopIteration when siblings are exhausted
-            found = child.xml_type == tree.element.xml_type and child.xml_name == (ns, local)
+            found = child.xml_type == ELEMENT_TYPE and child.xml_name == name
         return child
     
     def xml_append(self, obj):
