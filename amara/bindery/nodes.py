@@ -285,6 +285,18 @@ class container_mixin(object):
             pass
         return
 
+    def __setitem__(self, key, value):
+        if isinstance(key, int):
+            target = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+            #self.xml_parent.xml_remove(target)
+            for child in target.xml_children:
+                target.xml_remove(child)
+            target.xml_append(value)
+        else:
+            #FIXME: Need to implement?
+            pass
+        return
+
 
 class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
