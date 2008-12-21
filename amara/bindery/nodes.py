@@ -276,6 +276,15 @@ class container_mixin(object):
                 raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
         return result
 
+    def __delitem__(self, key):
+        if isinstance(key, int):
+            target = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+            self.xml_parent.xml_remove(target)
+        else:
+            #FIXME: Need to implement?
+            pass
+        return
+
 
 class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
