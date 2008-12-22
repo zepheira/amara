@@ -20,43 +20,49 @@ customize_compiler.__base__ = sysconfig.customize_compiler
 sysconfig.customize_compiler = customize_compiler
 
 import os, re, sys
-from itertools import izip
+from itertools import izip, imap
 from distutils import log
 from distutils.ccompiler import CCompiler
 from distutils.dep_util import newer_group
 from distutils.util import convert_path
+
 _find_include = r'\s*#\s*include\s+(?:"([^"\n]+)"|<([^>\n]+)>)'
 _find_include = re.compile(_find_include).match
+def _find_depends(source, incdirs, depends):
+    source = convert_path(source)
+    system_dirs = incdirs
+    user_dirs = [os.path.dirname(source)] + system_dirs
+    depends = set(depends)
+
+    # do two passes to prevent having too many files open at once
+    todo = []
+    lines = open(source)
+    for line in lines:
+        match = _find_include(line)
+        if match:
+            user_include, system_include = map(convert_path, match.groups())
+            if user_include:
+                todo.append((user_include, user_dirs))
+            else:
+                todo.append((system_include, system_dirs))
+    lines.close()
+    # Now look for the included file on the search path
+    includes = set()
+    for include, search_path in todo:
+        for path in search_path:
+            filename = os.path.normpath(os.path.join(path, include))
+            if os.path.isfile(filename) and filename not in depends:
+                depends.add(filename)
+                depends |= _find_depends(filename, incdirs, depends)
+                break
+    return depends
+def _find_depends_pairwise(sources, incdirs, depends):
+    depends = set(depends)
+    for source in sources:
+        deps = _find_depends(source, incdirs, depends)
+        yield source, deps
+
 class CCompilerEx(CCompiler):
-    def _find_depends(self, source, incdirs, depends):
-        source = convert_path(source)
-        system_dirs = incdirs
-        user_dirs = [os.path.dirname(source)] + system_dirs
-        depends = set(depends)
-
-        # do two passes to prevent having too many files open at once
-        todo = []
-        lines = open(source)
-        for line in lines:
-            match = _find_include(line)
-            if match:
-                user_include, system_include = map(convert_path, match.groups())
-                if user_include:
-                    todo.append((user_include, user_dirs))
-                else:
-                    todo.append((system_include, system_dirs))
-        lines.close()
-        # Now look for the included file on the search path
-        includes = set()
-        for include, search_path in todo:
-            for path in search_path:
-                filename = os.path.normpath(os.path.join(path, include))
-                if os.path.isfile(filename) and filename not in depends:
-                    depends.add(filename)
-                    depends |= self._find_depends(filename, incdirs, depends)
-                    break
-        return depends
-
     def _setup_compile(self, outdir, macros, incdirs, sources, depends,
                        extra_postargs):
         macros, objects, extra_postargs, pp_opts, build = \
@@ -82,7 +88,7 @@ class CCompilerEx(CCompiler):
             pass
         else:
             for src, obj in izip(sources, objects):
-                deps = self._find_depends(src, incdirs, depends)
+                deps = _find_depends(src, incdirs, depends)
                 deps.add(src)
                 if not newer_group(deps, obj):
                     skip_source.add(src)
@@ -95,21 +101,15 @@ class CCompilerEx(CCompiler):
                 build[obj] = src, os.path.splitext(src)[1]
 
         return macros, objects, extra_postargs, pp_opts, build
-
     def depends_pairwise(self, sources, incdirs, depends):
-        if incdirs is None:
-            incdirs = self.include_dirs
-        else:
-            incdirs = list(incdirs) + (self.include_dirs or [])
-        depends = set(depends)
-        pairs = []
-        for source in sources:
-            deps = self._find_depends(source, incdirs, depends)
-            pairs.append((source, deps))
-        return pairs
+        include_dirs = self.include_dirs
+        if incdirs:
+            include_dirs = include_dirs + list(incdirs)
+        return list(_find_depends_pairwise(sources, include_dirs, depends))
 from distutils import ccompiler
 ccompiler.CCompiler = CCompilerEx
 
+# Monkey patch `build_ext` to add "simple" build checking (header files)
 from distutils.command.build_ext import build_ext as cmdclass
 class build_ext(cmdclass):
     def build_extension(self, ext):
@@ -124,8 +124,80 @@ class build_ext(cmdclass):
                 if newer_group(depends, source, 'newer'):
                     os.utime(source, None)
         cmdclass.build_extension(self, ext)
+    def get_source_files(self):
+        self.check_extensions_list(self.extensions)
+        filenames = []
+        for ext in self.extensions:
+            if ext.include_dirs:
+                incdirs = self.include_dirs + list(ext.include_dirs)
+            else:
+                incdirs = self.include_dirs
+            for source, depends in _find_depends_pairwise(ext.sources, incdirs,
+                                                          set(ext.depends)):
+                filenames.append(source)
+                filenames.extend(depends)
+        return filenames
+# Replace the `build_ext` command class
 from distutils.command import build_ext as cmdmodule
 cmdmodule.build_ext = build_ext
+
+# Monkey patch `sdist` to add manifest checking
+from distutils.command.sdist import sdist as cmdclass
+from distutils.filelist import FileList
+from distutils.text_file import TextFile
+class sdist(cmdclass):
+    def get_file_list(self):
+        cmdclass.get_file_list(self)
+        manifest_filelist = self.filelist
+        source_filelist = FileList()
+        allfiles = self.filelist.allfiles
+        if allfiles:
+            source_filelist.set_allfiles(allfiles)
+        else:
+            source_filelist.findall()
+        source_filelist.extend(source_filelist.allfiles)
+        # Check for template (usually "MANIFEST.in")
+        if os.path.isfile(self.template):
+            template = TextFile(self.template,
+                                strip_comments=1,
+                                skip_blanks=1,
+                                join_lines=1,
+                                lstrip_ws=1,
+                                rstrip_ws=1,
+                                collapse_join=1)
+            while 1:
+                line = template.readline()
+                if line is None:            # end of file
+                    break
+                try:
+                    source_filelist.process_template_line(line)
+                except DistutilsTemplateError:
+                    # Already been warned by "real" filelist
+                    pass
+        if self.prune:
+            try:
+                self.filelist = source_filelist
+                self.prune_file_list()
+            finally:
+                self.filelist = manifest_filelist
+        source_filelist.sort()
+        source_filelist.remove_duplicates()
+
+        # Ensure file paths are formatted the same
+        # This removes any dot-slashes and converts all slashes to
+        # OS-specific separators.
+        manifest = set(map(os.path.normpath, manifest_filelist.files))
+        missing = False
+        for filename in imap(os.path.normpath, source_filelist.files):
+            if filename not in manifest:
+                self.warn('missing from source distribution: %s' % filename)
+                missing = True
+        if missing:
+            raw_input('WARNING: Not all source files in distribution! '
+                      ' Press <Enter> to continue.')
+# Replace the `build_ext` command class
+from distutils.command import sdist as cmdmodule
+cmdmodule.sdist = sdist
 
 # -- end of custimzation ----------------------------------------------
 
