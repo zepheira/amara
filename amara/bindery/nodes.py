@@ -271,30 +271,98 @@ class container_mixin(object):
             if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
                 return self.xml_attributes[key]
             if force_type in (None, tree.element.xml_type):
-                return self.xml_find_named_child(self, key[0], key[1])
+                return self.xml_find_named_child(key[0], key[1])
             else:
                 raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
         return result
 
     def __delitem__(self, key):
+        '''
+        from amara import bindery, xml_print
+        DOC = "<a><b>spam</b><b>eggs</b></a>"
+        doc = bindery.parse(DOC)
+        del doc.a.b[1]
+        xml_print(doc)
+        
+        --> "<a><b>spam</b></a>"
+
+        from amara import bindery, xml_print
+        DOC = "<a><b>spam</b><b>eggs</b></a>"
+        doc = bindery.parse(DOC)
+        del doc.a[u'b']
+        xml_print(doc)
+        
+        --> "<a><b>eggs</b></a>"
+        '''
+        target = None
         if isinstance(key, int):
             target = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
-            self.xml_parent.xml_remove(target)
+            parent = self.xml_parent
         else:
-            #FIXME: Need to implement?
-            pass
+            parent = self
+            force_type = None
+            if isinstance(key, tuple):
+                if len(key) == 3:
+                    force_type, key = key[0], key[1:]
+            elif isinstance(key, basestring):
+                key = (None, key)
+            else:
+                raise TypeError('Inappropriate key (%s)'%(key))
+            print repr(key)
+            if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
+                target = self.xml_attributes[key]
+            if force_type in (None, tree.element.xml_type):
+                target = self.xml_find_named_child(key[0], key[1])
+            else:
+                raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
+        #In docstring example, self = parent = a and target = b
+        if target is not None:
+            parent.xml_remove(target)
         return
 
     def __setitem__(self, key, value):
+        '''
+        from amara import bindery
+        DOC = "<a><b>spam</b></a>"
+        doc = bindery.parse(DOC)
+        doc.a.b[0] = u"eggs"
+        xml_print(doc)
+        
+        --> "<a><b>eggs</b></a>"
+
+        from amara import bindery
+        DOC = "<a><b>spam</b></a>"
+        doc = bindery.parse(DOC)
+        doc.a[u'b'] = u"eggs"
+        xml_print(doc)
+        
+        --> "<a><b>eggs</b></a>"
+        '''
+        target = None
         if isinstance(key, int):
             target = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
             #self.xml_parent.xml_remove(target)
+            parent = self.xml_parent
+        else:
+            parent = self
+            force_type = None
+            if isinstance(key, tuple):
+                if len(key) == 3:
+                    force_type, key = key[0], key[1:]
+            elif isinstance(key, basestring):
+                key = (None, key)
+            else:
+                raise TypeError('Inappropriate key (%s)'%(key))
+            if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
+                target = self.xml_attributes[key]
+            if force_type in (None, tree.element.xml_type):
+                target = self.xml_find_named_child(key[0], key[1])
+            else:
+                raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
+        if target is not None:
             for child in target.xml_children:
                 target.xml_remove(child)
             target.xml_append(value)
-        else:
-            #FIXME: Need to implement?
-            pass
         return
 
 

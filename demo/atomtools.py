@@ -59,6 +59,97 @@ from operator import *
 
 MODEL = examplotron_model(ATOM_MODEL)
 
+
+import re, copy
+from cStringIO import StringIO
+from datetime import datetime
+
+import amara
+
+SLUGCHARS = r'a-zA-Z0-9\-\_'
+OMIT_FROM_SLUG_PAT = re.compile('[^%s]'%SLUGCHARS)
+
+TYPE = 'type'
+UPDATED = 'updated'
+TITLE = 'title'
+ID = 'id'
+
+ATOM_MT = u'application/atom+xml'
+
+slug_from_title = lambda t: OMIT_FROM_SLUG_PAT.sub('_', t).lower().decode('utf-8')[:20]
+
+datetime_from_iso = lambda ds: datetime.strptime(ds, "%Y-%m-%dT%H:%M:%SZ")
+
+path_from_datetime = lambda dt: '%i/%i'%dt.utctimetuple()[:2]
+
+#def create_entry(doc):
+#    for entry in doc.entry
+
+def atomindex(entry):
+    yield TYPE, ATOM_MT
+    yield TITLE, unicode(entry.title)
+    yield ID, unicode(entry.id)
+    yield UPDATED, unicode(entry.updated)
+    #yield TITLE, doc.xml_select(u'name(*)')
+
+
+from amara.namespaces import *
+from amara.bindery import html
+
+NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
+
+def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:content', prefixes=NSS):
+    """
+    Takes all Atom content elements with type=html (i.e. a:title, a:summary or a:content)
+    And convert them to be of type=xhtml
+
+    This operation mutates root in place.
+
+    Example:
+
+    import amara; from util import tidy_content_element
+    A = '<entry xmlns="http://www.w3.org/2005/Atom"><id>urn:bogus:x</id><title type="html">&lt;div&gt;x&lt;p&gt;y&lt;p&gt;&lt;/div&gt;</title></entry>'
+    doc = amara.parse(A)
+    tidy_content_element(doc)
+    amara.xml_print(doc)
+    """
+    nodes = root.xml_select(check, prefixes)
+    for node in nodes:
+        if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
+            unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'))
+            #amara.xml_print(unsouped, stream=sys.stderr)
+            while node.xml_children: node.xml_remove(node.xml_first_child)
+            newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
+            for child in unsouped.html.body.xml_children:
+                s = StringIO()
+                amara.xml_print(child, stream=s)
+                newcontent += s.getvalue()
+            newcontent += '</div>'
+            node.xml_append(amara.parse(newcontent).xml_first_child)
+            node.xml_attributes[None, u'type'] = u'xhtml'
+            #for child in doc.html.body.xml_children:
+            #    div.xml_append(child)
+    return root
+
+    
+
+'''
+fname = tempfile.mktemp('.xml')
+driver.init_db(sqlite3.connect(fname))
+drv = driver(sqlite3.connect(fname))
+content = MONTY_XML
+id = drv.create_resource(StringIO(content), metadata=dict(myindex(content)))
+content1, metadata = drv.get_resource(id)
+content1 = content1.read()
+doc = amara.parse(content)
+self.assertEqual(content, content1)
+self.assertEqual(metadata[u'root-element-name'], doc.xml_select(u'name(*)'))
+self.assertEqual(metadata[u'element-count'], doc.xml_select(u'count(//*)'))
+return
+'''
+
+
+
 def run(source, normalize):
     doc = bindery.parse(source, model=MODEL)
     #print doc.labels.xml_model.generate_metadata(doc)
