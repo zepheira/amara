@@ -195,14 +195,8 @@ class container_mixin(object):
         called after the node has been added to `self.xml_children`
         """
         if isinstance(child, tree.element):
-            name_chosen = False
-            exclusions = []
-            while not name_chosen:
-                pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_local, exclusions)
-                existing = getattr(self, pname, None)
-                if existing is None or existing.xml_name == child.xml_name:
-                    name_chosen = True
-            if existing is None:
+            pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_local, self, True)
+            if not hasattr(self, pname):
                 setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
 #            if isinstance(child, tree.element):
 #                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
@@ -308,7 +302,6 @@ class container_mixin(object):
                 key = (None, key)
             else:
                 raise TypeError('Inappropriate key (%s)'%(key))
-            print repr(key)
             if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
                 target = self.xml_attributes[key]
             if force_type in (None, tree.element.xml_type):
@@ -385,7 +378,7 @@ class element_base(container_mixin, tree.element):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self.__class__.__dict__)
+        pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self, False)
         setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
@@ -452,6 +445,14 @@ class entity_base(container_mixin, tree.entity):
     xml_exclude_pnames = ()
     xml_encoding = 'utf-8'
 
+    def __new__(cls, document_uri=None):
+        #Create a subclass of entity_base every time to avoid the
+        #pollution of the class namespace caused by bindery's use of descriptors
+        #Cannot subclass more directly because if so we end up with infinite recursiion of __new__
+        cls = type("entity_base", (entity_base,), {})
+        #FIXME: Might be better to use super() here since we do have true cooperation of base classes
+        return tree.entity.__new__(cls, document_uri)
+
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
@@ -475,7 +476,7 @@ class entity_base(container_mixin, tree.entity):
             xml_namespaces.update(dict(e.xml_namespaces.items()))
         return xml_namespaces
 
-    def xml_pyname(self, ns, local, parent=None):
+    def xml_pyname(self, ns, local, parent=None, iselement=True):
         '''
         generate a Python ID (as a *string*) from an XML universal name
 
@@ -485,16 +486,19 @@ class entity_base(container_mixin, tree.entity):
         '''
         try:
             python_id = self._names[(local, ns)]
+        except AttributeError:
+            print dir(self)
+            raise
         except KeyError:
             python_id = str(self.PY_REPLACE_PAT.sub('_', local))
             while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
                 python_id += '_'
             self._names[(local, ns)] = python_id
-        if parent:
+        if parent is not None:
             name_checks_out = False
             while name_checks_out:
                 obj = getattr(self, pname, None)
-                if not obj or obj.xml_name != (ns, local):
+                if not obj or (iselement and obj.xml_name == (ns, local)):
                     name_checks_out = True
                     break
                 python_id += '_'
