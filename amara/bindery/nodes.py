@@ -449,7 +449,7 @@ class entity_base(container_mixin, tree.entity):
         #Create a subclass of entity_base every time to avoid the
         #pollution of the class namespace caused by bindery's use of descriptors
         #Cannot subclass more directly because if so we end up with infinite recursiion of __new__
-        cls = type("entity_base", (entity_base,), {})
+        cls = type(cls.__name__, (cls,), {})
         #FIXME: Might be better to use super() here since we do have true cooperation of base classes
         return tree.entity.__new__(cls, document_uri)
 
@@ -486,9 +486,6 @@ class entity_base(container_mixin, tree.entity):
         '''
         try:
             python_id = self._names[(local, ns)]
-        except AttributeError:
-            print dir(self)
-            raise
         except KeyError:
             python_id = str(self.PY_REPLACE_PAT.sub('_', local))
             while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
@@ -496,8 +493,8 @@ class entity_base(container_mixin, tree.entity):
             self._names[(local, ns)] = python_id
         if parent is not None:
             name_checks_out = False
-            while name_checks_out:
-                obj = getattr(self, pname, None)
+            while not name_checks_out:
+                obj = getattr(self, python_id, None)
                 if not obj or (iselement and obj.xml_name == (ns, local)):
                     name_checks_out = True
                     break
