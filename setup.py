@@ -112,6 +112,7 @@ ccompiler.CCompiler = CCompilerEx
 # Monkey patch `build_ext` to add "simple" build checking (header files)
 from distutils.command.build_ext import build_ext as cmdclass
 class build_ext(cmdclass):
+    _build_extension = cmdclass.build_extension
     def build_extension(self, ext):
         try:
             pairs = self.compiler.depends_pairwise(ext.sources,
@@ -123,7 +124,7 @@ class build_ext(cmdclass):
             for source, depends in pairs:
                 if newer_group(depends, source, 'newer'):
                     os.utime(source, None)
-        cmdclass.build_extension(self, ext)
+        self._build_extension(ext)
     def get_source_files(self):
         self.check_extensions_list(self.extensions)
         filenames = []
@@ -146,8 +147,9 @@ from distutils.command.sdist import sdist as cmdclass
 from distutils.filelist import FileList
 from distutils.text_file import TextFile
 class sdist(cmdclass):
+    _get_file_list = cmdclass.get_file_list
     def get_file_list(self):
-        cmdclass.get_file_list(self)
+        self._get_file_list()
         manifest_filelist = self.filelist
         source_filelist = FileList()
         allfiles = self.filelist.allfiles
