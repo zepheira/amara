@@ -1,6 +1,22 @@
 #RFC 4287
 #python atomtools.py copiasample.atom
 
+import sys
+from itertools import *
+from operator import *
+from collections import defaultdict
+
+import re, copy
+from cStringIO import StringIO
+from datetime import datetime
+
+import amara
+from amara.namespaces import *
+from amara.bindery import html
+from amara.bindery.model import *
+from amara import bindery
+
+
 #From 1.1 of the spec
 ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"
@@ -51,20 +67,7 @@ ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
 
 </feed>'''
 
-import sys
-from amara.bindery.model import *
-from amara import bindery
-from itertools import *
-from operator import *
-
 MODEL = examplotron_model(ATOM_MODEL)
-
-
-import re, copy
-from cStringIO import StringIO
-from datetime import datetime
-
-import amara
 
 SLUGCHARS = r'a-zA-Z0-9\-\_'
 OMIT_FROM_SLUG_PAT = re.compile('[^%s]'%SLUGCHARS)
@@ -85,6 +88,23 @@ path_from_datetime = lambda dt: '%i/%i'%dt.utctimetuple()[:2]
 #def create_entry(doc):
 #    for entry in doc.entry
 
+def doctest_example():
+    """Return the factorial of n, an exact integer >= 0.
+
+    If the result is small enough to fit in an int, return an int.
+    Else return a long.
+
+    >>> [factorial(n) for n in range(6)]
+    [1, 1, 2, 6, 24, 120]
+    >>> factorial(-1)
+    Traceback (most recent call last):
+        ...
+    ValueError: n must be >= 0
+
+    Factorials of floats are OK, but the float must be an exact integer:
+    """
+    pass
+
 def atomindex(entry):
     yield TYPE, ATOM_MT
     yield TITLE, unicode(entry.title)
@@ -92,9 +112,6 @@ def atomindex(entry):
     yield UPDATED, unicode(entry.updated)
     #yield TITLE, doc.xml_select(u'name(*)')
 
-
-from amara.namespaces import *
-from amara.bindery import html
 
 NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
 
@@ -149,6 +166,11 @@ return
 '''
 
 
+def test():
+    import doctest
+    doctest.testmod()
+    return
+
 
 def run(source, normalize):
     doc = bindery.parse(source, model=MODEL)
@@ -158,10 +180,14 @@ def run(source, normalize):
     metadata = doc.feed.xml_model.generate_metadata(doc)
     raw_feeddata = {}
     for eid, row in groupby(sorted(metadata, key=itemgetter(0)), itemgetter(0)):
-        entity = {}
+        entity = defaultdict(list)
         for r in row:
-            entity.setdefault(r[1], []).append(r[2])
+            entity[r[1]].append(r[2])
         raw_feeddata[eid] = entity
+        #Warning: this is OK since client code would usually not try to mutate raw_feeddata
+        #But if it does, it should be mindful of the use of defaultdict
+        #If this is a problem, unwrap to regular dicts:
+        #for k in raw_feeddata: raw_feeddata[k] = dict(raw_feeddata[k])
     import pprint
     pprint.pprint(raw_feeddata)
     feeddata = {}
@@ -220,9 +246,13 @@ def main(argv=None):
     #limit = options.limit
     #if source == '-':
     #    source = sys.stdin
-    normalize = options.normalize
+    print options.normalize
     #run(source, xpattern, xpath, limit, sentinel, display, prefixes)
-    run(source, normalize)
+    if options.test:
+        test()
+    else:
+        run(source, options.normalize)
+    return
 
 
 if __name__ == "__main__":

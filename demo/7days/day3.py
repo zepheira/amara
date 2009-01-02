@@ -127,3 +127,41 @@ doc2 = bindery.parse(BM2)
 merge(doc1.xbel, doc2.xbel)
 xml_print(doc1, indent=True)
 
+print
+print '---------' 'Merge XBEL by grouping iterators, with model'
+
+
+XBEL_DTDECL = '''<!DOCTYPE xbel PUBLIC 
+       "+//IDN python.org//DTD XML Bookmark Exchange Language 1.0//EN//XML" 
+       "http://www.python.org/topics/xml/dtds/xbel-1.0.dtd">'''
+
+XBEL_MODEL = '''<?xml version="1.0"?>
+<xbel version="1.0" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara">
+  <info eg:occurs="?">
+    <metadata owner="http://example.com" eg:occurs="?">MD1</metadata>
+  </info>
+  <folder eg:occurs="*">
+    <info eg:occurs="?">
+      <metadata owner="http://example.com" eg:occurs="?">MD1</metadata>
+    </info>
+    <title>F1</title>
+    <bookmark href="http://www.example.com" eg:occurs="*">
+      <info eg:occurs="?">
+        <metadata owner="http://example.com" eg:occurs="?">MD1</metadata>
+      </info>
+      <title eg:occurs="?">B1</title>
+      <desc eg:occurs="?">DESC-B1</desc>
+    </bookmark>
+  </folder>
+  <bookmark href="http://www.example.com">
+    <info eg:occurs="?">
+      <metadata owner="http://example.com" eg:occurs="?">MD1</metadata>
+    </info>
+    <title eg:occurs="?">B1</title>
+    <desc eg:occurs="?">DESC-B1</desc>
+  </bookmark>
+</xbel>
+'''
+
+#...
+
