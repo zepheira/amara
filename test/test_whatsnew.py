@@ -32,7 +32,7 @@ class TestBasicMods(unittest.TestCase):
         A.xml_append(tree.text(u'One'))
         doc.xml_append(A)
         doc.xml_append(tree.comment(u"This is easy"))
-        doc2 = amara.parse('doc1.xml')
+        doc2 = amara.parse('whatsnew_doc1.xml')
         output1 = cStringIO.StringIO()        
         output2 = cStringIO.StringIO()        
         xml_print(doc, stream=output1)
@@ -293,7 +293,6 @@ class TestBasicMods(unittest.TestCase):
         element = tree.element(None, u'A')
         for old_method in old_methods:
             self.assertRaises(AttributeError, getattr, element, "%s" % old_method)
-
     def test_element_valid_properties(self):
         new_operations = ['xml_append', 'xml_attribute_added', 
                           'xml_attribute_factory', 'xml_attribute_modified',
@@ -312,7 +311,6 @@ class TestBasicMods(unittest.TestCase):
         for operation in new_methods:
             self.assertTrue(operation in new_operations)
         return
-
     def test_element_inmutable_properties(self):
         inmutable = ['xml_qname', 'xml_children', 'xml_first_child', 
                      'xml_last_child', 'xml_following_sibling', 
@@ -327,6 +325,7 @@ class TestBasicMods(unittest.TestCase):
         return
     
     def test_element_new_features(self):
+       
         DOC = '<A xmlns="urn:bogus" a="aa" b="bb"><B/><B/><B/></A>'
         doc = amara.parse(DOC)
         A = doc.xml_children[0]
@@ -352,7 +351,6 @@ class TestBasicMods(unittest.TestCase):
                        'previousSibling','nextSibling']
         for old_method in old_methods:
             self.assertRaises(AttributeError, getattr, pi, "%s" % old_method)
-
     def test_pi_valid_properties(self):
         ### REVIEW new properties 
         new_operations = ['xml_data', 'xml_target', 
@@ -366,7 +364,6 @@ class TestBasicMods(unittest.TestCase):
         for operation in new_operations:
             self.assertTrue(operation in new_methods)
         return
-
     def test_pi_inmutable_properties(self):
         pi = tree.processing_instruction(
             u'xml-stylesheet',
@@ -375,8 +372,8 @@ class TestBasicMods(unittest.TestCase):
         for prop in inmutable:
             self.assertRaises(AttributeError, setattr, pi, "%s" % prop, u'spam')
         return
-
-
+    
+            
 if __name__ == '__main__':
     unittest.main()
 
