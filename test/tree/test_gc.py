@@ -6,7 +6,7 @@
 
 # Resources:
 #   http://www.skymind.com/~ocrow/python_string/
-#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/286222
+#   http://code.activestate.com/recipes/286222/
 
 import unittest
 import os

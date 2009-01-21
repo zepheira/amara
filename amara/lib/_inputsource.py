@@ -12,7 +12,7 @@ from amara.lib.xmlstring import isxml
 __all__ = ['_inputsource']
 
 class _inputsource(InputSource):
-    def __new__(self, arg, uri=None):
+    def __new__(self, arg, uri=None, resolver=iri.DEFAULT_RESOLVER):
         """
         arg - a string, Unicode object (only if you really know what you're doing),
               file-like object (stream), file path or URI.  You can also pass an
@@ -39,10 +39,10 @@ class _inputsource(InputSource):
             stream = StringIO(arg)
         elif iri.is_absolute(arg) and not os.path.isfile(arg):
             uri = arg
-            stream = iri.DEFAULT_RESOLVER.resolve(uri)
+            stream = resolver.resolve(uri)
         else:
             uri = iri.os_path_to_uri(arg)
-            stream = iri.DEFAULT_RESOLVER.resolve(uri)
+            stream = resolver.resolve(uri)
 
         #We might add the ability to load zips, gzips & bzip2s
         #http://docs.python.org/lib/module-zlib.html

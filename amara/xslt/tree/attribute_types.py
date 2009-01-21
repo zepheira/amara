@@ -102,7 +102,7 @@ class choice(attribute_type):
                         break
             else:
                 # if we get here it is an error
-                raise XsltError(XsltError.INVALID_ATTR_CHOICE, value, self)
+                raise XsltError(XsltError.INVALID_ATTR_CHOICE, value=value)
         return value
     reprocess = prepare
 
@@ -124,9 +124,9 @@ class avt:
             return _avt_wrapper(element, self, value)
         except XsltError, error:
             # an error from the AVT parser
-            raise XsltError(XsltError.INVALID_AVT, value,
-                            element.baseUri, element.lineNumber,
-                            element.columnNumber, str(error))
+            raise XsltError(XsltError.INVALID_AVT, value=value,
+                            baseuri=element.baseUri, line=element.lineNumber,
+                            col=element.columnNumber, msg=str(error))
 
 
 class choice_avt(avt, choice):
@@ -157,7 +157,7 @@ class char(attribute_type):
         if value is None:
             return self.default
         if len(value) > 1:
-            raise XsltError(XsltError.INVALID_CHAR_ATTR, value)
+            raise XsltError(XsltError.INVALID_CHAR_ATTR, value=value)
         return value
     reprocess = prepare
 
@@ -175,7 +175,7 @@ class number(attribute_type):
         try:
             return float(value or self.default)
         except:
-            raise XsltError(XsltError.INVALID_NUMBER_ATTR, value)
+            raise XsltError(XsltError.INVALID_NUMBER_ATTR, value=value)
     reprocess = prepare
 
 
@@ -202,7 +202,7 @@ class namespace_uri(uri_reference):
         if value is None:
             return self.default
         if value in (XML_NAMESPACE, XMLNS_NAMESPACE):
-            raise XsltError(XsltError.INVALID_NS_URIREF_ATTR, value)
+            raise XsltError(XsltError.INVALID_NS_URIREF_ATTR, value=value)
         return value
     reprocess = prepare
 
@@ -218,7 +218,7 @@ class id(attribute_type):
         if value is None:
             return self.default
         if not value:
-            raise XsltError(XsltError.INVALID_ID_ATTR, value)
+            raise XsltError(XsltError.INVALID_ID_ATTR, value=value)
         return value
     reprocess = prepare
 
@@ -236,7 +236,7 @@ class qname(attribute_type):
                 return None
             value = self.default
         elif not isqname(value):
-            raise XsltError(XsltError.INVALID_QNAME_ATTR, value)
+            raise XsltError(XsltError.INVALID_QNAME_ATTR, value=value)
 
         prefix, local = splitqname(value)
         if prefix:
@@ -244,7 +244,7 @@ class qname(attribute_type):
                 namespace = element.namespaces[prefix]
             except KeyError:
                 raise XsltRuntimeException(XsltError.UNDEFINED_PREFIX,
-                                           element, prefix)
+                                           elem=element, prefix=prefix)
         else:
             namespace = None
         return (namespace, local)
@@ -263,7 +263,7 @@ class raw_qname(qname):
                 return None
             value = self.default
         elif not isqname(value):
-            raise XsltError(XsltError.INVALID_QNAME_ATTR, value)
+            raise XsltError(XsltError.INVALID_QNAME_ATTR, value=value)
         return splitqname(value)
     reprocess = prepare
 
@@ -279,9 +279,9 @@ class ncname(attribute_type):
         if value is None:
             return self.default
         if not value:
-            raise XsltError(XsltError.INVALID_NCNAME_ATTR, value)
+            raise XsltError(XsltError.INVALID_NCNAME_ATTR, value=value)
         if ':' in value:
-            raise XsltError(XsltError.INVALID_NCNAME_ATTR, value)
+            raise XsltError(XsltError.INVALID_NCNAME_ATTR, value=value)
         return value
     reprocess = prepare
 
@@ -297,9 +297,9 @@ class prefix(attribute_type):
         if value is None:
             return self.default
         if not value:
-            raise XsltError(XsltError.INVALID_PREFIX_ATTR, value)
+            raise XsltError(XsltError.INVALID_PREFIX_ATTR, value=value)
         if ':' in value:
-            raise XsltError(XsltError.INVALID_PREFIX_ATTR, value)
+            raise XsltError(XsltError.INVALID_PREFIX_ATTR, value=value)
         if value == '#default':
             value = None
         return value
@@ -317,7 +317,7 @@ class nmtoken(attribute_type):
         if value is None:
             return self.default
         if not value:
-            raise XsltError(XsltError.INVALID_NMTOKEN_ATTR, value)
+            raise XsltError(XsltError.INVALID_NMTOKEN_ATTR, value=value)
         return value
     reprocess = prepare
 
@@ -335,18 +335,18 @@ class qname_but_not_ncname(attribute_type):
                 return None
             value = self.default
         elif not value:
-            raise XsltError(XsltError.QNAME_BUT_NOT_NCNAME, value)
+            raise XsltError(XsltError.QNAME_BUT_NOT_NCNAME, value=value)
 
         try:
             index = value.index(':')
         except ValueError:
-            raise XsltError(XsltError.QNAME_BUT_NOT_NCNAME, value)
+            raise XsltError(XsltError.QNAME_BUT_NOT_NCNAME, value=value)
         prefix, local = value[:index], value[index+1:]
         try:
             namespace = element.namespaces[prefix]
         except KeyError:
             raise XsltRuntimeException(XsltError.UNDEFINED_PREFIX,
-                                       element, prefix)
+                                       elem=element, prefix=prefix)
         return (namespace, local)
     reprocess = prepare
 
@@ -372,7 +372,7 @@ class token(attribute_type):
                 namespace = element.namespaces[prefix]
             except KeyError:
                 raise XsltRuntimeException(XsltError.UNDEFINED_PREFIX,
-                                           element, prefix)
+                                       elem=element, prefix=prefix)
         return (namespace, local)
     reprocess = prepare
 
@@ -452,9 +452,9 @@ class expression(attribute_type):
         try:
             return parse_xpath(value)
         except SyntaxError, error:
-            raise XsltError(XsltError.INVALID_EXPRESSION, value,
-                                element.baseUri, element.lineNumber,
-                                element.columnNumber, str(error))
+            raise XsltError(XsltError.INVALID_EXPRESSION, value=value,
+                            baseuri=element.baseUri, line=element.lineNumber,
+                            col=element.columnNumber, msg=str(error))
 
 class nodeset_expression(expression):
     display = _('nodeset-expression')
@@ -556,7 +556,7 @@ class yesno(attribute_type):
         if value is None:
             return self.default and self.default == 'yes'
         elif value not in ['yes', 'no']:
-            raise XsltError(XsltError.INVALID_ATTR_CHOICE, value, str(self))
+            raise XsltError(XsltError.INVALID_ATTR_CHOICE, value=value)#, str(self))
         return value == 'yes'
     reprocess = prepare
 

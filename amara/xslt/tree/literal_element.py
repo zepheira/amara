@@ -61,8 +61,7 @@ class literal_element(xslt_element):
                 try:
                     attribute_set = attribute_sets[name]
                 except KeyError:
-                    raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, self,
-                                    name)
+                    raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, name=name)
                 attribute_set.instantiate(context)
 
         self.process_children(context)

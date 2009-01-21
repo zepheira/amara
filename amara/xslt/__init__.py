@@ -221,7 +221,7 @@ class XsltError(Error):
             XsltError.ILLEGAL_TEXT_CHILD: _(
                 "Illegal literal text %(data)r within element '%(element)s'"),
             XsltError.UNDEFINED_PREFIX: _(
-                "Undefined namespace prefix '%(prefix)s'"),
+                "Undefined namespace prefix '%(prefix)s' for element '%(elem)s'"),
 
             # misc attribute validation
             XsltError.MISSING_REQUIRED_ATTRIBUTE: _(
@@ -256,7 +256,7 @@ class XsltError(Error):
             XsltError.AVT_SYNTAX: _(
                 'Unbalanced curly braces ({}) in attribute value template. (see XSLT 1.0 sec. 7.6.2)'),
             XsltError.INVALID_AVT: _(
-                "Malformed attribute value template '%(text)s'"),
+                "Malformed attribute value template file=%(baseuri)s, line=%(line)s, column=%(col)s ('%(value)s' '%(msg)s')"),
             XsltError.INVALID_PATTERN: _(
                 'XPattern expression syntax error at line %(line)d, '
                 'column %(column)d: %(text)s'),
@@ -334,7 +334,7 @@ class XsltError(Error):
 
             # xsl:element
             XsltError.UNDEFINED_ATTRIBUTE_SET: _(
-                "Undefined attribute set '%s'"),
+                "Undefined attribute set '%(name)s'"),
 
             # xsl:for-each
             XsltError.INVALID_FOREACH_SELECT: _(
@@ -361,11 +361,11 @@ class XsltError(Error):
             #XsltError.ILLEGAL_PARAM: _('xsl:param elements must be the first children of xsl:template (see XSLT 1.0 sec. 11).'),
             #XsltError.ILLEGAL_PARAM_PARENT: _('Uri: %s line %s col: %s\n   xsl:param can only appear at top level or as the child of an xsl:template (see XSLT 1.0 sec. 11).'),
             XsltError.ILLEGAL_SHADOWING: _('Illegal shadowing of %(variable)s.  An xsl:param or xsl:variable may not shadow another variable not at top level (see XSLT 1.0 sec. 11).'),
-            XsltError.VAR_WITH_CONTENT_AND_SELECT: _('Illegal binding of of %s.  An xsl:param or xsl:variable may not have both a select attribute and non-empty content. (see XSLT 1.0 sec. 11.2).'),
+            XsltError.VAR_WITH_CONTENT_AND_SELECT: _('Illegal binding of of %(name)s.  An xsl:param or xsl:variable may not have both a select attribute and non-empty content. (see XSLT 1.0 sec. 11.2).'),
 
             # xsl:message
             #XsltError.ILLEGAL_MESSAGE_PARENT: _('xsl:message cannot be a top-level element. (see XSLT 1.0 sec. 2.2)'),
-            XsltError.STYLESHEET_REQUESTED_TERMINATION: _('A message instruction in the Stylesheet requested termination of processing:\n%s'),
+            XsltError.STYLESHEET_REQUESTED_TERMINATION: _('A message instruction in the Stylesheet requested termination of processing:\n%(msg)s'),
 
             # xsl:processing-instruction
             XsltError.ILLEGAL_XML_PI: _('A processing instruction cannot be used to output an XML or text declaration. (see XSLT 1.0 sec. 7.3)'),
@@ -482,8 +482,6 @@ class XsltRuntimeError(XsltError, RuntimeError):
         from gettext import gettext as _
         return _("Stylesheet '%s', line %s, column %s, in '%s': %s") % (
             self.uri, self.lineno, self.offset, self.tagname, self.message)
-
-
 
 
 def transform(source, transforms, params=None, output=None):

@@ -1,0 +1,247 @@
+/*
+    Stylesheet for HTML documents produced with
+    Fourthought's sdocbook_html.xslt
+    from Simplified DocBook documents
+*/
+html {
+    background-color: #EEE;
+}
+.article {
+    margin: 2em 1em 2em 1em;
+    background-color: #EEE;
+    color: #000;
+    font-family: sans-serif;
+}
+.header, .toc, .body, .footer {
+    margin-left: 1em;
+    margin-right: 1em;
+}
+.header dl, .header p {
+    margin-left: 1em;
+}
+.header h2 {
+    margin-left: 0.7em;
+}
+.toc dl, .toc p {
+    margin-left: 1em;
+}
+.toc h2 {
+    margin-left: 0.7em;
+}
+.toc h3 {
+    margin-left: 0.7em;
+}
+a:link {
+    color: #00A;
+    background-color: transparent;
+    text-decoration: none;
+}
+a:visited {
+    color: #609;
+    background-color: transparent;
+    text-decoration: none;
+}
+a:active {
+    color: #A00;
+    background-color: transparent;
+    text-decoration: underline;
+}
+a:hover {
+    background-color: #FFA;
+    text-decoration: underline;
+}
+h1, h2, h3, h4, h5, h6 { text-align: left }
+h1, h2, h3 {
+    color: #005A9C;
+    background: transparent;
+}
+h1 { font: 170% sans-serif }
+h2 { font: 140% sans-serif }
+h3 { font: 120% sans-serif }
+h4 { font: bolder 100% sans-serif }
+h5 { font: italic 100% sans-serif }
+h6 { font: small-caps 100% sans-serif }
+p {
+    margin-top: 0.6em;
+    margin-bottom: 0.6em;
+}
+dl, ol, ul {
+    margin-left: 1.5em;
+}
+ol.compact, ul.compact {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+ol.compact p, ul.compact p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+dt, dd {
+    margin-top: 0;
+    margin-bottom: 0;
+} /* opera 3.50 */
+dt {
+    font-weight: bolder
+}
+.article-title {
+    border: solid 1px black;
+    background: #DDD;
+    margin: 0em 0em;
+}
+.article-title .title {
+    margin: 0.5em;
+}
+.section-title {
+    border: solid 1px #888;
+    background: #DDD;
+    margin: 1em 0em;
+}
+.section-title .title {
+    margin: 0em 0.25em;
+}
+.title { }
+.subtitle {
+    font-style: italic;
+    font-size: 83%;
+}
+.section-number {
+  /* float and height are needed to uniformily align the subtitle */
+    float: left;
+    height: 1.5em;
+    color: #886;
+    padding-left: 0.25em;
+    padding-right: 0.5em;
+}
+div.note {
+    background-color: #FFFAF0;
+    border: thin solid black;
+    padding: 1em;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+div.note .label {
+    margin-right: 0.5em;
+    font-weight: bolder;
+    font-family: sans-serif;
+}
+div.figure {
+    border: 1px dotted #CCC;
+    margin-left: 2em;
+    margin-right: 2em;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-bottom: 1em;
+}
+.caption {
+    color: #888;
+    font-style: italic;
+    font-size: 85%;
+}
+/*** monospace type element classes ***/
+tt, pre,
+.programlisting,
+.screen,
+.computeroutput,
+.userinput,
+.literal,
+{
+    font-family: "Bitstream Vera Sans Mono",      /* for *nix platforms */
+                 "Andale Mono", "Lucida Console", /* for Windows */
+                 monospace;                       /* just in case */
+}
+.literallayout {
+    padding: 4px 1em 4px 1em;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+/* programlisting in XML becomes a programlisting div, normally */
+.programlisting {
+    color: #060;
+    background-color: #EEE;
+    border: double 4px #CCC;
+    padding: 4px 1em 4px 1em;
+    margin-left: 1em;
+    margin-right: 1em;
+    font-size: 85%;
+}
+/* programlisting with @role='sample.IO' becomes a screen div */
+.screen {
+    color: #CEC;
+    background-color: #555;
+    border: double 4px #CCC;
+    padding: 4px 1em 4px 1em;
+    margin-left: 1em;
+    margin-right: 1em;
+    font-size: 85%;
+}
+/* pre is used within a programlisting or screen div */
+pre {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: auto;
+}
+.computeroutput {
+    color: #000;
+    background-color: #DDD;
+    font-size: 85%;
+}
+.userinput {
+    color: #800;
+    background-color: #DDC;
+    font-size: 85%;
+    white-space: nowrap;
+}
+.literal {
+    white-space: nowrap;
+}
+/* computeroutput and userinput look different when in a screen div */
+.screen .computeroutput {
+    font-size: 100%;
+    font-weight: normal;
+    color: #BBB;
+    background-color: transparent;
+}
+.screen .userinput {
+    font-size: 100%;
+    font-weight: bolder;
+    color: #FFC;
+    background-color: transparent;
+}
+/* a nifty trick to annotate just the first line of the footnote content */
+dt.footnotemark {
+    float: left;
+}
+sup {
+    color: #888;
+}
+table {
+    background-color: #BBB;
+}
+tr {
+    background-color: #CCC;
+}
+th, .thead {
+    background-color: #BCC;
+    font-family: sans-serif;
+    font-weight: bolder;
+    font-size: 100%;
+    text-align: center;
+}
+td {
+    font-family: sans-serif;
+    font-size: 83%;
+}
+tr.latest {
+    background-color: #CCB;
+}
+tr.stable {
+    background-color: #CCB;
+}
+.news {
+    font-style: italic;
+    background-color: #BBC;
+    color: #111;
+    border: none;
+    padding: 1em;
+}

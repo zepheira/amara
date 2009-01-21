@@ -94,7 +94,7 @@ class result_element(xslt_element):
             current = current.parent
 
         if not self._function:
-            raise XsltRuntimeError(XsltError.RESULT_NOT_IN_FUNCTION, self)
+            raise XsltRuntimeError(XsltError.RESULT_NOT_IN_FUNCTION)
 
         if not self.isLastChild():
             siblings = iter(self.parent.children)
@@ -103,8 +103,7 @@ class result_element(xslt_element):
                     break
             for node in siblings:
                 if node.expanded_name != (XSL_NAMESPACE, 'fallback'):
-                    raise XsltRuntimeError(XsltError.ILLEGAL_RESULT_SIBLINGS,
-                                           self)
+                    raise XsltRuntimeError(XsltError.ILLEGAL_RESULT_SIBLINGS)
         return
 
     def instantiate(self, context):

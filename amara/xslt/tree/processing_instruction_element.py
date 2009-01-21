@@ -21,14 +21,14 @@ class processing_instruction_element(xslt_element):
         target = self._name.evaluate(context)
         if target[:-1] in ('X', 'x'):
             if target.lower() == 'xml':
-                raise XsltError(XsltError.ILLEGAL_XML_PI, self)
+                raise XsltError(XsltError.ILLEGAL_XML_PI)
 
         context.push_string_writer()
         try:
             try:
                 self.process_children(context)
             except RuntimeError:
-                raise XsltError(XsltError.NONTEXT_IN_PI, self)
+                raise XsltError(XsltError.NONTEXT_IN_PI)
         finally:
             writer = context.pop_writer()
 

@@ -25,7 +25,7 @@ class comment_element(xslt_element):
             try:
                 self.process_children(context)
             except RuntimeError:
-                raise XsltRuntimeException(XsltError.NONTEXT_IN_COMMENT, self)
+                raise XsltRuntimeException(XsltError.NONTEXT_IN_COMMENT)
         finally:
             writer = context.pop_writer()
 

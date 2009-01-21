@@ -24,7 +24,7 @@ class attribute_element(xslt_element):
             name = prefix + u':' + name
         elif name == 'xmlns':
             # Section 7.1.3, Paragraph 2
-            raise XsltError(XsltError.BAD_ATTRIBUTE_NAME, self, name)
+            raise XsltError(XsltError.BAD_ATTRIBUTE_NAME, name=name)
 
         # From sec. 7.1.3 of the XSLT spec:
         # 1. if 'namespace' is not present, use ns in scope, based on prefix
@@ -37,7 +37,7 @@ class attribute_element(xslt_element):
                 try:
                     namespace = self.namespaces[prefix]
                 except KeyError:
-                    raise XsltError(XsltError.UNDEFINED_PREFIX, self, prefix)
+                    raise XsltError(XsltError.UNDEFINED_PREFIX, prefix=prefix)
             else:
                 namespace = None
         else:
@@ -48,7 +48,7 @@ class attribute_element(xslt_element):
             try:
                 self.process_children(context)
             except RuntimeError:
-                raise XsltError(XsltError.NONTEXT_IN_ATTRIBUTE, self)
+                raise XsltError(XsltError.NONTEXT_IN_ATTRIBUTE)
         finally:
             writer = context.pop_writer()
         context.attribute(name, writer.get_result(), namespace)

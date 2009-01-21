@@ -3,7 +3,7 @@
 """
 Classes and functions related to IRI/URI processing, validation, resolution, etc.
 
-Copyright 2004-2008 Fourthought, Inc. (USA).
+Copyright 2004-2008 Uche Ogbuji
 Detailed license and copyright information: http://4suite.org/COPYRIGHT
 Project home, documentation, distributions: http://4suite.org/
 """

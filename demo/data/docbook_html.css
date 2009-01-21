@@ -1,0 +1,72 @@
+/*
+    Stylesheet for HTML documents produced with
+    Fourthought's docbook_html.xslt
+    for DocBook v4.4 documents
+*/
+@import url("sdocbook_html.css");
+
+div.caution {
+    background-color: #FFFAF0;
+    border: thin solid black;
+    padding: 1em;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+div.caution .label {
+    margin-right: 0.5em;
+    font-weight: bolder;
+    font-family: sans-serif;
+}
+
+div.important {
+    background-color: #FFFAF0;
+    border: thin solid black;
+    padding: 1em;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+div.important .label {
+    margin-right: 0.5em;
+    font-weight: bolder;
+    font-family: sans-serif;
+}
+
+div.tip {
+    background-color: #FFFAF0;
+    border: thin solid black;
+    padding: 1em;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+div.tip .label {
+    margin-right: 0.5em;
+    font-weight: bolder;
+    font-family: sans-serif;
+}
+
+div.warning {
+    background-color: #FFFAF0;
+    border: thin solid black;
+    padding: 1em;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+div.warning .label {
+    margin-right: 0.5em;
+    font-weight: bolder;
+    font-family: sans-serif;
+}
+
+div.synopsis {
+    font-family: "Bitstream Vera Sans Mono",      /* for *nix platforms */
+                 "Andale Mono", "Lucida Console", /* for Windows */
+                 monospace;                       /* just in case */
+    border: thin solid black;
+    padding: 0.25em;
+    margin-left: 1em;
+    margin-right: 1em;
+}

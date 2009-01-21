@@ -22,7 +22,7 @@ class variable_element(xslt_element):
     def setup(self):
         # check for a bad binding
         if self._select and self.children:
-            raise XsltError(XsltError.VAR_WITH_CONTENT_AND_SELECT, self._name)
+            raise XsltError(XsltError.VAR_WITH_CONTENT_AND_SELECT, name=self._name)
         return
 
     def instantiate(self, context):

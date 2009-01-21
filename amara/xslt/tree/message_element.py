@@ -28,8 +28,7 @@ class message_element(xslt_element):
             writer = context.pop_writer()
         msg = writer.stream.getvalue()
         if self._terminate:
-            raise XsltError(XsltError.STYLESHEET_REQUESTED_TERMINATION,
-                            self, msg)
+            raise XsltError(XsltError.STYLESHEET_REQUESTED_TERMINATION, msg=msg)
         else:
             context.message(msg)
         return

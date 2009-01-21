@@ -36,7 +36,7 @@ class element_element(xslt_element):
             try:
                 namespace = self.namespaces[prefix]
             except KeyError:
-                raise XsltError(XsltError.UNDEFINED_PREFIX, self, prefix)
+                raise XsltError(XsltError.UNDEFINED_PREFIX, prefix=prefix)
         else:
             namespace = self._namespace.evaluate_as_string(context) or None
 
@@ -47,8 +47,8 @@ class element_element(xslt_element):
                 try:
                     attribute_set = attribute_sets[set_name]
                 except KeyError:
-                    raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET, self,
-                                    set_name)
+                    raise XsltError(XsltError.UNDEFINED_ATTRIBUTE_SET,
+                                    name=set_name)
                 attribute_set.instantiate(context)
         self.process_children(context)
         context.end_element(name, namespace)
