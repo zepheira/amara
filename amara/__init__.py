@@ -307,6 +307,10 @@ def launch(*args, **kwargs):
 
 import sys, getopt
 
+help_message = '''
+Amara 2.x.  Command line support for basic parsing.
+'''
+
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg

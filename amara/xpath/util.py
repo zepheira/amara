@@ -43,7 +43,7 @@ def simple_evaluate(expr, node, prefixes=None):
     try:
         prefixes_out = dict([(prefix, ns) for (prefix, ns) in node.xml_namespaces.iteritems()])
     except AttributeError:
-        prefixes_out = top_namespaces(node)
+        prefixes_out = top_namespaces(node.xml_root)
     if prefixes:
         prefixes_out.update(prefixes)
     ctx = context(node, 0, 0, namespaces=prefixes_out)

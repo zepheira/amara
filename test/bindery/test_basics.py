@@ -12,6 +12,18 @@ MONTY_XML = """<monty>
   <python ministry="abuse">But I was looking for argument</python>
 </monty>"""
 
+SILLY_XML = """<parent>
+  <element name="a">A</element>
+  <element name="b">B</element>
+</parent>"""
+
+SILLY_NS_XML = """<a:parent xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b">
+  <b:sillywrap>
+    <a:element name="a">A</a:element>
+    <a:element name="b">B</a:element>
+  </b:sillywrap>
+</a:parent>"""
+
 NS_XML = """<doc xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b">
   <a:monty/>
   <b:python/>
@@ -67,6 +79,16 @@ class Test_parse_functions_1(unittest.TestCase):
         fout.close()
         doc = parse(fname)
         self.run_checks(doc)
+
+    def test_attribute_series(self):
+        """Iterate over attributes with the same name on elements with the same name"""
+        doc = parse(SILLY_XML)
+        self.assertEqual(';'.join([ e.name for e in doc.parent.element ]), u'a;b')
+        
+    def test_attribute_series(self):
+        """Iterate over attributes with the same name on elements with the same name"""
+        doc = parse(SILLY_NS_XML)
+        self.assertEqual(';'.join([ e.name for e in doc.parent.sillywrap.element ]), u'a;b')
         
 
 class Test_parse_functions_2(unittest.TestCase):

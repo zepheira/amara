@@ -532,6 +532,10 @@ def launch(*args, **kwargs):
     return
 
 
+help_message = '''
+Amara 2.x.  Command line support for XSLT processing.
+'''
+
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg

@@ -425,10 +425,12 @@ class element_base(container_mixin, tree.element):
         return unicode(self).encode(self.factory_entity.xml_encoding)
 
     def __iter__(self):
-        return element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)
+        return element_iterator(self.xml_parent, self.xml_namespace, self.xml_local)
 
     def __len__(self):
-        return len(list(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname)))
+        i = 0
+        for e in element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname): i += 1
+        return i
 
 
 #This class also serves as the factory for specializing the core Amara tree parse
