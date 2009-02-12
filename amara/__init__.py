@@ -297,52 +297,70 @@ def writer(stream=sys.stdout, **kwargs):
     return writer_class(oparams, stream)
 
 
-def launch(*args, **kwargs):
-    source = args[0]
+def launch(source, **kwargs):
     doc = parse(source)
     from amara import xml_print
     xml_print(doc, indent=kwargs.get('pretty'))
     return
 
 
-import sys, getopt
+#Ideas borrowed from
+# http://www.artima.com/forums/flat.jsp?forum=106&thread=4829
 
-help_message = '''
-Amara 2.x.  Command line support for basic parsing.
-'''
+#FIXME: A lot of this is copied boilerplate that neds to be cleaned up
 
-class Usage(Exception):
-    def __init__(self, msg):
-        self.msg = msg
+def command_line_prep():
+    from optparse import OptionParser
+    usage = "Amara 2.x.  Command line support for basic parsing.\n"
+    usage += "python -m 'amara' [options] source cmd"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-p", "--pretty",
+                      action="store_true", dest="pretty", default=False,
+                      help="Pretty-print the XML output")
+    return parser
 
 
 def main(argv=None):
+    #But with better integration of entry points
     if argv is None:
         argv = sys.argv
+    # By default, optparse usage errors are terminated by SystemExit
     try:
+        optparser = command_line_prep()
+        options, args = optparser.parse_args(argv[1:])
+        # Process mandatory arguments with IndexError try...except blocks
         try:
-            opts, args = getopt.getopt(argv[1:], "hpv", ["help", "pretty"])
-        except getopt.error, msg:
-            raise Usage(msg)
-    
-        # option processing
-        kwargs = {'pretty': False}
-        for option, value in opts:
-            if option == "-v":
-                verbose = True
-            if option in ("-h", "--help"):
-                raise Usage(help_message)
-            if option in ("-p", "--pretty"):
-                kwargs['pretty'] = True
-    
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "\t for help use --help"
-        return 2
+            source = args[0]
+        except IndexError:
+            optparser.error("Missing source for XML")
+        #try:
+        #    xpattern = args[1]
+        #except IndexError:
+        #    optparser.error("Missing main xpattern")
+    except SystemExit, status:
+        return status
 
-    launch(*args, **kwargs)
+    # Perform additional setup work here before dispatching to run()
+    # Detectable errors encountered here should be handled and a status
+    # code of 1 should be returned. Note, this would be the default code
+    # for a SystemExit exception with a string message.
+
+    #try:
+    #    xpath = args[2].decode('utf-8')
+    #except IndexError:
+    #    xpath = None
+    #xpattern = xpattern.decode('utf-8')
+    #sentinel = options.sentinel and options.sentinel.decode('utf-8')
+    pretty = options.pretty
+    if source == '-':
+        source = sys.stdin
+    #if options.test:
+    #    test()
+    #else:
+    launch(source, pretty=pretty)
+    return
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv))
 

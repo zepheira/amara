@@ -30,6 +30,8 @@ def element_subtree_iter(node, include_root=False):
 def top_namespaces(doc):
     '''
     Return a namespace mapping for an entity node derived from its children
+
+    It is not safe to pass this function anything besides an entity node
     '''
     elems = [ dict([(prefix, ns) for (prefix, ns) in e.xml_namespaces.iteritems()])
                                  for e in doc.xml_children if hasattr(e, 'xml_namespaces') ]

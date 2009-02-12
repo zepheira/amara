@@ -69,6 +69,9 @@ ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
 
 MODEL = examplotron_model(ATOM_MODEL)
 
+import sys; sys.exit()
+
+
 SLUGCHARS = r'a-zA-Z0-9\-\_'
 OMIT_FROM_SLUG_PAT = re.compile('[^%s]'%SLUGCHARS)
 
