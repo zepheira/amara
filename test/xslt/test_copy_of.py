@@ -32,7 +32,7 @@ class test_copy_of_2(xslt_test):
 </xsl:template>
 
 </xsl:stylesheet>
-""")
+""", external=True)
     expected = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" height="10cm" width="10cm" contentStyleType="text/css" preserveAspectRatio="xMidYMid meet" zoomAndPan="magnify" viewBox="0 0 800 800" contentScriptType="text/ecmascript">
   <desc content="structured text">SVG Sample for SunWorld Article</desc>

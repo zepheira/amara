@@ -1,7 +1,8 @@
 ########################################################################
-# test/xslt/test_elem_attr.py
+# test/xslt/test_apply_templates.py
 from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
+from amara.xslt import XsltError
 
 class test_apply_templates_1(xslt_test):
     """`xsl:apply-templates`"""
@@ -208,6 +209,57 @@ class test_apply_templates_9(test_apply_templates_1):
 """)
     expected = """<?xml version="1.0"?>
 <docelem>""" + "1a"*5 + "1c"*5 + "</docelem>"
+
+
+class test_apply_templates_error_1(xslt_error):
+    """xsl:apply-templates with invalid select expression"""
+    error_class = TypeError
+    source = stringsource("""<?xml version="1.0"?><foo/>""")
+    transform = stringsource("""<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="xml" indent="no"/>
+
+  <xsl:template match="/">
+    <xsl:variable name="fragment">
+      <foo>hello</foo>
+      <foo>world</foo>
+    </xsl:variable>
+    <!-- should produce a fatal error in XSLT 1.0 -->
+    <xsl:apply-templates select="$fragment" mode="foo"/>
+  </xsl:template>
+
+  <xsl:template match="/" mode="foo">
+    <result>
+      <xsl:apply-templates mode="foo"/>
+    </result>
+  </xsl:template>
+
+  <xsl:template match="foo" mode="foo">
+    <bar>
+      <xsl:value-of select="."/>
+    </bar>
+  </xsl:template>
+
+</xsl:stylesheet>
+""")
+
+
+class test_apply_templates_error_2(xslt_error):
+    """xsl:apply-templates with invalid select expression"""
+    error_class = TypeError
+    source = stringsource("""<?xml version="1.0"?><foo/>""")
+    transform = stringsource("""<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="xml" indent="no"/>
+
+  <xsl:template match="/">
+    <xsl:apply-templates select="'why is a string here?'"/>
+  </xsl:template>
+
+</xsl:stylesheet>
+""")
 
 
 if __name__ == '__main__':

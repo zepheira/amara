@@ -1,5 +1,5 @@
 ########################################################################
-# test/xslt/test_elem_attr.py
+# test/xslt/test_attribute.py
 from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.writers import xmlwriter
