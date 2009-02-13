@@ -52,14 +52,17 @@ class testsource(object):
     Encapsulates an inputsource given as a string or URI, so that it can be
     referenced in various ways. Used by XsltTest().
     """
-    def __init__(self, source, uri=None, validate=False, xinclude=True):
+    __slots__ = ('source', 'uri', 'validate', 'xinclude', 'external')
+    def __init__(self, source, uri=None, validate=False, xinclude=True,
+                 external=False):
         self.source = source
         self.uri = uri
         self.validate = validate
         self.xinclude = xinclude
+        self.external = external
 
 class filesource(testsource):
-    def __init__(self, path, validate=False, xinclude=True):
+    def __init__(self, path, validate=False, xinclude=True, external=False):
         # Same logic that exists in _4xslt.py
         # The processor only deals with URIs, not file paths
         if not os.path.isabs(path):
@@ -68,16 +71,18 @@ class filesource(testsource):
             module = sys.modules[module]
             moduledir = os.path.dirname(os.path.abspath(module.__file__))
             path = os.path.join(moduledir, path)
+            assert os.path.exists(path)
         testsource.__init__(self, path, None, validate, xinclude)
 
 class stringsource(testsource):
-    def __init__(self, arg, uri=None, validate=False, xinclude=True):
+    def __init__(self, source, uri=None, validate=False, xinclude=True,
+                 external=False):
         if not uri:
             # it is relative to the calling module
             module = sys._getframe(1).f_globals['__name__']
             module = sys.modules[module]
             uri = iri.os_path_to_uri(module.__file__)
-        testsource.__init__(self, arg, uri, validate, xinclude)
+        testsource.__init__(self, source, uri, validate, xinclude)
 
 
 from amara.test import test_case, TestError
@@ -96,11 +101,12 @@ class xslt_test(test_case):
                 cls.transform = tuple(transform)
 
     def _format_error(self, error_class, error_code):
-        if issubclass(error_class, Error):
-            for name, value in error_class.__dict__.iteritems():
-                if value == error_code:
-                    error_code = error_class.__name__ + '.' + name
-                    break
+        if not issubclass(error_class, Error):
+            return error_class.__name__
+        for name, value in error_class.__dict__.iteritems():
+            if value == error_code:
+                error_code = error_class.__name__ + '.' + name
+                break
         return '%s(%s)' % (error_class.__name__, error_code)
 
     def setUp(self):
@@ -155,15 +161,18 @@ class xslt_error(xslt_test):
     class __metaclass__(xslt_test.__metaclass__):
         def __init__(cls, name, bases, namespace):
             xslt_test.__metaclass__.__init__(cls, name, bases, namespace)
-            if cls.error_code is None and 'error_code' not in namespace:
-                raise ValueError("class '%s' must define 'error_code'" % name)
+            if (issubclass(cls.error_class, Error) and
+                cls.error_code is None and 'error_code' not in namespace):
+                raise ValueError("class '%s' must define 'error_code'" %
+                                 name)
 
     def test_processor(self):
         try:
             xslt_test.test_processor(self)
         except self.error_class, error:
             expected = self._format_error(self.error_class, self.error_code)
-            compared = self._format_error(self.error_class, error.code)
+            compared = self._format_error(self.error_class,
+                                          getattr(error, 'code', None))
             self.assertEquals(expected, compared)
         else:
             expected = self._format_error(self.error_class, self.error_code)
