@@ -67,7 +67,23 @@ ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
 
 </feed>'''
 
+ENTRY_MODEL = '''<atom:entry ak:rel="local-name()" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+   <atom:title ak:rel="local-name()" ak:value="."></atom:title>
+   <atom:id ak:rel="local-name()" ak:value="."></atom:id>
+   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
+   <atom:summary type="text" ak:rel="local-name()" ak:value="."></atom:summary>
+   <atom:author eg:occurs="*" ak:resource="(atom:uri|atom:email)[1]" ak:rel="local-name()">
+     <atom:name ak:rel="local-name()" ak:value="."></atom:name>
+     <atom:uri ak:rel="local-name()" ak:value="."></atom:uri>
+     <atom:email ak:rel="local-name()" ak:value="."></atom:email>
+   </atom:author>
+   <atom:content type="text" xml:lang="en" ak:rel="local-name()" ak:value="." />
+</atom:entry>
+'''
+
 MODEL = examplotron_model(ATOM_MODEL)
+MODEL = examplotron_model(ENTRY_MODEL)
 
 import sys; sys.exit()
 

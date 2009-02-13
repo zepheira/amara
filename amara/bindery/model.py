@@ -247,7 +247,7 @@ class examplotron_model(document_model):
         Process an examplotron document for constraints
         '''
         NSS = {u'ak': u'http://purl.org/dc/org/xml3k/akara'}
-        parent = parent or self.model_document
+        parent = parent if parent is not None else self.model_document
         allowed_elements_test = []
         for e in parent.xml_elements:
             #Constraint info
@@ -274,6 +274,7 @@ class examplotron_model(document_model):
             #print e.xml_name, (e.xml_model.metadata_resource_expr, e.xml_model.metadata_rel_expr, e.xml_model.metadata_value_expr)
             
             #Recurse to process children
+            print repr(e)
             self.setup_model(e)
 
         if allowed_elements_test:
