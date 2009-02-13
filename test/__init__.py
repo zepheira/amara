@@ -370,6 +370,15 @@ class test_case(unittest.TestCase):
         finally:
             result.stopTest(self)
 
+    def assertIsInstance(self, obj, cls):
+        if isinstance(cls, tuple):
+            expected = ' or '.join(cls.__name__ for cls in cls)
+        else:
+            expected = cls.__name__
+        msg = "expected %s, not %s" % (expected, type(obj).__name__)
+        self.assertTrue(isinstance(obj, cls), msg)
+
+
 class test_loader(unittest.TestLoader):
     """
     Extends `unittest.TestLoader` to support defining TestCases as members
