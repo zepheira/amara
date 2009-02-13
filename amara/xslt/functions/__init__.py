@@ -4,6 +4,8 @@
 XSLT expression nodes that evaluate function calls.
 """
 
+from cStringIO import StringIO
+
 import amara
 from amara.lib import iri
 from amara.lib.xmlstring import isqname
@@ -38,26 +40,33 @@ class document_function(builtin_function):
                 raise XsltRuntimeError(XsltError.DOC_FUNC_EMPTY_NODESET,
                                        context.instruction)
         arg0 = arg0.evaluate(context)
-        documents = {}
         if isinstance(arg0, datatypes.nodeset):
+            uris = set()
             for node in arg0:
                 uri = datatypes.string(node)
                 if arg1 is None:
                     base_uri = node.xml_base
                 assert base_uri or iri.is_absolute(uri)
-            documents[iri.DEFAULT_RESOLVER.normalize(uri, base_uri)] = None
+                uris.add(iri.DEFAULT_RESOLVER.normalize(uri, base_uri))
         else:
             uri = datatypes.string(arg0)
             assert base_uri or iri.is_absolute(uri)
-            documents[iri.DEFAULT_RESOLVER.normalize(uri, base_uri)] = None
+            uris = [iri.DEFAULT_RESOLVER.normalize(uri, base_uri)]
 
-        for uri in documents:
-            if uri not in context.documents:
-                doc = amara.parse(uri)
+        documents = context.documents
+        sources = context.transform.root.sources
+        result = []
+        for uri in uris:
+            if uri in documents:
+                doc = documents[uri]
             else:
-                doc = context.documents[uri]
-            documents[uri] = doc
-        return datatypes.nodeset(documents.values())
+                if uri in sources:
+                    doc = amara.parse(StringIO(sources[uri]), uri)
+                else:
+                    doc = amara.parse(uri)
+                documents[uri] = doc
+            result.append(doc)
+        return datatypes.nodeset(result)
     evaluate = evaluate_as_nodeset
 
 
