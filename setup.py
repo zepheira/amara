@@ -251,6 +251,7 @@ setup(name='Amara',
                 # Test support; would be possible to break out into separate
                 # package at some point.
                 'amara.test',
+                'amara.test.xpath',
                 'amara.test.xslt',
                 ],
       package_dir={'amara.test': 'test'},
