@@ -12,8 +12,11 @@ class apply_imports_element(xslt_element):
     attribute_types = {}
 
     def instantiate(self, context):
-        if not context.template:
+        try:
+            precedence = context.template.import_precedence
+        except AttributeError:
+            assert context.template is None
             raise XsltError(XsltError.APPLYIMPORTS_WITH_NULL_CURRENT_TEMPLATE,
                             self)
-        context.transform.apply_templates(context, {}, self.import_precedence)
+        context.transform.apply_imports(context, precedence)
         return

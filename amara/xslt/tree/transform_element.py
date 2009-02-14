@@ -375,8 +375,8 @@ class transform_element(xslt_element):
                         priority = node_test.priority
                     else:
                         priority = template_priority
-                    info = ((precedence, template_priority, position),
-                            node_test, axis_type, element)
+                    sort_key = (precedence, template_priority, position)
+                    info = (sort_key, node_test, axis_type, element)
                     # Add the template rule to the dispatch table
                     type_key = node_type.xml_typecode
                     if type_key == tree.element.xml_typecode:
@@ -519,8 +519,52 @@ class transform_element(xslt_element):
 
     ############################ Runtime Routines ############################
 
-    def apply_templates(self, context, nodes, mode=None, params=None,
-                        precedence=None):
+    def apply_imports(self, context, precedence):
+        node, mode = context.node, context.mode
+        # Get the possible template rules for `node`
+        type_key = node.xml_typecode
+        if mode in self.match_templates:
+            type_table = self.match_templates[mode]
+            if type_key in type_table:
+                if type_key == tree.element.xml_typecode:
+                    element_table = type_table[type_key]
+                    name = node.xml_name
+                    if name in element_table:
+                        template_rules = element_table[name]
+                    else:
+                        template_rules = element_table[None]
+                else:
+                    template_rules = type_table[type_key]
+            else:
+                template_rules = type_table[tree.node.xml_typecode]
+        else:
+            template_rules = ()
+
+        first_template = locations = None
+        for sort_key, pattern, axis_type, template in template_rules:
+            # Filter out those patterns with a higher import precedence than
+            # what was specified.
+            if sort_key[0] < precedence:
+                context.namespaces = template.namespaces
+                if pattern.match(context, node, axis_type):
+                    # Make sure the template starts with a clean slate
+                    state = context.template, context.variables
+                    context.template = template
+                    context.variables = context.global_variables
+                    try:
+                        template.instantiate(context)
+                    finally:
+                        context.template, context.variables = state
+                    break
+        else:
+            # Nothing matched, use builtin templates
+            if isinstance(node, (tree.element, tree.entity)):
+                self.apply_templates(context, node.xml_children)
+            elif isinstance(node, (tree.text, tree.attribute)):
+                context.text(node.xml_value)
+        return
+
+    def apply_templates(self, context, nodes, mode=None, params=None):
         """
         Intended to be used by XSLT instruction implementations only.
 
@@ -566,12 +610,6 @@ class transform_element(xslt_element):
                     template_rules = type_table[tree.node.xml_typecode]
             else:
                 template_rules = ()
-
-            # If this is called from apply-imports, filter out those patterns
-            # with a higher import precedence than what was specified.
-            if precedence:
-                template_rules = ( rule for rule in template_rules
-                                   if rule[0][0] < precedence )
 
             first_template = locations = None
             for sort_key, pattern, axis_type, template in template_rules:

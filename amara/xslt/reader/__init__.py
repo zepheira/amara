@@ -284,7 +284,7 @@ class stylesheet_reader(object):
                 # because it may have contained imports thus increasing its
                 # import precedence.
                 self._import_index += 1
-                stylesheet.importIndex = self._import_index
+                stylesheet.import_precedence = self._import_index
 
                 # Merge the top-level elements into the "master" stylesheet
                 stylesheet._merge(self._stylesheet)
@@ -405,7 +405,7 @@ class stylesheet_reader(object):
         instance.baseUri = self._locator.getSystemId()
         instance.lineNumber = self._locator.getLineNumber()
         instance.columnNumber = self._locator.getColumnNumber()
-        instance.importIndex = self._import_index
+        instance.import_precedence = self._import_index
 
         if xsl_class: # -- XSLT element --------------------------------
             # Handle attributes in the null-namespace
@@ -688,7 +688,7 @@ class stylesheet_reader(object):
         self._import_index += is_import
         # Always update the precedence as the included stylesheet may have
         # contained imports thus increasing the import precedence.
-        self._stylesheet.importIndex = self._import_index
+        self._stylesheet.import_precedence = self._import_index
         return
 
 
