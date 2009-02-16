@@ -3,6 +3,7 @@
 import os
 import gc
 import sys
+import uuid
 import difflib
 
 from amara import Error
@@ -46,7 +47,6 @@ class _mapping_resolver(iri.default_resolver):
 def get_mapping_factory():
     return
 
-
 class testsource(object):
     """
     Encapsulates an inputsource given as a string or URI, so that it can be
@@ -81,7 +81,9 @@ class stringsource(testsource):
             # it is relative to the calling module
             module = sys._getframe(1).f_globals['__name__']
             module = sys.modules[module]
-            uri = iri.os_path_to_uri(module.__file__)
+            moduledir = os.path.dirname(os.path.abspath(module.__file__))
+            path = str(uuid.uuid4())
+            uri = iri.os_path_to_uri(os.path.join(moduledir, path))
         testsource.__init__(self, source, uri, validate, xinclude)
 
 

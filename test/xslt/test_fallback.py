@@ -9,15 +9,17 @@ class test_fallback_1(xslt_test):
     source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-
-<xsl:template match="foo">
-  <xsl:copy/>
-</xsl:template>
-
+  <xsl:output method="xml" indent="yes"/>
+  <greeting xsl:version="3.0">hello</greeting>
+  <xsl:template match="/">
+    <result>
+      <xsl:value-of select="document('')/*/greeting"/>
+    </result>
+  </xsl:template>
 </xsl:stylesheet>
 """)
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<foo/>"""
+    expected = """<?xml version="1.0"?>
+<result>hello</result>"""
 
 
 class test_fallback_2(test_fallback_1):
@@ -31,7 +33,9 @@ class test_fallback_2(test_fallback_1):
   <xsl:output method="xml" indent="yes"/>
   <greeting>hello</greeting>
   <xsl:template match="/">
-    <result><xsl:value-of select="document('')/*/greeting"/></result>
+    <result>
+      <xsl:value-of select="document('')/*/greeting"/>
+    </result>
   </xsl:template>
 </xsl:stylesheet>
 """)

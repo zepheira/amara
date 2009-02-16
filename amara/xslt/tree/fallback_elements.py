@@ -26,8 +26,8 @@ class _undefined_element(xslt_element):
     _error_code = XsltError.INTERNAL_ERROR
 
     def setup(self):
-        self._fallback = [ isinstance(child, fallback_element)
-                           for child in self.children ]
+        self._fallback = [ child for child in self.children
+                           if isinstance(child, fallback_element) ]
 
     def instantiate(self, context):
         context.instruction = self
