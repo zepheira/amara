@@ -400,12 +400,13 @@ class test_loader(unittest.TestLoader):
     def loadTestsFromModule(self, module):
         suites, cases = [], []
         for name, obj in vars(module).iteritems():
-            if isinstance(obj, (type, types.ClassType)):
-                if not hasattr(sys.modules[obj.__module__], '__unittest'):
-                    if issubclass(obj, unittest.TestSuite):
-                        suites.append(obj)
-                    elif issubclass(obj, unittest.TestCase):
-                        cases.append(obj)
+            if (isinstance(obj, (type, types.ClassType))
+                and '__unittest__' not in obj.__dict__
+                and '__unittest' not in sys.modules[obj.__module__].__dict__):
+                if issubclass(obj, unittest.TestSuite):
+                    suites.append(obj)
+                elif issubclass(obj, unittest.TestCase):
+                    cases.append(obj)
         tests = []
         for suite in sorted(suites, key=operator.attrgetter('__name__')):
             tests.append(self.loadTestsFromTestSuite(suite))

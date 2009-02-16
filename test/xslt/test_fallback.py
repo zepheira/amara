@@ -4,9 +4,13 @@ from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
-class test_fallback_1(xslt_test):
-    """1.0 stylesheet with non-1.0 top-level element"""
+class fallback_test(xslt_test):
+    __unittest__ = True
     source = stringsource("""<?xml version="1.0"?><dummy/>""")
+
+
+class test_fallback_1(fallback_test):
+    """1.0 stylesheet with non-1.0 top-level element"""
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -22,7 +26,7 @@ class test_fallback_1(xslt_test):
 <result>hello</result>"""
 
 
-class test_fallback_2(test_fallback_1):
+class test_fallback_2(fallback_test):
     """3.0 stylesheet with 3.0 top-level element"""
     # stylesheet version 3.0
     # top-level literal result element w/no version, in no namespace
@@ -43,7 +47,7 @@ class test_fallback_2(test_fallback_1):
 <result>hello</result>"""
 
 
-class test_fallback_3(test_fallback_1):
+class test_fallback_3(fallback_test):
     """forwards-compatible example from XSLT 1.0 specification"""
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -77,7 +81,7 @@ class test_fallback_3(test_fallback_1):
 </html>"""
 
 
-class test_fallback_4(test_fallback_1):
+class test_fallback_4(fallback_test):
     """1.0 literal result element with fallback"""
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -97,7 +101,7 @@ class test_fallback_4(test_fallback_1):
 <result/>"""
 
 
-class test_fallback_5(test_fallback_1):
+class test_fallback_5(fallback_test):
     """uninstantiated non-1.0 literal result element"""
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -123,7 +127,7 @@ class test_fallback_5(test_fallback_1):
 <result>hello world</result>"""
 
 
-class test_fallback_6(test_fallback_1):
+class test_fallback_6(fallback_test):
     """non-1.0 literal result element with fallback"""
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -143,10 +147,15 @@ class test_fallback_6(test_fallback_1):
 <result>Sorry, we don't do magic</result>"""
 
 
-class test_fallback_error_1(xslt_error):
+
+class fallback_error(xslt_error):
+    __unittest__ = True
+    source = stringsource("""<?xml version="1.0"?><dummy/>""")
+
+
+class test_fallback_error_1(fallback_error):
     """1.0 stylesheet with implicit 1.0 illegal top-level element"""
     error_code = XsltError.ILLEGAL_ELEMENT_CHILD
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
     # stylesheet version 1.0
     # top-level literal result element with no version info, in no namespace
     # (should raise an exception per XSLT 1.0 sec. 2.2)
@@ -162,7 +171,7 @@ class test_fallback_error_1(xslt_error):
 """)
 
 
-class test_fallback_error_2(test_fallback_error_1):
+class test_fallback_error_2(fallback_error):
     """1.0 stylesheet with explicit 1.0 illegal top-level element"""
     error_code = XsltError.ILLEGAL_ELEMENT_CHILD
     # stylesheet version 1.0
@@ -181,7 +190,7 @@ class test_fallback_error_2(test_fallback_error_1):
 """)
 
 
-class test_fallback_error_3(test_fallback_error_1):
+class test_fallback_error_3(fallback_error):
     """3.0 stylesheet with explicit 1.0 illegal top-level element"""
     error_code = XsltError.ILLEGAL_ELEMENT_CHILD
     # stylesheet version 3.0
@@ -200,7 +209,7 @@ class test_fallback_error_3(test_fallback_error_1):
 """)
 
 
-class test_fallback_error_4(test_fallback_error_1):
+class test_fallback_error_4(fallback_error):
     """non-1.0 literal result element without fallback"""
     error_code = XsltError.FWD_COMPAT_WITHOUT_FALLBACK
     transform = stringsource("""<?xml version="1.0"?>

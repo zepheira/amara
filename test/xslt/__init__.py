@@ -163,8 +163,10 @@ class xslt_error(xslt_test):
     class __metaclass__(xslt_test.__metaclass__):
         def __init__(cls, name, bases, namespace):
             xslt_test.__metaclass__.__init__(cls, name, bases, namespace)
-            if (issubclass(cls.error_class, Error) and
-                cls.error_code is None and 'error_code' not in namespace):
+            if (issubclass(cls.error_class, Error)
+                and cls.error_code is None
+                and 'error_code' not in namespace
+                and '__unittest__' not in namespace):
                 raise ValueError("class '%s' must define 'error_code'" %
                                  name)
 
