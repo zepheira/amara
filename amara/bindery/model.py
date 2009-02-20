@@ -175,7 +175,7 @@ class content_model:
                 new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
             if elem.xml_model.metadata_rel_expr:
                 rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
-                if self.metadata_value_expr:
+                if elem.xml_model.metadata_value_expr:
                     val = datatypes.string(elem.xml_select(elem.xml_model.metadata_value_expr))
                 elif new_resource is not None:
                     val = new_resource
@@ -265,8 +265,12 @@ class examplotron_model(document_model):
 
             #Metadata extraction cues
             #FIXME: Compile these XPath expressions
-            rattr = e.xml_select(u'string(@ak:resource)', NSS)
-            if rattr: e.xml_model.metadata_resource_expr = rattr
+            rattr = e.xml_select(u'@ak:resource', NSS)
+            if rattr:
+                #ak:resource="" should default to a generated ID
+                e.xml_model.metadata_resource_expr = rattr[0].xml_value or u'generate-id()'
+            #rattr = e.xml_select(u'string(@ak:resource)', NSS)
+            #if rattr: e.xml_model.metadata_resource_expr = rattr
             relattr = e.xml_select(u'string(@ak:rel)', NSS)
             if relattr: e.xml_model.metadata_rel_expr = relattr
             valattr = e.xml_select(u'string(@ak:value)', NSS)
@@ -274,7 +278,6 @@ class examplotron_model(document_model):
             #print e.xml_name, (e.xml_model.metadata_resource_expr, e.xml_model.metadata_rel_expr, e.xml_model.metadata_value_expr)
             
             #Recurse to process children
-            print repr(e)
             self.setup_model(e)
 
         if allowed_elements_test:

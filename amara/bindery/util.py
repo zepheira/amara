@@ -93,10 +93,8 @@ class dispatcher(object):
                 if (callable(test) and test(self, node)) or self.check_xpath(test, node):
                     for chunk in handler(node): yield chunk
                     return
-        else:
-            yield unicode(node.xml_select(u'string(.)'))
 
-    @node_handler(u'*', DEFAULTY_PRIORITY)
+    @node_handler(u'node()', DEFAULTY_PRIORITY)
     def default_node(self, node):
         if isinstance(node, tree.element):
             #print 'default_element'
