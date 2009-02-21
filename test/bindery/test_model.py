@@ -25,7 +25,7 @@ MODEL_A = '''<?xml version="1.0" encoding="utf-8"?>
     <opus year="1932" ak:rel="name()" ak:resource="">
       <title ak:rel="name()">The Wasteland</title>
     </opus>
-    <tag eg:occurs="*">old possum</tag>
+    <tag eg:occurs="*" ak:rel="name()">old possum</tag>
   </label>
 </labels>
 '''
@@ -89,10 +89,15 @@ class Test_parse_model_a(unittest.TestCase):
          (u'tse', u'place', u'Stamford,CT'),
          (u'tse', u'opus', u'r2e0e3e5'),
          (u'r2e0e3e5', u'title', u'The Wasteland'),
+         (u'tse', u'tag', u'old possum'),
+         (u'tse', u'tag', u'poet'),
          (u'lh', u'place', u'Harlem,NY'),
+         (u'lh', u'tag', u'poet'),
          (u'co', u'place', u'Idoto,Anambra'),
          (u'co', u'opus', u'r2e0e7e5'),
-         (u'r2e0e7e5', u'title', u"Heaven's Gate")]
+         (u'r2e0e7e5', u'title', u"Heaven's Gate"),
+         (u'co', u'tag', u'biafra'),
+         (u'co', u'tag', u'poet')]
         
         self.assertEqual(metadata, EXPECTED_MD)
         #import pprint; pprint.pprint(metadata)

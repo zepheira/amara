@@ -162,6 +162,7 @@ class container_mixin(object):
     def xml_get_model(self): return self.xml_model_
     def xml_set_model(self, model):
         self.__class__.xml_model_ = model
+        #FIXME: why not self.xml_root ?
         model.entities.add(self.xml_select(u'/')[0])
         return
     xml_model = property(xml_get_model, xml_set_model, "XML model")
@@ -171,6 +172,12 @@ class container_mixin(object):
         for e in subtree:
             e.xml_model.validate(e)
         return
+
+    def xml_avt(self, expr, prefixes=None):
+        from amara.xslt.expressions import avt
+        from amara.xpath import context
+        v = avt.avt_expression(expr)
+        return unicode(v.evaluate(context(self, namespaces=prefixes)))
 
     @property
     def xml_element_pnames(self):
