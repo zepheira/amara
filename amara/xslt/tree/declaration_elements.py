@@ -127,7 +127,7 @@ class attribute_set_element(xslt_element):
         'use-attribute-sets': attribute_types.qnames(),
         }
 
-    def instantiate(self, context):
+    def instantiate(self, context, used=None):
         if used is None:
             used = []
 
