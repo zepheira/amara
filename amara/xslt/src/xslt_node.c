@@ -463,9 +463,9 @@ PyTypeObject XsltNode_Type = {
   /* tp_descr_set      */ (descrsetfunc) 0,
   /* tp_dictoffset     */ 0,
   /* tp_init           */ (initproc) node_init,
-  /* tp_alloc          */ (allocfunc) PyType_GenericAlloc,
+  /* tp_alloc          */ (allocfunc) 0,
   /* tp_new            */ (newfunc) node_new,
-  /* tp_free           */ PyObject_GC_Del,
+  /* tp_free           */ 0,
 };
 
 
