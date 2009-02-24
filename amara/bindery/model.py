@@ -233,6 +233,8 @@ class document_model(object):
         #raise NotImplementedErr
 
 
+AKARA_NS = u'http://purl.org/dc/org/xml3k/akara'
+
 class examplotron_model(document_model):
     '''
     XML model information and metadata extraction cues from an examplotron document
@@ -246,7 +248,7 @@ class examplotron_model(document_model):
         '''
         Process an examplotron document for constraints
         '''
-        NSS = {u'ak': u'http://purl.org/dc/org/xml3k/akara'}
+        NSS = {u'ak': AKARA_NS}
         parent = parent if parent is not None else self.model_document
         allowed_elements_test = []
         for e in parent.xml_elements:

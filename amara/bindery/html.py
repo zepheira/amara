@@ -50,7 +50,7 @@ class node(html5lib.treebuilders._base.Node):
     def hasContent(self):
         """Return true if the node has children or text, false otherwise
         """
-        return bool(list(xml_children))
+        return bool(list(self.xml_children))
 
 
 class element(nodes.element_base, node):

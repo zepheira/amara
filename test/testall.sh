@@ -1,7 +1,8 @@
 #!/bin/sh
-EXCLUSIONS="\
 #./bindery/test_basics.py \
 #./tree/test_gc.py \
+EXCLUSIONS="\
+./bindery/test_performance.py \
 "
 
 echo $EXCLUSIONS
