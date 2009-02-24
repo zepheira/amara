@@ -136,10 +136,10 @@ class xmlwriter(streamwriter):
         order of the calls
         """
         if not self._element_name:
-            if self._in_first_element:
-                raise WriterError(WriterError.ATTRIBUTE_ADDED_TOO_LATE)
-            else:
+            if self._need_doctype:
                 raise WriterError(WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT)
+            else:
+                raise WriterError(WriterError.ATTRIBUTE_ADDED_TOO_LATE)
         prefix, local = xmlstring.splitqname(name)
         if namespace is None:
             name = local

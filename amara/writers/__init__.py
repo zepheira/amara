@@ -12,6 +12,16 @@ class WriterError(Error):
     ATTRIBUTE_ADDED_TOO_LATE = 1
     ATTRIBUTE_ADDED_TO_NON_ELEMENT = 2
 
+    @classmethod
+    def _load_messages(cls):
+        from gettext import gettext as _
+        return {
+            WriterError.ATTRIBUTE_ADDED_TOO_LATE: _(
+                'Children were added to the element'),
+            WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT: _(
+                'Attempted to add attribute to non-element'),
+        }
+
 
 class writer(object):
     # Note, any changes to __slots__ require a change in treewriter.c as well

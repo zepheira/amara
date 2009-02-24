@@ -2,7 +2,7 @@
 # test/xslt/test_attribute.py
 from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
-from amara.writers import xmlwriter
+from amara.writers import WriterError, xmlwriter
 from amara.xslt import XsltError
 
 PREFIX_TEMPLATE = xmlwriter.xmlwriter.GENERATED_PREFIX
@@ -261,7 +261,8 @@ class test_attribute_14(test_attribute_1):
 
 class test_attribute_error_1(xslt_error):
     """adding attribute ater non-attributes"""
-    error_code = XsltError.ATTRIBUTE_ADDED_TOO_LATE
+    error_class = WriterError
+    error_code = WriterError.ATTRIBUTE_ADDED_TOO_LATE
     recoverable = True
     source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
@@ -276,10 +277,12 @@ class test_attribute_error_1(xslt_error):
 """)
 
 
-class test_attribute_error_2(test_attribute_error_1):
+class test_attribute_error_2(xslt_error):
     """adding attribute to non-element"""
-    error_code = XsltError.ATTRIBUTE_ADDED_TO_NON_ELEMENT
+    error_class = WriterError
+    error_code = WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT
     recoverable = True
+    source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
@@ -289,10 +292,11 @@ class test_attribute_error_2(test_attribute_error_1):
 """)
 
 
-class test_attribute_error_3(test_attribute_error_1):
+class test_attribute_error_3(xslt_error):
     """creating non-text during xsl:attribute instantiation"""
     error_code = XsltError.NONTEXT_IN_ATTRIBUTE
     recoverable = True
+    source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
@@ -304,10 +308,11 @@ class test_attribute_error_3(test_attribute_error_1):
 """)
 
 
-class test_attribute_error_4(test_attribute_error_1):
+class test_attribute_error_4(xslt_error):
     """illegal attribute name ("xmlns")"""
     error_code = XsltError.BAD_ATTRIBUTE_NAME
     recoverable = True
+    source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
@@ -319,10 +324,11 @@ class test_attribute_error_4(test_attribute_error_1):
 """)
 
 
-class test_attribute_error_5(test_attribute_error_1):
+class test_attribute_error_5(xslt_error):
     """illegal attribute name (non-QName)"""
     error_code = XsltError.INVALID_QNAME_ATTR
     recoverable = True
+    source = stringsource("""<?xml version="1.0"?><dummy/>""")
     transform = stringsource("""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
