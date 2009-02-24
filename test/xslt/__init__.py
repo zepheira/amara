@@ -87,7 +87,7 @@ class stringsource(testsource):
         testsource.__init__(self, source, uri, validate, xinclude)
 
 
-from amara.test import test_case, TestError
+from amara.test import test_main, test_case, TestError
 
 class xslt_test(test_case):
 
@@ -181,3 +181,19 @@ class xslt_error(xslt_test):
         else:
             expected = self._format_error(self.error_class, self.error_code)
             self.fail('%s not raised' % expected)
+
+if __name__ == '__main__':
+    import glob
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    pattern = os.path.join(module_dir, 'test_*.py')
+    test_modules = [ os.path.basename(fn)[:-3] for fn in glob.glob(pattern) ]
+    # Re-arrange the modules /slightly/
+    for name in ('test_basics', 'test_exslt', 'test_borrowed'):
+        try:
+            test_modules.remove(name)
+        except ValueError:
+            pass
+        else:
+            test_modules.append(name)
+    test_modules.remove('test_borrowed')
+    test_main(*test_modules)
