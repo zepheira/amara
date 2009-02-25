@@ -76,10 +76,10 @@ can be found at <a href="http://www.w3.org/TR">http://www.w3.org/TR</a>.</p>
 <p>This specification has been produced as part of the <a href="http://www.w3.org/Style/Activity">W3C Style activity</a>.</p>
 
 </div>
-<div class="toc"><h2><a name="contents">Table of Contents</a></h2><p class="toc">1 <a href="#id1">Introduction</a><br>2 <a href="#id2">Stylesheet Structure</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.1 <a href="#xslt-namespace">XSLT Namespace</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.2 <a href="#stylesheet-element">Stylesheet Element</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.3 <a href="#result-element-stylesheet">Literal Result Element as Stylesheet</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.4 <a href="#qname">Qualified Names</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.5 <a href="#forwards">Forwards-Compatible Processing</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.6 <a href="#id3">Combining Stylesheets</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.6.1 <a href="#include">Stylesheet Inclusion</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.6.2 <a href="#import">Stylesheet Import</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.7 <a href="#id4">Embedding Stylesheets</a><br>3 <a href="#data-model">Data Model</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.1 <a href="#root-node-children">Root Node Children</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.2 <a href="#base-uri">Base URI</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.3 <a href="#unparsed-entities">Unparsed Entities</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.4 <a href="#strip">Whitespace Stripping</a><br>4 <a href="#id5">Expressions</a><br>5 <a href="#rules">Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.1 <a href="#id6">Processing Model</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.2 <a href="#patterns">Patterns</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.3 <a href="#id7">Defining Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.4 <a href="#id8">Applying Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.5 <a href="#conflict">Conflict Resolution for Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.6 <a href="#apply-imports">Overriding Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.7 <a href="#modes">Modes</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.8 <a href="#built-in-rule">Built-in Template Rules</a><br>6 <a href="#named-templates">Named Templates</a><br>7 <a href="#id9">Creating the Result Tree</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.1 <a href="#id10">Creating Elements and Attributes</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.1 <a href="#literal-result-element">Literal Result Elements</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.2 <a href="#id11">Creating Elements with xsl:element</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.3 <a href="#creating-attributes">Creating Attributes with xsl:attribute</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.4 <a href="#attribute-sets">Named Attribute Sets</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.2 <a href="#id12">Creating Text</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.3 <a href="#id13">Creating Processing Instructions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.4 <a href="#id14">Creating Comments</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.5 <a href="#copying">Copying</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.6 <a href="#id15">Computing Generated Text</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.6.1 <a href="#value-of">Generating Text with xsl:value-of</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.6.2 <a href="#attribute-value-templates">Attribute Value Templates</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.7 <a href="#number">Numbering</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.7.1 <a href="#convert">Number to String Conversion Attributes</a><br>8 <a href="#for-each">Repetition</a><br>9 <a href="#id16">Conditional Processing</a><br>&nbsp;&nbsp;&nbsp;&nbsp;9.1 <a href="#id17">Conditional Processing with xsl:if</a><br>&nbsp;&nbsp;&nbsp;&nbsp;9.2 <a href="#id18">Conditional Processing with xsl:choose</a><br>10 <a href="#sorting">Sorting</a><br>11 <a href="#variables">Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.1 <a href="#id19">Result Tree Fragments</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.2 <a href="#variable-values">Values of Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.3 <a href="#copy-of">Using Values of Variables and Parameters with
-xsl:copy-of</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.4 <a href="#top-level-variables">Top-level Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.5 <a href="#local-variables">Variables and Parameters within Templates</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.6 <a href="#id20">Passing Parameters to Templates</a><br>12 <a href="#add-func">Additional Functions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.1 <a href="#document">Multiple Source Documents</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.2 <a href="#key">Keys</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.3 <a href="#format-number">Number Formatting</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.4 <a href="#misc-func">Miscellaneous Additional Functions</a><br>13 <a href="#message">Messages</a><br>14 <a href="#extension">Extensions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;14.1 <a href="#extension-element">Extension Elements</a><br>&nbsp;&nbsp;&nbsp;&nbsp;14.2 <a href="#id21">Extension Functions</a><br>15 <a href="#fallback">Fallback</a><br>16 <a href="#output">Output</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.1 <a href="#id22">XML Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.2 <a href="#id23">HTML Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.3 <a href="#id24">Text Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.4 <a href="#disable-output-escaping">Disabling Output Escaping</a><br>17 <a href="#conformance">Conformance</a><br>18 <a href="#notation">Notation</a><br></p><h3>Appendices</h3><p class="toc">A <a href="#id25">References</a><br>&nbsp;&nbsp;&nbsp;&nbsp;A.1 <a href="#id26">Normative References</a><br>&nbsp;&nbsp;&nbsp;&nbsp;A.2 <a href="#id27">Other References</a><br>B <a href="#element-syntax-summary">Element Syntax Summary</a><br>C <a href="#dtd">DTD Fragment for XSLT Stylesheets</a> (Non-Normative)<br>D <a href="#id28">Examples</a> (Non-Normative)<br>&nbsp;&nbsp;&nbsp;&nbsp;D.1 <a href="#id29">Document Example</a><br>&nbsp;&nbsp;&nbsp;&nbsp;D.2 <a href="#data-example">Data Example</a><br>E <a href="#id30">Acknowledgements</a> (Non-Normative)<br>F <a href="#id31">Changes from Proposed Recommendation</a> (Non-Normative)<br>G <a href="#id32">Features under Consideration for Future Versions of XSLT</a> (Non-Normative)<br></p></div><hr><div class="body">
+<div class="toc"><h2><a name="contents">Table of Contents</a></h2><p class="toc">1 <a href="#r1e1e3e1">Introduction</a><br>2 <a href="#r1e1e3e3">Stylesheet Structure</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.1 <a href="#xslt-namespace">XSLT Namespace</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.2 <a href="#stylesheet-element">Stylesheet Element</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.3 <a href="#result-element-stylesheet">Literal Result Element as Stylesheet</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.4 <a href="#qname">Qualified Names</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.5 <a href="#forwards">Forwards-Compatible Processing</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.6 <a href="#r1e1e3e3e13">Combining Stylesheets</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.6.1 <a href="#include">Stylesheet Inclusion</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.6.2 <a href="#import">Stylesheet Import</a><br>&nbsp;&nbsp;&nbsp;&nbsp;2.7 <a href="#r1e1e3e3e15">Embedding Stylesheets</a><br>3 <a href="#data-model">Data Model</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.1 <a href="#root-node-children">Root Node Children</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.2 <a href="#base-uri">Base URI</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.3 <a href="#unparsed-entities">Unparsed Entities</a><br>&nbsp;&nbsp;&nbsp;&nbsp;3.4 <a href="#strip">Whitespace Stripping</a><br>4 <a href="#r1e1e3e7">Expressions</a><br>5 <a href="#rules">Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.1 <a href="#r1e1e3e9e3">Processing Model</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.2 <a href="#patterns">Patterns</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.3 <a href="#r1e1e3e9e7">Defining Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.4 <a href="#r1e1e3e9e9">Applying Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.5 <a href="#conflict">Conflict Resolution for Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.6 <a href="#apply-imports">Overriding Template Rules</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.7 <a href="#modes">Modes</a><br>&nbsp;&nbsp;&nbsp;&nbsp;5.8 <a href="#built-in-rule">Built-in Template Rules</a><br>6 <a href="#named-templates">Named Templates</a><br>7 <a href="#r1e1e3e13">Creating the Result Tree</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.1 <a href="#r1e1e3e13e5">Creating Elements and Attributes</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.1 <a href="#literal-result-element">Literal Result Elements</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.2 <a href="#r1e1e3e13e5e5">Creating Elements with xsl:element</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.3 <a href="#creating-attributes">Creating Attributes with xsl:attribute</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.1.4 <a href="#attribute-sets">Named Attribute Sets</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.2 <a href="#r1e1e3e13e7">Creating Text</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.3 <a href="#r1e1e3e13e9">Creating Processing Instructions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.4 <a href="#r1e1e3e13e11">Creating Comments</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.5 <a href="#copying">Copying</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.6 <a href="#r1e1e3e13e15">Computing Generated Text</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.6.1 <a href="#value-of">Generating Text with xsl:value-of</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.6.2 <a href="#attribute-value-templates">Attribute Value Templates</a><br>&nbsp;&nbsp;&nbsp;&nbsp;7.7 <a href="#number">Numbering</a><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7.7.1 <a href="#convert">Number to String Conversion Attributes</a><br>8 <a href="#for-each">Repetition</a><br>9 <a href="#r1e1e3e17">Conditional Processing</a><br>&nbsp;&nbsp;&nbsp;&nbsp;9.1 <a href="#r1e1e3e17e5">Conditional Processing with xsl:if</a><br>&nbsp;&nbsp;&nbsp;&nbsp;9.2 <a href="#r1e1e3e17e7">Conditional Processing with xsl:choose</a><br>10 <a href="#sorting">Sorting</a><br>11 <a href="#variables">Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.1 <a href="#r1e1e3e21e13">Result Tree Fragments</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.2 <a href="#variable-values">Values of Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.3 <a href="#copy-of">Using Values of Variables and Parameters with
+xsl:copy-of</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.4 <a href="#top-level-variables">Top-level Variables and Parameters</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.5 <a href="#local-variables">Variables and Parameters within Templates</a><br>&nbsp;&nbsp;&nbsp;&nbsp;11.6 <a href="#r1e1e3e21e23">Passing Parameters to Templates</a><br>12 <a href="#add-func">Additional Functions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.1 <a href="#document">Multiple Source Documents</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.2 <a href="#key">Keys</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.3 <a href="#format-number">Number Formatting</a><br>&nbsp;&nbsp;&nbsp;&nbsp;12.4 <a href="#misc-func">Miscellaneous Additional Functions</a><br>13 <a href="#message">Messages</a><br>14 <a href="#extension">Extensions</a><br>&nbsp;&nbsp;&nbsp;&nbsp;14.1 <a href="#extension-element">Extension Elements</a><br>&nbsp;&nbsp;&nbsp;&nbsp;14.2 <a href="#r1e1e3e27e9">Extension Functions</a><br>15 <a href="#fallback">Fallback</a><br>16 <a href="#output">Output</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.1 <a href="#r1e1e3e31e25">XML Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.2 <a href="#r1e1e3e31e27">HTML Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.3 <a href="#r1e1e3e31e29">Text Output Method</a><br>&nbsp;&nbsp;&nbsp;&nbsp;16.4 <a href="#disable-output-escaping">Disabling Output Escaping</a><br>17 <a href="#conformance">Conformance</a><br>18 <a href="#notation">Notation</a><br></p><h3>Appendices</h3><p class="toc">A <a href="#r1e1e5e1">References</a><br>&nbsp;&nbsp;&nbsp;&nbsp;A.1 <a href="#r1e1e5e1e3">Normative References</a><br>&nbsp;&nbsp;&nbsp;&nbsp;A.2 <a href="#r1e1e5e1e5">Other References</a><br>B <a href="#element-syntax-summary">Element Syntax Summary</a><br>C <a href="#dtd">DTD Fragment for XSLT Stylesheets</a> (Non-Normative)<br>D <a href="#r1e1e5e7">Examples</a> (Non-Normative)<br>&nbsp;&nbsp;&nbsp;&nbsp;D.1 <a href="#r1e1e5e7e3">Document Example</a><br>&nbsp;&nbsp;&nbsp;&nbsp;D.2 <a href="#data-example">Data Example</a><br>E <a href="#r1e1e5e9">Acknowledgements</a> (Non-Normative)<br>F <a href="#r1e1e5e11">Changes from Proposed Recommendation</a> (Non-Normative)<br>G <a href="#r1e1e5e13">Features under Consideration for Future Versions of XSLT</a> (Non-Normative)<br></p></div><hr><div class="body">
 <div class="div1">
-<h2><a name="id1"></a>1 Introduction</h2>
+<h2><a name="r1e1e3e1"></a>1 Introduction</h2>
 
 <p>This specification defines the syntax and semantics of the XSLT
 language.  A transformation in the XSLT language is expressed as a
@@ -191,7 +191,7 @@ media type may also be used.</p>
 </div>
 
 <div class="div1">
-<h2><a name="id2"></a>2 Stylesheet Structure</h2>
+<h2><a name="r1e1e3e3"></a>2 Stylesheet Structure</h2>
 
 <div class="div2">
 <h3><a name="xslt-namespace"></a>2.1 XSLT Namespace</h3>
@@ -597,7 +597,7 @@ actually called.</p></li>
 </div>
 
 <div class="div2">
-<h3><a name="id3"></a>2.6 Combining Stylesheets</h3>
+<h3><a name="r1e1e3e3e13"></a>2.6 Combining Stylesheets</h3>
 
 <p>XSLT provides two mechanisms to combine stylesheets:</p>
 
@@ -769,7 +769,7 @@ precedence</a>.</p></div>
 </div>
 
 <div class="div2">
-<h3><a name="id4"></a>2.7 Embedding Stylesheets</h3>
+<h3><a name="r1e1e3e3e15"></a>2.7 Embedding Stylesheets</h3>
 
 <p>Normally an XSLT stylesheet is a complete XML document with the
 <code>xsl:stylesheet</code> element as the document element. However,
@@ -1003,7 +1003,7 @@ one that occurs last in the stylesheet.</p>
 </div>
 
 <div class="div1">
-<h2><a name="id5"></a>4 Expressions</h2>
+<h2><a name="r1e1e3e7"></a>4 Expressions</h2>
 
 <p>XSLT uses the expression language defined by XPath <a href="#XPATH">[XPath]</a>.  Expressions are used in XSLT for a variety of purposes
 including:</p>
@@ -1057,7 +1057,7 @@ to any other function</p></li>
 <h2><a name="rules"></a>5 Template Rules</h2>
 
 <div class="div2">
-<h3><a name="id6"></a>5.1 Processing Model</h3>
+<h3><a name="r1e1e3e9e3"></a>5.1 Processing Model</h3>
 
 <p>A list of source nodes is processed to create a result tree
 fragment.  The result tree is constructed by processing a list
@@ -1252,7 +1252,7 @@ element.</p></li>
 </div>
 
 <div class="div2">
-<h3><a name="id7"></a>5.3 Defining Template Rules</h3>
+<h3><a name="r1e1e3e9e7"></a>5.3 Defining Template Rules</h3>
 
 
   
@@ -1309,7 +1309,7 @@ recursively processes the children of the source element.</p>
 </div>
 
 <div class="div2">
-<h3><a name="id8"></a>5.4 Applying Template Rules</h3>
+<h3><a name="r1e1e3e9e9"></a>5.4 Applying Template Rules</h3>
 
 
   
@@ -1671,13 +1671,13 @@ precedence</a>.</p>
 
 
 <div class="div1">
-<h2><a name="id9"></a>7 Creating the Result Tree</h2>
+<h2><a name="r1e1e3e13"></a>7 Creating the Result Tree</h2>
 
 <p>This section describes instructions that directly create nodes in
 the result tree.</p>
 
 <div class="div2">
-<h3><a name="id10"></a>7.1 Creating Elements and Attributes</h3>
+<h3><a name="r1e1e3e13e5"></a>7.1 Creating Elements and Attributes</h3>
 
 <div class="div3">
 <h4><a name="literal-result-element"></a>7.1.1 Literal Result Elements</h4>
@@ -1828,7 +1828,7 @@ of such mishandling.</p></div>
 </div>
 
 <div class="div3">
-<h4><a name="id11"></a>7.1.2 Creating Elements with <code>xsl:element</code></h4>
+<h4><a name="r1e1e3e13e5e5"></a>7.1.2 Creating Elements with <code>xsl:element</code></h4>
 
 
   
@@ -2111,7 +2111,7 @@ attribute set is used.</p>
 
 <div class="div2">
 
-<h3><a name="id12"></a>7.2 Creating Text</h3>
+<h3><a name="r1e1e3e13e7"></a>7.2 Creating Text</h3>
 
 <p>A template can also contain text nodes.  Each text node in a
 template remaining after whitespace has been stripped as specified in
@@ -2162,7 +2162,7 @@ in the result.</p></li>
 
 
 <div class="div2">
-<h3><a name="id13"></a>7.3 Creating Processing Instructions</h3>
+<h3><a name="r1e1e3e13e9"></a>7.3 Creating Processing Instructions</h3>
 
 
 
@@ -2217,7 +2217,7 @@ occurrence of <code>?</code> that is followed by a <code>&gt;</code>.</p>
 </div>
 
 <div class="div2">
-<h3><a name="id14"></a>7.4 Creating Comments</h3>
+<h3><a name="r1e1e3e13e11"></a>7.4 Creating Comments</h3>
 
 
   
@@ -2320,7 +2320,7 @@ defines the following named template:</p>
 </div>
 
 <div class="div2">
-<h3><a name="id15"></a>7.6 Computing Generated Text</h3>
+<h3><a name="r1e1e3e13e15"></a>7.6 Computing Generated Text</h3>
 
 <p>Within a template, the <code>xsl:value-of</code> element can be
 used to compute generated text, for example by extracting text from
@@ -2901,7 +2901,7 @@ a row for each <code>customer</code> element</p>
 </div>
 
 <div class="div1">
-<h2><a name="id16"></a>9 Conditional Processing</h2>
+<h2><a name="r1e1e3e17"></a>9 Conditional Processing</h2>
 
 <p>There are two instructions in XSLT that support conditional
 processing in a template: <code>xsl:if</code> and
@@ -2911,7 +2911,7 @@ supports selection of one choice when there are several
 possibilities.</p>
 
 <div class="div2">
-<h3><a name="id17"></a>9.1 Conditional Processing with <code>xsl:if</code></h3>
+<h3><a name="r1e1e3e17e5"></a>9.1 Conditional Processing with <code>xsl:if</code></h3>
 
 
   
@@ -2950,7 +2950,7 @@ as a comma separated list:</p>
 
 
 <div class="div2">
-<h3><a name="id18"></a>9.2 Conditional Processing with <code>xsl:choose</code></h3>
+<h3><a name="r1e1e3e17e7"></a>9.2 Conditional Processing with <code>xsl:choose</code></h3>
 
 
   
@@ -3242,7 +3242,7 @@ scope for an expression consists of those bindings that are visible at
 the point in the stylesheet where the expression occurs.</p>
 
 <div class="div2">
-<h3><a name="id19"></a>11.1 Result Tree Fragments</h3>
+<h3><a name="r1e1e3e21e13"></a>11.1 Result Tree Fragments</h3>
 
 <p>Variables introduce an additional data-type into the expression
 language.  [<a name="dt-result-tree-fragment" title="Result Tree Fragment">Definition</a>: This additional data type is called <b>result tree
@@ -3481,7 +3481,7 @@ beginning and continuing through to the end.</p></div>
 </div>
 
 <div class="div2">
-<h3><a name="id20"></a>11.6 Passing Parameters to Templates</h3>
+<h3><a name="r1e1e3e21e23"></a>11.6 Passing Parameters to Templates</h3>
 
 
   
@@ -4257,7 +4257,7 @@ the name of the element.</p>
 </div>
 
 <div class="div2">
-<h3><a name="id21"></a>14.2 Extension Functions</h3>
+<h3><a name="r1e1e3e27e9"></a>14.2 Extension Functions</h3>
 
 <p>If a <a href="http://www.w3.org/TR/xpath#NT-FunctionName">FunctionName</a> in a
 <a href="http://www.w3.org/TR/xpath#NT-FunctionCall">FunctionCall</a> expression is
@@ -4488,7 +4488,7 @@ The values of attributes are defaulted after the
 methods may have different default values for an attribute.</p>
 
 <div class="div2">
-<h3><a name="id22"></a>16.1 XML Output Method</h3>
+<h3><a name="r1e1e3e31e25"></a>16.1 XML Output Method</h3>
 
 <p>The <code>xml</code> output method outputs the result tree as a
 well-formed XML external general parsed entity. If the root node of
@@ -4658,7 +4658,7 @@ identifier.  The internal subset should be empty.  The
 </div>
 
 <div class="div2">
-<h3><a name="id23"></a>16.2 HTML Output Method</h3>
+<h3><a name="r1e1e3e31e27"></a>16.2 HTML Output Method</h3>
 
 <p>The <code>html</code> output method outputs the result tree as
 HTML; for example,</p>
@@ -4808,7 +4808,7 @@ is not specified, then the output method should output
 </div>
 
 <div class="div2">
-<h3><a name="id24"></a>16.3 Text Output Method</h3>
+<h3><a name="r1e1e3e31e29"></a>16.3 Text Output Method</h3>
 
 <p>The <code>text</code> output method outputs the result tree by
 outputting the string-value of every text node in the result tree in
@@ -4961,9 +4961,9 @@ that allow a <em>template</em> or
 
 <div class="back">
 <div class="div1">
-<h2><a name="id25"></a>A References</h2>
+<h2><a name="r1e1e5e1"></a>A References</h2>
 <div class="div2">
-<h3><a name="id26"></a>A.1 Normative References</h3>
+<h3><a name="r1e1e5e1e3"></a>A.1 Normative References</h3>
 
 <dl>
 
@@ -4980,7 +4980,7 @@ Language.</em> W3C Recommendation. See <a href="http://www.w3.org/TR/xpath">http
 </dl>
 </div>
 <div class="div2">
-<h3><a name="id27"></a>A.2 Other References</h3>
+<h3><a name="r1e1e5e1e5"></a>A.2 Other References</h3>
 
 <dl>
 
@@ -5406,10 +5406,10 @@ any non-whitespace character --&gt;
 </div>
 
 <div class="div1">
-<h2><a name="id28"></a>D Examples (Non-Normative)</h2>
+<h2><a name="r1e1e5e7"></a>D Examples (Non-Normative)</h2>
 
 <div class="div2">
-<h3><a name="id29"></a>D.1 Document Example</h3>
+<h3><a name="r1e1e5e7e3"></a>D.1 Document Example</h3>
 
 <p>This example is a stylesheet for transforming documents that
 conform to a simple DTD into XHTML <a href="#XHTML">[XHTML]</a>.  The DTD
@@ -5786,7 +5786,7 @@ bar {
 </div>
 
 <div class="div1">
-<h2><a name="id30"></a>E Acknowledgements (Non-Normative)</h2>
+<h2><a name="r1e1e5e9"></a>E Acknowledgements (Non-Normative)</h2>
 <p>The following have contributed to authoring this draft:</p>
 <blockquote><p>
 Daniel Lipkin, Saba
@@ -5936,7 +5936,7 @@ Steve Zilles
 </div>
 
 <div class="div1">
-<h2><a name="id31"></a>F Changes from Proposed Recommendation (Non-Normative)</h2>
+<h2><a name="r1e1e5e11"></a>F Changes from Proposed Recommendation (Non-Normative)</h2>
 
 <p>The following are the changes since the Proposed Recommendation:</p>
 
@@ -5954,7 +5954,7 @@ XSLT (see <a href="#sorting"><b>10 Sorting</b></a>).</p></li>
 </div>
 
 <div class="div1">
-<h2><a name="id32"></a>G Features under Consideration for Future Versions of XSLT (Non-Normative)</h2>
+<h2><a name="r1e1e5e13"></a>G Features under Consideration for Future Versions of XSLT (Non-Normative)</h2>
 
 <p>The following features are under consideration for versions of XSLT
 after XSLT 1.0:</p>
