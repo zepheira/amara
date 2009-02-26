@@ -375,7 +375,7 @@ class transform_element(xslt_element):
                         priority = node_test.priority
                     else:
                         priority = template_priority
-                    sort_key = (precedence, template_priority, position)
+                    sort_key = (precedence, priority, position)
                     info = (sort_key, node_test, axis_type, element)
                     # Add the template rule to the dispatch table
                     type_key = node_type.xml_typecode
@@ -559,7 +559,7 @@ class transform_element(xslt_element):
         else:
             # Nothing matched, use builtin templates
             if isinstance(node, (tree.element, tree.entity)):
-                self.apply_templates(context, node.xml_children)
+                self.apply_templates(context, node.xml_children, mode)
             elif isinstance(node, (tree.text, tree.attribute)):
                 context.text(node.xml_value)
         return
@@ -662,7 +662,7 @@ class transform_element(xslt_element):
                     context.processor.warning(BUILTIN_TEMPLATE_WITH_PARAMS)
                     self.builtin_param_warning = False
                 if isinstance(node, (tree.element, tree.entity)):
-                    self.apply_templates(context, node.xml_children)
+                    self.apply_templates(context, node.xml_children, mode)
                 elif isinstance(node, (tree.text, tree.attribute)):
                     context.text(node.xml_value)
 
