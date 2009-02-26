@@ -162,13 +162,6 @@ def launch(*args, **kwargs):
     return
 
 
-import sys, getopt
-
-class Usage(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -200,4 +193,66 @@ def main(argv=None):
 
 if __name__ == "__main__":
     sys.exit(main())
+
+def launch(source, **kwargs):
+    doc = parse(source)
+    from amara import xml_print
+    xml_print(doc, indent=kwargs.get('pretty'))
+    return
+
+
+#Ideas borrowed from
+# http://www.artima.com/forums/flat.jsp?forum=106&thread=4829
+
+#FIXME: A lot of this is copied boilerplate that neds to be cleaned up
+
+def command_line_prep():
+    from optparse import OptionParser
+    usage = "Amara 2.x.  Command line support for parsing HTML, even tag soup.\n"
+    usage += "python -m 'amara.bindery.html' [options] source cmd"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-p", "--pretty",
+                      action="store_true", dest="pretty", default=False,
+                      help="Pretty-print the XML output")
+    parser.add_option("-H", "--html",
+                      action="store_true", dest="html", default=False,
+                      help="Output (cleaned-up) HTML rather than XML")
+    return parser
+
+
+def main(argv=None):
+    #But with better integration of entry points
+    if argv is None:
+        argv = sys.argv
+    # By default, optparse usage errors are terminated by SystemExit
+    try:
+        optparser = command_line_prep()
+        options, args = optparser.parse_args(argv[1:])
+        # Process mandatory arguments with IndexError try...except blocks
+        try:
+            source = args[0]
+        except IndexError:
+            optparser.error("Missing source for HTML")
+        #try:
+        #    xpattern = args[1]
+        #except IndexError:
+        #    optparser.error("Missing main xpattern")
+    except SystemExit, status:
+        return status
+
+    # Perform additional setup work here before dispatching to run()
+    # Detectable errors encountered here should be handled and a status
+    # code of 1 should be returned. Note, this would be the default code
+    # for a SystemExit exception with a string message.
+
+    pretty = options.pretty
+    html = options.html
+    if source == '-':
+        source = sys.stdin
+    launch(source, pretty=pretty, html=html)
+    return
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
 

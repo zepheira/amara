@@ -167,9 +167,7 @@ class content_model:
         '''
         Process an document for metadata according to extraction cues
         '''
-        metadata = []
         def handle_element(elem, resource):
-            #print elem.xml_name, (elem.xml_model.metadata_resource_expr, elem.xml_model.metadata_rel_expr, elem.xml_model.metadata_value_expr)
             new_resource = None
             if elem.xml_model.metadata_resource_expr:
                 new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
@@ -181,7 +179,7 @@ class content_model:
                     val = new_resource
                 else:
                     val = elem.xml_select(u'string(.)')
-                metadata.append((unicode(resource), unicode(rel), simplify(val)))
+                yield (unicode(resource), unicode(rel), simplify(val))
                 #Basically expandqname first
                 #prefix, local = splitqname(rattr)
                 #try:
@@ -191,16 +189,15 @@ class content_model:
                 #    resource = rattr
             if new_resource is not None: resource = new_resource
             for child in elem.xml_elements:
-                handle_element(child, resource)
+                for item in handle_element(child, resource):
+                    yield item
             return
         #Make sure we skip any entities and start with top element(s)
         if isinstance(root, tree.entity):
-            for elem in root.xml_elements:
-                #FIXME: use elem.xml_base when it doesn't core dump :)
-                handle_element(elem, root.xml_base)
+            return ( item for elem in root.xml_elements for item in handle_element(elem, root.xml_base) )
         else:
-            handle_element(root, elem.xml_base)
-        return metadata
+            return ( item for item in handle_element(root, root.xml_base) )
+        return 
 
 
 #        node.xml_model.constraints.append(u'@xml:id', validate=True)      #Make xml:id required.  Will throw a constraint violation right away if there is not one.  Affects all instances of this class.

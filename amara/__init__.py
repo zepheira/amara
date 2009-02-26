@@ -3,7 +3,7 @@
 
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 
-__version__ = "2.0a1"
+__version__ = "2.0a2"
 
 class Error(Exception):
 

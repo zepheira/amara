@@ -99,7 +99,7 @@ class Test_parse_model_a(unittest.TestCase):
          (u'co', u'tag', u'biafra'),
          (u'co', u'tag', u'poet')]
         
-        self.assertEqual(metadata, EXPECTED_MD)
+        self.assertEqual(list(metadata), EXPECTED_MD)
         #import pprint; pprint.pprint(metadata)
 
         #f = filesource('nastytagsoup1.html')

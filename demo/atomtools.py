@@ -16,6 +16,45 @@ from amara.bindery import html
 from amara.bindery.model import *
 from amara import bindery
 
+__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '']
+
+#__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '', '', '', '']
+
+ENTRY_MODEL = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+   <atom:id ak:rel="local-name()" ak:value="."/>
+   <atom:title ak:rel="local-name()" ak:value="."/>
+   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
+   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_self')" ak:value='descendant-or-self::atom:link[@rel="self"]/@href' />
+   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_alternate')" ak:value='descendant-or-self::atom:link[@rel="alternate"]/@href' />
+   <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
+   <atom:summary ak:rel="local-name()" ak:value="."></atom:summary>
+   <atom:category eg:occurs="*" ak:rel="local-name()" ak:value="@term"/>
+   <atom:author eg:occurs="*" ak:resource="(atom:name|atom:uri|atom:email)[1]">
+     <atom:name ak:rel="local-name()" ak:value="." />
+     <atom:uri ak:rel="local-name()" ak:value="." />
+     <atom:email ak:rel="local-name()" ak:value="." />
+   </atom:author>
+   <atom:content eg:occurs="?" ak:rel="local-name()" ak:value="." /> 
+ </atom:entry>"""
+
+FEED_MODEL = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+ <atom:title ak:rel="local-name()" ak:value="."></atom:title>
+ <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
+ <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+ <atom:author eg:occurs="*">
+     <atom:name ak:rel="local-name()" ak:value="." />
+     <atom:uri ak:rel="local-name()" ak:value="." />
+     <atom:email ak:rel="local-name()" ak:value="." />
+ </atom:author>
+ <atom:id ak:rel="local-name()" ak:value="."></atom:id>
+ <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
+ <atom:rights ak:rel="local-name()" ak:value="."></atom:rights>
+%s
+</atom:feed>
+""" % ENTRY_MODEL
+
+
 
 #From 1.1 of the spec
 ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
