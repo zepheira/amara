@@ -73,6 +73,7 @@ class predicate:
                     else:
                         self.select = izip()
                 else:
+                    self._expr = expression
                     self.select = self._number
                 return
             elif isinstance(expression._right, position_function):
@@ -85,6 +86,7 @@ class predicate:
                     else:
                         self.select = izip()
                 else:
+                    self._expr = expression
                     self.select = self._number
                 return
 
