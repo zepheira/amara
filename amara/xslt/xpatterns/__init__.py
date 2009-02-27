@@ -112,7 +112,7 @@ class predicated_test(nodetests.node_test):
                   if self._node_test.match(context, node, principal_type) )
 
         # Child and attribute axes are forward only
-        nodes = self._predicates.filter(nodes, context, reverse=0)
+        nodes = self._predicates.filter(nodes, context, reverse=False)
         return node in nodes
 
     def __str__(self):
