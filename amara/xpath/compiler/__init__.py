@@ -42,8 +42,10 @@ class xpathcompiler(object):
         code = self._graph.assemble(name, args, docstring, filename,
                                     firstlineno)
         # Make the function
-        if 0: #Compiler._nasts == 200:
-            print '--',code.co_name,'-'*(60 - len(code.co_name))
+        if 0:
+            title = '%s (%s)' % (filename, name)
+            print '--', title, '-'*(60 - len(title))
+            print '>>', docstring
             import dis
             dis.dis(code)
             return new.function(code, {'__lltrace__': 1})

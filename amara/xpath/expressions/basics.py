@@ -113,12 +113,12 @@ class variable_reference(expressions.expression):
             raise XPathError(XPathError.UNDEFINED_VARIABLE,
                              variable=self._name, key=(namespace, local))
         # Add the actual opcodes
-        compiler.emit('LOAD_FAST', 'context')
-        compiler.emit('LOAD_ATTR', 'variables')
-        compiler.emit('LOAD_CONST', namespace)
-        compiler.emit('LOAD_CONST', local)
-        compiler.emit('BUILD_TUPLE', 2)
-        compiler.emit('BINARY_SUBSCR')
+        compiler.emit('LOAD_FAST', 'context',
+                      'LOAD_ATTR', 'variables',
+                      'LOAD_CONST', namespace,
+                      'LOAD_CONST', local,
+                      'BUILD_TUPLE', 2,
+                      'BINARY_SUBSCR')
         return
 
     def compile_as_nodeset(self, compiler):
@@ -130,6 +130,8 @@ class variable_reference(expressions.expression):
         return
 
     def compile_iterable(self, compiler):
+        # Discard the context node
+        compiler.emit('POP_TOP')
         self.compile(compiler)
         compiler.emit('GET_ITER')
         return

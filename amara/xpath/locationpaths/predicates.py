@@ -62,7 +62,7 @@ class predicate:
             return
 
         # Check for "position() = Expr"
-        if isinstance(expression, equality_expr) and expression._op == '=':
+        elif isinstance(expression, equality_expr) and expression._op == '=':
             if isinstance(expression._left, position_function):
                 expression = expression._right
                 if isinstance(expression, literal):
@@ -73,6 +73,7 @@ class predicate:
                     else:
                         self.select = izip()
                 else:
+                    self._expr = expression
                     self.select = self._number
                 return
             elif isinstance(expression._right, position_function):
@@ -85,12 +86,13 @@ class predicate:
                     else:
                         self.select = izip()
                 else:
+                    self._expr = expression
                     self.select = self._number
                 return
 
         # Check for "position() [>,>=] Expr" or "Expr [<,<=] position()"
         # FIXME - do full slice-type notation
-        if isinstance(expression, relational_expr):
+        elif isinstance(expression, relational_expr):
             op = expression._op
             if (isinstance(expression._left, position_function) and
                 isinstance(expression._right, (literal, variable_reference)) 
@@ -109,7 +111,8 @@ class predicate:
 
         if issubclass(expression.return_type, datatypes.number):
             self.select = self._number
-        elif not issubclass(expression.return_type, datatypes.xpathobject):
+        elif expression.return_type is not datatypes.xpathobject:
+            assert issubclass(expression.return_type, datatypes.xpathobject)
             self.select = self._boolean
         return
 

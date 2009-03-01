@@ -45,8 +45,9 @@ class for_each_element(xslt_element):
         else:
             nodes = context.node.xml_children
 
-        # Save the current context state
-        state = context.node, context.position, context.size, context.template
+        # Save the context focus (node/pos/size) and state (tpl/curr)
+        saved = (context.node, context.position, context.size,
+                 context.template, context.current_node)
         # Now process the selected nodes
         context.template = None
         size = context.size = len(nodes)
@@ -57,5 +58,6 @@ class for_each_element(xslt_element):
             self.process_children(context)
             position += 1
 
-        context.node, context.position, context.size, context.template = state
+        (context.node, context.position, context.size,
+         context.template, context.current_node) = saved
         return
