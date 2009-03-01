@@ -300,9 +300,9 @@ def writer(stream=sys.stdout, **kwargs):
 
 
 def launch(source, **kwargs):
-    doc = parse(source)
+    doc = parse(source, validate=kwargs['validate'], standalone=kwargs['standalone'])
     from amara import xml_print
-    xml_print(doc, indent=kwargs.get('pretty'))
+    xml_print(doc, indent=kwargs['pretty'])
     return
 
 
@@ -319,6 +319,12 @@ def command_line_prep():
     parser.add_option("-p", "--pretty",
                       action="store_true", dest="pretty", default=False,
                       help="Pretty-print the XML output")
+    parser.add_option("-v", "--validate",
+                      action="store_true", dest="validate", default=False,
+                      help="Apply DTD validation")
+    parser.add_option("-s", "--standalone",
+                      action="store_true", dest="standalone", default=False,
+                      help="Parse the XML with standalone rules")
     return parser
 
 
@@ -354,12 +360,14 @@ def main(argv=None):
     #xpattern = xpattern.decode('utf-8')
     #sentinel = options.sentinel and options.sentinel.decode('utf-8')
     pretty = options.pretty
+    validate = options.validate
+    standalone = options.standalone
     if source == '-':
         source = sys.stdin
     #if options.test:
     #    test()
     #else:
-    launch(source, pretty=pretty)
+    launch(source, pretty=pretty, validate=validate, standalone=standalone)
     return
 
 

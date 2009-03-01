@@ -20,6 +20,7 @@ __all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '']
 
 #__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '', '', '', '']
 
+#From 1.1 of the spec
 ENTRY_MODEL = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
    <atom:id ak:rel="local-name()" ak:value="."/>
    <atom:title ak:rel="local-name()" ak:value="."/>
@@ -54,72 +55,6 @@ FEED_MODEL = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="ht
 </atom:feed>
 """ % ENTRY_MODEL
 
-
-
-#From 1.1 of the spec
-ATOM_MODEL = '''<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"
-  xmlns:atom="http://www.w3.org/2005/Atom"
-  xmlns:eg="http://examplotron.org/0/"
-  xmlns:ak="http://purl.org/dc/org/xml3k/akara"
-  ak:resource="atom:id"
- >
-
- <title type="text" ak:rel="local-name()" ak:value=".">A title</title>
- <subtitle type="text" ak:rel="local-name()" ak:value=".">A subtitle</subtitle>
- <updated ak:rel="local-name()" ak:value=".">2003-12-13T18:30:02Z</updated>
- <author eg:occurs="*" ak:resource="(atom:uri|atom:email)[1]" ak:rel="local-name()">
-   <name ak:rel="local-name()" ak:value=".">John Doe</name>
-   <uri ak:rel="local-name()" ak:value=".">http://example.org/</uri>
-   <email ak:rel="local-name()" ak:value=".">jdjd@example.com</email>
- </author>
- <id ak:rel="local-name()" ak:value=".">urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
- <link rel="self" type="application/atom+xml"
-   href="http://example.org/feed.atom" eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
- <rights ak:rel="local-name()" ak:value=".">Copyright (c) 2003, John Doe</rights>
- <generator uri="http://www.example.com/" version="1.0">
-   Example Toolkit
- </generator>
-
- <entry eg:occurs="*" ak:resource="atom:id" ak:rel="local-name()">
-   <title ak:rel="local-name()" ak:value=".">Atom-Powered Robots Run Amok</title>
-   <link rel="self" type="application/atom+xml" hreflang="en"
-     href="http://example.org/2003/12/13/atom03" eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
-   <id ak:rel="local-name()" ak:value=".">tag:example.org,2003:3</id>
-   <updated ak:rel="local-name()" ak:value=".">2003-12-13T18:30:02Z</updated>
-   <published ak:rel="local-name()" ak:value=".">2003-12-13T08:29:29-04:00</published>
-   <summary type="text" ak:rel="local-name()" ak:value=".">Some text.</summary>
-   <author eg:occurs="*" ak:resource="(atom:uri|atom:email)[1]" ak:rel="local-name()">
-     <name ak:rel="local-name()" ak:value=".">John Doe</name>
-     <uri ak:rel="local-name()" ak:value=".">http://example.org/</uri>
-     <email ak:rel="local-name()" ak:value=".">jdjd@example.com</email>
-   </author>
-   <contributor eg:occurs="*" ak:resource="(atom:uri|atom:email)[1]" ak:rel="local-name()">
-     <name ak:rel="local-name()" ak:value=".">Jane Doe</name>
-     <uri ak:rel="local-name()" ak:value=".">http://example.org/Jane</uri>
-     <email ak:rel="local-name()" ak:value=".">janed@example.com</email>
-   </contributor>
-   <content type="text" xml:lang="en" xml:base="http://example.org/" ak:rel="local-name()" ak:value=".">
-     The main ingredient
-   </content>
- </entry>
-
-</feed>'''
-
-ENTRY_MODEL = '''<atom:entry ak:rel="local-name()" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
-   <atom:title ak:rel="local-name()" ak:value="."></atom:title>
-   <atom:id ak:rel="local-name()" ak:value="."></atom:id>
-   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
-   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
-   <atom:summary type="text" ak:rel="local-name()" ak:value="."></atom:summary>
-   <atom:author eg:occurs="*" ak:resource="(atom:uri|atom:email)[1]" ak:rel="local-name()">
-     <atom:name ak:rel="local-name()" ak:value="."></atom:name>
-     <atom:uri ak:rel="local-name()" ak:value="."></atom:uri>
-     <atom:email ak:rel="local-name()" ak:value="."></atom:email>
-   </atom:author>
-   <atom:content type="text" xml:lang="en" ak:rel="local-name()" ak:value="." />
-</atom:entry>
-'''
 
 MODEL = examplotron_model(ATOM_MODEL)
 MODEL = examplotron_model(ENTRY_MODEL)

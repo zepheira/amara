@@ -28,6 +28,7 @@ from amara.xpath import datatypes
 from amara.xpath.util import *
 
 ATTIBUTE_AXIS = u'@'
+NODE_ID_MARKER = u'generate-id()'
 
 class constraint(object):
     '''
@@ -170,7 +171,10 @@ class content_model:
         def handle_element(elem, resource):
             new_resource = None
             if elem.xml_model.metadata_resource_expr:
-                new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
+                if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
+                    new_resource = datatypes.string(elem.xml_nodeid)
+                else:
+                    new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
             if elem.xml_model.metadata_rel_expr:
                 rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
                 if elem.xml_model.metadata_value_expr:
@@ -267,7 +271,7 @@ class examplotron_model(document_model):
             rattr = e.xml_select(u'@ak:resource', NSS)
             if rattr:
                 #ak:resource="" should default to a generated ID
-                e.xml_model.metadata_resource_expr = rattr[0].xml_value or u'generate-id()'
+                e.xml_model.metadata_resource_expr = rattr[0].xml_value or NODE_ID_MARKER
             #rattr = e.xml_select(u'string(@ak:resource)', NSS)
             #if rattr: e.xml_model.metadata_resource_expr = rattr
             relattr = e.xml_select(u'string(@ak:rel)', NSS)
