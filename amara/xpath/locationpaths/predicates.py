@@ -132,6 +132,7 @@ class predicate:
     def _number(self, context, nodes):
         expr = self._expr
         position = 1
+        context.current_node = context.node
         for node in nodes:
             context.node, context.position = node, position
             if expr.evaluate_as_number(context) == position:
@@ -142,6 +143,7 @@ class predicate:
     def _boolean(self, context, nodes):
         expr = self._expr
         position = 1
+        context.current_node = context.node
         for node in nodes:
             context.node, context.position = node, position
             if expr.evaluate_as_boolean(context):
@@ -152,6 +154,7 @@ class predicate:
     def select(self, context, nodes):
         expr = self._expr
         position = 1
+        context.current_node = context.node
         for node in nodes:
             context.node, context.position = node, position
             result = expr.evaluate(context)

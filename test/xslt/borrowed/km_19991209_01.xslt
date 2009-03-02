@@ -9,8 +9,7 @@
 </xsl:template>
 <xsl:template match="/FORMS/CONTAINERS"> 
     <xsl:for-each select="CONTAINER"> 
-
-        <xsl:copy-of select="//*[name(.)=current()/PRE_HTML]" /> 
+        <xsl:copy-of select="//*[name(.)=current()/PRE_HTML]" />
         <xsl:value-of select="TITLE"/>
         <xsl:comment>Do some more things here</xsl:comment>
 
