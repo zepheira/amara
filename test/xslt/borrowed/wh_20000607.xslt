@@ -11,8 +11,7 @@
   <xsl:value-of select="position()" />
   <xsl:text> - </xsl:text>
   <xsl:value-of select="last()" />
-  <xsl:text>)
-</xsl:text>
+  <xsl:text>)&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="text()" />
