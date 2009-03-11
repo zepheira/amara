@@ -18,9 +18,10 @@ import sets
 import itertools
 import warnings
 import copy
+from cStringIO import StringIO
 from functools import *
 
-from amara import tree
+from amara import tree, xml_print
 from amara.namespaces import *
 from amara.lib.xmlstring import *
 from amara.lib.util import *
@@ -129,6 +130,9 @@ class content_model:
         self.metadata_resource_expr = None
         self.metadata_rel_expr = None
         self.metadata_value_expr = None
+        self.metadata_coercion_expr = None
+        self.other_rel_exprs = []
+        self.prefixes = {}
         return
 
     def add_constraint(self, constraint, validate=False):
@@ -170,20 +174,30 @@ class content_model:
         '''
         def handle_element(elem, resource):
             new_resource = None
+            prefixes = elem.xml_root.xml_model.prefixes
             if elem.xml_model.metadata_resource_expr:
                 if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
                     new_resource = datatypes.string(elem.xml_nodeid)
                 else:
-                    new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr))
+                    new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes))
             if elem.xml_model.metadata_rel_expr:
-                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr))
+                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
                 if elem.xml_model.metadata_value_expr:
-                    val = datatypes.string(elem.xml_select(elem.xml_model.metadata_value_expr))
+                    val = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
+                    if val:
+                        if elem.xml_model.metadata_coercion_expr and simplify(elem.xml_select(elem.xml_model.metadata_coercion_expr, prefixes=prefixes)) == u'nodeset':
+                            buf = StringIO()
+                            xml_print(val[0], stream=buf)
+                            val = buf.getvalue()
+                        elif isinstance(val[0], tree.attribute):
+                            val = val[0].xml_value
+                        else:
+                            val = unicode(val[0])
                 elif new_resource is not None:
                     val = new_resource
                 else:
-                    val = elem.xml_select(u'string(.)')
-                yield (unicode(resource), unicode(rel), simplify(val))
+                    val = unicode(elem)
+                yield (unicode(resource), unicode(rel), val)
                 #Basically expandqname first
                 #prefix, local = splitqname(rattr)
                 #try:
@@ -192,6 +206,12 @@ class content_model:
                 #except KeyError:
                 #    resource = rattr
             if new_resource is not None: resource = new_resource
+
+            for rel_expr, val_expr in elem.xml_model.other_rel_exprs:
+                rel = datatypes.string(elem.xml_select(rel_expr, prefixes=prefixes))
+                val = datatypes.string(elem.xml_select(val_expr, prefixes=prefixes))
+                yield (unicode(resource), unicode(rel), simplify(val))
+            
             for child in elem.xml_elements:
                 for item in handle_element(child, resource):
                     yield item
@@ -235,6 +255,7 @@ class document_model(object):
 
 
 AKARA_NS = u'http://purl.org/dc/org/xml3k/akara'
+from amara.lib.util import *
 
 class examplotron_model(document_model):
     '''
@@ -243,13 +264,14 @@ class examplotron_model(document_model):
     def __init__(self, egdoc):
         from amara import bindery
         self.model_document = bindery.parse(egdoc)
+        self.model_document.xml_model.prefixes = top_namespaces(self.model_document)
         self.setup_model()
     
     def setup_model(self, parent=None):
         '''
         Process an examplotron document for constraints
         '''
-        NSS = {u'ak': AKARA_NS}
+        NSS = {u'ak': AKARA_NS, u'eg': EG_NAMESPACE}
         parent = parent if parent is not None else self.model_document
         allowed_elements_test = []
         for e in parent.xml_elements:
@@ -278,6 +300,12 @@ class examplotron_model(document_model):
             if relattr: e.xml_model.metadata_rel_expr = relattr
             valattr = e.xml_select(u'string(@ak:value)', NSS)
             if valattr: e.xml_model.metadata_value_expr = valattr
+            coercionattr = e.xml_select(u'string(@ak:coercion)', NSS)
+            if coercionattr: e.xml_model.metadata_coercion_expr = coercionattr
+            relelem = e.xml_select(u'ak:rel', NSS)
+            
+            for rel in relelem:
+                e.xml_model.other_rel_exprs.append((unicode(rel.name),unicode(rel.value)))
             #print e.xml_name, (e.xml_model.metadata_resource_expr, e.xml_model.metadata_rel_expr, e.xml_model.metadata_value_expr)
             
             #Recurse to process children

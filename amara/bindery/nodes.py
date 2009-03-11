@@ -17,7 +17,7 @@ import sets
 import itertools
 import keyword
 import warnings
-import cStringIO
+#from cStringIO import StringIO
 import bisect
 
 from xml.dom import Node

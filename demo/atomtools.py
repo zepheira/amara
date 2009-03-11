@@ -16,12 +16,61 @@ from amara.bindery import html
 from amara.bindery.model import *
 from amara import bindery
 
+
 __all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '']
 
 #__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '', '', '', '']
 
 #From 1.1 of the spec
-ENTRY_MODEL = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+   <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
+   <ak:rel name="'type'" value="'atom:entry'"/>
+   <atom:id ak:rel="local-name()" ak:value="."/>
+   <atom:title type="xhtml" ak:rel="local-name()" ak:value="."/>
+   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
+<!--
+   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_self')" ak:value='descendant-or-self::atom:link[@rel="self"]/@href' />
+   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_alternate')" ak:value='descendant-or-self::atom:link[@rel="alternate"]/@href' />
+-->
+   <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
+   <atom:summary type="xhtml" ak:rel="local-name()" ak:value="."  ak:coercion="'nodeset'"/>
+   <atom:category eg:occurs="*" ak:rel="local-name()" ak:value="@term"/>
+   <atom:author eg:occurs="*" ak:resource="(atom:name|atom:uri|atom:email)[1]">
+     <ak:rel name="'type'" value="'atom:author'"/>
+     <atom:name ak:rel="local-name()" ak:value="." />
+     <atom:uri ak:rel="local-name()" ak:value="." />
+     <atom:email ak:rel="local-name()" ak:value="." />
+   </atom:author>
+   <atom:content type="xhtml" eg:occurs="?" ak:rel="local-name()" ak:value="." ak:coercion="'nodeset'"/> 
+ </atom:entry>"""
+
+FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+ <ak:rel name="'type'" value="'atom:feed'"/>
+ <atom:title ak:rel="local-name()" ak:value="."></atom:title>
+ <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
+ <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+ <atom:author eg:occurs="*">
+     <atom:name ak:rel="local-name()" ak:value="." />
+     <atom:uri ak:rel="local-name()" ak:value="." />
+     <atom:email ak:rel="local-name()" ak:value="." />
+ </atom:author>
+ <atom:id ak:rel="local-name()" ak:value="."></atom:id>
+ <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
+ <atom:rights ak:rel="local-name()" ak:value="."></atom:rights>
+%s
+</atom:feed>
+""" % ENTRY_MODEL_XML
+
+ATOM_MT = u'application/atom+xml'
+
+NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
+
+
+
+'''
+#From 1.1 of the spec
+ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
    <atom:id ak:rel="local-name()" ak:value="."/>
    <atom:title ak:rel="local-name()" ak:value="."/>
    <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
@@ -39,7 +88,7 @@ ENTRY_MODEL = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="
    <atom:content eg:occurs="?" ak:rel="local-name()" ak:value="." /> 
  </atom:entry>"""
 
-FEED_MODEL = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
  <atom:title ak:rel="local-name()" ak:value="."></atom:title>
  <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
  <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
@@ -53,13 +102,99 @@ FEED_MODEL = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="ht
  <atom:rights ak:rel="local-name()" ak:value="."></atom:rights>
 %s
 </atom:feed>
-""" % ENTRY_MODEL
+""" % ENTRY_MODEL_XML
+'''
+
+FEED_MODEL = examplotron_model(FEED_MODEL_XML)
+ENTRY_MODEL = examplotron_model(ENTRY_MODEL_XML)
+
+def aggregate_entries(envelope, entries):
+    '''
+    envelope - input source of atom feed document to enclose entries
+        if it has any entries, the new ones are appended
+    entries - sequence of entry input sources
+    '''
+    envelope_doc = bindery.parse(envelope, model=FEED_MODEL)
+    for entry in entries:
+        entry_doc = bindery.parse(entry, model=ENTRY_MODEL)
+        envelope_doc.feed.xml_append(entry_doc.entry)
+    metadata = envelope_doc.feed.xml_model.generate_metadata(envelope_doc)
+    return envelope_doc, metadata
 
 
-MODEL = examplotron_model(ATOM_MODEL)
-MODEL = examplotron_model(ENTRY_MODEL)
+def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:content', prefixes=NSS):
+    """
+    Takes all Atom content elements with type=html (i.e. a:title, a:summary or a:content)
+    And convert them to be of type=xhtml
 
-import sys; sys.exit()
+    This operation mutates root in place.
+
+    Example:
+
+    import amara; from util import tidy_content_element
+    A = '<entry xmlns="http://www.w3.org/2005/Atom"><id>urn:bogus:x</id><title type="html">&lt;div&gt;x&lt;p&gt;y&lt;p&gt;&lt;/div&gt;</title></entry>'
+    doc = amara.parse(A)
+    tidy_content_element(doc)
+    amara.xml_print(doc)
+    """
+    nodes = root.xml_select(check, prefixes)
+    for node in nodes:
+        if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
+            unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'))
+            #amara.xml_print(unsouped, stream=sys.stderr)
+            while node.xml_children: node.xml_remove(node.xml_first_child)
+            newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
+            for child in unsouped.html.body.xml_children:
+                s = StringIO()
+                amara.xml_print(child, stream=s)
+                newcontent += s.getvalue()
+            newcontent += '</div>'
+            node.xml_append(amara.parse(newcontent).xml_first_child)
+            node.xml_attributes[None, u'type'] = u'xhtml'
+            #for child in doc.html.body.xml_children:
+            #    div.xml_append(child)
+    return root
+
+def command_line_prep():
+    from optparse import OptionParser
+    usage = "%prog [options] wikibase outputdir"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-p", "--pattern",
+                      action="store", type="string", dest="pattern",
+                      help="limit the pages treated as Atom entries to those matching this pattern")
+    return parser
+
+
+def main(argv=None):
+    #But with better integration of entry points
+    if argv is None:
+        argv = sys.argv
+    # By default, optparse usage errors are terminated by SystemExit
+    try:
+        optparser = command_line_prep()
+        options, args = optparser.parse_args(argv[1:])
+        # Process mandatory arguments with IndexError try...except blocks
+        try:
+            wikibase = args[0]
+            try:
+                outputdir = args[1]
+            except IndexError:
+                optparser.error("Missing output directory")
+        except IndexError:
+            optparser.error("Missing Wiki base URL")
+    except SystemExit, status:
+        return status
+    rewrite = args[2] if len(args) > 1 else None
+
+    # Perform additional setup work here before dispatching to run()
+    # Detectable errors encountered here should be handled and a status
+    # code of 1 should be returned. Note, this would be the default code
+    # for a SystemExit exception with a string message.
+    pattern = options.pattern and options.pattern.decode('utf-8')
+
+    moin2atomentries(wikibase, outputdir, rewrite, pattern)
+    return
+
 
 
 SLUGCHARS = r'a-zA-Z0-9\-\_'
@@ -69,8 +204,6 @@ TYPE = 'type'
 UPDATED = 'updated'
 TITLE = 'title'
 ID = 'id'
-
-ATOM_MT = u'application/atom+xml'
 
 slug_from_title = lambda t: OMIT_FROM_SLUG_PAT.sub('_', t).lower().decode('utf-8')[:20]
 
@@ -105,41 +238,6 @@ def atomindex(entry):
     yield UPDATED, unicode(entry.updated)
     #yield TITLE, doc.xml_select(u'name(*)')
 
-
-NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
-
-def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:content', prefixes=NSS):
-    """
-    Takes all Atom content elements with type=html (i.e. a:title, a:summary or a:content)
-    And convert them to be of type=xhtml
-
-    This operation mutates root in place.
-
-    Example:
-
-    import amara; from util import tidy_content_element
-    A = '<entry xmlns="http://www.w3.org/2005/Atom"><id>urn:bogus:x</id><title type="html">&lt;div&gt;x&lt;p&gt;y&lt;p&gt;&lt;/div&gt;</title></entry>'
-    doc = amara.parse(A)
-    tidy_content_element(doc)
-    amara.xml_print(doc)
-    """
-    nodes = root.xml_select(check, prefixes)
-    for node in nodes:
-        if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
-            unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'))
-            #amara.xml_print(unsouped, stream=sys.stderr)
-            while node.xml_children: node.xml_remove(node.xml_first_child)
-            newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
-            for child in unsouped.html.body.xml_children:
-                s = StringIO()
-                amara.xml_print(child, stream=s)
-                newcontent += s.getvalue()
-            newcontent += '</div>'
-            node.xml_append(amara.parse(newcontent).xml_first_child)
-            node.xml_attributes[None, u'type'] = u'xhtml'
-            #for child in doc.html.body.xml_children:
-            #    div.xml_append(child)
-    return root
 
     
 

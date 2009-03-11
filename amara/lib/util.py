@@ -53,3 +53,35 @@ def replace_namespace(node, oldns, newns):
             elem.xml_namespace = newns
     return
 
+
+def first_item(seq): return chain(seq or (), (None,)).next()
+
+#See: http://docs.python.org/dev/howto/functional.html
+#from functional import *
+#Will work as of 2.7
+#mcompose = partial(reduce, compose)
+
+def mcompose(*funcs):
+    result = None
+    for func in funcs:
+        result = tuple(pipeline_stage(func, result))
+    for item in result:
+        yield item
+
+
+def pipeline_stage(obj, arg):
+    if callable(obj):
+        fresult = obj(arg)
+    else:
+        fresult = arg
+#        try:
+#            it = (fresult,)
+#            if not isinstance(fresult, basestring): it = iter(fresult)
+#        except TypeError:
+#            pass
+#    else:
+#        it = (arg,)
+#    return iter(it)
+    return fresult
+
+
