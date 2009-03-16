@@ -7,6 +7,7 @@ Common namespaces, for sake of convenience
 COMMON_PREFIXES = {}
 
 AKARA_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara"; COMMON_PREFIXES[AKARA_NAMESPACE] = u'ak'
+AKARA_XSLT_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara/xslt"; COMMON_PREFIXES[AKARA_XSLT_NAMESPACE] = u'ax'
 
 XML_NAMESPACE = u"http://www.w3.org/XML/1998/namespace"
 XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"

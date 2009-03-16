@@ -319,5 +319,7 @@ class examplotron_model(document_model):
             parent.xml_model.add_constraint(
                 constraint(u'not(*)', msg=u'Element should be empty')
             )
+        #To do:
+        #Add <ak:product ak:name="AVT" ak:value="AVT"/>
 
         

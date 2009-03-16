@@ -56,17 +56,31 @@ def replace_namespace(node, oldns, newns):
 
 def first_item(seq): return chain(seq or (), (None,)).next()
 
+identity = lambda x: x
+
+def omit_blanks():
+    return "..."
+
+def make_date():
+    return "..."
+
+
 #See: http://docs.python.org/dev/howto/functional.html
 #from functional import *
 #Will work as of 2.7
 #mcompose = partial(reduce, compose)
 
 def mcompose(*funcs):
-    result = None
-    for func in funcs:
-        result = tuple(pipeline_stage(func, result))
-    for item in result:
-        yield item
+    def f(val):
+        result = val
+        for func in funcs:
+            result = pipeline_stage(func, result)
+        return result
+    return f
+#    return result
+#        result = tuple(pipeline_stage(func, result))
+#    for item in result:
+#        yield item
 
 
 def pipeline_stage(obj, arg):
