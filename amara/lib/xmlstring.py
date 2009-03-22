@@ -16,8 +16,11 @@ __all__ = [
 def U(s):
     if isinstance(s, unicode): return s
     if isinstance(s, str): return s.decode('utf-8')
-    if s is None: return None
-    return str(s).decode('utf-8')
+    try:
+        return unicode(s)
+    except TypeError:
+        if s is None: return None
+        return str(s).decode('utf-8')
 
 #Basic idea is as old as the XML spec, but was good to reuse a regex at
 #http://maxharp3r.wordpress.com/2008/05/15/pythons-minidom-xml-and-illegal-unicode-characters/

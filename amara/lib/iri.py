@@ -782,9 +782,6 @@ def relativize(targetUri, againstUri, subPathOnly=False):
     # We might want to change the semantics slightly to allow a relative
     # target URI to be a valid "relative path" (and just return it).  For
     # now, though, absolute URIs only.
-    #
-    # TODO: We also need to decide if/when we want to use exceptions instead
-    # of returning `None`.
     if not is_absolute(targetUri) or not is_absolute(againstUri):
         return None
 
@@ -800,7 +797,7 @@ def relativize(targetUri, againstUri, subPathOnly=False):
     subPathSplit = [None, None] + splitTarget[2:]
 
     targetPath = splitTarget[2]
-    againstPath = splitAgainst[2]
+    againstPath = splitAgainst[2] or '/'
 
     leadingSlash = False
     if targetPath[:1] == '/' or againstPath[:1] == '/':

@@ -261,6 +261,8 @@ absolutize_test_cases = [
 
 # Test cases for Relativize() ================================================
 relativize_test_cases = [
+    ('s://ex/a', 's://ex', 'a', 'a'),
+    ('s://ex/a', 's://ex/', 'a', 'a'),
     ('s://ex/a/b/c', 's://ex/a/d', 'b/c', 'b/c'),
     ('s://ex/b/b/c', 's://ex/a/d', '/b/b/c', None),
     ('s://ex/a/b/c', 's://ex/a/b/', 'c', 'c'),
@@ -1037,6 +1039,12 @@ class Test_basic_uri_resolver(unittest.TestCase):
         uri = 'path'
         self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.DEFAULT_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
 
+        if not __file__.startswith("lib/test_iri.py"):
+            #User is not running it from expected location
+            if __file__.startswith("test_iri.py"):
+                os.chdir('..')
+            else:
+                print >> sys.stderr, "Please run this test from the test or test/lib directory"
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep

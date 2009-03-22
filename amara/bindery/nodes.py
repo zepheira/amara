@@ -259,7 +259,10 @@ class container_mixin(object):
         #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
         # => [((None, u'b'), u'3')]
         if isinstance(key, int):
-            result = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+            if key >= 0:
+                result = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
+            else:
+                result = list(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname))[key]
         else:
             force_type = None
             if isinstance(key, tuple):

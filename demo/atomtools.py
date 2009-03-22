@@ -14,25 +14,26 @@ import amara
 from amara.namespaces import *
 from amara.bindery import html
 from amara.bindery.model import *
+from amara.lib.util import *
+from amara.lib.xmlstring import *
 from amara import bindery
+from amara.writers.struct import *
 
 
-__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '']
-
-#__all__ = ['ENTRY_MODEL', 'FEED_MODEL', '', '', '', '', '']
+__all__ = [
+  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
+#  '', '',
+]
 
 #From 1.1 of the spec
 ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
-   <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
    <ak:rel name="'type'" value="'atom:entry'"/>
+   <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
+   <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
    <atom:id ak:rel="local-name()" ak:value="."/>
    <atom:title type="xhtml" ak:rel="local-name()" ak:value="."/>
    <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
    <atom:published ak:rel="local-name()" ak:value="."></atom:published>
-<!--
-   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_self')" ak:value='descendant-or-self::atom:link[@rel="self"]/@href' />
-   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_alternate')" ak:value='descendant-or-self::atom:link[@rel="alternate"]/@href' />
--->
    <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
    <atom:summary type="xhtml" ak:rel="local-name()" ak:value="."  ak:coercion="'nodeset'"/>
    <atom:category eg:occurs="*" ak:rel="local-name()" ak:value="@term"/>
@@ -47,6 +48,8 @@ ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:
 
 FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
  <ak:rel name="'type'" value="'atom:feed'"/>
+ <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
+ <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
  <atom:title ak:rel="local-name()" ak:value="."></atom:title>
  <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
  <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
@@ -63,51 +66,37 @@ FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg
 </atom:feed>
 """ % ENTRY_MODEL_XML
 
-ATOM_MT = u'application/atom+xml'
+ATOM_IMT = u'application/atom+xml'
 
 NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
 
-
-
-'''
-#From 1.1 of the spec
-ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
-   <atom:id ak:rel="local-name()" ak:value="."/>
-   <atom:title ak:rel="local-name()" ak:value="."/>
-   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
-   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
-   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_self')" ak:value='descendant-or-self::atom:link[@rel="self"]/@href' />
-   <atom:link eg:occurs="?" ak:rel="concat(local-name(), '_alternate')" ak:value='descendant-or-self::atom:link[@rel="alternate"]/@href' />
-   <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
-   <atom:summary ak:rel="local-name()" ak:value="."></atom:summary>
-   <atom:category eg:occurs="*" ak:rel="local-name()" ak:value="@term"/>
-   <atom:author eg:occurs="*" ak:resource="(atom:name|atom:uri|atom:email)[1]">
-     <atom:name ak:rel="local-name()" ak:value="." />
-     <atom:uri ak:rel="local-name()" ak:value="." />
-     <atom:email ak:rel="local-name()" ak:value="." />
-   </atom:author>
-   <atom:content eg:occurs="?" ak:rel="local-name()" ak:value="." /> 
- </atom:entry>"""
-
-FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
- <atom:title ak:rel="local-name()" ak:value="."></atom:title>
- <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
- <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
- <atom:author eg:occurs="*">
-     <atom:name ak:rel="local-name()" ak:value="." />
-     <atom:uri ak:rel="local-name()" ak:value="." />
-     <atom:email ak:rel="local-name()" ak:value="." />
- </atom:author>
- <atom:id ak:rel="local-name()" ak:value="."></atom:id>
- <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
- <atom:rights ak:rel="local-name()" ak:value="."></atom:rights>
-%s
-</atom:feed>
-""" % ENTRY_MODEL_XML
-'''
-
 FEED_MODEL = examplotron_model(FEED_MODEL_XML)
 ENTRY_MODEL = examplotron_model(ENTRY_MODEL_XML)
+
+SLUGCHARS = r'a-zA-Z0-9\-\_'
+OMIT_FROM_SLUG_PAT = re.compile('[^%s]'%SLUGCHARS)
+
+TYPE = 'type'
+UPDATED = 'updated'
+TITLE = 'title'
+ID = 'id'
+
+DEFAULT_SKEL = '''<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sample feed</title>
+  <id>http://example.org/CHANGE_ME</id>
+  <!--updated>2009-03-03T11:50:21Z</updated-->
+
+</feed>
+'''
+
+
+slug_from_title = lambda t: OMIT_FROM_SLUG_PAT.sub('_', t).lower().decode('utf-8')[:20]
+
+datetime_from_iso = lambda ds: datetime.strptime(ds, "%Y-%m-%dT%H:%M:%SZ")
+
+path_from_datetime = lambda dt: '%i/%i'%dt.utctimetuple()[:2]
+
 
 def aggregate_entries(envelope, entries):
     '''
@@ -156,6 +145,71 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
             #    div.xml_append(child)
     return root
 
+#
+
+
+class feed(object):
+    '''
+    Class to facilitate building Atom feeds
+    '''
+    def __init__(self, source=None):
+        '''
+        source - an input source with a starting Atom document, generally a skeleton
+        '''
+        source = source or DEFAULT_SKEL
+        self.source = bindery.parse(source, model=FEED_MODEL)
+
+    def append(self, id_, title, updated=None, summary=None, content=None, authors=None, categories=None, links=None, elements=None):
+        '''
+        append an entry
+        author is list of (u'Uche Ogbuji', u'Uche@Ogbuji.net', u'http://Uche.Ogbuji.net'), any of which can be None
+        '''
+        authors = authors or []
+        links = links or []
+        categories = categories or []
+        elements = elements or []
+        doc = self.source
+        updated = updated or datetime.now().isoformat()
+        entry = doc.xml_element_factory(ATOM_NAMESPACE, u'entry')
+        #entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'id', content=id_))
+        entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'id'))
+        entry.id.xml_append(U(id_))
+        entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'updated'))
+        entry.updated.xml_append(U(updated))
+        #Only supports text titles, for now
+        entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'title'))
+        entry.title.xml_append(U(title))
+        for category in categories:
+            entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'category'))
+            try:
+                term, scheme = category
+            except TypeError:
+                term, scheme = category, None
+            entry.category[-1].xml_attributes[u'term'] = U(term)
+            if scheme: entry.category[-1].xml_attributes[u'scheme'] = U(scheme)
+        for author in authors:
+            entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'author'))
+            (name, email, uri) = author
+            entry.author[-1].xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'name'))
+            entry.author[-1].name.xml_append(U(name))
+            if email:
+                entry.author[-1].xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'email'))
+                entry.author[-1].name.xml_append(U(email))
+            if uri:
+                entry.author[-1].xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'uri'))
+                entry.author[-1].name.xml_append(U(uri))
+        for elem in elements:
+            buf = StringIO()
+            w = structwriter(indent=u"yes", stream=buf)
+            w.feed(elem)
+            entry.xml_append_fragment(buf.getvalue())
+        doc.feed.xml_append(entry)
+        return
+
+
+
+
+
 def command_line_prep():
     from optparse import OptionParser
     usage = "%prog [options] wikibase outputdir"
@@ -197,24 +251,6 @@ def main(argv=None):
     return
 
 
-
-SLUGCHARS = r'a-zA-Z0-9\-\_'
-OMIT_FROM_SLUG_PAT = re.compile('[^%s]'%SLUGCHARS)
-
-TYPE = 'type'
-UPDATED = 'updated'
-TITLE = 'title'
-ID = 'id'
-
-slug_from_title = lambda t: OMIT_FROM_SLUG_PAT.sub('_', t).lower().decode('utf-8')[:20]
-
-datetime_from_iso = lambda ds: datetime.strptime(ds, "%Y-%m-%dT%H:%M:%SZ")
-
-path_from_datetime = lambda dt: '%i/%i'%dt.utctimetuple()[:2]
-
-#def create_entry(doc):
-#    for entry in doc.entry
-
 def doctest_example():
     """Return the factorial of n, an exact integer >= 0.
 
@@ -231,32 +267,6 @@ def doctest_example():
     Factorials of floats are OK, but the float must be an exact integer:
     """
     pass
-
-def atomindex(entry):
-    yield TYPE, ATOM_MT
-    yield TITLE, unicode(entry.title)
-    yield ID, unicode(entry.id)
-    yield UPDATED, unicode(entry.updated)
-    #yield TITLE, doc.xml_select(u'name(*)')
-
-
-    
-
-'''
-fname = tempfile.mktemp('.xml')
-driver.init_db(sqlite3.connect(fname))
-drv = driver(sqlite3.connect(fname))
-content = MONTY_XML
-id = drv.create_resource(StringIO(content), metadata=dict(myindex(content)))
-content1, metadata = drv.get_resource(id)
-content1 = content1.read()
-doc = amara.parse(content)
-self.assertEqual(content, content1)
-self.assertEqual(metadata[u'root-element-name'], doc.xml_select(u'name(*)'))
-self.assertEqual(metadata[u'element-count'], doc.xml_select(u'count(//*)'))
-return
-'''
-
 
 def test():
     import doctest
@@ -288,64 +298,6 @@ def run(source, normalize):
 
 #Ideas borrowed from
 # http://www.artima.com/forums/flat.jsp?forum=106&thread=4829
-
-def command_line_prep():
-    from optparse import OptionParser
-    usage = "%prog [options] source cmd"
-    parser = OptionParser(usage=usage)
-    parser.add_option("-n", "--normalize",
-                      action="store_false", dest="normalize", default=-False,
-                      help="send a normalized version of the Atom to the console")
-    #parser.add_option("-q", "--quiet",
-    #                  action="store_false", dest="verbose", default=1,
-    #                  help="don't print status messages to stdout", metavar="<PREFIX=URI>")
-    return parser
-
-
-def main(argv=None):
-    #But with better integration of entry points
-    if argv is None:
-        argv = sys.argv
-    # By default, optparse usage errors are terminated by SystemExit
-    try:
-        optparser = command_line_prep()
-        options, args = optparser.parse_args(argv[1:])
-        # Process mandatory arguments with IndexError try...except blocks
-        try:
-            source = args[0]
-        except IndexError:
-            optparser.error("Missing filename/URL to parse")
-        #try:
-        #    xpattern = args[1]
-        #except IndexError:
-        #    optparser.error("Missing main xpattern")
-    except SystemExit, status:
-        return status
-
-    # Perform additional setup work here before dispatching to run()
-    # Detectable errors encountered here should be handled and a status
-    # code of 1 should be returned. Note, this would be the default code
-    # for a SystemExit exception with a string message.
-
-    #try:
-    #    xpath = args[2].decode('utf-8')
-    #except IndexError:
-    #    xpath = None
-    #xpattern = xpattern.decode('utf-8')
-    #sentinel = options.sentinel and options.sentinel.decode('utf-8')
-    #display = options.display and options.display.decode('utf-8')
-    #prefixes = options.ns
-    #limit = options.limit
-    #if source == '-':
-    #    source = sys.stdin
-    print options.normalize
-    #run(source, xpattern, xpath, limit, sentinel, display, prefixes)
-    if options.test:
-        test()
-    else:
-        run(source, options.normalize)
-    return
-
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
