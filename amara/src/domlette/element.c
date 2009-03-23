@@ -32,6 +32,7 @@ element_init(ElementObject *self, PyObject *namespaceURI,
   return self;
 }
 
+/* returns borrowed reference */
 Py_LOCAL_INLINE(PyObject *)
 lookup_prefix(ElementObject *self, PyObject *namespace)
 {
@@ -69,10 +70,25 @@ lookup_prefix(ElementObject *self, PyObject *namespace)
     current = Node_GET_PARENT(current);
   } while (current && Element_Check(current));
 
+  /* if the default namespace is not declared, then it is the null namespace */
+  if (namespace == Py_None)
+    return Py_None;
+
+  /* the `xml` prefix is implied in all documents */
+  switch (PyObject_RichCompareBool(xml_namespace, namespace, Py_EQ)) {
+  case 0:
+    break;
+  case 1:
+    return xml_string;
+  default:
+    return NULL;
+  }
+
   PyErr_SetString(PyExc_ValueError, "undeclared namespace uri");
   return NULL;
 }
 
+/* returns borrowed reference */
 Py_LOCAL_INLINE(PyObject *)
 lookup_namespace(ElementObject *self, PyObject *prefix)
 {
@@ -116,6 +132,17 @@ lookup_namespace(ElementObject *self, PyObject *prefix)
   if (prefix == Py_None)
     return Py_None;
 
+  /* the `xml` prefix is implied in all documents */
+  switch (PyObject_RichCompareBool(xml_string, prefix, Py_EQ)) {
+  case 0:
+    break;
+  case 1:
+    return xml_namespace;
+  default:
+    return NULL;
+  }
+
+  /* undeclared prefix */
   PyErr_SetString(PyExc_ValueError, "undeclared prefix");
   return NULL;
 }
