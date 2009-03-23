@@ -8,6 +8,7 @@ import cStringIO
 
 import amara
 from amara.test import test_case, test_main
+from amara.namespaces import *
 from amara import tree, xml_print
 
 TEST1 = '''<a:top xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b"><a:monty/></a:top>'''
@@ -56,6 +57,14 @@ class test_namespaces(test_case):
         #Make sure it didn't affect the top elem
         self.assertEqual(doc.xml_first_child.xml_namespace, NS_B)
         self.assertEqual(doc.xml_first_child.xml_prefix, u'b')
+        return
+
+    def test_auto_xml_namespace(self):
+        '''Automatic recognition of XML namespace'''
+        doc = amara.parse('<a/>')
+        self.assertEqual(doc.xml_first_child.xml_namespaces[u'xml'], XML_NAMESPACE)
+        doc.xml_first_child.xml_attributes[XML_NAMESPACE, u'xml:base'] = u'urn:bogus'
+        self.assertEqual(doc.xml_first_child.xml_attributes[XML_NAMESPACE, u'xml:base'], u'urn:bogus')
         return
 
 

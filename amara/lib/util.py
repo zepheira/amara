@@ -99,3 +99,38 @@ def pipeline_stage(obj, arg):
     return fresult
 
 
+from copy import *
+def trim_word_count(node, maxcount):
+    '''
+    import amara
+    from amara.lib.util import trim_word_count
+    x = amara.parse('<a>one two <b>three four </b><c>five <d>six seven</d> eight</c> nine</a>')
+    amara.xml_print(trim_word_count(x, 1))
+    amara.xml_print(trim_word_count(x, 2))
+    amara.xml_print(trim_word_count(x, 3))
+    amara.xml_print(trim_word_count(x, 5))
+    amara.xml_print(trim_word_count(x, 6))
+    amara.xml_print(trim_word_count(x, 7))
+    amara.xml_print(trim_word_count(x, 8))
+    amara.xml_print(trim_word_count(x, 9))
+    amara.xml_print(trim_word_count(x, 10))
+    '''
+    import amara
+    def trim(node, count):
+        newnode = copy(node)
+        for child in node.xml_children:
+            if count >= maxcount:
+                continue
+            addendum = len(child.xml_select(u'string(.)').split())
+            if count + addendum > maxcount:
+                if isinstance(child, amara.tree.text):
+                    newnode.xml_append(amara.tree.text(child.xml_value.rsplit(None, maxcount-count)[0]))
+                else:
+                    newnode.xml_append(trim(child, count))
+                count = maxcount
+            else:
+                newnode.xml_append(deepcopy(child))
+                count += addendum
+        return newnode
+    return trim(node, 0)
+

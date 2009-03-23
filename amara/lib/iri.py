@@ -34,7 +34,7 @@ __all__ = [
 
   # Miscellaneous
   'is_absolute', 'get_scheme', 'strip_fragment',
-  'os_path_to_uri', 'uri_to_os_path', 'basejoin', 'join',
+  'os_path_to_uri', 'uri_to_os_path', 'basejoin',
   'make_urllib_safe',
   'WINDOWS_SLASH_COMPAT',
 
