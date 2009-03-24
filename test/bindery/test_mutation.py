@@ -13,6 +13,7 @@ from xml.dom import Node
 XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 output = cStringIO.StringIO()
 
+ATTRIBUTE_NODE = tree.attribute.xml_type
 
 class TestBasicMods(unittest.TestCase):
     #def setUp(self):
@@ -483,7 +484,7 @@ class TestBasicMods(unittest.TestCase):
         DOC = '<a b="spam"><b>spam</b></a>'
         EXPECTED = '<a b="eggs"><b>spam</b></a>'
         doc = bindery.parse(DOC)
-        doc.a[Node.ATTRIBUTE_NODE, None, u'b'] = u'eggs'
+        doc.a[ATTRIBUTE_NODE, None, u'b'] = u'eggs'
         self.compare_output(doc, XMLDECL+EXPECTED)
         return
 

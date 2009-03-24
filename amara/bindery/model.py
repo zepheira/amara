@@ -183,16 +183,21 @@ class content_model:
             if elem.xml_model.metadata_rel_expr:
                 rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
                 if elem.xml_model.metadata_value_expr:
-                    val = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
-                    if val:
-                        if elem.xml_model.metadata_coercion_expr and simplify(elem.xml_select(elem.xml_model.metadata_coercion_expr, prefixes=prefixes)) == u'nodeset':
-                            buf = StringIO()
-                            xml_print(val[0], stream=buf)
-                            val = buf.getvalue()
-                        elif isinstance(val[0], tree.attribute):
-                            val = val[0].xml_value
+                    valresult = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
+                    if isinstance(valresult, datatypes.nodeset):
+                        if valresult:
+                            if elem.xml_model.metadata_coercion_expr and simplify(elem.xml_select(elem.xml_model.metadata_coercion_expr, prefixes=prefixes)) == u'nodeset':
+                                buf = StringIO()
+                                xml_print(valresult[0], stream=buf)
+                                val = buf.getvalue()
+                            elif isinstance(valresult[0], tree.attribute):
+                                val = valresult[0].xml_value
+                            else:
+                                val = unicode(valresult[0])
                         else:
-                            val = unicode(val[0])
+                            val = None
+                    else:
+                        val = simplify(valresult)
                 elif new_resource is not None:
                     val = new_resource
                 else:

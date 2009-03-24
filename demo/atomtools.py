@@ -152,12 +152,20 @@ class feed(object):
     '''
     Class to facilitate building Atom feeds
     '''
-    def __init__(self, source=None):
+    def __init__(self, skel=None, title=None, updated=None, id=None):
         '''
-        source - an input source with a starting Atom document, generally a skeleton
+        skel - an input source with a starting Atom document, generally a skeleton
         '''
-        source = source or DEFAULT_SKEL
-        self.source = bindery.parse(source, model=FEED_MODEL)
+        skel = skel or DEFAULT_SKEL
+        self.source = bindery.parse(skel, model=FEED_MODEL)
+        if title:
+            self.source.feed.title = title
+        if id:
+            self.source.feed.id = id
+        #FIXME: Warnings if they don't supply id in skel or id kwarg
+        #self.source.feed.xml_append(E((ATOM_NAMESPACE, u'updated'), updated or datetime.now().isoformat()))
+        self.source.feed.updated = updated or datetime.now().isoformat()
+        return
 
     def append(self, id_, title, updated=None, summary=None, content=None, authors=None, categories=None, links=None, elements=None):
         '''

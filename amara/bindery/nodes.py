@@ -17,7 +17,7 @@ import sets
 import itertools
 import keyword
 import warnings
-#from cStringIO import StringIO
+from cStringIO import StringIO
 import bisect
 
 from xml.dom import Node
@@ -26,6 +26,7 @@ from amara import tree
 from amara.lib.xmlstring import *
 from amara.xpath import datatypes
 from amara.lib.util import *
+from amara.writers.struct import *
 import model
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
@@ -90,9 +91,10 @@ class element_iterator:
         return self
 
     def next(self):
-        #if not self.curr:
-        #    raise StopIteration()
-        return self.parent.xml_find_named_child(self.ns, self.local, self.children)
+        child = self.parent.xml_find_named_child(self.ns, self.local, self.children)
+        if child is None:
+            raise StopIteration
+        return child
 
 
 #def elem_getter(pname, parent):
@@ -114,17 +116,23 @@ class bound_element(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        try:
-            return obj.xml_find_named_child(self.ns, self.local)
-        except StopIteration:
+        child = obj.xml_find_named_child(self.ns, self.local)
+        if child is not None:
+            return child
+        else:
             #This property is defined on this element class, but does not exist on this instance
             return obj.xml_model.element_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
         target = self.__get__(obj, None)
-        for child in target.xml_children:
-            target.xml_remove(child)
-        target.xml_append(value)
+        if target is not None:
+            for child in target.xml_children:
+                target.xml_remove(child)
+            target.xml_append(value)
+        else:
+            new_elem = obj.factory_entity.xml_element_factory(self.ns, self.local)
+            new_elem.xml_append(value)
+            obj.xml_append(new_elem)
         return
 
     def __delete__(self, obj):
@@ -231,7 +239,10 @@ class container_mixin(object):
         childiter = iter(self.xml_children) if childiter is None else childiter
         name = (ns, local)
         while not found:
-            child = childiter.next() #Will raise StopIteration when siblings are exhausted
+            try:
+                child = childiter.next() #Will raise StopIteration when siblings are exhausted
+            except StopIteration:
+                return None
             found = child.xml_type == ELEMENT_TYPE and child.xml_name == name
         return child
     
@@ -244,6 +255,11 @@ class container_mixin(object):
             base_class.xml_append(self, tree.text(obj))
         elif isinstance(obj, tree.node):
             base_class.xml_append(self, obj)
+        elif isinstance(obj, E):
+            buf = StringIO()
+            w = structwriter(indent=u"yes", stream=buf)
+            w.feed(obj)
+            self.xml_append_fragment(buf.getvalue())
         else:
             raise TypeError
         return
@@ -356,10 +372,15 @@ class container_mixin(object):
                 key = (None, key)
             else:
                 raise TypeError('Inappropriate key (%s)'%(key))
-            if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes') and key in self.xml_attributes:
-                target = self.xml_attributes[key]
-            if force_type in (None, tree.element.xml_type):
-                target = self.xml_find_named_child(key[0], key[1])
+            if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes'):
+                target = None
+                self.xml_attributes[key] = value
+            elif force_type in (None, tree.element.xml_type):
+                target = self.xml_find_named_child(*key)
+                if target is None:
+                    new_elem = parent.factory_entity.xml_element_factory(*key)
+                    new_elem.xml_append(value)
+                    parent.xml_append(new_elem)
             else:
                 raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
         if target is not None:
