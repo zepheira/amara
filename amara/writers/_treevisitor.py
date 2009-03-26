@@ -114,6 +114,7 @@ class visitor:
 
         for child in node.xml_children:
             self.visit(child)
+        self.printer.end_document()
         return
     _dispatch[tree.entity.xml_type] = visit_document
 
@@ -253,8 +254,15 @@ def xml_print(root, stream=sys.stdout, encoding='UTF-8', **kwargs):
     # of document node (getElementsByName is an HTML DOM only method)
     #if as_html is None:
     #    as_html = hasattr(root.ownerDocument or root, 'getElementsByName')
-    v = visitor(stream, encoding, **kwargs)
-    v.visit(root)
+    if 'xml_declaration' in kwargs and not isinstance(root, tree.entity):
+        del kwargs['xml_declaration']
+        v = visitor(stream, encoding, **kwargs)
+        v.printer.start_document()
+        v.visit(root)
+        v.printer.end_document()
+    else:
+        v = visitor(stream, encoding, **kwargs)
+        v.visit(root)
     return
 
 

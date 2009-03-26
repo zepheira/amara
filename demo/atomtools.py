@@ -21,7 +21,7 @@ from amara.writers.struct import *
 
 
 __all__ = [
-  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
+  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML', 'tidy_content_element'
 #  '', '',
 ]
 
@@ -130,16 +130,23 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
     nodes = root.xml_select(check, prefixes)
     for node in nodes:
         if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
-            unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'))
+            unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'), encoding='utf-8')
             #amara.xml_print(unsouped, stream=sys.stderr)
             while node.xml_children: node.xml_remove(node.xml_first_child)
-            newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
+            node.xml_append(amara.parse('<div xmlns="http://www.w3.org/1999/xhtml"/>').xml_first_child)
+            #node.xml_append_fragment('<div xmlns="http://www.w3.org/1999/xhtml"/>')
+            #newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
             for child in unsouped.html.body.xml_children:
-                s = StringIO()
-                amara.xml_print(child, stream=s)
-                newcontent += s.getvalue()
-            newcontent += '</div>'
-            node.xml_append(amara.parse(newcontent).xml_first_child)
+                if isinstance(child, tree.text):
+                    node.xml_first_child.xml_append(child)
+                else:
+                    s = StringIO()
+                    amara.xml_print(child, stream=s)
+                    node.xml_first_child.xml_append(amara.parse(s.getvalue()).xml_first_child)
+                #node.div.xml_append_fragment(s.getvalue())
+                #newcontent += s.getvalue()
+            #newcontent += '</div>'
+            #node.xml_append(amara.parse(newcontent).xml_first_child)
             node.xml_attributes[None, u'type'] = u'xhtml'
             #for child in doc.html.body.xml_children:
             #    div.xml_append(child)

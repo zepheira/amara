@@ -142,7 +142,7 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         self.elementClass = eclass
     
 
-def parse(source, model=None):
+def parse(source, model=None, encoding=None):
     '''
     
     '''
@@ -151,7 +151,9 @@ def parse(source, model=None):
     parser = html5lib.HTMLParser(tree=treebuilder)
     if model:
         entity_factory = model.clone
-    return parser.parse(inputsource(source, None).stream, model)
+        #parser.tree.model = model
+    return parser.parse(inputsource(source, None).stream, encoding=encoding)
+    #return parser.parse(inputsource(source, None).stream, model)
 
 
 def launch(*args, **kwargs):
