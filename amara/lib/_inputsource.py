@@ -1,9 +1,12 @@
 #amara.lib._inputsource
 #Named with _ to avoid clash with amara.lib.inputsource class
 
+from __future__ import with_statement
+
 import os
 from cStringIO import StringIO
 from uuid import UUID, uuid1, uuid4
+from contextlib import closing
 
 from amara._expat import InputSource
 from amara.lib import iri, xmlstring

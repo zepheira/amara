@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 #RFC 4287
 #python atomtools.py copiasample.atom
 
@@ -21,7 +22,7 @@ from amara.writers.struct import *
 
 
 __all__ = [
-  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML', 'tidy_content_element'
+  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML', 'tidy_content_element', 'feed',
 #  '', '',
 ]
 
@@ -218,6 +219,15 @@ class feed(object):
             w = structwriter(indent=u"yes", stream=buf)
             w.feed(elem)
             entry.xml_append_fragment(buf.getvalue())
+        #FIXME: Support other content types
+        if summary:
+            entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'summary'))
+            entry.summary.xml_attributes[u'type'] = u'text'
+            entry.summary.xml_append(U(summary))
+        if content:
+            entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'content'))
+            entry.content.xml_attributes[u'type'] = u'text'
+            entry.content.xml_append(U(content))
         doc.feed.xml_append(entry)
         return
 

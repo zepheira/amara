@@ -10,16 +10,18 @@ __all__ = [
 'content_model',
 'named_node_test', 'document_model', 'examplotron_model',
 'ATTIBUTE_AXIS',
+'metadata_dict',
 ]
 
 import sys
 #import re
 import sets
-import itertools
 import warnings
 import copy
 from cStringIO import StringIO
+from itertools import *
 from functools import *
+from operator import *
 
 from amara import tree, xml_print
 from amara.namespaces import *
@@ -327,4 +329,15 @@ class examplotron_model(document_model):
         #To do:
         #Add <ak:product ak:name="AVT" ak:value="AVT"/>
 
-        
+
+def metadata_dict(metadata):
+    resources = {}
+    #Use sorted to ensure grouping by resource IDs
+    for rid, row in groupby(sorted(metadata), itemgetter(0)):
+        #entry[u'id'] = eid
+        resource = {}
+        #It's all crazy lazy, so use list to consume the iterator
+        list( resource.setdefault(key, []).append(val) for (i, key, val) in row )
+        resources[rid] = resource
+    return resources
+

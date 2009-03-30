@@ -19,6 +19,7 @@ import amara
 from amara import bindery
 
 SCALE = 100
+TIMER_COUNT = 2000
 
 class Test_increment_over_core_tree(unittest.TestCase):
     def setUp(self):
@@ -28,23 +29,20 @@ class Test_increment_over_core_tree(unittest.TestCase):
         self.bigdoc1 = ''.join(self.bigdoc1)
         #len(self.bigdoc1) is 4007 for SCALE = 1000
         self.doc = amara.parse(self.bigdoc1)
-        print 1000
         t0 = Timer('amara.parse(doc)', 'import amara; doc = %r'%(self.bigdoc1))
         #self.base_tree_time = min(t0.repeat(3))
-        self.base_tree_time = t0.timeit()
+        self.base_tree_time = t0.timeit(TIMER_COUNT)
         print self.base_tree_time
         return
 
     def test_bindery_parse(self):
         #self.assert_(diff/SCALE < 0.01)
-        print 2000
         t1 = Timer('bindery.parse(doc)', 'from amara import bindery; doc = %r'%(self.bigdoc1))
         #t = min(t1.repeat(3))
-        t = t1.timeit()
-        print (t - self.base_tree_time)/t
-        print t, (t - self.base_tree_time)/t
+        t = t1.timeit(TIMER_COUNT)
+        print t, (t - self.base_tree_time)/self.base_tree_time
         #self.assert_(diff/SCALE < 0.01)
-        self.assert_(t < 0.1)
+        self.assert_(t < 3)
         return
 
 
