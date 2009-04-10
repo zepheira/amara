@@ -179,9 +179,9 @@ class content_model:
             prefixes = elem.xml_root.xml_model.prefixes
             if elem.xml_model.metadata_resource_expr:
                 if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
-                    new_resource = datatypes.string(elem.xml_nodeid)
+                    new_resource = unicode(datatypes.string(elem.xml_nodeid))
                 else:
-                    new_resource = datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes))
+                    new_resource = unicode(datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes)))
             if elem.xml_model.metadata_rel_expr:
                 rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
                 if elem.xml_model.metadata_value_expr:

@@ -54,7 +54,12 @@ def replace_namespace(node, oldns, newns):
     return
 
 
-def first_item(seq): return chain(seq or (), (None,)).next()
+def first_item(seq, next=None):
+    if next is None:
+        return chain(seq or (), (None,)).next()
+    else:
+        return next(chain(seq or (), (None,)).next())
+
 
 identity = lambda x: x
 
@@ -133,4 +138,87 @@ def trim_word_count(node, maxcount):
                 count += addendum
         return newnode
     return trim(node, 0)
+
+
+def coroutine(func):
+    '''
+    A simple tool to eliminate the need to call next() to kick-start a co-routine
+    From David Beazley: http://www.dabeaz.com/generators/index.html
+    '''
+    def start(*args,**kwargs):
+        coro = func(*args,**kwargs)
+        coro.next()
+        return coro
+    return start
+
+#Grabbed from unittest.py
+
+def fail(msg=None):
+    """Fail immediately, with the given message."""
+    raise AssertionError(msg)
+
+
+def fail_if(expr, msg=None):
+    "Fail the test if the expression is true."
+    if expr: raise AssertionError(msg)
+
+
+def fail_unless(expr, msg=None):
+    """Fail the test unless the expression is true."""
+    if not expr: raise AssertionError(msg)
+
+
+def fail_unless_equal(first, second, msg=None):
+    """Fail if the two objects are unequal as determined by the '=='
+       operator.
+    """
+    if not first == second:
+        raise AssertionError(msg or '%r != %r' % (first, second))
+
+
+def fail_if_equal(first, second, msg=None):
+    """Fail if the two objects are equal as determined by the '=='
+       operator.
+    """
+    if first == second:
+        raise AssertionError(msg or '%r == %r' % (first, second))
+
+
+def fail_unless_almost_equal(first, second, places=7, msg=None):
+    """Fail if the two objects are unequal as determined by their
+       difference rounded to the given number of decimal places
+       (default 7) and comparing to zero.
+
+       Note that decimal places (from zero) are usually not the same
+       as significant digits (measured from the most signficant digit).
+    """
+    if round(second-first, places) != 0:
+        raise AssertionError(msg or '%r != %r within %r places' % (first, second, places))
+
+
+def fail_if_almost_equal(first, second, places=7, msg=None):
+    """Fail if the two objects are equal as determined by their
+       difference rounded to the given number of decimal places
+       (default 7) and comparing to zero.
+
+       Note that decimal places (from zero) are usually not the same
+       as significant digits (measured from the most signficant digit).
+    """
+    if round(second-first, places) == 0:
+        raise AssertionError(msg or '%r == %r within %r places' % (first, second, places))
+
+# Synonyms for assertion methods
+
+assert_equal = fail_unless_equal
+
+assert_not_equal = fail_if_equal
+
+assert_almost_equal = fail_unless_almost_equal
+
+assert_not_almostEqual = fail_if_almost_equal
+
+assert_ = fail_unless
+
+assert_false = fail_if
+
 
