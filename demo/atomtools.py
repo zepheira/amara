@@ -195,6 +195,9 @@ class feed(object):
         #Only supports text titles, for now
         entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'title'))
         entry.title.xml_append(U(title))
+        for link in links:
+            (href, rel) = link
+            entry.xml_append(E((ATOM_NAMESPACE, u'link'), {u'href': href, u'rel': rel}))
         for category in categories:
             entry.xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'category'))
             try:

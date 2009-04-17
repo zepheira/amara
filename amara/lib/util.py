@@ -151,74 +151,45 @@ def coroutine(func):
         return coro
     return start
 
-#Grabbed from unittest.py
+#Loosely based on methods in unittest.py
 
-def fail(msg=None):
-    """Fail immediately, with the given message."""
-    raise AssertionError(msg)
-
-
-def fail_if(expr, msg=None):
-    "Fail the test if the expression is true."
-    if expr: raise AssertionError(msg)
-
-
-def fail_unless(expr, msg=None):
-    """Fail the test unless the expression is true."""
-    if not expr: raise AssertionError(msg)
-
-
-def fail_unless_equal(first, second, msg=None):
-    """Fail if the two objects are unequal as determined by the '=='
-       operator.
+def assert_(test, obj, msg=None):
     """
-    if not first == second:
-        raise AssertionError(msg or '%r != %r' % (first, second))
+    Raise an error if the test expression is not true.  The test can be a function that takes the context object.
+    """
+    if (callable(test) and not test(obj)) or not test:
+        raise AssertionError(msg)
+    return obj
 
 
-def fail_if_equal(first, second, msg=None):
+def assert_false(test, obj, msg=None):
+    """
+    Raise an error if the test expression is true.  The test can be a function that takes the context object.
+    """
+    if (callable(test) and test(obj)) or test:
+        raise AssertionError(msg)
+    return obj
+
+
+def assert_equal(other, obj, msg=None):
+    """
+    Fail if the two objects are unequal as determined by the '==' operator.
+    
+    from functools import *
+    from amara.lib.util import *
+    f = partial(assert_equal, u'', msg="POW!")
+    print (f(''),) # -> ''
+    """
+    if not obj == other:
+        raise AssertionError(msg or '%r != %r' % (obj, other))
+    return obj
+
+
+def assert_not_equal(other, obj, msg=None):
     """Fail if the two objects are equal as determined by the '=='
        operator.
     """
-    if first == second:
-        raise AssertionError(msg or '%r == %r' % (first, second))
-
-
-def fail_unless_almost_equal(first, second, places=7, msg=None):
-    """Fail if the two objects are unequal as determined by their
-       difference rounded to the given number of decimal places
-       (default 7) and comparing to zero.
-
-       Note that decimal places (from zero) are usually not the same
-       as significant digits (measured from the most signficant digit).
-    """
-    if round(second-first, places) != 0:
-        raise AssertionError(msg or '%r != %r within %r places' % (first, second, places))
-
-
-def fail_if_almost_equal(first, second, places=7, msg=None):
-    """Fail if the two objects are equal as determined by their
-       difference rounded to the given number of decimal places
-       (default 7) and comparing to zero.
-
-       Note that decimal places (from zero) are usually not the same
-       as significant digits (measured from the most signficant digit).
-    """
-    if round(second-first, places) == 0:
-        raise AssertionError(msg or '%r == %r within %r places' % (first, second, places))
-
-# Synonyms for assertion methods
-
-assert_equal = fail_unless_equal
-
-assert_not_equal = fail_if_equal
-
-assert_almost_equal = fail_unless_almost_equal
-
-assert_not_almostEqual = fail_if_almost_equal
-
-assert_ = fail_unless
-
-assert_false = fail_if
-
+    if obj == other:
+        raise AssertionError(msg or '%r == %r' % (obj, other))
+    return obj
 

@@ -330,6 +330,24 @@ class examplotron_model(document_model):
         #Add <ak:product ak:name="AVT" ak:value="AVT"/>
 
 
+def generate_metadata(root): return root.xml_model.generate_metadata(root)
+
+#Singleton/sentinel
+MARK = object()
+
+def metadata_dict(metadata):
+    resources = {}
+    first_id = MARK
+    #Use sorted to ensure grouping by resource IDs
+    for rid, row in groupby(sorted(metadata), itemgetter(0)):
+        if first_id == MARK: first_id = rid
+        #entry[u'id'] = eid
+        resource = {}
+        #It's all crazy lazy, so use list to consume the iterator
+        list( resource.setdefault(key, []).append(val) for (i, key, val) in row )
+        resources[rid] = resource
+    return resources, first_id
+
 def metadata_dict(metadata):
     resources = {}
     #Use sorted to ensure grouping by resource IDs
