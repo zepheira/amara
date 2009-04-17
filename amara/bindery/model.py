@@ -11,6 +11,7 @@ __all__ = [
 'named_node_test', 'document_model', 'examplotron_model',
 'ATTIBUTE_AXIS',
 'metadata_dict',
+'generate_metadata',
 ]
 
 import sys
@@ -347,15 +348,4 @@ def metadata_dict(metadata):
         list( resource.setdefault(key, []).append(val) for (i, key, val) in row )
         resources[rid] = resource
     return resources, first_id
-
-def metadata_dict(metadata):
-    resources = {}
-    #Use sorted to ensure grouping by resource IDs
-    for rid, row in groupby(sorted(metadata), itemgetter(0)):
-        #entry[u'id'] = eid
-        resource = {}
-        #It's all crazy lazy, so use list to consume the iterator
-        list( resource.setdefault(key, []).append(val) for (i, key, val) in row )
-        resources[rid] = resource
-    return resources
 
