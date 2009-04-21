@@ -111,19 +111,6 @@ class child_element_constraint(constraint):
         return
 
 
-def named_node_test(child_ns, child_local, node, axis=u''):
-    '''
-    Return an XPath node test for the given child element on the given node
-    '''
-    for prefix, ns in node.xml_namespaces.items():
-        if ns == child_ns:
-            #Use this prefix, as long as it's not the default NS
-            if not prefix: break
-            return axis + prefix + u':' + child_local
-    #Probably better to just pass in a temp prefix mapping here
-    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, child_ns or u'', child_local)
-
-
 class content_model:
     def __init__(self):
         self.element_types = {}

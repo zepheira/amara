@@ -5,6 +5,9 @@ from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 
 __version__ = "2.0a2"
 
+#FIXME: Proper i18n soon
+def _(text): return text
+
 class Error(Exception):
 
     message = ''

@@ -17,7 +17,8 @@ from amara.lib.util import *
 # NOTE: XPathParser and Context are imported last to avoid import errors
 
 __all__ = [# XPath expression processing:
-           'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize', 'simplify'
+           'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize',
+           'simplify', 'named_node_test',
            ]
 
 
@@ -265,6 +266,7 @@ def abspath(node, prefixes=None):
     #http://mail.python.org/pipermail/xml-sig/2004-August/010423.html
     #Significantly enhanced to use Unicode properly, support more
     #node types, use safer node type tests, etc.
+    #See also: http://snippets.dzone.com/posts/show/4349
     """
     Return an XPath expression that provides a unique path to
     the given node (supports elements, attributes, root nodes,
@@ -328,5 +330,18 @@ def abspath(node, prefixes=None):
         return abspath(ancestor, prefixes) + u'/' + step
     else:
         return u'/' + step
+
+
+def named_node_test(child_ns, child_local, node, axis=u''):
+    '''
+    Return an XPath node test for the given child element on the given node
+    '''
+    for prefix, ns in node.xml_namespaces.items():
+        if ns == child_ns:
+            #Use this prefix, as long as it's not the default NS
+            if not prefix: break
+            return axis + prefix + u':' + child_local
+    #Probably better to just pass in a temp prefix mapping here
+    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, child_ns or u'', child_local)
 
 
