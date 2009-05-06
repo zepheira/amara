@@ -26,7 +26,7 @@ class BinderyError(Error):
         return {
             # -- internal/unexpected errors --------------------------------
             BinderyError.CONSTRAINT_VIOLATION: _(
-                'Failed constraint: %(constraint)s'),
+                'Failed constraint: "%(constraint)s" in context of node %(node)s.'),
         }
 
 

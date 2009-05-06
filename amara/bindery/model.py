@@ -59,7 +59,7 @@ class constraint(object):
                 result = datatypes.string(node.xml_select(assertion))
                 if result:
                     return
-            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION, constraint=self.msg or assertion)
+            raise BinderyError(BinderyError.CONSTRAINT_VIOLATION, constraint=self.msg or assertion, node=abspath(node))
 
 
 class attribute_constraint(constraint):

@@ -44,6 +44,7 @@ class test_xslt_variable_shadowing_d_20010308(xslt_test):
   
 </xsl:stylesheet>
 """
+    transform = transform(stringsource )
     source = stringsource("<a><b/><c/><d/></a>")
     parameters = {}
     expected = """

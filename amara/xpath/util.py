@@ -18,7 +18,7 @@ from amara.lib.util import *
 
 __all__ = [# XPath expression processing:
            'Compile', 'Evaluate', 'SimpleEvaluate', 'paramvalue', 'parameterize',
-           'simplify', 'named_node_test',
+           'simplify', 'named_node_test', 'abspath'
            ]
 
 

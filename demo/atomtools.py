@@ -216,7 +216,7 @@ class feed(object):
                 entry.author[-1].name.xml_append(U(email))
             if uri:
                 entry.author[-1].xml_append(doc.xml_element_factory(ATOM_NAMESPACE, u'uri'))
-                entry.author[-1].name.xml_append(U(uri))
+                entry.author[-1].uri.xml_append(U(uri))
         for elem in elements:
             buf = StringIO()
             w = structwriter(indent=u"yes", stream=buf)

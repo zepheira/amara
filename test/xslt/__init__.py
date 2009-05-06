@@ -95,6 +95,7 @@ class xslt_test(test_case):
     transform = None
     expected = None
     parameters = None
+    force_method = None
 
     class __metaclass__(type):
         def __init__(cls, name, bases, namespace):
@@ -124,7 +125,7 @@ class xslt_test(test_case):
         return
 
     def _assert_result(self, result):
-        method = result.parameters.method
+        method = (None, self.force_method) if self.force_method else result.parameters.method
         omit_decl = result.parameters.omit_xml_declaration
         expected, compared = self.expected, result
         if method == (None, 'xml') and not omit_decl:
