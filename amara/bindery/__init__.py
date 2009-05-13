@@ -8,13 +8,16 @@ Extra friendly XML node API for Python
 import nodes
 from amara import Error
 
-def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False, model=None):
+def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False, prefixes=None, model=None):
     from amara import tree
     if model:
         entity_factory = model.clone
     if not entity_factory:
         entity_factory = nodes.entity_base
-    return tree.parse(obj, uri, entity_factory=entity_factory, standalone=standalone, validate=validate)
+    doc = tree.parse(obj, uri, entity_factory=entity_factory, standalone=standalone, validate=validate)
+    for k, v in (prefixes or {}).items():
+        doc.xml_namespaces[k] = v
+    return doc
 
 
 class BinderyError(Error):
