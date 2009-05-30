@@ -96,7 +96,7 @@ class dispatcher(object):
 
     @node_handler(u'node()', DEFAULTY_PRIORITY)
     def default_node(self, node):
-        if isinstance(node, tree.element):
+        if isinstance(node, tree.element) or isinstance(node, tree.entity):
             #print 'default_element'
             for child in node.xml_children:
                 for chunk in self.dispatch(child):
@@ -104,5 +104,4 @@ class dispatcher(object):
         else:
             #print 'default_node'
             yield unicode(node.xml_select(u'string(.)'))
-
 

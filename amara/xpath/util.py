@@ -113,7 +113,7 @@ def Compile(expr):
     """
     try:
         return XPathParser.Parse(expr)
-    except XPathException:
+    except (XPathException, KeyboardInterrupt, SystemExit):
         raise
     except:
         stream = cStringIO.StringIO()

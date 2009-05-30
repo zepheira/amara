@@ -22,8 +22,9 @@ from amara.writers.struct import *
 
 
 __all__ = [
-  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML', 'tidy_content_element', 'feed',
-#  '', '',
+  'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
+  'ATOM_IMT', 'NSS', 'DEFAULT_SKEL',
+  'tidy_content_element', 'feed', 'aggregate_entries',
 ]
 
 #From 1.1 of the spec
@@ -106,10 +107,11 @@ def aggregate_entries(envelope, entries):
     entries - sequence of entry input sources
     '''
     envelope_doc = bindery.parse(envelope, model=FEED_MODEL)
-    for entry in entries:
-        entry_doc = bindery.parse(entry, model=ENTRY_MODEL)
+    entrydocs = [ bindery.parse(entry, model=ENTRY_MODEL) for entry in entries ]
+    #for entry in sorted(entrydocs, key=lambda x: attrgetter('updated')):
+    for entry_doc in sorted(entrydocs, key=lambda x: str(x.entry.updated), reverse=True):
         envelope_doc.feed.xml_append(entry_doc.entry)
-    metadata = envelope_doc.feed.xml_model.generate_metadata(envelope_doc)
+    metadata = generate_metadata(envelope_doc)
     return envelope_doc, metadata
 
 
@@ -235,7 +237,36 @@ class feed(object):
         return
 
 
+def parse(isrc):
+    '''
+    Convert Atom syntax to Exhibit JSON
+    (see: http://www.ibm.com/developerworks/web/library/wa-realweb6/ ; this is based on listing 3)
+    '''
+    import simplejson
+    doc = bindery.parse(isrc)
+    try:
+        doc_entries = iter(doc.feed.entry)
+    except AttributeError:
+        doc_entries = iter(doc.entry)
 
+    entries = [
+        {
+            u"label": unicode(e.id),
+            u"type": u"Entry",
+            u"title": unicode(e.title),
+            #Nested list comprehension to select the alternate link,
+            #then select the first result ([0]) and gets its href attribute
+            u"link": [ l for l in e.link if l.rel == u"alternate" ][0].href,
+            u"author": unicode(e.author.name),
+            u"logo": unicode(e.logo),
+            #Nested list comprehension to create a list of category values
+            u"categories": [ unicode(c.term) for c in e.category ],
+            u"updated": unicode(e.updated),
+            u"content": unicode(e.content),
+        }
+        for e in doc_entries
+    ]
+    return 
 
 
 def command_line_prep():
@@ -322,11 +353,4 @@ def run(source, normalize):
     pprint.pprint(raw_feeddata)
     feeddata = {}
     return
-
-
-#Ideas borrowed from
-# http://www.artima.com/forums/flat.jsp?forum=106&thread=4829
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv))
 
