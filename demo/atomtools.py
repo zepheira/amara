@@ -242,12 +242,14 @@ def parse(isrc):
     Convert Atom syntax to Exhibit JSON
     (see: http://www.ibm.com/developerworks/web/library/wa-realweb6/ ; this is based on listing 3)
     '''
-    import simplejson
-    doc = bindery.parse(isrc)
+    doc = bindery.parse(isrc, model=FEED_MODEL)
     try:
         doc_entries = iter(doc.feed.entry)
     except AttributeError:
-        doc_entries = iter(doc.entry)
+        try:
+            doc_entries = iter(doc.entry)
+        except AttributeError:
+            return None
 
     entries = [
         {
@@ -258,7 +260,6 @@ def parse(isrc):
             #then select the first result ([0]) and gets its href attribute
             u"link": [ l for l in e.link if l.rel == u"alternate" ][0].href,
             u"author": unicode(e.author.name),
-            u"logo": unicode(e.logo),
             #Nested list comprehension to create a list of category values
             u"categories": [ unicode(c.term) for c in e.category ],
             u"updated": unicode(e.updated),
@@ -266,7 +267,7 @@ def parse(isrc):
         }
         for e in doc_entries
     ]
-    return 
+    return entries
 
 
 def command_line_prep():
