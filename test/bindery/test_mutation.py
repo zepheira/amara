@@ -563,6 +563,41 @@ class TestBasicMods(unittest.TestCase):
         self.compare_output(doc, XMLDECL+EXPECTED)
         return
 
+    def testSetNamespace1(self):
+        #EXPECTED = '<A><B id="1">One</B><B id="2">Two</B></A>'
+        EXPECTED = '<ns:A xmlns:ns="urn:bogus"><ns:B/></ns:A>'
+        DOC = '<A><B/></A>'
+        doc = bindery.parse(DOC)
+        doc.A.xml_namespaces[u'ns'] = u'urn:bogus'
+        self.assertEqual(doc.A.xml_name, (None, u'A'))
+        self.assertEqual(doc.A.B.xml_name, (None, u'B'))
+        doc.A.xml_namespace = u'urn:bogus'
+        doc.xml_fixup()
+        #print [ n for n in dir(doc) if not n.startswith('__') and not n.startswith('xml') ]
+        self.assertEqual(doc.A_.xml_name, (u'urn:bogus', u'A'))
+        doc.A_.B.xml_namespace = u'urn:bogus'
+        doc.A_.xml_fixup()
+        self.assertEqual(doc.A_.B_.xml_name, (u'urn:bogus', u'B'))
+        self.compare_output(doc, XMLDECL+EXPECTED)
+        return
+
+    def testSetNamespace2(self):
+        #EXPECTED = '<A><B id="1">One</B><B id="2">Two</B></A>'
+        EXPECTED = '<A xmlns="urn:bogus"><B/></A>'
+        DOC = '<A><B/></A>'
+        doc = bindery.parse(DOC)
+        doc.A.xml_namespaces[None] = u'urn:bogus'
+        self.assertEqual(doc.A.xml_name, (None, u'A'))
+        self.assertEqual(doc.A.B.xml_name, (None, u'B'))
+        doc.A.xml_namespace = u'urn:bogus'
+        doc.xml_fixup()
+        self.assertEqual(doc.A_.xml_name, (u'urn:bogus', u'A'))
+        doc.A_.B.xml_namespace = u'urn:bogus'
+        doc.A_.xml_fixup()
+        self.assertEqual(doc.A_.B_.xml_name, (u'urn:bogus', u'B'))
+        self.compare_output(doc, XMLDECL+EXPECTED)
+        return
+
 
 MONTY = """\
 <?xml version="1.0" encoding="utf-8"?>

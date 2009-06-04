@@ -389,6 +389,34 @@ class container_mixin(object):
             target.xml_append(value)
         return
 
+    #def xml_fixup(self, old_ns):
+    def xml_fixup(self, target=None):
+        """
+        Should be called after any modification to `xml_namespace` on any child,
+        which would normally break the binding to this container.
+        A stop-gap measure until the best real fix is determined.
+        See: 
+        File "/Users/uche/lib/python2.5/site-packages/amara/bindery/nodes.py", line 154, in __get__
+            return obj.xml_attributes[self.ns, self.local]
+            KeyError: (None, u'foo')
+        """
+        #FIXME: Should technically use a new binding class, since those are related to ns/local
+        #self.xml_parent.xml_replace(self, self)
+        #print self.xml_children, []
+        if target:
+            offset = self.xml_index(target)
+            #ref = self.xml_preceding_sibling
+            self.xml_remove(target)
+            self.xml_insert(offset, target)
+            return
+        children = []
+        for child in self.xml_children:
+            self.xml_remove(child)
+            children.append(child)
+        for child in children:
+            self.xml_append(child)
+        return
+
 
 class element_base(container_mixin, tree.element):
     xml_attribute_factory = tree.attribute #factory callable for attributes
@@ -512,10 +540,12 @@ class entity_base(container_mixin, tree.entity):
     def xml_pyname(self, ns, local, parent=None, iselement=True):
         '''
         generate a Python ID (as a *string*) from an XML universal name
+        used to prepare an object for binding
 
         ns - the XML namespace
         local - the XML local name
-        exclude - iterator of names not to use (e.g. to avoid clashes)
+        parent - the parent to which the named object will be bound, used to disambiguate names
+        iselement - a flag as to whether the object to be bound is an element or attribute
         '''
         try:
             python_id = self._names[(local, ns)]
@@ -527,11 +557,18 @@ class entity_base(container_mixin, tree.entity):
         if parent is not None:
             name_checks_out = False
             while not name_checks_out:
-                obj = getattr(self, python_id, None)
-                if not obj or (iselement and obj.xml_name == (ns, local)):
+                if hasattr(parent, python_id):
+                    descriptor = parent.__class__.__dict__.get(python_id)
+                    if descriptor is not None and iselement and (descriptor.ns, descriptor.local) == (ns, local):
+                        name_checks_out = True
+                        break
+                    python_id += '_'
+#                    print (parent, parent.__dict__)
+#                    obj = getattr(parent, python_id)
+#                    if obj is None or (iselement and obj.xml_name == (ns, local)):
+                else:
                     name_checks_out = True
                     break
-                python_id += '_'
             
         return python_id
 

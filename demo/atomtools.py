@@ -20,6 +20,7 @@ from amara.lib.xmlstring import *
 from amara import bindery
 from amara.writers.struct import *
 
+from amara.lib.util import *
 
 __all__ = [
   'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
@@ -133,30 +134,31 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
     nodes = root.xml_select(check, prefixes)
     for node in nodes:
         if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
+            #unsouped = html.parse('<html xmlns="http://www.w3.org/1999/xhtml">%s</html>'%node.xml_select(u'string(.)').encode('utf-8'), encoding='utf-8')
             unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'), encoding='utf-8')
-            #amara.xml_print(unsouped, stream=sys.stderr)
+            print (unsouped.html,)
+            unsouped.html.xml_namespaces[u''] = XHTML_NAMESPACE
+            unsouped.html.xml_namespace = XHTML_NAMESPACE
+            print (unsouped.html,)
+            subtree = element_subtree_iter(unsouped)
+            print (unsouped.html,)
+            subtree.next().xml_namespace = XHTML_NAMESPACE
+            print (unsouped.html,)
+            for e in subtree:
+                if isinstance(e, tree.element):
+                    e.xml_namespace = XHTML_NAMESPACE
+                    e.xml_parent.xml_fixup(e)
+            #amara.xml_print(unsouped, stream=sys.stderr, indent=True)
             while node.xml_children: node.xml_remove(node.xml_first_child)
             node.xml_append(amara.parse('<div xmlns="http://www.w3.org/1999/xhtml"/>').xml_first_child)
             #node.xml_append_fragment('<div xmlns="http://www.w3.org/1999/xhtml"/>')
             #newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
             for child in unsouped.html.body.xml_children:
-                if isinstance(child, tree.text):
-                    node.xml_first_child.xml_append(child)
-                else:
-                    s = StringIO()
-                    amara.xml_print(child, stream=s)
-                    node.xml_first_child.xml_append(amara.parse(s.getvalue()).xml_first_child)
-                #node.div.xml_append_fragment(s.getvalue())
-                #newcontent += s.getvalue()
-            #newcontent += '</div>'
-            #node.xml_append(amara.parse(newcontent).xml_first_child)
+                node.xml_first_child.xml_append(child)
             node.xml_attributes[None, u'type'] = u'xhtml'
-            #for child in doc.html.body.xml_children:
-            #    div.xml_append(child)
     return root
 
 #
-
 
 class feed(object):
     '''
@@ -259,9 +261,9 @@ def parse(isrc):
             #Nested list comprehension to select the alternate link,
             #then select the first result ([0]) and gets its href attribute
             u"link": [ l for l in e.link if l.rel == u"alternate" ][0].href,
-            u"author": unicode(e.author.name),
+            u"author": [ unicode(a.name) for a in iter(e.author or []) ],
             #Nested list comprehension to create a list of category values
-            u"categories": [ unicode(c.term) for c in e.category ],
+            u"categories": [ unicode(c.term) for c in iter(e.category or []) ],
             u"updated": unicode(e.updated),
             u"content": unicode(e.content),
         }
