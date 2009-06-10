@@ -182,6 +182,7 @@ class container_mixin(object):
         return
 
     def xml_avt(self, expr, prefixes=None):
+        prefixes = prefixes or self.xml_namespaces.copy()
         from amara.xslt.expressions import avt
         from amara.xpath import context
         v = avt.avt_expression(expr)

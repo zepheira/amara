@@ -134,8 +134,8 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
     commentClass = comment
     doctypeClass = doctype_create
     
-    def __init__(self):
-        self.entity = entity()
+    def __init__(self, entity_factory=None):
+        self.entity = entity_factory()
         html5lib.treebuilders._base.TreeBuilder.__init__(self)
         def eclass(name):
             return self.entity.xml_element_factory(None, str(name))
@@ -148,53 +148,13 @@ def parse(source, model=None, encoding=None):
     '''
     #from amara.bindery import html; doc = html.parse("http://www.hitimewine.net/istar.asp?a=6&id=161153!1247")
     #parser = html5lib.HTMLParser()
-    parser = html5lib.HTMLParser(tree=treebuilder)
-    if model:
-        entity_factory = model.clone
-        #parser.tree.model = model
+    def get_tree_instance():
+        entity_factory = model.clone if model else entity
+        return treebuilder(entity_factory)
+    parser = html5lib.HTMLParser(tree=get_tree_instance)
     return parser.parse(inputsource(source, None).stream, encoding=encoding)
     #return parser.parse(inputsource(source, None).stream, model)
 
-
-def launch(*args, **kwargs):
-    source = args[0]
-    doc = parse(source)
-    from amara import xml_print
-    xml_print(doc, indent=kwargs.get('pretty'), is_html=bool(kwargs.get('html')))
-    return
-
-
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv
-    try:
-        try:
-            opts, args = getopt.getopt(argv[1:], "hpHv", ["help", "pretty", "html"])
-        except getopt.error, msg:
-            raise Usage(msg)
-    
-        # option processing
-        kwargs = {'pretty': False}
-        for option, value in opts:
-            if option == "-v":
-                verbose = True
-            elif option in ("-h", "--help"):
-                raise Usage(help_message)
-            elif option in ("-p", "--pretty"):
-                kwargs['pretty'] = True
-            elif option in ("-H", "--html"):
-                kwargs['html'] = True
-    
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "\t for help use --help"
-        return 2
-
-    launch(*args, **kwargs)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
 
 def launch(source, **kwargs):
     doc = parse(source)
@@ -207,6 +167,7 @@ def launch(source, **kwargs):
 # http://www.artima.com/forums/flat.jsp?forum=106&thread=4829
 
 #FIXME: A lot of this is copied boilerplate that neds to be cleaned up
+import sys
 
 def command_line_prep():
     from optparse import OptionParser

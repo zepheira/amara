@@ -113,6 +113,7 @@ class child_element_constraint(constraint):
 
 class content_model:
     def __init__(self):
+        #{(ns, local): (python-name, default)}
         self.element_types = {}
         self.attribute_types = {}
         self.constraints = []
@@ -269,6 +270,9 @@ class examplotron_model(document_model):
         NSS = {u'ak': AKARA_NS, u'eg': EG_NAMESPACE}
         parent = parent if parent is not None else self.model_document
         allowed_elements_test = []
+        if isinstance(parent, tree.element):
+            for a in parent.xml_attributes:
+                parent.xml_model.attribute_types[a] = (self.model_document.xml_pyname(a[0], a[1], iselement=False), None)
         for e in parent.xml_elements:
             #Constraint info
             eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))

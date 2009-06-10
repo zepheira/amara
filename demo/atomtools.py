@@ -4,6 +4,7 @@
 
 import sys
 from itertools import *
+from functools import *
 from operator import *
 from collections import defaultdict
 
@@ -20,12 +21,16 @@ from amara.lib.xmlstring import *
 from amara import bindery
 from amara.writers.struct import *
 
+from amara.bindery.util import dispatcher, node_handler
+from amara.bindery.model import *
+
 from amara.lib.util import *
 
 __all__ = [
   'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
   'ATOM_IMT', 'NSS', 'DEFAULT_SKEL',
   'tidy_content_element', 'feed', 'aggregate_entries',
+  'atom2rss1',
 ]
 
 #From 1.1 of the spec
@@ -136,24 +141,21 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
         if node.xml_select(u'@type = "html"') and node.xml_select(u'string(.)'):
             #unsouped = html.parse('<html xmlns="http://www.w3.org/1999/xhtml">%s</html>'%node.xml_select(u'string(.)').encode('utf-8'), encoding='utf-8')
             unsouped = html.parse('<html>%s</html>'%node.xml_select(u'string(.)').encode('utf-8'), encoding='utf-8')
-            print (unsouped.html,)
-            unsouped.html.xml_namespaces[u''] = XHTML_NAMESPACE
-            unsouped.html.xml_namespace = XHTML_NAMESPACE
-            print (unsouped.html,)
+            unsouped.html.xml_namespaces[None] = XHTML_NAMESPACE
             subtree = element_subtree_iter(unsouped)
-            print (unsouped.html,)
-            subtree.next().xml_namespace = XHTML_NAMESPACE
-            print (unsouped.html,)
+            #Grab body, before changing the namespaces changes how it's bound
+            #After NS is changed, you'd need to remember to do unsouped.html_.body_
+            body = unsouped.html.body
             for e in subtree:
                 if isinstance(e, tree.element):
                     e.xml_namespace = XHTML_NAMESPACE
+                    #Temporary fixup until bindery can handle namespace change better
                     e.xml_parent.xml_fixup(e)
             #amara.xml_print(unsouped, stream=sys.stderr, indent=True)
             while node.xml_children: node.xml_remove(node.xml_first_child)
             node.xml_append(amara.parse('<div xmlns="http://www.w3.org/1999/xhtml"/>').xml_first_child)
             #node.xml_append_fragment('<div xmlns="http://www.w3.org/1999/xhtml"/>')
-            #newcontent = '<div xmlns="http://www.w3.org/1999/xhtml">'
-            for child in unsouped.html.body.xml_children:
+            for child in body.xml_children:
                 node.xml_first_child.xml_append(child)
             node.xml_attributes[None, u'type'] = u'xhtml'
     return root
@@ -253,22 +255,34 @@ def parse(isrc):
         except AttributeError:
             return None
 
-    entries = [
-        {
+    def process_entry(e):
+        known_elements = [u'id', u'title', u'link', u'author', u'category', u'updated', u'content', u'summary']
+        data = {
             u"label": unicode(e.id),
             u"type": u"Entry",
             u"title": unicode(e.title),
             #Nested list comprehension to select the alternate link,
             #then select the first result ([0]) and gets its href attribute
             u"link": [ l for l in e.link if l.rel == u"alternate" ][0].href,
-            u"author": [ unicode(a.name) for a in iter(e.author or []) ],
+            u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
             #Nested list comprehension to create a list of category values
             u"categories": [ unicode(c.term) for c in iter(e.category or []) ],
             u"updated": unicode(e.updated),
-            u"content": unicode(e.content),
+            u"summary": unicode(e.summary),
         }
-        for e in doc_entries
-    ]
+        if e.summary is not None:
+            data[u"summary"] = unicode(e.summary)
+        if e.content is not None:
+            try:
+                data[u"content_src"] = unicode(e.content.src)
+            except AttributeError:
+                data[u"content_text"] = unicode(e.content)
+        for child in e.xml_elements:
+            if child.xml_namespace != ATOM_NAMESPACE and child.xml_local not in known_elements:
+                data[child.xml_local] = unicode(child)
+        return data
+
+    entries = [ process_entry(e) for e in doc_entries ]
     return entries
 
 
@@ -357,3 +371,89 @@ def run(source, normalize):
     feeddata = {}
     return
 
+
+RSS_CONTENT_NAMESPACE = u"http://purl.org/rss/1.0/modules/content/"
+RSS10_NAMESPACE = u"http://purl.org/rss/1.0/"
+
+def atom2rss1(isrc):
+    doc = bindery.parse(isrc, model=FEED_MODEL)
+    converter = atom_content_handlers()
+    doc.feed.xml_namespaces[u'a'] = ATOM_NAMESPACE
+    doc.feed.xml_namespaces[u'html'] = XHTML_NAMESPACE
+    buf = StringIO()
+    structwriter(indent=u"yes", stream=buf).feed(
+        converter.dispatch(doc.feed)
+    )
+    return buf.getvalue()
+
+
+#
+class atom_content_handlers(dispatcher):
+    '''
+    A dispatcher for converting Atom to RSS 1.0
+    '''
+    MAX_ITEM_DESC = 500
+    @node_handler(u'a:feed')
+    def feed(self, node):
+        yield E((RDF_NAMESPACE, u'rdf:RDF'),
+            NS(u'dc', DC_NAMESPACE),
+            NS(u'content', RSS_CONTENT_NAMESPACE),
+            E((RSS10_NAMESPACE, u'channel'), {(u'rdf:about'): node.xml_avt(u"{a:link[@rel='alternate']/@href}")},
+                E((RSS10_NAMESPACE, u'title'), self.text_construct(node.title)),
+                E((RSS10_NAMESPACE, u'description'), self.text_construct(node.subtitle)),
+                E((RSS10_NAMESPACE, u'link'), node.xml_avt(u"{a:link[@rel='alternate']/@href}")),
+                E((RSS10_NAMESPACE, u'items'),
+                    E((RDF_NAMESPACE, u'rdf:Seq'),
+                        chain(*imap(partial(self.dispatch, mode=u'index'), node.entry))
+                    )
+                )
+            ),
+            chain(*imap(partial(self.dispatch, mode=u'full'), node.entry))
+        )
+
+    @node_handler(u'a:entry', mode=u'index')
+    def entry_index(self, node):
+        yield E((RDF_NAMESPACE, u'rdf:li'),
+            node.xml_avt(u"{a:link[@rel='alternate']/@href}")
+        )
+
+    @node_handler(u'a:entry', mode=u'full')
+    def entry_full(self, node):
+        yield E((RSS10_NAMESPACE, u'item'),  {(u'rdf:about'): node.xml_avt(u"{a:link[@rel='alternate']/@href}")},
+        E((RSS10_NAMESPACE, u'title'), self.text_construct(node.title)),
+        E((RSS10_NAMESPACE, u'description'), self.description(node)),
+        E((RSS_CONTENT_NAMESPACE, u'content:encoded'), self.text_construct(node.summary or node.content)),
+        E((DC_NAMESPACE, u'dc:date'), node.updated),
+        [ E((DC_NAMESPACE, u'dc:subject'), s.term) for s in iter(node.category or []) ],
+        E((RSS10_NAMESPACE, u'link'), node.xml_avt(u"{a:link[@rel='alternate']/@href}")),
+        )
+
+    def description(self, node):
+        if node.summary:
+            d = unicode(node.summary)
+        else:
+            d = unicode(node.content)
+        if len(d) > self.MAX_ITEM_DESC:
+            d = d[:self.MAX_ITEM_DESC] + u'\n...[Truncated]'
+        return d
+
+    @node_handler(u'html:*')
+    def html_elem(self, node):
+        yield E(node.xml_local, node.xml_attributes.copy(),
+            chain(*imap(self.dispatch, node.xml_children))
+        )
+
+    def text_construct(self, node):
+        #FIXME: Need to fix a nasty bug in models before using node.type
+        type_ = node.xml_avt(u"{@type}")
+        #FIXME: will be None, not u'' when said bug is fixed
+        if type_ in [u'', u'text']:
+            yield unicode(node)
+        elif type_ == u'xhtml':
+            buf = StringIO()
+            w = structwriter(indent=u"yes", stream=buf, encoding='utf-8')
+            for child in node.xml_select(u'html:div/node()'):
+                w.feed(self.dispatch(child))
+            encoded = buf.getvalue().decode('utf-8')
+            #print (encoded,)
+            yield encoded

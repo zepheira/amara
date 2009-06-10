@@ -45,17 +45,20 @@ def property_getter(propname, node, converter=unicode):
 
 
 DEFAULTY_PRIORITY = -sys.maxint-1
+ALL_MODES = u'*'
 
 class node_handler(object):
     '''
     A decorator
     '''
-    def __init__(self, test, priority=0):
+    def __init__(self, test, mode=None, priority=0):
         self.test = test if type(test) in (list, tuple) else [test]
         self.priority = priority
+        self.mode = mode
 
     def __call__(self, func):
         func.test = self.test
+        func.mode = self.mode
         func.priority = self.priority
         return func
 
@@ -79,6 +82,7 @@ class dispatcher(object):
         If any ancestor of the node can be used as context for the test XPath,
         such that the node is in the resulting node set, the test succeeds
         '''
+        #FIXME: optimize, at least for the simple node test case.  No need to climb all the way up the tree for that
         if isinstance(test, unicode):
             context = node
             while context.xml_parent is not None:
@@ -87,14 +91,15 @@ class dispatcher(object):
                 context = context.xml_parent
         return False
 
-    def dispatch(self, node):
+    def dispatch(self, node, mode=None):
         for handler in self.node_handlers:
             for test in handler.test:
                 if (callable(test) and test(self, node)) or self.check_xpath(test, node):
-                    for chunk in handler(node): yield chunk
-                    return
+                    if handler.mode in (mode, ALL_MODES):
+                        for chunk in handler(node): yield chunk
+                        return
 
-    @node_handler(u'node()', DEFAULTY_PRIORITY)
+    @node_handler(u'node()', ALL_MODES, DEFAULTY_PRIORITY)
     def default_node(self, node):
         if isinstance(node, tree.element) or isinstance(node, tree.entity):
             #print 'default_element'
