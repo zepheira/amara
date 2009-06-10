@@ -249,11 +249,20 @@ def parse(isrc):
     doc = bindery.parse(isrc, model=FEED_MODEL)
     try:
         doc_entries = iter(doc.feed.entry)
+        feedinfo = {
+            u"label": unicode(doc.feed.id),
+            u"type": u"Feed",
+            u"title": unicode(doc.feed.title),
+            u"link": [ l for l in doc.feed.link if l.rel == u"alternate" ][0].href,
+            u"authors": [ unicode(a.name) for a in iter(doc.feed.author or []) ],
+            u"updated": unicode(doc.feed.updated),
+        }
     except AttributeError:
         try:
             doc_entries = iter(doc.entry)
+            feedinfo = None
         except AttributeError:
-            return None
+            return None, []
 
     def process_entry(e):
         known_elements = [u'id', u'title', u'link', u'author', u'category', u'updated', u'content', u'summary']
@@ -282,8 +291,7 @@ def parse(isrc):
                 data[child.xml_local] = unicode(child)
         return data
 
-    entries = [ process_entry(e) for e in doc_entries ]
-    return entries
+    return feedinfo, [ process_entry(e) for e in doc_entries ]
 
 
 def command_line_prep():
