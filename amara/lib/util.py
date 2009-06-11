@@ -39,6 +39,27 @@ def top_namespaces(doc):
     return reduce(lambda a, b: a.update(b) or a, elems, {})
 
 
+#
+def set_namespaces(node, prefixes):
+    """
+    Sets namespace mapping on an entity node by updating its children, or
+    on element by just updating its own mappings.  As such it can be used as
+    a batch namespace update on an element
+
+    node - the root of the tree on which namespaces are to be declared
+    prefixes -  the any additional/overriding namespace mappings
+                in the form of a dictionary of prefix: namespace
+                the base namespace mappings are taken from in-scope
+                declarations on the given node.  These new declarations are
+                superimposed on existing ones
+    """
+    to_update = chain(node.xml_elements, (node,)) if isinstance(node, tree.entity) else (node,)
+    for target in to_update:
+        for k, v in prefixes.items():
+            target.xml_namespaces[k] = v
+    return
+
+
 def replace_namespace(node, oldns, newns):
     '''
     Checks the subtree at node for elements in oldns, and changes their xml_namespace to newns.

@@ -42,10 +42,10 @@ class Test_sane_default_1(unittest.TestCase):
     def test_specify_ns(self):
         """Parse with string"""
         doc = parse(SANE_DEFAULT_XML, prefixes=SANE_DEFAULT_XML_PREFIXES)
-        print doc.xml_namespaces
+        #print doc.xml_namespaces
         self.assertEqual(len(list(doc.xml_select(u'//x:monty'))), 1)
         return
-        
+
 
 if __name__ == '__main__':
     testsupport.test_main()

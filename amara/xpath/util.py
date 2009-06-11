@@ -51,6 +51,7 @@ def simple_evaluate(expr, node, prefixes=None):
                               #extmodules=ext_modules)
     return ctx.evaluate(expr)
 
+
 SimpleEvaluate = simple_evaluate
 
 def Evaluate(expr, contextNode=None, context=None):

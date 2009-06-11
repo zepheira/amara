@@ -8,6 +8,7 @@ Some utilities for Amara bindery
 import sys
 from amara import tree
 from amara.lib.util import *
+from amara.xpath import context, parser
 
 def property_str_getter(propname, node):
     '''
@@ -62,6 +63,7 @@ class node_handler(object):
         func.priority = self.priority
         return func
 
+#
 
 #A simple, XSLT-like dispatch system
 class dispatcher(object):
@@ -69,11 +71,12 @@ class dispatcher(object):
         self.node_handlers = []
         for obj in ( getattr(self, name) for name in dir(self) ):
             test = getattr(obj, 'test', None)
-            if test:
+            if test is not None:
                 self.node_handlers.append((obj.priority, obj))
         #Using bisect or cmp for sorted might be more efficient, but in general dispatcher handler sets
         #will be small enough not to matter
         self.node_handlers = [ obj for (priority, obj) in sorted(self.node_handlers, reverse=True) ]
+        self.cached_xpath = {}
         return
     
     def check_xpath(self, test, node):
@@ -83,12 +86,21 @@ class dispatcher(object):
         such that the node is in the resulting node set, the test succeeds
         '''
         #FIXME: optimize, at least for the simple node test case.  No need to climb all the way up the tree for that
-        if isinstance(test, unicode):
-            context = node
-            while context.xml_parent is not None:
-                if node in context.xml_parent.xml_select(test):
-                    return True
-                context = context.xml_parent
+        #for i, t in enumerate(obj.test):
+            #FIXME: add support for python callable tests
+        #    if isinstance(t, basestring):
+        #        obj.test[i:i+1] = []
+        
+        if test not in self.cached_xpath:
+            self.cached_xpath[test] = parser.parse(test)
+        test = self.cached_xpath[test]
+        #if hasattr(test, 'evaluate'):
+        #if isinstance(test, unicode):
+        cnode = node
+        while cnode.xml_parent is not None:
+            if node in test.evaluate(context(cnode.xml_parent, namespaces=cnode.xml_parent.xml_namespaces)):
+                return True
+            cnode = cnode.xml_parent
         return False
 
     def dispatch(self, node, mode=None):
@@ -106,7 +118,8 @@ class dispatcher(object):
             for child in node.xml_children:
                 for chunk in self.dispatch(child):
                     yield chunk
-        else:
+        elif isinstance(node, tree.text):
             #print 'default_node'
-            yield unicode(node.xml_select(u'string(.)'))
+            #yield unicode(node.xml_select(u'string(.)'))
+            yield node.xml_value
 

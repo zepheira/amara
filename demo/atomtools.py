@@ -385,6 +385,7 @@ RSS10_NAMESPACE = u"http://purl.org/rss/1.0/"
 
 def atom2rss1(isrc):
     doc = bindery.parse(isrc, model=FEED_MODEL)
+    #doc = bindery.parse(isrc, model=FEED_MODEL, prefixes={u'a', ATOM_NAMESPACE})
     converter = atom_content_handlers()
     doc.feed.xml_namespaces[u'a'] = ATOM_NAMESPACE
     doc.feed.xml_namespaces[u'html'] = XHTML_NAMESPACE
