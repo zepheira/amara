@@ -335,7 +335,7 @@ class test_case(unittest.TestCase):
 
     def run(self, result):
         result.startTest(self)
-        if result.simulate:
+        if getattr(result, "simulate", False):
             testMethod = lambda: None
         else:
             testMethod = getattr(self, self._testMethodName)
