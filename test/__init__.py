@@ -701,5 +701,8 @@ def test_main(*modules):
     result = runner.run(test)
     raise SystemExit(0 if result.wasSuccessful() else 1)
 
+# Tell nose to ignore this function
+test_main.__test__ = False
+
 if __name__ == '__main__':
     test_main()
