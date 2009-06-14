@@ -7,7 +7,7 @@
 import cStringIO
 
 import amara
-from amara.test import test_case, test_main
+from amara.test import test_case
 from amara.namespaces import *
 from amara import tree, xml_print
 
@@ -67,6 +67,9 @@ class test_namespaces(test_case):
         self.assertEqual(doc.xml_first_child.xml_attributes[XML_NAMESPACE, u'xml:base'], u'urn:bogus')
         return
 
+# Otherwise nose thinks it's a test to run
+del test_case
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()
