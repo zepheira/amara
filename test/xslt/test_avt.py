@@ -1,11 +1,10 @@
 ########################################################################
 # test/xslt/test_avt.py
-from amara.test import test_main
-from amara.test.xpath.test_expressions import test_expression
+from amara.test.xpath.test_expressions import base_expression
 from amara.xpath import datatypes
 from amara.xslt import XsltError
 
-class test_avt(test_expression):
+class test_avt(base_expression):
     module_name = 'amara.xslt.expressions.avt'
     class_name = "avt_expression"
     evaluate_method = 'evaluate_as_string'
@@ -28,7 +27,7 @@ class test_avt(test_expression):
         ]
 
     @classmethod
-    def unpack_test_case(cls, source, expected=None, *extras):
+    def unpack_tst_case(cls, source, expected=None, *extras):
         return (source,), expected, extras
 
 
@@ -44,11 +43,16 @@ class test_avt_errors(test_avt):
         ]
 
     @classmethod
-    def new_test_method(cls, expected, factory, args):
+    def new_tst_method(*q):
+        # work around some strange metaclass interacation with nose
+        if len(q) == 1:
+            return
+        cls, expected, factory, args = q
         def test_method(self):
             self.assertRaises(XsltError, factory, *args)
         return test_method
 
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_choose.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_choose_1(xslt_test):
@@ -64,6 +63,9 @@ version="1.0">
   </BODY>
 </HTML>"""
 
+# Hide the base class from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

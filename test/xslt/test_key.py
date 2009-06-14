@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_key.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
@@ -344,6 +343,9 @@ class test_key_error_1(xslt_error):
 </xsl:stylesheet>
 """)
 
+# Hide the base classes from nose
+del xslt_test, xslt_error
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

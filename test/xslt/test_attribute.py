@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_attribute.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.writers import WriterError, xmlwriter
 from amara.xslt import XsltError
@@ -356,6 +355,9 @@ class test_attribute_error_6(xslt_error):
 </xsl:stylesheet>
 """)
 
+# Hide these from nose
+del xslt_test, xslt_error
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

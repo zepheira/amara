@@ -5,7 +5,6 @@ import cStringIO
 import unittest
 
 from amara.lib import treecompare
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 
@@ -365,5 +364,8 @@ class test_basics_11(xslt_test):
   <hr noshade>
 </div>"""
 
+del xslt_test
+
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

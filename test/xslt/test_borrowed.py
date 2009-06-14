@@ -4,7 +4,6 @@ import os
 import glob
 import warnings
 
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource
 
 def __bootstrap__(module_dict):
@@ -33,6 +32,9 @@ def __bootstrap__(module_dict):
     return
 __bootstrap__(locals())
 
+# Hide the base class from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

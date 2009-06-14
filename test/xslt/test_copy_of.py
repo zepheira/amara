@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_copy_of.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_copy_of_1(xslt_test):
@@ -70,6 +69,9 @@ class test_copy_of_2(xslt_test):
   <path d="M500,600 C500,500 650,500 650,600                             S800,700 800,600" class="ViaAppia"/>
 </svg>"""
 
+# Hide the base class from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

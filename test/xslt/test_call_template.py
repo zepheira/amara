@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_call_template.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_call_template_1(xslt_test):
@@ -51,5 +50,9 @@ class test_call_template_1(xslt_test):
 <root><tr><td>b</td><td>a</td></tr><tr><td>d</td><td>c</td></tr></root>"""
 
 
+# Hide the base class from nose
+del xslt_test
+
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

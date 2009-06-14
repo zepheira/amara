@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_apply_templates.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
@@ -261,6 +260,9 @@ class test_apply_templates_error_2(xslt_error):
 </xsl:stylesheet>
 """)
 
+# Hide these from nose
+del xslt_test, xslt_error
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_message.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_message_1(xslt_test):
@@ -143,6 +142,9 @@ class test_message_4(xslt_test):
 END STYLESHEET MESSAGE
 """
 
+# Hide the base classes from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_literals.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_literals_1(xslt_test):
@@ -46,6 +45,9 @@ class test_literals_2(xslt_test):
     expected = """<?xml version='1.0' encoding='us-ascii'?>
 <result><text/><value/></result>"""
 
+# Hide the base classes from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()

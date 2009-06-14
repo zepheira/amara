@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_attribute_set.py
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
 class test_attribute_set_1(xslt_test):
@@ -86,6 +85,9 @@ class test_attribute_set_1(xslt_test):
 </results>
 """
 
+# Hide this from nose
+del xslt_test
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()
