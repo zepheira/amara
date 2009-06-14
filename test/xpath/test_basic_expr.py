@@ -2,9 +2,9 @@
 from amara.lib import testsupport
 from amara.xpath import datatypes
 
-from test_expressions import test_expression
+from test_expressions import base_expression
 
-class test_basic_expr(test_expression):
+class test_basic_expr(base_expression):
     module_name = 'amara.xpath.expressions.basics'
 
 

@@ -1,7 +1,7 @@
 import amara
 from amara.lib import testsupport
 from amara.xpath import datatypes, util
-from amara.test import test_case, test_main
+from amara.test import test_case
 from amara import tree, xml_print
 
 abspath = util.abspath
@@ -37,7 +37,10 @@ class test_sb060223(test_case):
         self.assertEqual(ap, u'/bax:foo[1]/bar:baz[1]')
         return
 
+# Hide this from nose, else it tries to run it as a test
+del test_case
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main()
 

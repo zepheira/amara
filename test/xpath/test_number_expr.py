@@ -5,13 +5,13 @@ from amara.xpath.expressions.basics import number_literal, string_literal
 
 from test_expressions import (
     # expression TestCase
-    test_expression,
+    base_expression,
     # IEEE 754 "special" numbers as expressions
     NOT_A_NUMBER, POSITIVE_INFINITY, NEGATIVE_INFINITY
     )
 
 
-class test_number_expr(test_expression):
+class test_number_expr(base_expression):
     module_name = 'amara.xpath.expressions.numbers'
     evaluate_method = 'evaluate_as_number'
     return_type = datatypes.number

@@ -6,14 +6,14 @@ from amara.xpath.compiler import xpathcompiler
 from amara.xpath.locationpaths.axisspecifiers import axis_specifier
 
 from test_expressions import (
-    test_xpath,
+    base_xpath,
     # nodeset literals
     DOC, ROOT, CHILD1, CHILD3, PI, PI2, TEXT1, COMMENT
     )
 
 NAMESPACES = {'bar': 'http://foo.com'}
 
-class test_nodetests(test_xpath):
+class test_nodetests(base_xpath):
     module_name = 'amara.xpath.locationpaths.nodetests'
 
     @classmethod

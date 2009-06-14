@@ -8,7 +8,7 @@ from amara.xpath.locationpaths.nodetests import node_type, name_test
 from amara.xpath.locationpaths.predicates import predicates, predicate
 
 from test_expressions import (
-    test_expression,
+    base_expression,
     DOC, ROOT, CHILD1, CHILD2, CHILD3, LANG, GCHILDREN1, GCHILDREN2, LCHILDREN
     )
 
@@ -17,7 +17,7 @@ CONTEXT_CHILD1 = context(CHILD1, 1, 3)
 
 CHILD_STEP = location_step(axis('child'), name_test('*'))
 
-class test_locationpaths(test_expression):
+class test_locationpaths(base_expression):
     module_name = 'amara.xpath.locationpaths'
     evaluate_method = 'evaluate_as_nodeset'
     return_type = datatypes.nodeset

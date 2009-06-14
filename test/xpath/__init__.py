@@ -10,7 +10,7 @@ def _argstr(arg):
     else:
         return unicode(arg)
 
-class test_metaclass(type):
+class base_metaclass(type):
     # The name of module where the class to be tested is defined
     module_name = None
     # The name of the class to be tested
@@ -45,8 +45,8 @@ class test_metaclass(type):
         raise NotImplementedError
 
 
-class test_xpath(test_case, object):
-    __metaclass__ = test_metaclass
+class base_xpath(test_case, object):
+    __metaclass__ = base_metaclass
 
     def assertIsInstance(self, obj, cls):
         if isinstance(cls, tuple):

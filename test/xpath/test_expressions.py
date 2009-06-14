@@ -2,8 +2,8 @@
 
 from amara.lib import inputsource
 from amara import tree
-from amara.test import test_main
-from amara.test.xpath import test_xpath, test_metaclass
+from amara.test.xpath import base_xpath
+from amara.test.xpath import base_metaclass
 from amara.xpath import context, datatypes
 from amara.xpath.expressions import expression
 from amara.xpath.expressions.basics import string_literal, number_literal
@@ -14,7 +14,7 @@ from amara.xpath.expressions.basics import string_literal, number_literal
 # Create an independent "literal" base class as to not confuse the isinstance()
 # checks throughout the compilation phase. The XPath parser cannot emit
 # boolean or node-set literals!
-class test_literal(expression):
+class base_literal(expression):
     def __init__(self, literal):
         self._literal = self.return_value(literal)
 
@@ -43,10 +43,10 @@ class test_literal(expression):
         print >> stream, indent + repr(self)
 
 
-class boolean_literal(test_literal):
+class boolean_literal(base_literal):
     return_value = datatypes.boolean
 
-    compile = test_literal.compile_as_boolean
+    compile = base_literal.compile_as_boolean
 
     def __str__(self):
         return self._literal and 'true()' or 'false()'
@@ -54,7 +54,7 @@ TRUE = boolean_literal(True)
 FALSE = boolean_literal(False)
 
 
-class nodeset_literal(test_literal):
+class nodeset_literal(base_literal):
     return_value = datatypes.nodeset
 
     def compile_iterable(self, compiler):
@@ -157,18 +157,18 @@ LCHILDREN = LCHILD1, LCHILD2, NONASCIIQNAME = children(LANG)
 ########################################################################
 # unittest support
 
-class test_expression(test_xpath):
+class base_expression(base_xpath):
     # The typed evaluate method (aka, evaluate_as_XXX())
     evaluate_method = None
     test_methods = ('evaluate',)
 
-    class __metaclass__(test_metaclass):
+    class __metaclass__(base_metaclass):
         def __new__(cls, name, bases, namespace):
             if 'test_methods' not in namespace:
                 if 'evaluate_method' in namespace:
                     test_methods = ('evaluate', namespace['evaluate_method'])
                     namespace['test_methods'] = test_methods
-            return test_metaclass.__new__(cls, name, bases, namespace)
+            return base_metaclass.__new__(cls, name, bases, namespace)
 
         def new_test_method(cls, expected, factory, args, *test_args):
             if not test_args:
@@ -182,10 +182,11 @@ class test_expression(test_xpath):
             return test_method
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main(# list of module names to test
-              'test_basic_expr',        # basic expressions
-              'test_function_calls',    # basic expressions
-              'test_nodeset_expr',      # basic expressions
-              'test_boolean_expr',      # number expressions
-              'test_number_expr',       # number expressions
+#              'test_basic_expr',        # basic expressions
+#              'test_function_calls',    # basic expressions
+#              'test_nodeset_expr',      # basic expressions
+#              'test_boolean_expr',      # number expressions
+#              'test_number_expr',       # number expressions
               )

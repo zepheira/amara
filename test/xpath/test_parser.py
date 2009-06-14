@@ -5,7 +5,7 @@ from amara.xpath import context, datatypes, XPathError
 
 from test_expressions import (
     # expression TestCase
-    test_expression,
+    base_expression,
     # nodeset literals
     DOC, PI, PI2, ROOT, CHILDREN, CHILD1, ATTR1, GCHILDREN1, GCHILD11,
     GCHILD12, TEXT1, CHILD2, ATTR2, IDATTR2, GCHILDREN2, GCHILD21, CHILD3,
@@ -46,7 +46,7 @@ CONTEXT_ELEMENT = context(ELEMENTS, 1, 1)
 ELEMENT1, ELEMENT2 = ELEMENTS
 
 
-class test_parser(test_expression):
+class test_parser(base_expression):
     module_name = 'amara.xpath.parser'
     class_name = 'parse'
 
@@ -131,7 +131,11 @@ class test_parser_pass(test_parser):
 class test_parser_errors(test_parser):
 
     @classmethod
-    def new_test_method(cls, expected, factory, args, context):
+    def new_test_method(*q):
+        if len(q) == 1:
+            # Bypassing some strange interaction of nose and __metaclass__
+            return
+        cls, expected, factory, args, context = q
         def get_error_string(code):
             for attr, value in vars(XPathError).iteritems():
                 if value == code:

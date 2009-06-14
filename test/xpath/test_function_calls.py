@@ -4,7 +4,7 @@ from amara.xpath import context, datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
 
 from test_expressions import (
-    test_expression,
+    base_expression,
     # boolean literals
     TRUE, FALSE,
     # number literals (for special values)
@@ -33,7 +33,7 @@ EGG5 = DOC.xml_append(tree.element(None, 'egg0'))
 EGG5.xml_append(tree.text('0'))
 
 
-class test_function_call(test_expression):
+class test_function_call(base_expression):
     module_name = 'amara.xpath.expressions.functioncalls'
     class_name = 'function_call'
 

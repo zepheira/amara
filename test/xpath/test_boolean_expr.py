@@ -5,7 +5,7 @@ from amara.xpath import datatypes
 from amara.xpath.expressions.basics import string_literal, number_literal
 
 from test_expressions import (
-    test_expression,
+    base_expression,
     # boolean literals
     TRUE, FALSE,
     # number literals (for special values)
@@ -30,7 +30,7 @@ NUM31 = tree.attribute(None, 'num31', '31')
 NUM.xml_attributes.setnode(NUM0)
 
 
-class test_boolean_expr(test_expression):
+class test_boolean_expr(base_expression):
     module_name = 'amara.xpath.expressions.booleans'
     evaluate_method = 'evaluate_as_boolean'
     return_type = datatypes.boolean

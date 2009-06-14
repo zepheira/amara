@@ -4,9 +4,9 @@ from amara.xpath import context, datatypes
 from amara.xpath.expressions.basics import number_literal, string_literal
 from amara.xpath.expressions.booleans import and_expr, or_expr
 
+from amara.test.xpath import base_xpath
+
 from test_expressions import (
-    # expression TestCase
-    test_xpath,
     # boolean literals
     TRUE, FALSE,
     # IEEE 754 "special" numbers as expressions
@@ -16,11 +16,15 @@ from test_expressions import (
     )
 
 
-class test_predicate_expr(test_xpath):
+class test_predicate_expr(base_xpath):
     module_name = 'amara.xpath.locationpaths.predicates'
 
     @classmethod
-    def new_test_method(cls, expected, factory, args, nodes):
+    def new_test_method(*q):
+        if len(q) == 1:
+            # Bypassing some strange interaction of nose and __metaclass__
+            return
+        cls, expected, factory, args, nodes = q
         ctx = context(nodes[0], 1, len(nodes))
         def test_method(self):
             predicate = factory(*args)

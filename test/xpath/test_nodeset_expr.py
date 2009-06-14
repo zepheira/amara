@@ -4,7 +4,7 @@ from amara.xpath import context, datatypes
 from amara.xpath.locationpaths.predicates import predicates, predicate
 
 from test_expressions import (
-    test_expression,
+    base_expression,
     # boolean literals
     TRUE, FALSE,
     # nodeset literals
@@ -13,7 +13,7 @@ from test_expressions import (
 
 CONTEXT = context(CHILD1, 1, 1)
 
-class test_nodeset_expr(test_expression):
+class test_nodeset_expr(base_expression):
     module_name = 'amara.xpath.expressions.nodesets'
     evaluate_method = 'evaluate_as_nodeset'
     return_type = datatypes.nodeset
