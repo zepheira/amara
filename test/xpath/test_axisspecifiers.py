@@ -13,13 +13,7 @@ class axisspecifier(base_xpath):
     class_name = 'axis_specifier'
 
     @classmethod
-    def new_test_method(*q):
-        if len(q) == 1:
-            # I'm lost in a maze of twisty metaclasses.
-            # For some reason the nose tests insist on calling this
-            # an extra 7 times with a single argument. Skip those.
-            return lambda : 1
-        cls, expected, factory, args, node = q
+    def new_tst_method(cls, expected, factory, args, node):
         def test_method(self):
             axis = factory(*args)
             result = list(axis.select(node))

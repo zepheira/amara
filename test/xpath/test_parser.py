@@ -131,11 +131,7 @@ class test_parser_pass(test_parser):
 class test_parser_errors(test_parser):
 
     @classmethod
-    def new_test_method(*q):
-        if len(q) == 1:
-            # Bypassing some strange interaction of nose and __metaclass__
-            return
-        cls, expected, factory, args, context = q
+    def new_tst_method(cls, expected, factory, args, context):
         def get_error_string(code):
             for attr, value in vars(XPathError).iteritems():
                 if value == code:

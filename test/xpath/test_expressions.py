@@ -170,7 +170,7 @@ class base_expression(base_xpath):
                     namespace['test_methods'] = test_methods
             return base_metaclass.__new__(cls, name, bases, namespace)
 
-        def new_test_method(cls, expected, factory, args, *test_args):
+        def new_tst_method(cls, expected, factory, args, *test_args):
             if not test_args:
                 test_args = (context(DOC, 1, 1),)
             def test_method(self):

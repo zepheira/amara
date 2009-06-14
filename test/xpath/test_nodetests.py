@@ -17,7 +17,7 @@ class test_nodetests(base_xpath):
     module_name = 'amara.xpath.locationpaths.nodetests'
 
     @classmethod
-    def new_test_method(cls, expected, factory, args, node,
+    def new_tst_method(cls, expected, factory, args, node,
                         principal_type=Node.ELEMENT_NODE):
         ctx = context(node, namespaces=NAMESPACES)
         compiler = xpathcompiler(ctx)

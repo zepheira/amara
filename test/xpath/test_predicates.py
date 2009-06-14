@@ -20,11 +20,7 @@ class test_predicate_expr(base_xpath):
     module_name = 'amara.xpath.locationpaths.predicates'
 
     @classmethod
-    def new_test_method(*q):
-        if len(q) == 1:
-            # Bypassing some strange interaction of nose and __metaclass__
-            return
-        cls, expected, factory, args, nodes = q
+    def new_tst_method(cls, expected, factory, args, nodes):
         ctx = context(nodes[0], 1, len(nodes))
         def test_method(self):
             predicate = factory(*args)
