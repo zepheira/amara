@@ -7,9 +7,6 @@ from functools import *
 from itertools import *
 from operator import *
 
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
-
 from amara import bindery
 
 class Test_doc1(unittest.TestCase):
@@ -105,5 +102,6 @@ class Test_doc_ns2(unittest.TestCase):
         return
 
 if __name__ == '__main__':
+    from amara.test import test_main
     testsupport.test_main()
 
