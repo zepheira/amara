@@ -2,10 +2,11 @@
 from amara import tree
 from amara.lib import testsupport
 from amara.xpath import context, datatypes
-from amara.xpath.locationpaths import relative_location_path, location_step
+from amara.xpath.locationpaths import (absolute_location_path, relative_location_path,
+                                       location_step, abbreviated_absolute_location_path,
+                                       abbreviated_relative_location_path)
 from amara.xpath.locationpaths.axisspecifiers import axis_specifier as axis
-from amara.xpath.locationpaths.nodetests import node_type, name_test
-from amara.xpath.locationpaths.predicates import predicates, predicate
+from amara.xpath.locationpaths.nodetests import name_test
 
 from test_expressions import (
     base_expression,
@@ -17,31 +18,23 @@ CONTEXT_CHILD1 = context(CHILD1, 1, 3)
 
 CHILD_STEP = location_step(axis('child'), name_test('*'))
 
-class test_locationpaths(base_expression):
-    module_name = 'amara.xpath.locationpaths'
-    evaluate_method = 'evaluate_as_nodeset'
-    return_type = datatypes.nodeset
 
-
-class test_absolute_location_path(test_locationpaths):
-    class_name = 'absolute_location_path'
-    test_cases = [
-        # /
-        ([], datatypes.nodeset([DOC]), CONTEXT_CHILD1),
+def test_absolute_location_path():
+    for args, expected in (
+        ([], datatypes.nodeset([DOC])),
         # /child::*
-        ([relative_location_path(CHILD_STEP)],
-         datatypes.nodeset([ROOT]), CONTEXT_CHILD1),
+        ([relative_location_path(CHILD_STEP)], datatypes.nodeset([ROOT])),
         # /descendant::*
-        ([relative_location_path(location_step(axis('descendant'),
-                                 name_test('*')))],
+        ([relative_location_path(location_step(axis('descendant'), name_test('*')))],
          datatypes.nodeset([ROOT, CHILD1] + GCHILDREN1 + [CHILD2] +
-                           GCHILDREN2 + [CHILD3, LANG] + LCHILDREN),
-         CONTEXT_CHILD1),
-        ]
+                           GCHILDREN2 + [CHILD3, LANG] + LCHILDREN)),
+        ):
+        result = absolute_location_path(*args).evaluate_as_nodeset(CONTEXT_CHILD1)
+        assert isinstance(result, datatypes.nodeset)
+        assert result == expected, (result, expected)
 
-class test_relative_location_path(test_locationpaths):
-    class_name = 'relative_location_path'
-    test_cases = [
+def test_relative_location_path():
+    for args, expected, ctx in (
         # <CHILD1>/ancestor::*
         ([location_step(axis('ancestor'), name_test('*'))],
          datatypes.nodeset([ROOT]), CONTEXT_CHILD1),
@@ -54,29 +47,28 @@ class test_relative_location_path(test_locationpaths):
         # <CHILD1>/child::GCHILD
         ([location_step(axis('child'), name_test('GCHILD'))],
          datatypes.nodeset(GCHILDREN1), CONTEXT_CHILD1),
-        ]
+        ):
+        result = relative_location_path(*args).evaluate_as_nodeset(ctx)
+        assert isinstance(result, datatypes.nodeset)
+        assert result == expected, (result, expected)
+
+def test_abbreviated_absolute_location_path():
+    # //child::*
+    result = abbreviated_absolute_location_path(relative_location_path(CHILD_STEP)
+                                                ).evaluate_as_nodeset(CONTEXT_CHILD1)
+    assert isinstance(result, datatypes.nodeset)
+    expected = datatypes.nodeset([ROOT, CHILD1] + GCHILDREN1 + [CHILD2] +
+                                 GCHILDREN2 + [CHILD3, LANG] + LCHILDREN)
+    assert result == expected, (result, expected)
 
 
-class test_abbreviated_absolute_location_path(test_locationpaths):
-    class_name = 'abbreviated_absolute_location_path'
-    test_cases = [
-        # //child::*
-        ([relative_location_path(CHILD_STEP)],
-         datatypes.nodeset([ROOT, CHILD1] + GCHILDREN1 + [CHILD2] +
-                           GCHILDREN2 + [CHILD3, LANG] + LCHILDREN),
-         CONTEXT_CHILD1),
-        ]
-
-
-class test_abbreviated_relative_location_path(test_locationpaths):
-    class_name = 'abbreviated_relative_location_path'
-    test_cases = [
-        # child::*//child::*
-        ([relative_location_path(CHILD_STEP), CHILD_STEP],
-         datatypes.nodeset(GCHILDREN1 + GCHILDREN2 + LCHILDREN),
-         CONTEXT_ROOT),
-        ]
-
+class test_abbreviated_relative_location_path():
+    # child::*//child::*
+    result = abbreviated_relative_location_path(relative_location_path(CHILD_STEP), CHILD_STEP
+                                                ).evaluate_as_nodeset(CONTEXT_ROOT)
+    assert isinstance(result, datatypes.nodeset)
+    expected = datatypes.nodeset(GCHILDREN1 + GCHILDREN2 + LCHILDREN)
+    assert result == expected, (result, expected)
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit('Use nosetests')
