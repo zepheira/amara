@@ -1,63 +1,31 @@
 #!/usr/bin/env python
-from amara.lib import testsupport
 
+# nodeset literals
 from test_expressions import (
-    base_xpath,
-    # nodeset literals
     DOC, ROOT, CHILD1, CHILD2, CHILD3, LANG, PI2
     )
 
+from amara.xpath.locationpaths.axisspecifiers import axis_specifier
 
-class axisspecifier(base_xpath):
-    module_name = 'amara.xpath.locationpaths.axisspecifiers'
-    class_name = 'axis_specifier'
+def test_ancestor_axis():
+    assert list(axis_specifier('ancestor').select(CHILD1)) == [ROOT, DOC]
 
-    @classmethod
-    def new_tst_method(cls, expected, factory, args, node):
-        def test_method(self):
-            axis = factory(*args)
-            result = list(axis.select(node))
-            self.assertEquals(expected, result)
-        return test_method
+def test_ancestor_or_self_axis():
+    assert list(axis_specifier('ancestor-or-self').select(CHILD1)) == [CHILD1, ROOT, DOC]
 
+def test_descendant_axis():
+    assert list(axis_specifier('descendant').select(CHILD1)) == list(CHILD1)
 
-class test_ancestor_axis(axisspecifier):
-    test_cases = [
-        (['ancestor'], [ROOT, DOC], CHILD1),
-        ]
+def test_descendant_or_self_axis():
+    assert list(axis_specifier('descendant-or-self').select(CHILD1)) == [CHILD1] + list(CHILD1)
 
+def test_child_axis():
+    assert list(axis_specifier('child').select(CHILD2)) == list(CHILD2)
 
-class test_ancestor_or_self_axis(axisspecifier):
-    test_cases = [
-        (['ancestor-or-self'], [CHILD1, ROOT, DOC], CHILD1),
-        ]
-
-
-class test_descendant_axis(axisspecifier):
-    test_cases = [
-        (['descendant'], list(CHILD1), CHILD1),
-        ]
-
-
-class test_descendant_or_self_axis(axisspecifier):
-    test_cases = [
-        (['descendant-or-self'], [CHILD1]+list(CHILD1), CHILD1),
-        ]
-
-
-class test_child_axis(axisspecifier):
-    test_cases = [
-        (['child'], list(CHILD2), CHILD2),
-        ]
-
-
-class test_following_axis(axisspecifier):
-    test_cases = [
-        (['following'],
-         [CHILD3.xml_following_sibling, LANG] + list(LANG) +
-         [LANG.xml_following_sibling, PI2], CHILD3),
-        ]
+def test_following_axis():
+    assert list(axis_specifier('following').select(CHILD3)) == (
+        [CHILD3.xml_following_sibling, LANG] + list(LANG) + [LANG.xml_following_sibling, PI2])
 
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("Run using 'nosetests'")

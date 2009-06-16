@@ -1,13 +1,9 @@
-import amara
-from amara.lib import testsupport
-from amara.xpath import datatypes, util
-from amara.test import test_case
-from amara import tree, xml_print
+from amara import parse
+from amara.xpath.util import abspath
 
-abspath = util.abspath
-parse = amara.parse
+import unittest
 
-class test_sb060223(test_case):
+class test_sb060223(unittest.TestCase):
     #Samuel L Bayer-inspired test for default namespace handling
     #http://lists.fourthought.com/pipermail/4suite/2006-February/007757.html
     XML1 = '<foo xmlns:bar="http://bar.com"><baz/><bar:baz/></foo>'
@@ -20,7 +16,6 @@ class test_sb060223(test_case):
         self.assertEqual(ap, u'/foo[1]/baz[1]')
         ap = abspath(baz2.xml_following_sibling)
         self.assertEqual(ap, u'/foo[1]/bar:baz[1]')
-        return
 
     def test_abspath_with_default_ns(self):
         doc = parse(self.XML2)
@@ -35,12 +30,6 @@ class test_sb060223(test_case):
         self.assertEqual(ap, u'/bax:foo[1]/bax:baz[1]')
         ap = abspath(baz.xml_following_sibling, {u'bax': u'http://bax.com'})
         self.assertEqual(ap, u'/bax:foo[1]/bar:baz[1]')
-        return
 
-# Hide this from nose, else it tries to run it as a test
-del test_case
-
-if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
-
+if __name__ == "__main__":
+    unittest.main()
