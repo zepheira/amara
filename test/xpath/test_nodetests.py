@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from amara.lib import testsupport
-from amara.domlette import Node, Namespace
+
+# FIXME: This does not import. Has this test been upgraded to work with Amara2?
+from amara.domlette import Node
+
 from amara.xpath import context
 from amara.xpath.compiler import xpathcompiler
 from amara.xpath.locationpaths.axisspecifiers import axis_specifier
