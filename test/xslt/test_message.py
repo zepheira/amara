@@ -142,7 +142,7 @@ class test_message_4(xslt_test):
 END STYLESHEET MESSAGE
 """
 
-# Hide the base classes from nose
+# Hide the base class from nose
 del xslt_test
 
 if __name__ == '__main__':
