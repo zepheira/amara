@@ -1,15 +1,15 @@
 ########################################################################
 # test/xslt/test_avt.py
-from amara.test.xpath.test_expressions import base_expression
-from amara.xpath import datatypes
+from amara.test.xpath.test_expressions import DOC
+from amara.xpath import datatypes, context
 from amara.xslt import XsltError
 
-class test_avt(base_expression):
-    module_name = 'amara.xslt.expressions.avt'
-    class_name = "avt_expression"
-    evaluate_method = 'evaluate_as_string'
-    return_type = datatypes.string
-    test_cases = [
+from amara.xslt.expressions.avt import avt_expression
+
+DEFAULT_CONTEXT = context(DOC, 1, 1)
+
+def test_avt():
+    for arg, expected in (
         ('', ''),
         ('Senatus{{populisque}}romae', 'Senatus{populisque}romae'),
         ('Senatus{{{"populisque}}"}romae', 'Senatus{populisque}}romae'),
@@ -24,15 +24,14 @@ class test_avt(base_expression):
         ('{"literal"}}}', 'literal}'),
         ('{"literal"}-}}', 'literal-}'),
         ('{"100"}% {100}% {90+10}% 100% {"%"}1{0}0 %100', '100% 100% 100% 100% %100 %100'),
-        ]
+        ):
+        result = avt_expression(arg).evaluate_as_string(DEFAULT_CONTEXT)
+        assert isinstance(result, datatypes.string)
+        assert result == expected, (result, expected)
 
-    @classmethod
-    def unpack_tst_case(cls, source, expected=None, *extras):
-        return (source,), expected, extras
 
-
-class test_avt_errors(test_avt):
-    test_cases = [
+def test_avt_errors():
+    for arg, in (
         ('{}',),                # no expression is error
         ('{-{{"literal"}',),    # '-{"literal"' is invalid Expr
         ('{"literal"}}-}',),    # '{"literal"} is expr; '}-}' is error
@@ -40,19 +39,11 @@ class test_avt_errors(test_avt):
         ('{node()}}',),         # '{node()}' is expr; trailing '}' is error
         ('(id(@ref)/title}',),  # missing leading '{'
         ('{(id(@ref)/title',),  # missing trailing '{'
-        ]
-
-    @classmethod
-    def new_tst_method(*q):
-        # work around some strange metaclass interacation with nose
-        if len(q) == 1:
-            return
-        cls, expected, factory, args = q
-        def test_method(self):
-            self.assertRaises(XsltError, factory, *args)
-        return test_method
-
-
+        ):
+        try:
+            avt_expression(arg)
+            raise AssertionError("should not have allowed %r" % (arg,))
+        except XsltError:
+            pass
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("use nosetests")
