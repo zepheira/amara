@@ -72,6 +72,8 @@ def test_id_function():
         ):
         result = function_call('id', args).evaluate_as_nodeset(CONTEXT1)
         assert isinstance(result, datatypes.nodeset)
+        result = list(result)
+        expected = list(expected)
         assert result == expected, (result, expected)
 
 def test_local_name_function():
@@ -284,13 +286,14 @@ def test_ceiling_function():
 
 def test_round_function():
     for arg, expected in (
-        ([string_literal('"3.14"')], datatypes.number(3)),
-        ([number_literal('-4.5')], datatypes.number(-4)),
-        ([NOT_A_NUMBER], datatypes.NOT_A_NUMBER),
-        ([POSITIVE_INFINITY], datatypes.POSITIVE_INFINITY),
-        ([NEGATIVE_INFINITY], datatypes.NEGATIVE_INFINITY),
-        ([string_literal('"12345"')], datatypes.number(12345)),
+        (string_literal('"3.14"'), datatypes.number(3)),
+        (number_literal('-4.5'), datatypes.number(-4)),
+        (NOT_A_NUMBER, datatypes.NOT_A_NUMBER),
+        (POSITIVE_INFINITY, datatypes.POSITIVE_INFINITY),
+        (NEGATIVE_INFINITY, datatypes.NEGATIVE_INFINITY),
+        (string_literal('"12345"'), datatypes.number(12345)),
         ):
+        print "Call", arg
         result = function_call('round', [arg]).evaluate_as_number(CONTEXT1)
         assert isinstance(result, datatypes.number)
         assert ((result.isnan() and expected.isnan()) or result == expected), (result, expected)
