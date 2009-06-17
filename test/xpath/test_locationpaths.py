@@ -62,7 +62,7 @@ def test_abbreviated_absolute_location_path():
     assert result == expected, (result, expected)
 
 
-class test_abbreviated_relative_location_path():
+def test_abbreviated_relative_location_path():
     # child::*//child::*
     result = abbreviated_relative_location_path(relative_location_path(CHILD_STEP), CHILD_STEP
                                                 ).evaluate_as_nodeset(CONTEXT_ROOT)
