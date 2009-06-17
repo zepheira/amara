@@ -46,10 +46,6 @@ ELEMENT1, ELEMENT2 = ELEMENTS
 
 from amara.xpath.parser import parse
 
-class test_parser(base_expression):
-    module_name = 'amara.xpath.parser'
-    class_name = 'parse'
-
 
 def _run_parser_pass(test_cases):
     for args, expected, ctx in test_cases:
