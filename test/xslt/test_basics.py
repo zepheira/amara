@@ -1,19 +1,13 @@
 ########################################################################
 # test/xslt/test_basics.py
-import os
 import cStringIO
-import unittest
 
-from amara.lib import treecompare
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.xslt.processor import processor
+from amara.lib import inputsource, treecompare
+from amara.xpath import util
 
-from amara.lib import inputsource, iri, treecompare
-
-def _run_html(source_xml, transform_xml, expected, parameters = None):
-    from amara.xslt.processor import processor
-    from amara.lib import inputsource
-    from amara.xpath import util
-
+def _run(source_xml, transform_xml, expected, parameters,
+              compare_method):
     P = processor()
     source = inputsource(source_xml)
     transform = inputsource(transform_xml)
@@ -21,25 +15,18 @@ def _run_html(source_xml, transform_xml, expected, parameters = None):
     if parameters is not None:
         parameters = util.parameterize(parameters)
     result = str(P.run(source, parameters=parameters))
-    diff = treecompare.html_diff(result, expected)
+    diff = compare_method(result, expected)
     diff = list(diff)
     assert not diff, (source_xml, transform_xml, result, expected, diff)
+
+def _run_html(source_xml, transform_xml, expected, parameters=None):
+    _run(source_xml, transform_xml, expected, parameters,
+         treecompare.html_diff)
 
 def _run_xml(source_xml, transform_xml, expected, parameters=None):
-    from amara.xslt.processor import processor
-    from amara.lib import inputsource
-    from amara.xpath import util
+    _run(source_xml, transform_xml, expected, parameters,
+         treecompare.xml_diff)
 
-    P = processor()
-    source = inputsource(source_xml)
-    transform = inputsource(transform_xml)
-    P.append_transform(transform)
-    if parameters is not None:
-        parameters = util.parameterize(parameters)
-    result = str(P.run(source, parameters=parameters))
-    diff = treecompare.xml_diff(result, expected)
-    diff = list(diff)
-    assert not diff, (source_xml, transform_xml, result, expected, diff)
 
 def test_basics_1():
     _run_html('xslt/addr_book1.xml', 'xslt/addr_book1.xsl', 
@@ -396,8 +383,5 @@ def test_basics_11():
   <hr noshade>
 </div>""")
 
-del xslt_test
-
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("Use nosetests")
