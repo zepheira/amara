@@ -7,11 +7,43 @@ import unittest
 from amara.lib import treecompare
 from amara.test.xslt import xslt_test, filesource, stringsource
 
+from amara.lib import inputsource, iri, treecompare
 
-class test_basics_1(xslt_test):
-    source = filesource('addr_book1.xml')
-    transform = filesource('addr_book1.xsl')
-    expected = """<html>
+def _run_html(source_xml, transform_xml, expected, parameters = None):
+    from amara.xslt.processor import processor
+    from amara.lib import inputsource
+    from amara.xpath import util
+
+    P = processor()
+    source = inputsource(source_xml)
+    transform = inputsource(transform_xml)
+    P.append_transform(transform)
+    if parameters is not None:
+        parameters = util.parameterize(parameters)
+    result = str(P.run(source, parameters=parameters))
+    diff = treecompare.html_diff(result, expected)
+    diff = list(diff)
+    assert not diff, (source_xml, transform_xml, result, expected, diff)
+
+def _run_xml(source_xml, transform_xml, expected, parameters=None):
+    from amara.xslt.processor import processor
+    from amara.lib import inputsource
+    from amara.xpath import util
+
+    P = processor()
+    source = inputsource(source_xml)
+    transform = inputsource(transform_xml)
+    P.append_transform(transform)
+    if parameters is not None:
+        parameters = util.parameterize(parameters)
+    result = str(P.run(source, parameters=parameters))
+    diff = treecompare.xml_diff(result, expected)
+    diff = list(diff)
+    assert not diff, (source_xml, transform_xml, result, expected, diff)
+
+def test_basics_1():
+    _run_html('xslt/addr_book1.xml', 'xslt/addr_book1.xsl', 
+         """<html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <title>Address Book</title>
@@ -37,18 +69,20 @@ class test_basics_1(xslt_test):
 
     </table>
   </body>
-</html>"""
+</html>""")
 
+"""  XXX FIXME
     def test_transform_output(self):
         from amara.xslt import transform
         io = cStringIO.StringIO()
         result = transform(self.source, self.transform, output=io)
         self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
         return
+ """
 
-class test_basics_2(xslt_test):
-    source = filesource('addr_book1.xml')
-    transform = stringsource("""<?xml version="1.0"?>
+def test_basics_2():
+    _run_html('xslt/addr_book1.xml',
+         """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version="1.0"
@@ -79,8 +113,7 @@ class test_basics_2(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<HTML>
+""", """<HTML>
   <HEAD>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <TITLE>Address Book</TITLE>
@@ -100,12 +133,12 @@ class test_basics_2(xslt_test):
 
     </TABLE>
   </BODY>
-</HTML>"""
+</HTML>""")
 
-
-class test_basics_3(xslt_test):
-    source = filesource('addr_book1.xml')
-    transform = stringsource("""<?xml version="1.0"?>
+# This fails because of differences in whitespace
+def test_basics_3():
+    _run_html('xslt/addr_book1.xml',
+         """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version="1.0"
@@ -143,8 +176,7 @@ class test_basics_3(xslt_test):
   <xsl:template match="*"/>
 
 </xsl:stylesheet>
-""")
-    expected = """<HTML>
+""", """<HTML>
   <HEAD>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <TITLE>Address Book</TITLE>
@@ -163,11 +195,14 @@ class test_basics_3(xslt_test):
       </TR>
     </TABLE>
   </BODY>
-</HTML>"""
+</HTML>""")
 
+# FIXME: This has an embedded DTD and the original test set the
+# "validate" flag, but the test code didn't actually validate.
+# I'm not validating either.
 
-class test_basics_4(xslt_test):
-    source = stringsource("""<?xml version = "1.0"?>
+def test_basics_4():
+    _run_html("""<?xml version = "1.0"?>
 <?xml-stylesheet type="text/xml" href="Xml/Xslt/Core/addr_book1.xsl"?>
 <!DOCTYPE ADDRBOOK [
   <!ELEMENT ADDRBOOK (ENTRY*)>
@@ -210,8 +245,7 @@ class test_basics_4(xslt_test):
         <PHONENUM DESC="Cell">000-000-0000</PHONENUM>
         <EMAIL>vxz@magog.ru</EMAIL>
     </ENTRY>
-</ADDRBOOK>""", validate=True)
-    transform = stringsource("""<?xml version="1.0"?>
+</ADDRBOOK>""", """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:A="http://spam.org"
@@ -244,8 +278,7 @@ class test_basics_4(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<HTML xmlns:A='http://spam.org'>
+""", """<HTML xmlns:A='http://spam.org'>
   <HEAD>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <TITLE>Address Book</TITLE>
@@ -265,13 +298,11 @@ class test_basics_4(xslt_test):
 
     </TABLE>
   </BODY>
-</HTML>"""
+</HTML>""")
 
-
-class test_basics_5(xslt_test):
-
-    source = stringsource("<dummy/>")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_basics_5():
+    _run_xml("<dummy/>",
+         """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
 
@@ -290,10 +321,10 @@ version="1.0">
   </xsl:template>
 
 </xsl:stylesheet>
-""")
+""", """<?xml version='1.0' encoding='UTF-8'?>
+<doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>""",
     parameters = {'override': 'xyz', 'list': ('a', 'b', 'c')}
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
-<doc><overridden>xyz</overridden><list><item>a</item><item>b</item><item>c</item></list></doc>"""
+         )
 
 
     # Appending explicit stylesheet when xml-stylesheet PI already
@@ -322,47 +353,48 @@ OUTPUT_TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
 </xsl:transform>
 """
 
-class test_basics_6(xslt_test):
-    '''
-    Basic output parameter test, 1
-    '''
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="yes"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
+
+def test_basics_6():
+    'Basic output parameter test, 1'
+    _run_xml('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="xml" indent="yes"',
+         """<?xml version="1.0" encoding="UTF-8"?>
 <div>
   <hr noshade="noshade"/>
-</div>"""
+</div>""")
 
-class test_basics_7(xslt_test):
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="xml" indent="no"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div><hr noshade="noshade"/></div>"""
 
-class test_basics_8(xslt_test):
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="xml"')
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<div><hr noshade="noshade"/></div>"""
+def test_basics_7():
+    _run_xml('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="xml" indent="no"',
+         """<?xml version="1.0" encoding="UTF-8"?>
+<div><hr noshade="noshade"/></div>""")
 
-class test_basics_9(xslt_test):
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="html" indent="no"')
-    expected = """<div><hr noshade></div>"""
+def test_basics_8():
+    _run_xml('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="xml"',
+         """<?xml version="1.0" encoding="UTF-8"?>
+<div><hr noshade="noshade"/></div>""")
 
-class test_basics_10(xslt_test):
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="html" indent="yes"')
-    expected = """<div>
+def test_basics_9():
+    _run_html('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="html" indent="no"',
+         """<div><hr noshade></div>""")
+
+def test_basics_10():
+    _run_html('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="html" indent="yes"',
+         expected = """<div>
   <hr noshade>
-</div>"""
+</div>""")
 
-class test_basics_11(xslt_test):
-    source = stringsource('<div><hr noshade="noshade"/></div>')
-    transform = stringsource(OUTPUT_TEMPLATE%'method="html"')
-    expected = """<div>
+    
+def test_basics_11():
+    _run_html('<div><hr noshade="noshade"/></div>',
+         OUTPUT_TEMPLATE % 'method="html"',
+         """<div>
   <hr noshade>
-</div>"""
+</div>""")
 
 del xslt_test
 
