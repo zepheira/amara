@@ -6,10 +6,7 @@ from amara import tree
 import os
 import tempfile
 
-MONTY_XML = """<monty>
-  <python spam="eggs">What do you mean "bleh"</python>
-  <python ministry="abuse">But I was looking for argument</python>
-</monty>"""
+MONTY_XML = """<monty><python spam="eggs">What do you mean "bleh"</python><python ministry="abuse">But I was looking for argument</python></monty>"""
 
 NS_XML = """<doc xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b">
   <a:monty/>
