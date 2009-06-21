@@ -98,8 +98,8 @@ class Test_4suite1_tests(unittest.TestSuite):
             'minimal document with DOCTYPE'
             doc = amara.tree.entity()
             doc.xml_append(amara.tree.element(None, u'foo'))
-            doc.publicId = u'myPub'
-            doc.systemId = u'mySys'
+            doc.xml_public_id = u'myPub'
+            doc.xml_system_id = u'mySys'
             s = cStringIO.StringIO()
             xml_print(doc, stream=s)
             out = s.getvalue()
