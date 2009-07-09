@@ -6,9 +6,7 @@
 import unittest
 import cStringIO
 import amara
-from amara.test import test_case
-from amara.lib import testsupport
-from amara.lib import inputsource, iri, treecompare
+from amara.lib import iri, treecompare
 from amara import tree, xml_print
 from amara import bindery
 
@@ -21,7 +19,7 @@ The title is the beginning of “Heavensgate”, by Christopher Okigbo, the grea
 
 ATOMENTRY1 = '<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'
 
-class Test_tnb_feed(test_case):
+def Test_tnb_feed():
     doc = bindery.parse(TNBFEED)
     s = cStringIO.StringIO()
     xml_print(doc.feed.entry, stream=s)
@@ -29,19 +27,18 @@ class Test_tnb_feed(test_case):
     doc2 = bindery.parse(out)
 
 #python -c "import amara; doc=amara.parse('<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'); amara.xml_print(doc)"
-class Test_simple_atom_entry(test_case):
-    def test_simple_atom_entry(self):
-        '''Basic ns fixup upon mutation'''
-        doc = bindery.parse(ATOMENTRY1)
-        s = cStringIO.StringIO()
-        xml_print(doc, stream=s)
-        out = s.getvalue()
-        #self.assertEqual(out, ATOMENTRY1)
-        diff = treecompare.xml_diff(out, ATOMENTRY1)
-        diff = '\n'.join(diff)
-        self.assertFalse(diff, msg=(None, diff))
-        #Make sure we can parse the result
-        doc2 = bindery.parse(out)
+def test_simple_atom_entry():
+    '''Basic ns fixup upon mutation'''
+    doc = bindery.parse(ATOMENTRY1)
+    s = cStringIO.StringIO()
+    xml_print(doc, stream=s)
+    out = s.getvalue()
+    #self.assertEqual(out, ATOMENTRY1)
+    diff = treecompare.xml_diff(out, ATOMENTRY1)
+    diff = '\n'.join(diff)
+    self.assertFalse(diff, msg=(None, diff))
+    #Make sure we can parse the result
+    doc2 = bindery.parse(out)
 
 
 #from Ft.Xml import EMPTY_NAMESPACE
@@ -89,7 +86,7 @@ XHTML_EXPECTED_4 = """<html>
 """ % JABBERWOCKY
 
 
-class Test_domlette_serialization(test_case):
+class Test_domlette_serialization(unittest.TestCase):
     'Domlette serialization'
     def test_minimal_document(self):
         'minimal document with DOCTYPE'
@@ -189,9 +186,5 @@ class Test_domlette_serialization(test_case):
         doc2 = bindery.parse(out)
         return
 
-del test_case
-
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
-
+    raise SystemExit("use nosetests")
