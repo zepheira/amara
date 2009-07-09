@@ -734,43 +734,38 @@ percent_encode_tests = [
 ]
 
 
-class Test_uridict(unittest.TestSuite):
-    '''uridict implementation'''
-    class Test_file_uri_localhost_equiv(unittest.TestCase):
-        '''file:/// and file://localhost/ equivalence'''
-        def test_uri_dict(self):
-            '''equivalent key in UriDict'''
-            uris = iri.uridict()
-            uris['file:///path/to/resource'] = 0
-            self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
-            return
+class Test_file_uri_localhost_equiv(unittest.TestCase):
+    '''uridict implementation - file:/// and file://localhost/ equivalence'''
+    def test_uri_dict(self):
+        '''equivalent key in UriDict'''
+        uris = iri.uridict()
+        uris['file:///path/to/resource'] = 0
+        self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
 
-        def test_equiv_keys(self):
-            '''value of 2 equivalent keys'''
-            uris = iri.uridict()
-            uris['file:///path/to/resource'] = 1
-            uris['file://localhost/path/to/resource'] = 2
-            self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
+    def test_equiv_keys(self):
+        '''value of 2 equivalent keys'''
+        uris = iri.uridict()
+        uris['file:///path/to/resource'] = 1
+        uris['file://localhost/path/to/resource'] = 2
+        self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
 
-    class Test_case_equiv(unittest.TestCase):
-        '''case equivalence'''
-        def test_case_normalization(self):
-            '''case normalization'''
-            uris = iri.uridict()
-            for uri, expected, junk in case_normalization_tests:
-                uris[uri] = 1
-                uris[expected] = 2
-                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
-            return
+class Test_case_equiv(unittest.TestCase):
+    '''uridict implementation - case equivalence'''
+    def test_case_normalization(self):
+        '''case normalization'''
+        uris = iri.uridict()
+        for uri, expected, junk in case_normalization_tests:
+            uris[uri] = 1
+            uris[expected] = 2
+            self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
 
-        def test_percent_encoding_equivalence(self):
-            '''percent-encoding equivalence'''
-            uris = iri.uridict()
-            for uri, expected in pct_enc_normalization_tests:
-                uris[uri] = 1
-                uris[expected] = 2
-                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
-            return
+    def test_percent_encoding_equivalence(self):
+        '''percent-encoding equivalence'''
+        uris = iri.uridict()
+        for uri, expected in pct_enc_normalization_tests:
+            uris[uri] = 1
+            uris[expected] = 2
+            self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
 
 class Test_percent_encode_decode(unittest.TestCase):
     '''PercentEncode and PercentDecode'''
@@ -1038,12 +1033,6 @@ class Test_basic_uri_resolver(unittest.TestCase):
         uri = 'path'
         self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.DEFAULT_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
 
-        if not __file__.startswith("lib/test_iri.py"):
-            #User is not running it from expected location
-            if __file__.startswith("test_iri.py"):
-                os.chdir('..')
-            else:
-                print >> sys.stderr, "Please run this test from the test or test/lib directory"
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
