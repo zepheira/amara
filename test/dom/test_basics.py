@@ -1,5 +1,4 @@
 import unittest
-from amara.lib import testsupport
 from amara.dom import parse
 from xml.dom import Node
 from amara import tree
@@ -77,4 +76,4 @@ class Test_parse_functions_2(unittest.TestCase):
         self.assertEqual(doc.xml_children[0].xml_prefix, None,)
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")
