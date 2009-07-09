@@ -6,7 +6,7 @@
 import unittest
 import cStringIO
 import amara
-from amara.lib import iri, treecompare
+from amara.lib import treecompare
 from amara import tree, xml_print
 from amara import bindery
 
