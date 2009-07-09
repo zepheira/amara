@@ -1,4 +1,4 @@
-import os, unittest, sys, string, codecs
+import os, unittest, sys, codecs
 import warnings
 from amara.lib import iri, iriresolvers
 
@@ -783,7 +783,6 @@ class Test_percent_encode_decode(unittest.TestCase):
                 self.assertEqual(encoded, iri.percent_encode(unencoded))
                 self.assertEqual(unencoded, iri.percent_decode(encoded))
             setattr(cls, "test_percent_encode_%i"%count, test_percent_encode_template)
-        return
 
     # non-BMP tests:
     #     a couple of random chars from U+10000 to U+10FFFD.
@@ -838,7 +837,6 @@ class Test_percent_encode_decode(unittest.TestCase):
                 continue
             self.assertEqual(encoded, iri.percent_encode(unencoded, encoding=enc_name), enc_name)
             self.assertEqual(unencoded, iri.percent_decode(encoded, encoding=enc_name), enc_name)
-        return
 
     # utf-16be: why not?
     #unencoded = u'a test string...\x00\xe9...\x20\x22...\xd8\x00\xdc\x00'
@@ -1037,7 +1035,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
         if base[-1] != os.sep:
             base += os.sep
         stream = iri.DEFAULT_RESOLVER.resolve('lib/sampleresource.txt', iri.os_path_to_uri(base))
-        self.assertEqual('Spam', string.rstrip(stream.readline()), 'resolve')
+        self.assertEqual('Spam', stream.readline().rstrip(), 'resolve')
         stream.close()
 
         uuid = iri.DEFAULT_RESOLVER.generate()
@@ -1077,8 +1075,6 @@ class Test_scheme_registry_resolver(unittest.TestCase):
         for base, relative, expected in scheme_cases:
             res = resolver.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
-
-        return
 
 if __name__ == '__main__':
     raise SystemExit("Use nosetests")
