@@ -32,7 +32,7 @@ class TestBasicMods(unittest.TestCase):
         A.xml_append(tree.text(u'One'))
         doc.xml_append(A)
         doc.xml_append(tree.comment(u"This is easy"))
-        doc2 = amara.parse('whatsnew_doc1.xml')
+        doc2 = amara.parse('docs/whatsnew_doc1.xml')
         output1 = cStringIO.StringIO()        
         output2 = cStringIO.StringIO()        
         xml_print(doc, stream=output1)
