@@ -1,6 +1,5 @@
 import cStringIO
 import unittest
-from amara.lib import testsupport
 from amara.lib import MarkupWriter  ### where is now MarkupWriter ?
 
 
@@ -49,4 +48,4 @@ class Test_markup_writer(unittest.TestCase):
         return
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")
