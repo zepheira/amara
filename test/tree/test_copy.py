@@ -52,7 +52,8 @@ class Test_constructs(unittest.TestCase):
         copied = copy.deepcopy(doc)
         self.assertNotEqual(doc, copied)
         self.assertEqual(copied.xml_type, tree.entity.xml_type)
-        self.assertEqual(len(copied.xml_children), 0)
+        self.assertEqual(len(copied.xml_children), 1)
+        self.assertEqual(len(copied.xml_children[0].xml_children), 0)
         return
 
     

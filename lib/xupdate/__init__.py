@@ -5,7 +5,6 @@ XUpdate request processing
 """
 
 from amara import Error
-from amara._xmlstring import IsQName
 
 __all__ = ['XUPDATE_NAMESPACE', 'XUpdateError']
 

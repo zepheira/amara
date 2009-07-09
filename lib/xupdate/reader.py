@@ -7,7 +7,7 @@ XUpdate document reader
 import operator
 from amara import XML_NAMESPACE
 from amara._expat import ContentModel, Handler, Reader
-from amara._xmlstring import SplitQName, IsQName
+from amara._xmlstring import splitqname, isqname
 from amara.xpath import XPathError
 from amara.xpath.parser import parse as parse_expression
 from amara.xupdate import XUpdateError, XUPDATE_NAMESPACE
@@ -17,7 +17,7 @@ from amara.xupdate.expressions import *
 # -- validation models -------------------------------------------------
 
 def qname_type(namespace, name):
-    prefix, local = SplitQName(name)
+    prefix, local = splitqname(name)
     return ContentModel(ContentModel.TYPE_NAME, (namespace, local), label=name)
 
 _end_event = ContentModel.FINAL_EVENT
@@ -218,10 +218,10 @@ def variable_element(tagname, namespaces, attributes):
         raise XUpdateError(XUpdateError.MISSING_REQUIRED_ATTRIBUTE,
                            element=tagname, attribute='name')
     else:
-        if not IsQName(name):
+        if not isqname(name):
             raise XUpdateError(XUpdateError.INVALID_QNAME_ATTR,
                                attribute='name', value=name)
-        prefix, name = SplitQName(name)
+        prefix, name = splitqname(name)
         if prefix:
             try:
                 namespace = namespaces[prefix]
