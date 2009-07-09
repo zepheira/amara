@@ -8,7 +8,6 @@ import cStringIO
 import copy
 
 import amara
-from amara.lib import testsupport
 from amara import tree, xml_print
 from amara import bindery
 
@@ -58,4 +57,4 @@ class Test_constructs(unittest.TestCase):
 
     
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")

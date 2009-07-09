@@ -5,9 +5,9 @@
 #See "Working with namespaces" section in http://wiki.xml3k.org/Amara2/Whatsnew
 
 import cStringIO
+import unittest
 
 import amara
-from amara.test import test_case
 from amara.namespaces import *
 from amara import tree, xml_print
 
@@ -16,7 +16,7 @@ TEST1 = '''<a:top xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b"><a:monty/></a:top>
 NS_A = u"urn:bogus:a"
 NS_B = u"urn:bogus:b"
 
-class test_namespaces(test_case):
+class test_namespaces(unittest.TestCase):
 
     def test_namespace_fixup_from_scratch(self):
         '''Basic ns fixup upon mutation'''
@@ -67,9 +67,6 @@ class test_namespaces(test_case):
         self.assertEqual(doc.xml_first_child.xml_attributes[XML_NAMESPACE, u'xml:base'], u'urn:bogus')
         return
 
-# Otherwise nose thinks it's a test to run
-del test_case
 
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("use nosetests")

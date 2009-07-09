@@ -14,7 +14,6 @@ import gc
 from cStringIO import StringIO
 import commands, os
 import itertools
-from amara.lib import testsupport
 
 import amara
 
@@ -118,5 +117,5 @@ def ps_stat():
 
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")
 
