@@ -6,8 +6,8 @@ from xml.dom import Node
 import os
 import tempfile
 
-from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
+
 
 class Test_parse_nasty_tagsoup1(unittest.TestCase):
     """Testing nasty tag soup 1"""
@@ -44,5 +44,4 @@ class Test_rdfa1(unittest.TestCase):
         return
 
 if __name__ == '__main__':
-    testsupport.test_main()
-
+    raise SystemExit("Use nosetests")
