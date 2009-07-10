@@ -17,7 +17,9 @@ def _run(source_xml, transform_xml, expected, parameters,
     result = str(P.run(source, parameters=parameters))
     try:
         diff = compare_method(result, expected)
-    except:
+    except Exception, err:
+        # I don't have a quick way to tell which string caused
+        # the error, so let the person debugging figure it out.
         print "=== RESULT ==="
         print result
         print "=== EXPECTED ==="
