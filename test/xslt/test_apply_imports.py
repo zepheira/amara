@@ -101,6 +101,8 @@ def test_apply_imports_error_1():
             transform_uri = "file:xslt/")
     except XsltError, err:
         assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
+    else:
+        raise AssertionError("should have failed!")
 
 
 if __name__ == '__main__':

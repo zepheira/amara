@@ -305,6 +305,8 @@ def test_attribute_error_1():
             expected = None)
     except WriterError, err:
         assert err.code == WriterError.ATTRIBUTE_ADDED_TOO_LATE
+    else:
+        raise AssertionError("should have failed!")
 
 
 def test_attribute_error_2():
@@ -322,6 +324,8 @@ def test_attribute_error_2():
             expected = None)
     except WriterError, err:
         assert err.code == WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT
+    else:
+        raise AssertionError("should have failed!")
 
 
 def test_attribute_error_3():
@@ -341,6 +345,8 @@ def test_attribute_error_3():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.NONTEXT_IN_ATTRIBUTE
+    else:
+        raise AssertionError("should have failed!")
 
 def test_attribute_error_4():
     """illegal attribute name ("xmlns")"""
@@ -359,6 +365,8 @@ def test_attribute_error_4():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.BAD_ATTRIBUTE_NAME
+    else:
+        raise AssertionError("should have failed!")
 
 def test_attribute_error_5():
     """illegal attribute name (non-QName)"""
@@ -377,6 +385,8 @@ def test_attribute_error_5():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.INVALID_QNAME_ATTR
+    else:
+        raise AssertionError("should have failed!")
 
 def test_attribute_error_6():
     """illegal namespace-uri"""
@@ -396,6 +406,8 @@ def test_attribute_error_6():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.INVALID_NS_URIREF_ATTR
+    else:
+        raise AssertionError("should have failed!")
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")

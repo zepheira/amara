@@ -185,6 +185,8 @@ def test_fallback_error_1():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
+    else:
+        raise AssertionError("should have failed!")
 
 def test_fallback_error_2():
     """1.0 stylesheet with explicit 1.0 illegal top-level element"""
@@ -209,6 +211,8 @@ def test_fallback_error_2():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
+    else:
+        raise AssertionError("should have failed!")
 
 def test_fallback_error_3():
     """3.0 stylesheet with explicit 1.0 illegal top-level element"""
@@ -233,6 +237,8 @@ def test_fallback_error_3():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
+    else:
+        raise AssertionError("should have failed!")
 
 
 def test_fallback_error_4():
@@ -260,6 +266,8 @@ def test_fallback_error_4():
             expected = None)
     except XsltError, err:
         assert err.code == XsltError.FWD_COMPAT_WITHOUT_FALLBACK
+    else:
+        raise AssertionError("should have failed!")
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")
