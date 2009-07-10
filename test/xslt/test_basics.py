@@ -7,10 +7,10 @@ from amara.lib import inputsource, treecompare
 from amara.xpath import util
 
 def _run(source_xml, transform_xml, expected, parameters,
-              compare_method):
+              compare_method, source_uri=None, transform_uri=None):
     P = processor()
-    source = inputsource(source_xml)
-    transform = inputsource(transform_xml)
+    source = inputsource(source_xml, source_uri)
+    transform = inputsource(transform_xml, transform_uri)
     P.append_transform(transform)
     if parameters is not None:
         parameters = util.parameterize(parameters)
@@ -19,13 +19,15 @@ def _run(source_xml, transform_xml, expected, parameters,
     diff = list(diff)
     assert not diff, (source_xml, transform_xml, result, expected, diff)
 
-def _run_html(source_xml, transform_xml, expected, parameters=None):
+def _run_html(source_xml, transform_xml, expected, parameters=None,
+              source_uri=None, transform_uri=None):
     _run(source_xml, transform_xml, expected, parameters,
-         treecompare.html_diff)
+         treecompare.html_diff, source_uri, transform_uri)
 
-def _run_xml(source_xml, transform_xml, expected, parameters=None):
+def _run_xml(source_xml, transform_xml, expected, parameters=None,
+              source_uri=None, transform_uri=None):
     _run(source_xml, transform_xml, expected, parameters,
-         treecompare.xml_diff)
+         treecompare.xml_diff, source_uri, transform_uri)
 
 
 def test_basics_1():
