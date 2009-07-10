@@ -1,16 +1,22 @@
 ########################################################################
 # test/xslt/test_fallback.py
-from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
+#from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
-class fallback_test(xslt_test):
-    __unittest__ = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
+from test_basics import _run_xml, _run_html
 
+#class fallback_test(xslt_test):
+#    __unittest__ = True
+#    source = stringsource("""<?xml version="1.0"?><dummy/>""")
 
-class test_fallback_1(fallback_test):
+FALLBACK_SOURCE_XML = """<?xml version="1.0"?><dummy/>"""
+
+def test_fallback_1():
     """1.0 stylesheet with non-1.0 top-level element"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = FALLBACK_SOURCE_XML,
+        transform_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
   <greeting xsl:version="3.0">hello</greeting>
@@ -20,17 +26,20 @@ class test_fallback_1(fallback_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result>hello</result>"""
+        )
 
-
-class test_fallback_2(fallback_test):
+def test_fallback_2():
     """3.0 stylesheet with 3.0 top-level element"""
     # stylesheet version 3.0
     # top-level literal result element w/no version, in no namespace
     # (should be ignored / no error)
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = FALLBACK_SOURCE_XML,
+        transform_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -41,14 +50,16 @@ class test_fallback_2(fallback_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<result>hello</result>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result>hello</result>""")
 
-
-class test_fallback_3(fallback_test):
+def test_fallback_3():
     """forwards-compatible example from XSLT 1.0 specification"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_html(
+        source_xml = FALLBACK_SOURCE_XML,
+        transform_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <xsl:choose>
@@ -68,8 +79,8 @@ class test_fallback_3(fallback_test):
     </xsl:choose>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<html>
+""",
+        expected = """<html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <title>XSLT 1.1 required</title>
@@ -77,12 +88,14 @@ class test_fallback_3(fallback_test):
   <body>
     <p>Sorry, this stylesheet requires XSLT 1.1.</p>
   </body>
-</html>"""
+</html>""")
 
-
-class test_fallback_4(fallback_test):
+def test_fallback_4():
     """1.0 literal result element with fallback"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = FALLBACK_SOURCE_XML,
+        transform_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
   <xsl:template match="/">
@@ -95,14 +108,16 @@ class test_fallback_4(fallback_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result/>""")
 
-
-class test_fallback_5(fallback_test):
+def test_fallback_5():
     """uninstantiated non-1.0 literal result element"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = FALLBACK_SOURCE_XML,
+        source_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
   <xsl:template match="/">
@@ -121,14 +136,16 @@ class test_fallback_5(fallback_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result>hello world</result>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result>hello world</result>""")
 
-
-class test_fallback_6(fallback_test):
+def test_fallback_6():
     """non-1.0 literal result element with fallback"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = FALLBACK_SOURCE_XML,
+        transform_uri = "file:xslt/test_fallback.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
   <xsl:template match="/">
@@ -141,24 +158,21 @@ class test_fallback_6(fallback_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result>Sorry, we don't do magic</result>"""
+        )
 
-
-
-class fallback_error(xslt_error):
-    __unittest__ = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-
-
-class test_fallback_error_1(fallback_error):
+def test_fallback_error_1():
     """1.0 stylesheet with implicit 1.0 illegal top-level element"""
-    error_code = XsltError.ILLEGAL_ELEMENT_CHILD
     # stylesheet version 1.0
     # top-level literal result element with no version info, in no namespace
     # (should raise an exception per XSLT 1.0 sec. 2.2)
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = FALLBACK_SOURCE_XML,
+            transform_uri = "file:xslt/test_fallback.py",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -167,17 +181,22 @@ class test_fallback_error_1(fallback_error):
     <result/>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
 
-
-class test_fallback_error_2(fallback_error):
+def test_fallback_error_2():
     """1.0 stylesheet with explicit 1.0 illegal top-level element"""
-    error_code = XsltError.ILLEGAL_ELEMENT_CHILD
     # stylesheet version 1.0
     # top-level literal result element version 1.0, in no namespace
     # (same as previous test, but version is explicit;
     #  should still raise an exception per XSLT 1.0 sec. 2.2)
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = FALLBACK_SOURCE_XML,
+            transform_uri = "file:xslt/test_fallback.py",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -186,17 +205,22 @@ class test_fallback_error_2(fallback_error):
     <result/>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
 
-
-class test_fallback_error_3(fallback_error):
+def test_fallback_error_3():
     """3.0 stylesheet with explicit 1.0 illegal top-level element"""
-    error_code = XsltError.ILLEGAL_ELEMENT_CHILD
     # stylesheet version 3.0
     # top-level literal result element version 1.0, in no namespace
     # (it disables forwards-compatible processing for itself,
     #  so it should still raise an exception per XSLT 1.0 sec. 2.2)
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = FALLBACK_SOURCE_XML,
+            transform_uri = "file:xslt/test_fallback.py",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -205,13 +229,19 @@ class test_fallback_error_3(fallback_error):
     <result/>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
 
 
-class test_fallback_error_4(fallback_error):
+def test_fallback_error_4():
     """non-1.0 literal result element without fallback"""
-    error_code = XsltError.FWD_COMPAT_WITHOUT_FALLBACK
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = FALLBACK_SOURCE_XML,
+            transform_uri = "file:xslt/test_fallback.py",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -226,12 +256,10 @@ class test_fallback_error_4(fallback_error):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-
-
-# Hide the base classes from nose
-del xslt_test, xslt_error, fallback_test, fallback_error
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.FWD_COMPAT_WITHOUT_FALLBACK
 
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("use nosetests")
