@@ -1,11 +1,13 @@
 ########################################################################
 # test/xslt/test_text.py
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_text_1(xslt_test):
+from test_basics import _run_html
+
+def test_text_1():
     """<xsl:text> with disable-output-escaping='yes'"""
-    source = stringsource("""<noescape>dummy</noescape>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_html(
+        source_xml = """<noescape>dummy</noescape>""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="html"/>
@@ -19,14 +21,10 @@ class test_text_1(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected ="""<html>
+""",
+        expected ="""<html>
   <p>&nbsp;</p>
-</html>"""
-
-# Hide the base class from nose
-del xslt_test
+</html>""")
 
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("Use nosetests")
