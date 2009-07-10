@@ -1,10 +1,12 @@
 ########################################################################
 # test/xslt/test_literals.py
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_literals_1(xslt_test):
-    source = stringsource("""<customer id="uo">Uche Ogbuji</customer>""")
-    transform = stringsource("""<?xml version="1.0"?>
+from test_basics import _run_xml
+
+def test_literals_1():
+    _run_xml(
+        source_xml = """<customer id="uo">Uche Ogbuji</customer>""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:template match="customer">
@@ -17,14 +19,16 @@ class test_literals_1(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
+""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
 <wrapper><customer id='uo' xmlns='http://spam.com'><Uche xmlns='http://eggs.com'>Eggs</Uche><name>Uche Ogbuji</name></customer></wrapper>"""
+        )
 
 
-class test_literals_2(xslt_test):
-    source = stringsource("""<?xml version="1.0"?><foo/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_literals_2():
+    _run_xml(
+        source_xml = """<?xml version="1.0"?><foo/>""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
      <xsl:output indent="no" encoding="us-ascii"/>
@@ -41,13 +45,9 @@ class test_literals_2(xslt_test):
      </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version='1.0' encoding='us-ascii'?>
-<result><text/><value/></result>"""
-
-# Hide the base classes from nose
-del xslt_test
+""",
+        expected = """<?xml version='1.0' encoding='us-ascii'?>
+<result><text/><value/></result>""")
 
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("use nosetests")
