@@ -1,13 +1,10 @@
 ########################################################################
 # test/xslt/test_fallback.py
-#from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
+
 from amara.xslt import XsltError
 
 from test_basics import _run_xml, _run_html
 
-#class fallback_test(xslt_test):
-#    __unittest__ = True
-#    source = stringsource("""<?xml version="1.0"?><dummy/>""")
 
 FALLBACK_SOURCE_XML = """<?xml version="1.0"?><dummy/>"""
 
