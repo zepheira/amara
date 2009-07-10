@@ -15,7 +15,14 @@ def _run(source_xml, transform_xml, expected, parameters,
     if parameters is not None:
         parameters = util.parameterize(parameters)
     result = str(P.run(source, parameters=parameters))
-    diff = compare_method(result, expected)
+    try:
+        diff = compare_method(result, expected)
+    except:
+        print "=== RESULT ==="
+        print result
+        print "=== EXPECTED ==="
+        print expected
+        raise
     diff = list(diff)
     assert not diff, (source_xml, transform_xml, result, expected, diff)
 
