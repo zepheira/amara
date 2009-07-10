@@ -1,6 +1,5 @@
 ########################################################################
 # test/xslt/test_copy_of.py
-from amara.test.xslt import xslt_test, stringsource, filesource
 
 from test_basics import _run_xml
 
@@ -77,9 +76,5 @@ if 0:
   <path d="M500,600 C500,500 650,500 650,600                             S800,700 800,600" class="ViaAppia"/>
 </svg>"""
 
-# Hide the base class from nose
-del xslt_test
-
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("Use nosetests")
