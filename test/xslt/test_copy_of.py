@@ -1,12 +1,15 @@
 ########################################################################
 # test/xslt/test_copy_of.py
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt import xslt_test, stringsource, filesource
 
-class test_copy_of_1(xslt_test):
+from test_basics import _run_xml
+
+def test_copy_of_1():
     """copy element and contents"""
-    source = stringsource("""<?xml version="1.0"?>
-<foo>Embedded <html><a href='link'>go</a>.</html></foo>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = """<?xml version="1.0"?>
+<foo>Embedded <html><a href='link'>go</a>.</html></foo>""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template match="html">
@@ -16,14 +19,16 @@ class test_copy_of_1(xslt_test):
   <xsl:apply-templates select="*"/>
 </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<html><a href='link'>go</a>.</html>"""
+""",
+        expected = """<html><a href='link'>go</a>.</html>"""
+        )
 
-
-class test_copy_of_2(xslt_test):
+def test_copy_of_2():
     """copy external document"""
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = """<?xml version="1.0"?><dummy/>""",
+        transform_uri = "file:xslt/test_copy_of.py",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template match="/">
@@ -31,7 +36,7 @@ class test_copy_of_2(xslt_test):
 </xsl:template>
 
 </xsl:stylesheet>
-""", external=True)
+""",
     expected = """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" height="10cm" width="10cm" contentStyleType="text/css" preserveAspectRatio="xMidYMid meet" zoomAndPan="magnify" viewBox="0 0 800 800" contentScriptType="text/ecmascript">
   <desc content="structured text">SVG Sample for SunWorld Article</desc>
@@ -49,7 +54,10 @@ class test_copy_of_2(xslt_test):
   <text y="400" x="400" class="OrthoLogos">TO KALON</text>
 
   <path d="M500,600 C500,500 650,500 650,600                             S800,700 800,600" class="ViaAppia"/>
-</svg>"""
+</svg>""")
+
+# XXX This was in the older tests, but it doesn't seem to be used for anything. ??
+if 0:
     expected_offline = """<?xml version="1.0" encoding="UTF-8"?>
 <svg height="10cm" width="10cm" viewBox="0 0 800 800">
   <desc>SVG Sample for SunWorld Article</desc>
