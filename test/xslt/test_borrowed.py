@@ -6,6 +6,8 @@ import warnings
 
 from amara.test.xslt import xslt_test, filesource
 
+
+
 def __bootstrap__(module_dict):
     module_dir = os.path.dirname(os.path.abspath(__file__))
     borrowed_dir = os.path.join(module_dir, 'borrowed')
@@ -36,5 +38,4 @@ __bootstrap__(locals())
 del xslt_test
 
 if __name__ == '__main__':
-    from amara.test import test_main
-    test_main()
+    raise SystemExit("Use nosetests")
