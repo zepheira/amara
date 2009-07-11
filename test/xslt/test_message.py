@@ -3,8 +3,14 @@
 
 from test_basics import _run_xml, _run_html, _compare_text
 
-SOURCE_XML = open("xslt/addr_book1.xml").read()
-SOURCE_URI = "file:xslt/addr_book1.xml"
+for filename in ("addr_book1.xml",
+                 "xslt/addr_book1.xml",
+                 "test/xslt/addr_book1.xml"):
+    if os.path.exists(filename):
+        break
+
+SOURCE_XML = open(filename).read()
+SOURCE_URI = "file:" + filename
 TRANSFORM_URI = "file:xslt/test_message.py"
 
 from cStringIO import StringIO

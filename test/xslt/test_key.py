@@ -4,8 +4,13 @@ from amara.xslt import XsltError
 
 from test_basics import _run_xml, _run_html, _run_text
 
-FILE_SOURCE_XML = open("xslt/addr_book1.xml").read()
-FILE_URI = "file:xslt/addr_book1.xml"
+for filename in ("addr_book1.xml",
+                 "xslt/addr_book1.xml",
+                 "test/xslt/addr_book1.xml"):
+    if os.path.exists(filename):
+        break
+FILE_SOURCE_XML = open(filename).read()
+FILE_URI = "file:" + filename
 
 def test_key_1():
     """basic keys"""

@@ -6,6 +6,13 @@ from amara.xslt.processor import processor
 from amara.lib import inputsource, treecompare
 from amara.xpath import util
 
+def find_file(filename):
+    import os
+    for prefix in ("", "xslt/", "test/xslt/"):
+        if os.path.exists(prefix+filename):
+            return prefix+filename
+    return filename
+
 def _run(source_xml, transform_xml, expected, parameters,
          compare_method, source_uri=None, transform_uri=None,
          processor_kwargs={}):
@@ -68,7 +75,7 @@ def _run_text(source_xml, transform_xml, expected, parameters=None,
          _compare_text, source_uri, transform_uri)
 
 def test_basics_1():
-    _run_html('xslt/addr_book1.xml', 'xslt/addr_book1.xsl', 
+    _run_html(find_file('addr_book1.xml'), find_file('addr_book1.xsl'), 
          """<html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
@@ -107,7 +114,7 @@ def test_basics_1():
  """
 
 def test_basics_2():
-    _run_html('xslt/addr_book1.xml',
+    _run_html(find_file('addr_book1.xml'),
          """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -163,7 +170,7 @@ def test_basics_2():
 
 # This fails because of differences in whitespace
 def test_basics_3():
-    _run_html('xslt/addr_book1.xml',
+    _run_html(find_file('addr_book1.xml'),
          """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"

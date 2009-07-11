@@ -2,6 +2,12 @@ import os, unittest, sys, codecs
 import warnings
 from amara.lib import iri, iriresolvers
 
+def find_file(filename):
+    for prefix in ("", "lib/", "test/lib/"):
+        if os.path.exists(prefix+filename):
+            return prefix+filename
+    return filename
+
 # Test cases for BaseJoin() ==================================================
 # (base, relative, expected)
 basejoin_test_cases = [
@@ -1034,7 +1040,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
-        stream = iri.DEFAULT_RESOLVER.resolve('lib/sampleresource.txt', iri.os_path_to_uri(base))
+        stream = iri.DEFAULT_RESOLVER.resolve(find_file('sampleresource.txt'), iri.os_path_to_uri(base))
         self.assertEqual('Spam', stream.readline().rstrip(), 'resolve')
         stream.close()
 

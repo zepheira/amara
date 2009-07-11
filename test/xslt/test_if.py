@@ -3,10 +3,16 @@
 
 from test_basics import _run_xml, _run_html
 
+def find_file(filename):
+    for prefix in ("", "xslt/", "test/xslt/"):
+        if os.path.exists(prefix + filename):
+            return prefix + filename
+    return filename
+
 def test_if_1():
     """`xsl:if`"""
     _run_xml(
-        source_xml = open("xslt/addr_book1.xml").read(),
+        source_xml = open(find_file("addr_book1.xml")).read(),
         transform_uri = "file:xslt/test_if.py",
         transform_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
