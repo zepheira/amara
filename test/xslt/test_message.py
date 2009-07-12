@@ -3,14 +3,10 @@
 
 import os
 
-from test_basics import _run_xml, _run_html, _compare_text
+from xslt_support import _run_xml, _run_html, _compare_text
 
-for filename in ("addr_book1.xml",
-                 "xslt/addr_book1.xml",
-                 "test/xslt/addr_book1.xml"):
-    if os.path.exists(filename):
-        break
-
+module_name = os.path.dirname(__file__)
+filename = os.path.join(module_name, "addr_book1.xml")
 SOURCE_XML = open(filename).read()
 SOURCE_URI = "file:" + filename
 TRANSFORM_URI = "file:xslt/test_message.py"
