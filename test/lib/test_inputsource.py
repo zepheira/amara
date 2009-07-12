@@ -1,10 +1,7 @@
 ########################################################################
 # test/xslt/test_inputsource.py
 
-import os
 from amara.lib import inputsource, iri, treecompare
-
-module_dir = os.path.dirname(os.path.abspath(__file__))
 
 rlimit_nofile = 300
 try:
@@ -20,7 +17,7 @@ def test_many_inputsources():
     # Amara's inputsource consumes a filehandle, in the 'stream' attribute
     # See what happens if we run out of file handles.
     sources = []
-    filename = os.path.join(module_dir, "borrowed", "da_20000714_02.xslt")
+    filename = __file__
     for i in range(rlimit_nofile):
         try:
             sources.append(inputsource(filename))
