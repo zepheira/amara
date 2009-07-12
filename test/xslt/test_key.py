@@ -3,15 +3,13 @@
 import os
 from amara.xslt import XsltError
 
-from test_basics import _run_xml, _run_html, _run_text
+from xslt_support import _run_xml, _run_html, _run_text
 
-for filename in ("addr_book1.xml",
-                 "xslt/addr_book1.xml",
-                 "test/xslt/addr_book1.xml"):
-    if os.path.exists(filename):
-        break
+module_name = os.path.dirname(__file__)
+filename = os.path.join(module_name, "addr_book1.xml")
 FILE_SOURCE_XML = open(filename).read()
 FILE_URI = "file:" + filename
+TRANSFORM_URI = "file:" + __file__
 
 def test_key_1():
     """basic keys"""
@@ -80,7 +78,7 @@ def test_key_2():
     _run_text(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -113,7 +111,7 @@ def test_key_3():
     _run_text(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -149,7 +147,7 @@ def test_key_4():
     _run_text(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -176,7 +174,7 @@ def test_key_5():
     _run_text(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -203,7 +201,7 @@ def test_key_6():
     _run_text(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -237,7 +235,7 @@ def test_key_7():
     _run_xml(
         source_xml = FILE_SOURCE_XML,
         source_uri = FILE_URI,
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -273,7 +271,7 @@ def test_key_8():
     """included keys (test_key_8)"""
     _run_xml(
         source_xml = "<dummy/>",
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -314,7 +312,7 @@ def test_key_9():
     """included keys (test_key_9)"""
     _run_xml(
         source_xml = "<dummy/>",
-        transform_uri = "file:xslt/test_key.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -356,9 +354,9 @@ def test_key_error_1():
     """keys using patterns of form `ns:*`"""
     try:
         _run_xml(
-            source = FILE_SOURCE_XML,
+            source_xml = FILE_SOURCE_XML,
             source_uri = FILE_URI,
-            transform_uri = "file:xslt/test_key.py",
+            transform_uri = TRANSFORM_URI,
             transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
