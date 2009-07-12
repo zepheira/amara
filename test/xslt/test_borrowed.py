@@ -1,41 +1,56 @@
 ########################################################################
 # test/xslt/test_borrowed.py
+
+# This runs tests which came from external sources. Quoting Uche:
+#
+#    Borrowed was my old term for a test case that came form some real
+#    world bug or use-case published somewhere.  In Amara I renamed
+#    those "user case" tests (I also considered calling them "end
+#    user", "black box" or "scenaio" tests), but we didn't apply that
+#    renaming when we asked for help from the community to port the
+#    "borrowed" tests from 4Suite.
+
 import os
 import glob
 import warnings
 
-from amara.test.xslt import xslt_test, filesource
+from amara.lib import inputsource
 
+from test_basics import _run_xml
 
+# Collect a dictionary of test functions, created on the fly based on
+# tests from the "borrowed" directory.
 
-def __bootstrap__(module_dict):
+def _bootstrap():
     module_dir = os.path.dirname(os.path.abspath(__file__))
     borrowed_dir = os.path.join(module_dir, 'borrowed')
-    for source in glob.iglob(os.path.join(borrowed_dir, '*.xml')):
-        basename, ext = os.path.splitext(source)
-        transform = basename + '.xslt'
+    tests = {}
+    for source_xml in glob.iglob(os.path.join(borrowed_dir, '*.xml')):
+        basename, ext = os.path.splitext(source_xml)
+        transform_xml = basename + '.xslt'
         expected = basename + '.out'
-        if not os.path.exists(transform):
-            warnings.warn('SKIP: missing XSLT for %r' % source)
+        if not os.path.exists(transform_xml):
+            warnings.warn('SKIP: missing XSLT for %r' % source_xml)
             continue
         if not os.path.exists(expected):
-            warnings.warn('SKIP: missing output for transform of %r' % source)
+            warnings.warn('SKIP: missing output for transform of %r' % source_xml)
             continue
-        class_name = 'test_borrowed_' + os.path.basename(basename)
-        class_dict = {
-            'source': filesource(source),
-            'transform': filesource(transform),
-            'expected': open(expected).read(),
-            }
-        source = filesource(source)
-        module_dict[class_name] = type(class_name, (xslt_test,), class_dict)
-    global __bootstrap__
-    del __bootstrap__
-    return
-__bootstrap__(locals())
+        def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected):
+            _run_xml(
+                source_xml = inputsource(source_xml),
+                transform_xml = inputsource(transform_xml),
+                expected = inputsource(expected).stream.read())
 
-# Hide the base class from nose
-del xslt_test
+        test_name = 'test_borrowed_' + os.path.basename(basename)
+        test_borrowed.__name__ = test_name
+
+        assert test_name not in tests
+        tests[test_name] = test_borrowed
+
+    return tests
+
+# Add those tests to the global namespace
+globals().update(_bootstrap())
 
 if __name__ == '__main__':
     raise SystemExit("Use nosetests")
