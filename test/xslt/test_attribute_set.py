@@ -1,7 +1,7 @@
 ########################################################################
 # test/xslt/test_attribute_set.py
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
 
 def test_attribute_set_1():
     _run_xml(

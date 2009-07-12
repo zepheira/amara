@@ -5,7 +5,7 @@ from amara.xslt import XsltError
 
 PREFIX_TEMPLATE = xmlwriter.xmlwriter.GENERATED_PREFIX
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
 
 SOURCE_XML = """<?xml version="1.0"?><dummy/>"""
 
