@@ -2,7 +2,7 @@
 # test/xslt/test_fallback.py
 
 from amara.xslt import XsltError
-from test_basics import _run_xml, _run_html
+from xslt_support import _run_xml, _run_html
 
 TRANSFORM_URI = "file:" + __name__
 
