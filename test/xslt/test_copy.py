@@ -1,7 +1,11 @@
 ########################################################################
 # test/xslt/test_copy.py
 
-from test_basics import _run_xml
+import os
+from amara.lib import inputsource
+from xslt_support import _run_xml
+
+module_dirname = os.path.dirname(__file__)
 
 def test_copy_1():
     """`xsl:copy`"""
@@ -27,8 +31,8 @@ def test_copy_1():
 def test_copy_2():
     """identity transform"""
     _run_xml(
-        source_xml = open('xslt/addr_book1.xml').read(),
-        source_uri = "file:xslt/addr_book1.xml",
+        source_xml = inputsource(os.path.join(module_dirname, 'addr_book1.xml')),
+        source_uri = "file:" + module_dirname + "/addr_book1.xml",
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
