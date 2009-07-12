@@ -1,13 +1,17 @@
 ########################################################################
 # test/xslt/test_elem_attr.py
 
-from test_basics import _run_html, _run_xml
+import os
+from amara.lib import inputsource
+from xslt_support import _run_html, _run_xml
+
+module_dirname = os.path.dirname(__file__)
 
 def test_elem_attr_1():
     """`xsl:element` and `xsl:attribute` instantiation"""
     _run_html(
-        source_xml = open('xslt/addr_book1.xml'),
-        source_uri = "file:xslt/addr_book1.xml",
+        source_xml = inputsource(os.path.join(module_dirname, 'addr_book1.xml')),
+        source_uri = "file:" + module_dirname + "/addr_book1.xml",
         transform_xml = """<?xml version="1.0"?>
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
