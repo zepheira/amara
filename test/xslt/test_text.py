@@ -1,7 +1,7 @@
 ########################################################################
 # test/xslt/test_text.py
 
-from test_basics import _run_html
+from xslt_support import _run_html
 
 def test_text_1():
     """<xsl:text> with disable-output-escaping='yes'"""
