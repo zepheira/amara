@@ -1,5 +1,6 @@
 ########################################################################
 # test/xslt/test_key.py
+import os
 from amara.xslt import XsltError
 
 from test_basics import _run_xml, _run_html, _run_text
