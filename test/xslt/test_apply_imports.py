@@ -2,7 +2,11 @@
 # test/xslt/test_apply_imports.py
 from amara.xslt import XsltError
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
+
+import os
+module_name = os.path.dirname(__file__)
+module_uri = "file:" + module_name + "/"
 
 def test_apply_imports_1():
     _run_xml(
@@ -21,8 +25,7 @@ def test_apply_imports_1():
 </xsl:stylesheet>""",
         expected = """<?xml version='1.0' encoding='UTF-8'?>
 <div style="border: solid red"><pre>This is an example</pre></div>""",
-        transform_uri="file:xslt/",
-        )
+        transform_uri = module_uri)
 
 
 def test_apply_imports_2():
@@ -47,7 +50,7 @@ def test_apply_imports_2():
 </xsl:stylesheet>""",
         expected = """<?xml version='1.0' encoding='UTF-8'?>
 <body><div style="border: solid red"><unknown-element>example</unknown-element></div></body>""",
-        transform_uri = "file:xslt/")
+        transform_uri = module_uri)
 
 
 def test_apply_imports_3():
@@ -70,7 +73,7 @@ def test_apply_imports_3():
 </xsl:stylesheet>""",
         expected = """<?xml version='1.0' encoding='UTF-8'?>
 <span>main</span><span>imported</span>""",
-        transform_uri = "file:xslt/")
+        transform_uri = module_uri)
 
 
 def test_apply_imports_error_1():
@@ -98,7 +101,7 @@ def test_apply_imports_error_1():
 </xsl:stylesheet>
 """,
             expected = None,
-            transform_uri = "file:xslt/")
+            transform_uri = module_uri)
     except XsltError, err:
         assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
     else:
