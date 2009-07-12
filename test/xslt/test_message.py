@@ -1,6 +1,8 @@
 ########################################################################
 # test/xslt/test_message.py
 
+import os
+
 from test_basics import _run_xml, _run_html, _compare_text
 
 for filename in ("addr_book1.xml",
