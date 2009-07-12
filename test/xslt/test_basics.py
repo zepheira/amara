@@ -34,6 +34,7 @@ def _run(source_xml, transform_xml, expected, parameters,
         print result
         print "=== EXPECTED ==="
         print expected
+        print "=== DONE ==="
         raise
 
 def _run_html(source_xml, transform_xml, expected, parameters=None,
