@@ -1,7 +1,7 @@
 ########################################################################
 # test/xslt/test_literals.py
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
 
 def test_literals_1():
     _run_xml(
