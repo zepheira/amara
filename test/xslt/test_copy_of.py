@@ -1,7 +1,11 @@
 ########################################################################
 # test/xslt/test_copy_of.py
 
-from test_basics import _run_xml
+import os
+from amara.lib import inputsource
+from xslt_support import _run_xml
+
+module_dirname = os.path.dirname(__file__)
 
 def test_copy_of_1():
     """copy element and contents"""
@@ -26,7 +30,7 @@ def test_copy_of_2():
     """copy external document"""
     _run_xml(
         source_xml = """<?xml version="1.0"?><dummy/>""",
-        transform_uri = "file:xslt/test_copy_of.py",
+        transform_uri = "file:" + module_dirname + "/test_copy_of.py",
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
