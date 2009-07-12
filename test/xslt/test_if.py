@@ -2,19 +2,18 @@
 # test/xslt/test_if.py
 
 import os
+from amara.lib import inputsource
+from xslt_support import _run_xml, _run_html
 
-from test_basics import _run_xml, _run_html
+module_name = os.path.dirname(__file__)
 
 def find_file(filename):
-    for prefix in ("", "xslt/", "test/xslt/"):
-        if os.path.exists(prefix + filename):
-            return prefix + filename
-    return filename
+    return os.path.join(module_name, filename)
 
 def test_if_1():
     """`xsl:if`"""
     _run_xml(
-        source_xml = open(find_file("addr_book1.xml")).read(),
+        source_xml = inputsource(find_file("addr_book1.xml")),
         transform_uri = "file:xslt/test_if.py",
         transform_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
