@@ -2,7 +2,6 @@
 # test/xslt/test_copy_of.py
 
 import os
-from amara.lib import inputsource
 from xslt_support import _run_xml
 
 module_dirname = os.path.dirname(__file__)
