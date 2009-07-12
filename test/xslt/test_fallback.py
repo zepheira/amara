@@ -2,9 +2,9 @@
 # test/xslt/test_fallback.py
 
 from amara.xslt import XsltError
-
 from test_basics import _run_xml, _run_html
 
+TRANSFORM_URI = "file:" + __name__
 
 FALLBACK_SOURCE_XML = """<?xml version="1.0"?><dummy/>"""
 
@@ -12,7 +12,7 @@ def test_fallback_1():
     """1.0 stylesheet with non-1.0 top-level element"""
     _run_xml(
         source_xml = FALLBACK_SOURCE_XML,
-        transform_uri = "file:xslt/test_fallback.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -35,7 +35,7 @@ def test_fallback_2():
     # (should be ignored / no error)
     _run_xml(
         source_xml = FALLBACK_SOURCE_XML,
-        transform_uri = "file:xslt/test_fallback.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -55,7 +55,7 @@ def test_fallback_3():
     """forwards-compatible example from XSLT 1.0 specification"""
     _run_html(
         source_xml = FALLBACK_SOURCE_XML,
-        transform_uri = "file:xslt/test_fallback.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
@@ -91,7 +91,7 @@ def test_fallback_4():
     """1.0 literal result element with fallback"""
     _run_xml(
         source_xml = FALLBACK_SOURCE_XML,
-        transform_uri = "file:xslt/test_fallback.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -141,7 +141,7 @@ def test_fallback_6():
     """non-1.0 literal result element with fallback"""
     _run_xml(
         source_xml = FALLBACK_SOURCE_XML,
-        transform_uri = "file:xslt/test_fallback.py",
+        transform_uri = TRANSFORM_URI,
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" indent="yes"/>
@@ -168,7 +168,7 @@ def test_fallback_error_1():
     try:
         _run_xml(
             source_xml = FALLBACK_SOURCE_XML,
-            transform_uri = "file:xslt/test_fallback.py",
+            transform_uri = TRANSFORM_URI,
             transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -194,7 +194,7 @@ def test_fallback_error_2():
     try:
         _run_xml(
             source_xml = FALLBACK_SOURCE_XML,
-            transform_uri = "file:xslt/test_fallback.py",
+            transform_uri = TRANSFORM_URI,
             transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -220,7 +220,7 @@ def test_fallback_error_3():
     try:
         _run_xml(
             source_xml = FALLBACK_SOURCE_XML,
-            transform_uri = "file:xslt/test_fallback.py",
+            transform_uri = TRANSFORM_URI,
             transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -243,7 +243,7 @@ def test_fallback_error_4():
     try:
         _run_xml(
             source_xml = FALLBACK_SOURCE_XML,
-            transform_uri = "file:xslt/test_fallback.py",
+            transform_uri = TRANSFORM_URI,
             transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
