@@ -1,6 +1,8 @@
 ########################################################################
 # test/xslt/test_if.py
 
+import os
+
 from test_basics import _run_xml, _run_html
 
 def find_file(filename):
