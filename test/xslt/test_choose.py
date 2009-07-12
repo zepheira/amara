@@ -1,12 +1,18 @@
 ########################################################################
 # test/xslt/test_choose.py
-from test_basics import _run_html
+
+import os
+from xslt_support import _run_html
+from amara.lib import inputsource
+
+module_name = os.path.dirname(__file__)
+
 
 def test_choose_1():
     """`xsl:choose"""
     _run_html(
-        source_xml = open("xslt/addr_book1.xml").read(),
-        source_uri = "file:xslt/addr_book1.xml",
+        source_xml = inputsource(os.path.join(module_name, "addr_book1.xml")),
+        source_uri = "file:" + module_name + "/addr_book1.xml",
         transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
