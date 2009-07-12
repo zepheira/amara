@@ -16,7 +16,7 @@ import warnings
 
 from amara.lib import inputsource
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
 
 # Collect a dictionary of test functions, created on the fly based on
 # tests from the "borrowed" directory.

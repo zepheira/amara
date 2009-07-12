@@ -2,7 +2,7 @@
 # test/xslt/test_apply_templates.py
 from amara.xslt import XsltError
 
-from test_basics import _run_xml
+from xslt_support import _run_xml
 
 SOURCE_XML = """<?xml version="1.0"?>
 <data>""" + """

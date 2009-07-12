@@ -1,6 +1,7 @@
 ########################################################################
 # test/xslt/test_call_template.py
-from test_basics import _run_xml
+
+from xslt_support import _run_xml
 
 def test_call_template_1():
     """`xsl:call-template"""
