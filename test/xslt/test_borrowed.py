@@ -16,7 +16,7 @@ import warnings
 
 from amara.lib import inputsource
 
-from xslt_support import _run_xml
+from xslt_support import _run_xml, _run_text
 
 # Collect a dictionary of test functions, created on the fly based on
 # tests from the "borrowed" directory.
@@ -28,18 +28,27 @@ def _bootstrap():
     for source_xml in glob.iglob(os.path.join(borrowed_dir, '*.xml')):
         basename, ext = os.path.splitext(source_xml)
         transform_xml = basename + '.xslt'
-        expected = basename + '.out'
         if not os.path.exists(transform_xml):
             warnings.warn('SKIP: missing XSLT for %r' % source_xml)
             continue
-        if not os.path.exists(expected):
+
+        expected_out = basename + '.out'
+        expected_txt = basename + '.txt'
+        if os.path.exists(expected_out):
+            def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_out):
+                _run_xml(
+                    source_xml = inputsource(source_xml),
+                    transform_xml = inputsource(transform_xml),
+                    expected = inputsource(expected).stream.read())
+        elif os.path.exists(expected_txt):
+            def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_txt):
+                _run_text(
+                    source_xml = inputsource(source_xml),
+                    transform_xml = inputsource(transform_xml),
+                    expected = inputsource(expected).stream.read())
+        else:
             warnings.warn('SKIP: missing output for transform of %r' % source_xml)
             continue
-        def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected):
-            _run_xml(
-                source_xml = inputsource(source_xml),
-                transform_xml = inputsource(transform_xml),
-                expected = inputsource(expected).stream.read())
 
         test_name = 'test_borrowed_' + os.path.basename(basename)
         test_borrowed.__name__ = test_name
