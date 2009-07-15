@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 ########################################################################
-# test/xslt/d_20010308.py
+# test/xslt/borrowed/cs_20070210.py
 
 # From original 4Suite cvs:
 # Dan (hitt@charybdis.zembu.com) reports non-conformance with XSLT w.r.t. variable shadowing
@@ -9,12 +9,14 @@ import os
 import cStringIO
 import unittest
 
-from amara.lib import treecompare
 from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt.xslt_support import _run_xml
 
-class test_apply_import1(xslt_test):
-    transform = stringsource("""\
+def test_apply_import1():
+    _run_xml(
+        source_xml = "<example><spam/></example>",
+        transform_uri = "file:" + __file__,
+        transform_xml = """\
 <xsl:transform version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 >
@@ -32,11 +34,10 @@ class test_apply_import1(xslt_test):
   </div>
 </xsl:template>
 
-</xsl:transform>""")
-    source = stringsource("<example><spam/></example>")
-    parameters = {}
-    expected = """<div><span>b</span><span>a</span></div>"""
+</xsl:transform>""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<div><span>b</span><span>a</span></div>""",
+        )
 
 if __name__ == '__main__':
-    test_main()
-
+    raise SystemExit("Use nosetests")
