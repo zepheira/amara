@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!--From David_Marston@lotus.com of Xalan-->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      version='1.0'
      xmlns:x="http://namespaces.ogbuji.net/articles">
