@@ -43,6 +43,7 @@ def _run_xml(source_xml, transform_xml, expected, parameters=None,
 def _compare_text(s1, s2):
     if s1 == s2:
         return []
+    i = 0
     for i in range(min(len(s1), len(s2))):
         if s1[i] != s2[i]:
             prefix = s1[:i]
