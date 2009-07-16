@@ -1,0 +1,5 @@
+<cmdsynopsis sepchar=" ">
+  <command>if</command>
+  <arg choice="plain" rep="norepeat">true_body</arg>
+  <text> ... </text>
+</cmdsynopsis>
