@@ -16,7 +16,7 @@ import warnings
 
 from amara.lib import inputsource
 
-from xslt_support import _run_xml, _run_text
+from xslt_support import _run_xml, _run_text, _run_html
 
 # Collect a dictionary of test functions, created on the fly based on
 # tests from the "borrowed" directory.
@@ -34,6 +34,7 @@ def _bootstrap():
 
         expected_out = basename + '.out'
         expected_txt = basename + '.txt'
+        expected_html = basename + '.html'
         if os.path.exists(expected_out):
             def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_out):
                 _run_xml(
@@ -43,6 +44,12 @@ def _bootstrap():
         elif os.path.exists(expected_txt):
             def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_txt):
                 _run_text(
+                    source_xml = inputsource(source_xml),
+                    transform_xml = inputsource(transform_xml),
+                    expected = inputsource(expected).stream.read())
+        elif os.path.exists(expected_html):
+            def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_html):
+                _run_html(
                     source_xml = inputsource(source_xml),
                     transform_xml = inputsource(transform_xml),
                     expected = inputsource(expected).stream.read())
