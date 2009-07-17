@@ -1,3 +1,7 @@
+<!--
+# Dieter Maurer <dieter@handshake.de> reports problems with xsl:text and 
+# pre tag output
+-->
 <?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"

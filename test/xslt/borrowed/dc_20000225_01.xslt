@@ -1,3 +1,7 @@
+<!--
+Example from David Carlisle to John Lam on 25 Feb 2000, with
+ well-formedness and XSLT semantics corrections
+-->
 <total
   xsl:version="1.0"
   xsl:exclude-result-prefixes="exsl"
