@@ -1,4 +1,5 @@
 <?xml version='1.0'?>
+<!--Example from Pawson, David <DPawson@rnib.org.uk> to Leigh Dodds on 6 March 2000-->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
   <xsl:output method="html" indent="yes"/>
