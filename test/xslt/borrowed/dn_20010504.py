@@ -10,8 +10,6 @@ from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
-from Ft.Lib.Uri import OsPathToUri
-
 class test_xslt_count_children_via_incrementing_counter_dn_20010504(xslt_test):
     source = stringsource("""\
 <numbers>
@@ -108,7 +106,7 @@ xmlns:num2="num2"
     <xsl:value-of select="1 div $n1 > 1 div $n2"/>
   </xsl:template>
 
-</xsl:stylesheet>""", uri = OsPathToUri(os.path.abspath(__file__)))
+</xsl:stylesheet>""")
     parameters = {}
     expected = """\
 9

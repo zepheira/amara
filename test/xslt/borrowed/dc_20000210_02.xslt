@@ -16,4 +16,4 @@
   <foo><xsl:value-of select="translate(.,'&#10; ','')"/></foo>
 </xsl:template>
 
-</xsl:stylesheet>
+</xsl:stylesheet> 
