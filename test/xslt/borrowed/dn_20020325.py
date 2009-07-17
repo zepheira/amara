@@ -3,13 +3,8 @@
 # Examples from the article "Two-stage recursive algorithms in XSLT"
 # By Dimitre Novatchev and Slawomir Tyszko
 # http://www.topxml.com/xsl/articles/recurse/
-import os
-import cStringIO
-import unittest
 
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt.xslt_support import _run_text
 
 BOOKS = """   <book>
       <title>Angela's Ashes</title>
@@ -50,10 +45,9 @@ GOBBLEDY_XML = """<?xml version="1.0" encoding="utf-8"?>
 GOBBLEDY_OUT = GOBBLEDY.replace('AAA','ZZZ')
 
 
-class test_xslt_recursive_1_dn_20020325(xslt_test):
-    source = ""
+def test_xslt_recursive_1_dn_20020325():
     # total-sales/simple.xsl
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+    transform_xml = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -81,30 +75,27 @@ class test_xslt_recursive_1_dn_20020325(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        from amara.xslt import transform
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            elements = (2 * MULTIPLIER) * 2 ** i
-            title = "simple recursion with %d element" % elements + "s" * (elements > 0)
-            self.source = stringsource(BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i))
-            self.expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
-            result = transform(self.source, self.transform, output=io)
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    from amara.xslt import transform
+    for i in range(EXPLIMIT):
+        elements = (2 * MULTIPLIER) * 2 ** i
+        #title = "simple recursion with %d element" % elements + "s" * (elements > 0)
+        source = BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i)
+        expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected,
+            )
 
-class test_xslt_recursive_2_dn_20020325(xslt_test):
-    source = ""
+def test_xslt_recursive_2_dn_20020325():
     # total-sales/dvc.xsl
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+    transform_xml = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="text"/>
 
@@ -143,35 +134,32 @@ class test_xslt_recursive_2_dn_20020325(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        from amara.xslt import transform
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            elements = (2 * MULTIPLIER) * 2 ** i
-            title = "simple recursion with %d element" % elements + "s" * (elements > 0)
-            self.source = stringsource(BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i))
-            self.expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
-            result = transform(self.source, self.transform, output=io)
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        elements = (2 * MULTIPLIER) * 2 ** i
+        #title = "simple recursion with %d element" % elements + "s" * (elements > 0)
+        source = BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i)
+        expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
 
-class test_xslt_recursive_3_dn_20020325(xslt_test):
-    source = ""
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected,
+            )
+
+def test_xslt_recursive_3_dn_20020325():
     # total-sales/two-stage.xsl
     # (with $t param added so threshold can be adjusted)
     #
     # The threshold is the # of elements above which DVC will be used,
     # and below which recursion will be used.
     #
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+    transform_xml = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="text"/>
 
@@ -236,32 +224,28 @@ class test_xslt_recursive_3_dn_20020325(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        from amara.xslt import transform
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            threshold = 8 # seems to be best as of 2003-03-23
-            elements = (2 * MULTIPLIER) * 2 ** i
-            title = "2-stage divide and conquer with %d element" % elements + "s" * (elements > 0)
-            title += " (threshold=%d)" % threshold
-            self.source = stringsource(BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i))
-            self.expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
-            result = transform(self.source, self.transform, output=io, params={'t': threshold})
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        threshold = 8 # seems to be best as of 2003-03-23
+        elements = (2 * MULTIPLIER) * 2 ** i
+        #title = "2-stage divide and conquer with %d element" % elements + "s" * (elements > 0)
+        #title += " (threshold=%d)" % threshold
+        source = BOOKLIST_XML % ((BOOKS * MULTIPLIER) * 2 ** i)
+        expected = str((BOOKS_TOTAL * MULTIPLIER) * 2 ** i)
 
-class test_xslt_recursive_4_dn_20020325(xslt_test):
-    source = ""
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected)
+
+def test_xslt_recursive_4_dn_20020325():
     # reverse/lrReverse.xsl
-    transform = stringsource("""<?xml version="1.0"?>
+    transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="text"/>
@@ -291,36 +275,31 @@ class test_xslt_recursive_4_dn_20020325(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        from amara.xslt import transform
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            chars = 1000 * 2 ** i
-            title = "divide and conquer reversal of %d-char string" % chars
-            self.source = stringsource(DIGITS_XML % ((DIGITS * 100) * 2 ** i))
-            self.expected = str((REVERSED_DIGITS * 100) * 2 ** i)
-            result = transform(self.source, self.transform, output=io)
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
-    
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        chars = 1000 * 2 ** i
+        #title = "divide and conquer reversal of %d-char string" % chars
+        source = DIGITS_XML % ((DIGITS * 100) * 2 ** i)
+        expected = str((REVERSED_DIGITS * 100) * 2 ** i)
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected,
+            )
 
-class test_xslt_recursive_5_dn_20020325(xslt_test):
-    source = ""
+def test_xslt_recursive_5_dn_20020325():
     # reverse/lrReverse2.xsl
     # (with $t param added so threshold can be adjusted)
     #
     # The threshold is the # of chars above which DVC will be used,
     # and below which recursion will be used.
     #
-    transform = stringsource("""<?xml version="1.0"?>
+    transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="text"/>
@@ -377,31 +356,26 @@ class test_xslt_recursive_5_dn_20020325(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        from amara.xslt import transform
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            threshold = 75
-            chars = 1000 * 2 ** i
-            title = "2-stage divide and conquer reversal of %d-char string" % chars
-            title += " (threshold=%d)" % threshold
-            self.source = stringsource(DIGITS_XML % ((DIGITS * 100) * 2 ** i))
-            self.expected = str((REVERSED_DIGITS * 100) * 2 ** i)
-            result = transform(self.source, self.transform, output=io, params={'t': threshold})
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+   # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        threshold = 75
+        chars = 1000 * 2 ** i
+        #title = "2-stage divide and conquer reversal of %d-char string" % chars
+        #title += " (threshold=%d)" % threshold
+        source = DIGITS_XML % ((DIGITS * 100) * 2 ** i)
+        expected = str((REVERSED_DIGITS * 100) * 2 ** i)
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected)
 
-class test_xslt_recursive_6_dn_20020325(xslt_test):
-    source = ""
-    transform = stringsource("""<xsl:stylesheet version="1.0" 
+def test_xslt_recursive_6_dn_20020325():
+    transform_xml = """<xsl:stylesheet version="1.0" 
  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
  xmlns:exsl="http://exslt.org/common">
   
@@ -505,29 +479,24 @@ class test_xslt_recursive_6_dn_20020325(xslt_test):
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        from amara.xslt import transform
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            chars = (len(GOBBLEDY) * 20) * 2 ** i
-            title = "divide and conquer search/replace on %d-char string" % chars
-            self.source = stringsource(GOBBLEDY_XML % ((GOBBLEDY * 20) * 2 ** i))
-            self.expected = str((GOBBLEDY_OUT * 20) * 2 ** i)
-            result = transform(self.source, self.transform, output=io)
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        chars = (len(GOBBLEDY) * 20) * 2 ** i
+        #title = "divide and conquer search/replace on %d-char string" % chars
+        source = GOBBLEDY_XML % ((GOBBLEDY * 20) * 2 ** i)
+        expected = str((GOBBLEDY_OUT * 20) * 2 ** i)
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected)
 
-class test_xslt_recursive_7_dn_20020325(xslt_test):
-    source = ""
-    transform = stringsource("""<xsl:stylesheet version="1.0" 
+def test_xslt_recursive_7_dn_20020325():
+    transform_xml = """<xsl:stylesheet version="1.0" 
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:exsl="http://exslt.org/common">
   <xsl:output method="text" encoding="iso-8859-1" />
@@ -653,26 +622,21 @@ class test_xslt_recursive_7_dn_20020325(xslt_test):
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = ""
+</xsl:stylesheet>"""
 
-    def test_transform(self):
-        import sys
-        from amara.xslt import transform
-        # how many repetitions of BOOKS for the shortest source doc
-        MULTIPLIER = 10
-        # how many binary orders of magnitude to go up to
-        EXPLIMIT = 1
-        for i in range(EXPLIMIT):
-            io = cStringIO.StringIO()
-            chars = (len(GOBBLEDY) * 20) * 2 ** i
-            title = "2-stage divide and conquer search/replace on %d-char string" % chars
-            self.source = stringsource(GOBBLEDY_XML % ((GOBBLEDY * 20) * 2 ** i))
-            self.expected = str((GOBBLEDY_OUT * 20) * 2 ** i)
-            result = transform(self.source, self.transform, output=io)
-            self.assert_(treecompare.html_compare(self.expected, io.getvalue()))
-        return
+    # how many repetitions of BOOKS for the shortest source doc
+    MULTIPLIER = 10
+    # how many binary orders of magnitude to go up to
+    EXPLIMIT = 1
+    for i in range(EXPLIMIT):
+        chars = (len(GOBBLEDY) * 20) * 2 ** i
+        #title = "2-stage divide and conquer search/replace on %d-char string" % chars
+        source = GOBBLEDY_XML % ((GOBBLEDY * 20) * 2 ** i)
+        expected = str((GOBBLEDY_OUT * 20) * 2 ** i)
+        _run_text(
+            source_xml = source,
+            transform_xml = transform_xml,
+            expected = expected)
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")
