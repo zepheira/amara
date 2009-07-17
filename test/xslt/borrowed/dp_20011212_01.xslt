@@ -1,3 +1,4 @@
+<!-- Dave's Pawson's exsl:node-set problems -->
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:exslt="http://exslt.org/common"
