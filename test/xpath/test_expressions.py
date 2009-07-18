@@ -114,7 +114,7 @@ src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
   <!ATTLIST CHILD1 attr1 CDATA #IMPLIED
                    attr31 CDATA #IMPLIED>
   <!ATTLIST CHILD2 attr1 CDATA #IMPLIED
-                   CODE CDATA #REQUIRED>
+                   CODE ID #REQUIRED>
   <!ATTLIST foo:CHILD3 foo:name CDATA #IMPLIED
 	           xmlns:foo CDATA #IMPLIED>
   <!ATTLIST GCHILD name CDATA #IMPLIED>
@@ -157,7 +157,7 @@ CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')
 ATTR31 = CHILD1.xml_attributes.getnode(None, 'attr31')
 GCHILDREN1 = GCHILD11, GCHILD12 = children(CHILD1)
-TEXT1 = CHILD1.xml_children[-1]
+TEXT_WS1, TEXT_WS2, TEXT1 = children(CHILD1, type=tree.text)
 # `CHILD2` nodes
 ATTR2 = CHILD2.xml_attributes.getnode(None, 'attr1')
 IDATTR2 = CHILD2.xml_attributes.getnode(None, 'CODE')
