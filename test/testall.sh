@@ -5,5 +5,5 @@
 # -P to not tweak the PYTHONPATH to include ..
 # Use "-e" to exclude tests, using a regular expression#
 
-nosetests -v --exe -P
+nosetests -v --exe -P $*
 
