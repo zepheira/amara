@@ -4,19 +4,12 @@
 # his stylesheets
 
 import os
-import cStringIO
-import unittest
 
-from amara.lib import treecompare
-from amara.test import test_main
-#from amara.test.xslt import xslt_test, filesource, stringsource
 from amara.test.xslt.xslt_support import _run_html
 
-#from Ft.Lib import Uri
-#BASE_URI = Uri.OsPathToUri(os.path.abspath(__file__), attemptAbsolute=True)
-#INCLUDE_URI = Uri.Absolutize('resources/tg_20010628-include.xml', BASE_URI)
-INCLUDE_URI = "file:" + os.path.join(os.path.dirname(__file__),
-                                     "resources", "tg_20010628-include.xml")
+from amara.lib import iri
+INCLUDE_URI = iri.os_path_to_uri(os.path.join(os.path.dirname(__file__),
+                                              "resources", "tg_20010628-include.xml"))
 
 def test_xslt_xinclude_tg_20010628():
     _run_html(
