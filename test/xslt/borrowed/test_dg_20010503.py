@@ -1,13 +1,7 @@
 ########################################################################
 # test/xslt/dg_20010503.py
 # Duncan Grisby <dgrisby@uk.research.att.com> reports dependence on the order of the false attributes in an xml-stylesheet PI
-import os
-import cStringIO
-import unittest
 
-#from amara.lib import treecompare
-#from amara.test import test_main
-#from amara.test.xslt import xslt_test, filesource, stringsource
 from amara.test.xslt.xslt_support import _run_html
 
 def test_xslt_order_dependence_dg_20010503():
