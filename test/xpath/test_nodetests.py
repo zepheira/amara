@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from amara.lib import testsupport
 
-# FIXME: This does not import. Has this test been upgraded to work with Amara2?
-from amara.domlette import Node
+from amara.tree import element
 
 from amara.xpath import context
 from amara.xpath.compiler import xpathcompiler
@@ -11,7 +10,8 @@ from amara.xpath.locationpaths.axisspecifiers import axis_specifier
 from test_expressions import (
     base_xpath,
     # nodeset literals
-    DOC, ROOT, CHILD1, CHILD3, PI, PI2, TEXT1, COMMENT
+    DOC, ROOT, CHILD1, CHILD3, PI, PI2,
+    TEXT1, TEXT_WS1, TEXT_WS2, COMMENT
     )
 
 NAMESPACES = {'bar': 'http://foo.com'}
@@ -21,7 +21,7 @@ class test_nodetests(base_xpath):
 
     @classmethod
     def new_tst_method(cls, expected, factory, args, node,
-                        principal_type=Node.ELEMENT_NODE):
+                        principal_type=element):
         ctx = context(node, namespaces=NAMESPACES)
         compiler = xpathcompiler(ctx)
         # apply node-test using the default axis, 'child'
@@ -53,7 +53,7 @@ class test_node_type(test_nodetests):
     test_cases = [
         # (arg, ...), expected, context-node)
         (('node',), [PI, ROOT, PI2], DOC),
-        (('text',), [TEXT1], CHILD1),
+        (('text',), [TEXT_WS1, TEXT_WS2, TEXT1], CHILD1),
         (('comment',), [COMMENT], ROOT),
         (('processing-instruction',), [PI, PI2], DOC),
         (('processing-instruction', '"xml-stylesheet"'), [PI], DOC),
