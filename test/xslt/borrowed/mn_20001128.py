@@ -3,18 +3,15 @@
 # Miloslav Nic <nicmila@idoox.com> has a cool element/attribute stats tool
 
 import os
-import cStringIO
-import unittest
 
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt.xslt_support import _run_text
 
-class test_xslt_debug_1_mn_20001128(xslt_test):
-    source = filesource('resources/slides4svg.xml')
-    transform = stringsource("""<xsl:stylesheet xmlns:xsl = "http://www.w3.org/1999/XSL/Transform"
-version =
-"1.0" > 
+module_dir = os.path.dirname(__file__)
+SLIDES4SVG_XML = os.path.join(module_dir, "resources", "slides4svg.xml")
+
+def test_xslt_debug_1_mn_20001128():
+    transform = """<xsl:stylesheet xmlns:xsl = "http://www.w3.org/1999/XSL/Transform"
+version = "1.0" > 
    <xsl:output method="text"/>
 
    <xsl:key name="elements" match="*" use="name()"/>
@@ -50,8 +47,7 @@ generate-id(key('attributes',concat(name(parent::*),':::',name())))">
    </xsl:template>
 
    <xsl:template match="text()"/>
- </xsl:stylesheet>""")
-    parameters = {}
+ </xsl:stylesheet>"""
     expected = """
 slideshow
 title
@@ -73,10 +69,14 @@ preformatted
 graphic [ file height width  ] 
 link [ href  ] 
 para"""
+    _run_text(
+        source_xml = SLIDES4SVG_XML,
+        transform_xml = transform,
+        expected = expected,
+        )
 
-class test_xslt_debug_2_mn_20001128(xslt_test):
-    source = filesource('resources/slides4svg.xml')
-    transform = stringsource("""<xsl:stylesheet xmlns:xsl = "http://www.w3.org/1999/XSL/Transform"
+def test_xslt_debug_2_mn_20001128():
+    transform = """<xsl:stylesheet xmlns:xsl = "http://www.w3.org/1999/XSL/Transform"
  version =
  "1.0" > 
     <xsl:output method="text"/>
@@ -131,8 +131,8 @@ class test_xslt_debug_2_mn_20001128(xslt_test):
     </xsl:template>
 
     <xsl:template match="text()"/>
-  </xsl:stylesheet>""")
-    parameters = {}
+  </xsl:stylesheet>"""
+
     expected = """
 bulletlist
 emphasis
@@ -161,5 +161,12 @@ speaker
 speakerNote
 title"""
 
+    _run_text(
+        source_xml = SLIDES4SVG_XML,
+        transform_xml = transform,
+        expected = expected,
+        )        
+
+
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")
