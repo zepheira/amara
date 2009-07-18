@@ -74,7 +74,7 @@ def test_id_function():
         assert isinstance(result, datatypes.nodeset)
         result = list(result)
         expected = list(expected)
-        assert result == expected, (result, expected)
+        assert result == expected, (args, result, expected)
 
 def test_local_name_function():
     for arg, expected in (

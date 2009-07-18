@@ -8,7 +8,7 @@ from test_expressions import (
     # nodeset literals
     DOC, PI, PI2, ROOT, CHILDREN, CHILD1, ATTR1, GCHILDREN1, GCHILD11,
     GCHILD12, TEXT1, CHILD2, ATTR2, IDATTR2, GCHILDREN2, GCHILD21, CHILD3,
-    LANG, LCHILDREN, NONASCIIQNAME,
+    LANG, LCHILDREN, NONASCIIQNAME, TEXT_WS1, TEXT_WS2
     )
 
 CONTEXT_DOC = context(DOC, 1, 1)
@@ -131,18 +131,10 @@ def test_parser_pass():
          CONTEXT_ELEMENT),
         (['//element[descendant::y[.="z"]][2]'], datatypes.nodeset(),
          CONTEXT_ELEMENT),
+        (["text()"], datatypes.nodeset(), CONTEXT_CHILD3),
+        (["text()"], datatypes.nodeset([TEXT_WS1, TEXT_WS2, TEXT1]), CONTEXT_CHILD1),
         ]
 
-    _run_parser_pass(test_cases)
-
-# TODO:
-# These two test cases fail and I haven't tracked down why.
-# Isolating them for future reference.
-def test_parse_pass_buggy():
-    test_cases = (
-        (["text()"], datatypes.nodeset([TEXT1]), CONTEXT_CHILD1),
-        (["text()"], datatypes.nodeset(), CONTEXT_CHILD2),
-        )
     _run_parser_pass(test_cases)
 
 def test_parser_errors_new():
