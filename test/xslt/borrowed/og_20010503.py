@@ -3,13 +3,9 @@
 # Oliver Graf <ograf@oli-ver-ena.de> has indentation probs with 
 # ft:write-file
 
-import os, tempfile
-
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
-
+import tempfile
 from amara.lib import iri
+from amara.test.xslt.xslt_support import _run_xml
 
 BASENAME = tempfile.mktemp()
 BASENAME_URI = iri.os_path_to_uri(BASENAME)
@@ -21,8 +17,9 @@ file_expected = """<?xml version="1.0" encoding="ISO-8859-1"?>
 </datatree>"""
 
 
-class test_xslt_ft_write_file_og_20010503(xslt_test):
-    source = stringsource("""\
+def test_xslt_ft_write_file_og_20010503():
+    _run_xml(
+        source_xml = """\
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <test>
@@ -32,8 +29,8 @@ class test_xslt_ft_write_file_og_20010503(xslt_test):
   <data>14</data>
   <data>15</data>
 </test>
-""")
-    transform = stringsource("""\
+""",
+        transform_xml = """\
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <xsl:stylesheet
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
@@ -56,27 +53,9 @@ class test_xslt_ft_write_file_og_20010503(xslt_test):
   </exsl:document>
 </xsl:template>
 
-</xsl:stylesheet>""" % BASENAME_URI)
-    parameters = {}
-    expected = ""
-
-    # def test_transform(self):
-    #     import sys
-    #     from amara.xslt import transform
-    #     result = transform(self.source, self.transform, output=io)
-    #     
-    #     for num in range(11,16):
-    #         file = '%s%d.xml' % (BASENAME, num)
-    #         if os.path.exists(file):
-    #             actual = open(file).read()
-    #             os.unlink(file)
-    #             self.assert_(treecompare.html_compare(file_expected % num, actual))
-    #         else:
-    #             tester.error("ft:write-file %d.xml doesn't exist" % num)
-    # 
-    #     return
-
-del xslt_test
+</xsl:stylesheet>""" % BASENAME_URI,
+        expected = "",
+)
 
 if __name__ == '__main__':
     test_main()
