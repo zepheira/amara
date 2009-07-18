@@ -43,18 +43,22 @@ from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
+### dalke - added to make the imports work
+def NumberValue(x):
+    return x
+
 #Extensions
 
-from Ft.Xml.XPath import Conversions
+    
 
 ORACLE_JAVA_NS = 'http://www.oracle.com/XSL/Transform/java'
 JAVA_COLOR_NS = ORACLE_JAVA_NS + '/java.awt.Color'
 JAVA_INTEGER_NS = ORACLE_JAVA_NS + '/java.lang.Integer'
 
 def Java_Color_GetHSBColor(context, hue, saturation, brightness):
-    hue = Conversions.NumberValue(hue)
-    saturation = Conversions.NumberValue(saturation)
-    brightness = Conversions.NumberValue(brightness)
+    hue = NumberValue(hue)
+    saturation = NumberValue(saturation)
+    brightness = NumberValue(brightness)
 
     if saturation == 0:
         r = g = b = int(brightness * 255)
@@ -94,19 +98,19 @@ def Java_Color_GetHSBColor(context, hue, saturation, brightness):
     return 0xff000000L | (r << 16) | (g << 8) | (b << 0)
 
 def Java_Color_GetRed(context, color):
-    color = Conversions.NumberValue(color)
+    color = NumberValue(color)
     return (long(color) >> 16) & 0xff
 
 def Java_Color_GetGreen(context, color):
-    color = Conversions.NumberValue(color)
+    color = NumberValue(color)
     return (long(color) >> 8) & 0xff
 
 def Java_Color_GetBlue(context, color):
-    color = Conversions.NumberValue(color)
+    color = NumberValue(color)
     return long(color) & 0xff
 
 def Java_Integer_ToHexString(context, number):
-    return '%X' % Conversions.NumberValue(number)
+    return '%X' % NumberValue(number)
 
 ExtFunctions = {
     (JAVA_COLOR_NS, 'getHSBColor') : Java_Color_GetHSBColor,
@@ -240,6 +244,8 @@ class test_xslt_call_template_ed_20010101(xslt_test):
     # 
     #     return
 
+# Hide the test framework from nose
+del xslt_test
 
 if __name__ == '__main__':
     test_main()
