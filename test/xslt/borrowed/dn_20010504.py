@@ -6,12 +6,12 @@ import os
 import cStringIO
 import unittest
 
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.lib import iri
+from amara.test.xslt.xslt_support import _run_text
 
-class test_xslt_count_children_via_incrementing_counter_dn_20010504(xslt_test):
-    source = stringsource("""\
+def test_xslt_count_children_via_incrementing_counter_dn_20010504():
+    _run_text(
+        source_xml = """\
 <numbers>
  <num>3</num> 
  <num>2</num> 
@@ -22,8 +22,9 @@ class test_xslt_count_children_via_incrementing_counter_dn_20010504(xslt_test):
  <num>7</num> 
  <num>8</num> 
  <num>1</num> 
-</numbers>""")
-    transform = stringsource("""\
+</numbers>""",
+        transform_uri = iri.os_path_to_uri(__file__),
+        transform_xml = """\
 <xsl:stylesheet version="1.0"
 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 xmlns:num="num"
@@ -106,11 +107,11 @@ xmlns:num2="num2"
     <xsl:value-of select="1 div $n1 > 1 div $n2"/>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {}
-    expected = """\
+</xsl:stylesheet>""",
+        expected = """\
 9
-1"""
+1""")
+
 
 if __name__ == '__main__':
     test_main()
