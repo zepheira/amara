@@ -3,11 +3,6 @@
 # See 
 # http://lists.fourthought.com/pipermail/4suite-dev/2002-September/000732.html
 
-import os
-import cStringIO
-import unittest
-
-from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt.xslt_support import _run_xml
 
@@ -53,5 +48,5 @@ def test_xslt_vars_2_mb_20020907():
         expected = commonexpected)
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")
 
