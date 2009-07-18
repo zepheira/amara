@@ -10,7 +10,7 @@ from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
-from Ft.Lib.Uri import OsPathToUri
+#from Ft.Lib.Uri import OsPathToUri
 
 # The name of the environment variable that will indicate
 # the location of DocBook XSL docbook-xsl-#.#.# directory
