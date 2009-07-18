@@ -2,23 +2,12 @@
 # test/xslt/mb_20021016.py
 # Just some general recursion stress tests:
 # 1. Ackermann's Function
-# 2. Fibonacci Numbers
+# 2. Fibonacci Numbers (moved into the static test files mb_20021016_02.*)
 
-import os
-import sys
-import cStringIO
-import unittest
+from amara.test.xslt.xslt_support import _run_text
 
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
-
-from Ft import MAX_PYTHON_RECURSION_DEPTH
-sys.setrecursionlimit(MAX_PYTHON_RECURSION_DEPTH)
-
-class test_xslt_call_template_ed_20010101(xslt_test):
-    source = stringsource("""<dummy/>""")
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+def test_xslt_call_template_ed_20010101():
+    transform = """<?xml version="1.0" encoding="utf-8"?>
 <!--
 
   Ackermann's function
@@ -78,11 +67,15 @@ class test_xslt_call_template_ed_20010101(xslt_test):
     </xsl:choose>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    parameters = {'x': 3, 'y': 4}
-    expected = """A(3,4) = 125"""
+</xsl:stylesheet>"""
+
+    _run_text(
+        source_xml = "<dummy/>",
+        transform_xml = transform,
+        # modifies the defaults
+        parameters = {'x': 3, 'y': 4},
+        expected = "A(3,4) = 125",
+        )
 
 if __name__ == '__main__':
-    test_main()
-
-
+    raise SystemExit("Use nosetests")
