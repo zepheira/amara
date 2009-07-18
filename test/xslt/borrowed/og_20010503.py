@@ -4,17 +4,15 @@
 # ft:write-file
 
 import os, tempfile
-import cStringIO
-import unittest
 
 from amara.lib import treecompare
 from amara.test import test_main
 from amara.test.xslt import xslt_test, filesource, stringsource
 
-from Ft.Lib.Uri import OsPathToUri
+from amara.lib import iri
 
 BASENAME = tempfile.mktemp()
-BASENAME_URI = OsPathToUri(BASENAME)
+BASENAME_URI = iri.os_path_to_uri(BASENAME)
 
 file_expected = """<?xml version="1.0" encoding="ISO-8859-1"?>
 <datatree>
@@ -77,6 +75,8 @@ class test_xslt_ft_write_file_og_20010503(xslt_test):
     #             tester.error("ft:write-file %d.xml doesn't exist" % num)
     # 
     #     return
+
+del xslt_test
 
 if __name__ == '__main__':
     test_main()
