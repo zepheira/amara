@@ -2,9 +2,6 @@
 # test/xslt/dn_20010504.py
 # Dimitre Novatchev <dnovatchev@yahoo.com> discovered a brilliant 
 # technique for dynamic template selection
-import os
-import cStringIO
-import unittest
 
 from amara.lib import iri
 from amara.test.xslt.xslt_support import _run_text
