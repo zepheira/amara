@@ -2,15 +2,10 @@
 # test/xslt/dm_20010506.py
 # Dieter Maurer <dieter@handshake.de> reports problems with xsl:import 
 # and variables
-import os
-import cStringIO
-import unittest
 
 from amara.xslt import XsltError
 from amara.lib import iri
 from amara.test.xslt.xslt_support import _run_xml, _run_html
-
-#raise Exception, "FAIL, incomplete port, specific errors not tested"
 
 commonsource = "<ignored/>"
 
@@ -111,4 +106,4 @@ def test_xslt_include_with_params_dm_20010506():
 
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")
