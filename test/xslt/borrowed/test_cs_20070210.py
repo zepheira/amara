@@ -4,18 +4,14 @@
 
 # From original 4Suite cvs:
 # Dan (hitt@charybdis.zembu.com) reports non-conformance with XSLT w.r.t. variable shadowing
+from amara.lib import iri
 
-import os
-import cStringIO
-import unittest
-
-from amara.test import test_main
 from amara.test.xslt.xslt_support import _run_xml
 
 def test_apply_import1():
     _run_xml(
         source_xml = "<example><spam/></example>",
-        transform_uri = "file:" + __file__,
+        transform_uri = iri.os_path_to_uri(__file__),
         transform_xml = """\
 <xsl:transform version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
