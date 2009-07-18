@@ -5,12 +5,14 @@ import os
 import cStringIO
 import unittest
 
-from amara.lib import treecompare
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
+#from amara.lib import treecompare
+#from amara.test import test_main
+#from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt.xslt_support import _run_html
 
-class test_xslt_order_dependence_dg_20010503(xslt_test):
-    source = stringsource("""\
+def test_xslt_order_dependence_dg_20010503():
+    _run_html(
+        source_xml = """\
 <?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
 <?xml-stylesheet type="text/xml" href="Xml/Xslt/Core/addr_book1.xsl"?>
 <ADDRBOOK>
@@ -23,9 +25,13 @@ class test_xslt_order_dependence_dg_20010503(xslt_test):
         <EMAIL>pieter.aaron@inter.net</EMAIL>
     </ENTRY>
 </ADDRBOOK>
-""")
-    transform = []
-    expected = """<html>
+""",
+        # This test previously did not work, with the error
+        #    XsltError: No stylesheets to process.
+        # The problem is the stylesheet is a link in the source XML.
+        # I upgraded the tests, but still don't know how to handle this case.
+        transform_xml = None,
+        expected = """<html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <title>Address Book</title>
@@ -39,8 +45,8 @@ class test_xslt_order_dependence_dg_20010503(xslt_test):
       </tr>
     </table>
   </body>
-</html>"""
+</html>""")
 
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")
