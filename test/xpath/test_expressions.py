@@ -103,9 +103,23 @@ NEGATIVE_INFINITY = number_constant('-Infinity', datatypes.NEGATIVE_INFINITY)
 # Node constants
 src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 <!DOCTYPE ROOT [
+  <!ELEMENT ROOT (#PCDATA|CHILD1|CHILD2|foo:CHILD3|lang)*>
+  <!ELEMENT CHILD1 (#PCDATA|GCHILD)*>
   <!ELEMENT CHILD2 (#PCDATA|GCHILD)*>
+  <!ELEMENT foo:CHILD3 EMPTY>
+  <!ELEMENT GCHILD EMPTY>
+  <!ELEMENT lang (foo|f\xf6\xf8)*>
+  <!ELEMENT foo EMPTY>
+  <!ELEMENT f\xf6\xf8 EMPTY>
+  <!ATTLIST CHILD1 attr1 CDATA #IMPLIED
+                   attr31 CDATA #IMPLIED>
   <!ATTLIST CHILD2 attr1 CDATA #IMPLIED
-                   CODE ID #REQUIRED>
+                   CODE CDATA #REQUIRED>
+  <!ATTLIST foo:CHILD3 foo:name CDATA #IMPLIED
+	           xmlns:foo CDATA #IMPLIED>
+  <!ATTLIST GCHILD name CDATA #IMPLIED>
+  <!ATTLIST lang xml:lang CDATA #IMPLIED>
+  <!ATTLIST foo xml:lang CDATA #IMPLIED>
 ]>
 <?xml-stylesheet "Data" ?>
 <ROOT>
