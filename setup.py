@@ -254,7 +254,7 @@ setup(name='Amara',
                 'amara.test.xpath',
                 'amara.test.xslt',
                 ],
-      py_modules=['amara.tools.atomtools', 'amara.tools.rdfascrape'],
+      py_modules=['amara.tools.atomtools', 'amara.tools.rdfascrape', 'amara.tools.kekule', 'amara.tools.scrapesniff'],
       package_dir={'amara.test': 'test', 'amara.tools': 'demo'},
       ext_modules=[
           Extension('amara._xmlstring',

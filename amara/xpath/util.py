@@ -286,7 +286,7 @@ def abspath(node, prefixes=None):
         #Count previous siblings with same node name
         previous = node.xml_preceding_sibling
         while previous:
-            if ((previous.xml_namespace, previous.xml_local)
+            if (isinstance(previous, tree.element) and (previous.xml_namespace, previous.xml_local)
                 == (node.xml_namespace, node.xml_local)):
                 count += 1
             previous = previous.xml_preceding_sibling
@@ -305,7 +305,7 @@ def abspath(node, prefixes=None):
                     break
             else:
                 nametest = FULL_NS_FORM%(node.xml_namespace, node.xml_local)
-        step = u'%s[%i]' % (nametest, count)
+        step = u'%s[%i]' % (nametest, count) if count > 1 else u'%s' % (nametest)
         ancestor = node.xml_parent
     elif node.xml_type == tree.attribute.xml_type:
         step = u'@%s' % (node.xml_qname)

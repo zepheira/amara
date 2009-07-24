@@ -28,7 +28,7 @@ from amara.lib.util import *
 
 __all__ = [
   'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
-  'ATOM_IMT', 'NSS', 'DEFAULT_SKEL',
+  'ATOM_IMT', 'PREFIXES', 'DEFAULT_SKEL',
   'tidy_content_element', 'feed', 'aggregate_entries',
   'atom2rss1',
 ]
@@ -76,7 +76,7 @@ FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg
 
 ATOM_IMT = u'application/atom+xml'
 
-NSS = {COMMON_PREFIXES[ATOM_NAMESPACE]: ATOM_NAMESPACE}
+PREFIXES = {COMMON_NAMESPACES[ATOM_NAMESPACE]: ATOM_NAMESPACE, COMMON_NAMESPACES[ATOMTHR_EXT_NAMESPACE]: ATOMTHR_EXT_NAMESPACE}
 
 FEED_MODEL = examplotron_model(FEED_MODEL_XML)
 ENTRY_MODEL = examplotron_model(ENTRY_MODEL_XML)
@@ -121,7 +121,7 @@ def aggregate_entries(envelope, entries):
     return envelope_doc, metadata
 
 
-def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:content', prefixes=NSS):
+def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:content', prefixes=PREFIXES):
     """
     Takes all Atom content elements with type=html (i.e. a:title, a:summary or a:content)
     And convert them to be of type=xhtml

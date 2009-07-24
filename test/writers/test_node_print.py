@@ -1,7 +1,4 @@
 # -*- encoding: utf-8 -*-
-# Testing new amara.tree API
-
-# Testing quick reference examples
 
 import unittest
 import cStringIO

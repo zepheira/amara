@@ -4,44 +4,45 @@
 Common namespaces, for sake of convenience
 """
 
-COMMON_PREFIXES = {}
+COMMON_NAMESPACES = {}
 
-AKARA_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara"; COMMON_PREFIXES[AKARA_NAMESPACE] = u'ak'
-AKARA_XSLT_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara/xslt"; COMMON_PREFIXES[AKARA_XSLT_NAMESPACE] = u'ax'
+AKARA_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara"; COMMON_NAMESPACES[AKARA_NAMESPACE] = u'ak'
+AKARA_XSLT_NAMESPACE = u"http://purl.org/dc/org/xml3k/akara/xslt"; COMMON_NAMESPACES[AKARA_XSLT_NAMESPACE] = u'ax'
 
 XML_NAMESPACE = u"http://www.w3.org/XML/1998/namespace"
 XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
 
-XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_PREFIXES[XHTML_NAMESPACE] = u'xhtml'
-XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_PREFIXES[XSL_NAMESPACE] = u'xsl'
+XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_NAMESPACES[XHTML_NAMESPACE] = u'xhtml'
+XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_NAMESPACES[XSL_NAMESPACE] = u'xsl'
 
-RNG_NAMESPACE = u"http://relaxng.org/ns/structure/1.0"; COMMON_PREFIXES[RNG_NAMESPACE] = u'rng'
-EG_NAMESPACE = u"http://examplotron.org/0/"; COMMON_PREFIXES[EG_NAMESPACE] = u'eg'
+RNG_NAMESPACE = u"http://relaxng.org/ns/structure/1.0"; COMMON_NAMESPACES[RNG_NAMESPACE] = u'rng'
+EG_NAMESPACE = u"http://examplotron.org/0/"; COMMON_NAMESPACES[EG_NAMESPACE] = u'eg'
 
 #XML Linking Language: http://www.w3.org/TR/xlink/
-XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_PREFIXES[XLINK_NAMESPACE] = u'xlink'
-XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_PREFIXES[XINCLUDE_NAMESPACE] = u'xinclude'
+XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_NAMESPACES[XLINK_NAMESPACE] = u'xlink'
+XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_NAMESPACES[XINCLUDE_NAMESPACE] = u'xinclude'
 
-SVG_NAMESPACE = u"http://www.w3.org/2000/svg"; COMMON_PREFIXES[SVG_NAMESPACE] = u'svg'
+SVG_NAMESPACE = u"http://www.w3.org/2000/svg"; COMMON_NAMESPACES[SVG_NAMESPACE] = u'svg'
 
 #RDF
 
-RDF_NAMESPACE = u"http://www.w3.org/1999/02/22-rdf-syntax-ns#"; COMMON_PREFIXES[RDF_NAMESPACE] = u'rdf'
-RDFS_NAMESPACE = u"http://www.w3.org/2000/01/rdf-schema#"; COMMON_PREFIXES[RDFS_NAMESPACE] = u'rdfs'
-DC_NAMESPACE = u"http://purl.org/dc/elements/1.1/"; COMMON_PREFIXES[DC_NAMESPACE] = u'dc'
-SKOS_NAMESPACE = u"http://www.w3.org/2008/05/skos#"; COMMON_PREFIXES[SKOS_NAMESPACE] = u'skos'
-OWL_NAMESPACE = u"http://www.w3.org/2002/07/owl#"; COMMON_PREFIXES[OWL_NAMESPACE] = u'owl'
+RDF_NAMESPACE = u"http://www.w3.org/1999/02/22-rdf-syntax-ns#"; COMMON_NAMESPACES[RDF_NAMESPACE] = u'rdf'
+RDFS_NAMESPACE = u"http://www.w3.org/2000/01/rdf-schema#"; COMMON_NAMESPACES[RDFS_NAMESPACE] = u'rdfs'
+DC_NAMESPACE = u"http://purl.org/dc/elements/1.1/"; COMMON_NAMESPACES[DC_NAMESPACE] = u'dc'
+SKOS_NAMESPACE = u"http://www.w3.org/2008/05/skos#"; COMMON_NAMESPACES[SKOS_NAMESPACE] = u'skos'
+OWL_NAMESPACE = u"http://www.w3.org/2002/07/owl#"; COMMON_NAMESPACES[OWL_NAMESPACE] = u'owl'
 
 RDF_GROUP = [RDF_NAMESPACE, RDFS_NAMESPACE, DC_NAMESPACE, OWL_NAMESPACE, SKOS_NAMESPACE]
 
-ATOM_NAMESPACE = u'http://www.w3.org/2005/Atom'; COMMON_PREFIXES[ATOM_NAMESPACE] = u'atom'
-ATOMPUB_NAMESPACE = u'http://www.w3.org/2007/app'; COMMON_PREFIXES[ATOMPUB_NAMESPACE] = u'app'
-ATOMTHR_EXT_NAMESPACE = u'http://purl.org/syndication/thread/1.0'; COMMON_PREFIXES[ATOMTHR_EXT_NAMESPACE] = u'thr'
+ATOM_NAMESPACE = u'http://www.w3.org/2005/Atom'; COMMON_NAMESPACES[ATOM_NAMESPACE] = u'atom'
+ATOMPUB_NAMESPACE = u'http://www.w3.org/2007/app'; COMMON_NAMESPACES[ATOMPUB_NAMESPACE] = u'app'
+ATOMTHR_EXT_NAMESPACE = u'http://purl.org/syndication/thread/1.0'; COMMON_NAMESPACES[ATOMTHR_EXT_NAMESPACE] = u'thr'
 
 
 #obsolete
 EXTENSION_NAMESPACE = u'http://xmlns.4suite.org/ext'
 
+COMMON_PREFIXES = dict((v, k) for (k, v) in COMMON_NAMESPACES.iteritems())
 
 
 """
