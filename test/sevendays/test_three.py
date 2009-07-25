@@ -63,7 +63,7 @@ def merge(f1, f2):
     return
 
 
-class TestItereators(unittest.TestCase):
+class TestIterators(unittest.TestCase):
     def setUp(self):
         self.XML ="""\
 <env>
