@@ -13,12 +13,10 @@ __all__ = [
 
 from functools import *
 import re
-import sets
 import itertools
 import keyword
 import warnings
 from cStringIO import StringIO
-import bisect
 
 from xml.dom import Node
 
