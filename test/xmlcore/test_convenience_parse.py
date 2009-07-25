@@ -7,7 +7,7 @@ from amara.tree import parse   ### Revise imports
 #Just checking the API for now
 
 TEST_STRING = "<test/>"
-TEST_FILE = "Xml/Core/disclaimer.xml"
+TEST_FILE = "test/xmlcore/disclaimer.xml"
 
 ### modify this url
 TEST_URL = "http://cvs.4suite.org/viewcvs/*checkout*/4Suite/test/Xml/Core/disclaimer.xml"
