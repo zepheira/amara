@@ -304,7 +304,6 @@ def writer(stream=sys.stdout, **kwargs):
 
 def launch(source, **kwargs):
     doc = parse(source, validate=kwargs['validate'], standalone=kwargs['standalone'])
-    from amara import xml_print
     xml_print(doc, indent=kwargs['pretty'])
     return
 
