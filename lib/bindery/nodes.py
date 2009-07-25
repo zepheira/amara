@@ -548,11 +548,14 @@ class entity_base(container_mixin, tree.entity):
         '''
         try:
             python_id = self._names[(local, ns)]
-        except KeyError:
+        except (KeyError, AttributeError):
             python_id = str(self.PY_REPLACE_PAT.sub('_', local))
             while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
                 python_id += '_'
-            self._names[(local, ns)] = python_id
+            # self._names may not be present when copy.deepcopy() is
+            # creating a copy, so only try to cache if it's present.
+            if hasattr(self, '_names'):
+                self._names[(local, ns)] = python_id
         if parent is not None:
             name_checks_out = False
             while not name_checks_out:
