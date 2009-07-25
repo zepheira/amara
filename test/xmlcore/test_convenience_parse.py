@@ -1,8 +1,7 @@
 import unittest
-from amara.lib import Parse   ### Revise imports
-from amara.Lib import Uri, Uuid
-from xml.dom import Node
 import os
+from amara import tree
+from amara.tree import parse   ### Revise imports
 
 #More in-depth testing of DOM structure building is done in other tests.
 #Just checking the API for now
@@ -18,34 +17,34 @@ class Test_parse_functions_1(unittest.TestCase):
     """Testing local sources"""
     def test_parse_with_string(self):
         """Parse with string"""
-        doc = Parse(TEST_STRING)
+        doc = parse(TEST_STRING)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'test')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_typecode, tree.element.xml_typecode)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'test')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
         
     def test_parse_with_stream(self):
         """Parse with stream"""
         stream = open(TEST_FILE)
-        doc = Parse(stream)
+        doc = parse(stream)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_typecode, tree.element.xml_typecode)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
     
     def test_parse_with_file_path(self):
         """Parse with file path"""
-        doc = Parse(TEST_FILE)
+        doc = parse(TEST_FILE)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_typecode, tree.element.xml_typecode)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
         
 
 class Test_parse_functions_2(unittest.TestCase):
@@ -53,13 +52,13 @@ class Test_parse_functions_2(unittest.TestCase):
     May be slow; requires Internet connection"""
 
     def test_parse_with_url(self):
-        doc = Parse(TEST_URL)
+        doc = parse(TEST_URL)
         #Minimal node testing
-        self.assertEqual(len(doc.childNodes), 1)
-        self.assertEqual(doc.childNodes[0].nodeType, Node.ELEMENT_NODE)
-        self.assertEqual(doc.childNodes[0].nodeName, 'disclaimer')
-        self.assertEqual(doc.childNodes[0].namespaceURI, None)
-        self.assertEqual(doc.childNodes[0].prefix, None,)
+        self.assertEqual(len(doc.xml_children), 1)
+        self.assertEqual(doc.xml_children[0].xml_typecode, tree.element.xml_typecode)
+        self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
+        self.assertEqual(doc.xml_children[0].xml_namespace, None)
+        self.assertEqual(doc.xml_children[0].xml_prefix, None,)
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")
