@@ -1,7 +1,12 @@
-import os, unittest, sys, string, codecs
+import os, unittest, sys, codecs
 import warnings
 from amara.lib import iri, iriresolvers
-from amara.lib import testsupport
+
+def find_file(filename):
+    for prefix in ("", "lib/", "test/lib/"):
+        if os.path.exists(prefix+filename):
+            return prefix+filename
+    return filename
 
 # Test cases for BaseJoin() ==================================================
 # (base, relative, expected)
@@ -735,43 +740,38 @@ percent_encode_tests = [
 ]
 
 
-class Test_uridict(unittest.TestSuite):
-    '''uridict implementation'''
-    class Test_file_uri_localhost_equiv(unittest.TestCase):
-        '''file:/// and file://localhost/ equivalence'''
-        def test_uri_dict(self):
-            '''equivalent key in UriDict'''
-            uris = iri.uridict()
-            uris['file:///path/to/resource'] = 0
-            self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
-            return
+class Test_file_uri_localhost_equiv(unittest.TestCase):
+    '''uridict implementation - file:/// and file://localhost/ equivalence'''
+    def test_uri_dict(self):
+        '''equivalent key in UriDict'''
+        uris = iri.uridict()
+        uris['file:///path/to/resource'] = 0
+        self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
 
-        def test_equiv_keys(self):
-            '''value of 2 equivalent keys'''
-            uris = iri.uridict()
-            uris['file:///path/to/resource'] = 1
-            uris['file://localhost/path/to/resource'] = 2
-            self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
+    def test_equiv_keys(self):
+        '''value of 2 equivalent keys'''
+        uris = iri.uridict()
+        uris['file:///path/to/resource'] = 1
+        uris['file://localhost/path/to/resource'] = 2
+        self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
 
-    class Test_case_equiv(unittest.TestCase):
-        '''case equivalence'''
-        def test_case_normalization(self):
-            '''case normalization'''
-            uris = iri.uridict()
-            for uri, expected, junk in case_normalization_tests:
-                uris[uri] = 1
-                uris[expected] = 2
-                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
-            return
+class Test_case_equiv(unittest.TestCase):
+    '''uridict implementation - case equivalence'''
+    def test_case_normalization(self):
+        '''case normalization'''
+        uris = iri.uridict()
+        for uri, expected, junk in case_normalization_tests:
+            uris[uri] = 1
+            uris[expected] = 2
+            self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
 
-        def test_percent_encoding_equivalence(self):
-            '''percent-encoding equivalence'''
-            uris = iri.uridict()
-            for uri, expected in pct_enc_normalization_tests:
-                uris[uri] = 1
-                uris[expected] = 2
-                self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
-            return
+    def test_percent_encoding_equivalence(self):
+        '''percent-encoding equivalence'''
+        uris = iri.uridict()
+        for uri, expected in pct_enc_normalization_tests:
+            uris[uri] = 1
+            uris[expected] = 2
+            self.assertEqual(2, uris[uri], '%s and %s equivalence' % (uri, expected))
 
 class Test_percent_encode_decode(unittest.TestCase):
     '''PercentEncode and PercentDecode'''
@@ -789,7 +789,6 @@ class Test_percent_encode_decode(unittest.TestCase):
                 self.assertEqual(encoded, iri.percent_encode(unencoded))
                 self.assertEqual(unencoded, iri.percent_decode(encoded))
             setattr(cls, "test_percent_encode_%i"%count, test_percent_encode_template)
-        return
 
     # non-BMP tests:
     #     a couple of random chars from U+10000 to U+10FFFD.
@@ -844,7 +843,6 @@ class Test_percent_encode_decode(unittest.TestCase):
                 continue
             self.assertEqual(encoded, iri.percent_encode(unencoded, encoding=enc_name), enc_name)
             self.assertEqual(unencoded, iri.percent_decode(encoded, encoding=enc_name), enc_name)
-        return
 
     # utf-16be: why not?
     #unencoded = u'a test string...\x00\xe9...\x20\x22...\xd8\x00\xdc\x00'
@@ -1039,17 +1037,11 @@ class Test_basic_uri_resolver(unittest.TestCase):
         uri = 'path'
         self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.DEFAULT_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
 
-        if not __file__.startswith("lib/test_iri.py"):
-            #User is not running it from expected location
-            if __file__.startswith("test_iri.py"):
-                os.chdir('..')
-            else:
-                print >> sys.stderr, "Please run this test from the test or test/lib directory"
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
-        stream = iri.DEFAULT_RESOLVER.resolve('lib/sampleresource.txt', iri.os_path_to_uri(base))
-        self.assertEqual('Spam', string.rstrip(stream.readline()), 'resolve')
+        stream = iri.DEFAULT_RESOLVER.resolve(find_file('sampleresource.txt'), iri.os_path_to_uri(base))
+        self.assertEqual('Spam', stream.readline().rstrip(), 'resolve')
         stream.close()
 
         uuid = iri.DEFAULT_RESOLVER.generate()
@@ -1090,8 +1082,5 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             res = resolver.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
-        return
-
 if __name__ == '__main__':
-    testsupport.test_main()
-
+    raise SystemExit("Use nosetests")

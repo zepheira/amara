@@ -1,3 +1,7 @@
+<!--
+Example from David Carlisle <davidc@nag.co.uk> to John Robert Gardner 
+<jrgardn@emory.edu> on 10 Jan 2000
+-->
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version="1.0"

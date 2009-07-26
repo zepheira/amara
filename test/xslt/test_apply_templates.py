@@ -1,19 +1,22 @@
 ########################################################################
 # test/xslt/test_apply_templates.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
-class test_apply_templates_1(xslt_test):
-    """`xsl:apply-templates`"""
-    source = stringsource("""<?xml version="1.0"?>
+from xslt_support import _run_xml
+
+SOURCE_XML = """<?xml version="1.0"?>
 <data>""" + """
  <item>b</item>
  <item in="1">a</item>
  <item>d</item>
  <item in="1">c</item>
-"""*5 + """</data>""")
-    transform = stringsource("""<?xml version="1.0"?>
+"""*5 + """</data>"""
+
+def test_apply_templates_1():
+    """`xsl:apply-templates`"""
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -25,14 +28,15 @@ class test_apply_templates_1(xslt_test):
     <xsl:value-of select='.'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "badc"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "badc"*5 + "</docelem>")
 
-
-class test_apply_templates_2(test_apply_templates_1):
+def test_apply_templates_2():
     """`xsl:apply-templates` using `xsl:sort`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml ="""<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -49,14 +53,15 @@ class test_apply_templates_2(test_apply_templates_1):
     <xsl:value-of select='.'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "a"*5 + "b"*5 + "c"*5 + "d"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "a"*5 + "b"*5 + "c"*5 + "d"*5 + "</docelem>")
 
-
-class test_apply_templates_3(test_apply_templates_1):
+def test_apply_templates_3():
     """`xsl:apply-templates` using `xsl:with-param`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -74,14 +79,15 @@ class test_apply_templates_3(test_apply_templates_1):
     <xsl:value-of select='concat($foo,.)'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "1b1a1d1c"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "1b1a1d1c"*5 + "</docelem>")
 
-
-class test_apply_templates_4(test_apply_templates_1):
+def test_apply_templates_4():
     """`xsl:apply-templates` using `xsl:sort` and `xsl:with-param`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -100,14 +106,15 @@ class test_apply_templates_4(test_apply_templates_1):
     <xsl:value-of select='concat($foo,.)'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "1a"*5 + "1b"*5 + "1c"*5 + "1d"*5 + "</docelem>"
+""",
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "1a"*5 + "1b"*5 + "1c"*5 + "1d"*5 + "</docelem>")
 
-
-class test_apply_templates_5(test_apply_templates_1):
+def test_apply_templates_5():
     """`xsl:apply-templates` with select"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -118,14 +125,16 @@ class test_apply_templates_5(test_apply_templates_1):
     <xsl:value-of select='.'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "ac"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "ac"*5 + "</docelem>")
 
 
-class test_apply_templates_6(test_apply_templates_1):
+def test_apply_templates_6():
     """`xsl:apply-templates` with select of attributes"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -134,14 +143,15 @@ class test_apply_templates_6(test_apply_templates_1):
   </xsl:template>
   <xsl:template match='@*[. = "1"]'>!</xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "!!"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "!!"*5 + "</docelem>")
 
-
-class test_apply_templates_7(test_apply_templates_1):
+def test_apply_templates_7():
     """`xsl:apply-templates` with select using `xsl:sort`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -157,14 +167,15 @@ class test_apply_templates_7(test_apply_templates_1):
     <xsl:value-of select='.'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "a"*5 + "c"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "a"*5 + "c"*5 + "</docelem>")
 
-
-class test_apply_templates_8(test_apply_templates_1):
+def test_apply_templates_8():
     """`xsl:apply-templates` with select using `xsl:with-param`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -181,14 +192,15 @@ class test_apply_templates_8(test_apply_templates_1):
     <xsl:value-of select='concat($foo,.)'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "1a1c"*5 + "</docelem>"
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "1a1c"*5 + "</docelem>")
 
-
-class test_apply_templates_9(test_apply_templates_1):
+def test_apply_templates_9():
     """`xsl:apply-templates` with select using `xsl:sort` and `xsl:with-param`"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <docelem>
@@ -206,16 +218,16 @@ class test_apply_templates_9(test_apply_templates_1):
     <xsl:value-of select='concat($foo,.)'/>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<docelem>""" + "1a"*5 + "1c"*5 + "</docelem>"
+""",
+    expected = """<?xml version="1.0" encoding="UTF-8"?>
+<docelem>""" + "1a"*5 + "1c"*5 + "</docelem>")
 
-
-class test_apply_templates_error_1(xslt_error):
+def test_apply_templates_error_1():
     """xsl:apply-templates with invalid select expression"""
-    error_class = TypeError
-    source = stringsource("""<?xml version="1.0"?><foo/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><foo/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="xml" indent="no"/>
@@ -242,14 +254,17 @@ class test_apply_templates_error_1(xslt_error):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except TypeError:
+        pass
 
-
-class test_apply_templates_error_2(xslt_error):
+def test_apply_templates_error_2():
     """xsl:apply-templates with invalid select expression"""
-    error_class = TypeError
-    source = stringsource("""<?xml version="1.0"?><foo/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><foo/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="xml" indent="no"/>
@@ -259,8 +274,10 @@ class test_apply_templates_error_2(xslt_error):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-
+""",
+            expected = None)
+    except TypeError:
+        pass
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")

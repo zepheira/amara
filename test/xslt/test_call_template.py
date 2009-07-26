@@ -1,19 +1,20 @@
 ########################################################################
 # test/xslt/test_call_template.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_call_template_1(xslt_test):
+from xslt_support import _run_xml
+
+def test_call_template_1():
     """`xsl:call-template"""
-    source = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = """<?xml version="1.0"?>
 <data>
  <item>b</item>
  <item>a</item>
  <item>d</item>
  <item>c</item>
 </data>
-""")
-    transform = stringsource("""<?xml version="1.0"?>
+""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 <xsl:template match="/">
 <root>
@@ -46,10 +47,10 @@ class test_call_template_1(xslt_test):
   </xsl:call-template>
 </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
-<root><tr><td>b</td><td>a</td></tr><tr><td>d</td><td>c</td></tr></root>"""
+""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
+<root><tr><td>b</td><td>a</td></tr><tr><td>d</td><td>c</td></tr></root>""")
 
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

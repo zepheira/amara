@@ -87,7 +87,7 @@ class stringsource(testsource):
         testsource.__init__(self, source, uri, validate, xinclude)
 
 
-from amara.test import test_main, test_case, TestError
+from amara.test import test_case, TestError
 
 class xslt_test(test_case):
 
@@ -128,6 +128,7 @@ class xslt_test(test_case):
         method = (None, self.force_method) if self.force_method else result.parameters.method
         omit_decl = result.parameters.omit_xml_declaration
         expected, compared = self.expected, result
+        #print expected, compared
         if method == (None, 'xml') and not omit_decl:
             diff = treecompare.xml_diff(expected, compared)
         elif method == (None, 'html'):
@@ -184,6 +185,7 @@ class xslt_error(xslt_test):
             self.fail('%s not raised' % expected)
 
 if __name__ == '__main__':
+    from amara.test import test_main, test_case, TestError
     import glob
     module_dir = os.path.dirname(os.path.abspath(__file__))
     pattern = os.path.join(module_dir, 'test_*.py')

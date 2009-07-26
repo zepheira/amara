@@ -1,13 +1,22 @@
 ########################################################################
 # test/xslt/test_key.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
+import os
 from amara.xslt import XsltError
 
-class test_key_1(xslt_test):
+from xslt_support import _run_xml, _run_html, _run_text
+
+module_name = os.path.dirname(__file__)
+filename = os.path.join(module_name, "addr_book1.xml")
+FILE_SOURCE_XML = open(filename).read()
+FILE_URI = "file:" + filename
+TRANSFORM_URI = "file:" + __file__
+
+def test_key_1():
     """basic keys"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_html(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <!-- silly bit of overkill for key usage, but executes the basic test -->
@@ -38,8 +47,8 @@ class test_key_1(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<HTML>
+""",
+        expected = """<HTML>
   <HEAD>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
     <TITLE>Address Book</TITLE>
@@ -62,13 +71,15 @@ class test_key_1(xslt_test):
 
     </TABLE>
   </BODY>
-</HTML>"""
+</HTML>""")
 
-
-class test_key_2(xslt_test):
+def test_key_2():
     """keys scoped to context document"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_text(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method='text'/>
@@ -87,18 +98,21 @@ class test_key_2(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """
+""",
+        expected = """
       Entries from keys: 3
       Template from keys: 0
       Entries from keys: 0
       Template from keys: 1"""
+        )
 
-
-class test_key_3(xslt_test):
+def test_key_3():
     """keys using patterns of form `ns:*`"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_text(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:x="http://spam.com"
@@ -122,16 +136,19 @@ class test_key_3(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """
+""",
+        expected = """
     Entries from key 1: 1
     Entries from key 2: 1"""
+        )
 
-
-class test_key_4(xslt_test):
+def test_key_4():
     """imported keys"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_text(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-key-import-1.xslt"/>
@@ -146,16 +163,19 @@ class test_key_4(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """
+""",
+        expected = """
     Entries from key 1: 1
     Entries from key 2: 1"""
+        )
 
-
-class test_key_5(xslt_test):
-    """included keys"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_key_5():
+    """included keys (test_key_5)"""
+    _run_text(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:include href="test-key-import-1.xslt"/>
@@ -170,16 +190,19 @@ class test_key_5(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """
+""",
+        expected = """
     Entries from key 1: 1
     Entries from key 2: 1"""
+        )
 
-
-class test_key_6(xslt_test):
-    """included keys"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_key_6():
+    """included keys (test_key_6)"""
+    _run_text(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-key-import-1.xslt"/>
@@ -201,16 +224,19 @@ class test_key_6(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """
+""",
+        expected = """
     Entries from key 1: 3
-    Entries from key 2: 1"""
+    Entries from key 2: 1""")
 
 
-class test_key_7(xslt_test):
-    """included keys"""
-    source = stringsource("<dummy/>")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_key_7():
+    """included keys (test_key_7)"""
+    _run_xml(
+        source_xml = FILE_SOURCE_XML,
+        source_uri = FILE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:x="http://spam.com/x"
@@ -235,15 +261,18 @@ class test_key_7(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:x="http://spam.com/x"><x:drei xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="zwo"/><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+        )
 
 
-class test_key_8(xslt_test):
-    """included keys"""
-    source = stringsource("<dummy/>")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_key_8():
+    """included keys (test_key_8)"""
+    _run_xml(
+        source_xml = "<dummy/>",
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:x="http://spam.com/x"
@@ -273,15 +302,18 @@ class test_key_8(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/><y:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+        )
 
 
-class test_key_9(xslt_test):
-    """included keys"""
-    source = stringsource("<dummy/>")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_key_9():
+    """included keys (test_key_9)"""
+    _run_xml(
+        source_xml = "<dummy/>",
+        transform_uri = TRANSFORM_URI,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:x="http://spam.com/x"
@@ -312,16 +344,20 @@ class test_key_9(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/><y:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+        )
 
 
-class test_key_error_1(xslt_error):
+def test_key_error_1():
     """keys using patterns of form `ns:*`"""
-    error_code = XsltError.UNDEFINED_PREFIX
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = FILE_SOURCE_XML,
+            source_uri = FILE_URI,
+            transform_uri = TRANSFORM_URI,
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:x="http://spam.com"
@@ -342,8 +378,12 @@ class test_key_error_1(xslt_error):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.UNDEFINED_PREFIX
+    else:
+        raise AssertionError("should have failed!")
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

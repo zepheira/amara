@@ -2,8 +2,8 @@
 
 from amara.lib import inputsource
 from amara import tree
-from amara.test import test_main
-from amara.test.xpath import test_xpath, test_metaclass
+from amara.test.xpath import base_xpath
+from amara.test.xpath import base_metaclass
 from amara.xpath import context, datatypes
 from amara.xpath.expressions import expression
 from amara.xpath.expressions.basics import string_literal, number_literal
@@ -14,7 +14,7 @@ from amara.xpath.expressions.basics import string_literal, number_literal
 # Create an independent "literal" base class as to not confuse the isinstance()
 # checks throughout the compilation phase. The XPath parser cannot emit
 # boolean or node-set literals!
-class test_literal(expression):
+class base_literal(expression):
     def __init__(self, literal):
         self._literal = self.return_value(literal)
 
@@ -43,10 +43,10 @@ class test_literal(expression):
         print >> stream, indent + repr(self)
 
 
-class boolean_literal(test_literal):
+class boolean_literal(base_literal):
     return_value = datatypes.boolean
 
-    compile = test_literal.compile_as_boolean
+    compile = base_literal.compile_as_boolean
 
     def __str__(self):
         return self._literal and 'true()' or 'false()'
@@ -54,7 +54,7 @@ TRUE = boolean_literal(True)
 FALSE = boolean_literal(False)
 
 
-class nodeset_literal(test_literal):
+class nodeset_literal(base_literal):
     return_value = datatypes.nodeset
 
     def compile_iterable(self, compiler):
@@ -103,9 +103,23 @@ NEGATIVE_INFINITY = number_constant('-Infinity', datatypes.NEGATIVE_INFINITY)
 # Node constants
 src = inputsource("""<?xml version='1.0' encoding='ISO-8859-1'?>
 <!DOCTYPE ROOT [
+  <!ELEMENT ROOT (#PCDATA|CHILD1|CHILD2|foo:CHILD3|lang)*>
+  <!ELEMENT CHILD1 (#PCDATA|GCHILD)*>
   <!ELEMENT CHILD2 (#PCDATA|GCHILD)*>
+  <!ELEMENT foo:CHILD3 EMPTY>
+  <!ELEMENT GCHILD EMPTY>
+  <!ELEMENT lang (foo|f\xf6\xf8)*>
+  <!ELEMENT foo EMPTY>
+  <!ELEMENT f\xf6\xf8 EMPTY>
+  <!ATTLIST CHILD1 attr1 CDATA #IMPLIED
+                   attr31 CDATA #IMPLIED>
   <!ATTLIST CHILD2 attr1 CDATA #IMPLIED
                    CODE ID #REQUIRED>
+  <!ATTLIST foo:CHILD3 foo:name CDATA #IMPLIED
+	           xmlns:foo CDATA #IMPLIED>
+  <!ATTLIST GCHILD name CDATA #IMPLIED>
+  <!ATTLIST lang xml:lang CDATA #IMPLIED>
+  <!ATTLIST foo xml:lang CDATA #IMPLIED>
 ]>
 <?xml-stylesheet "Data" ?>
 <ROOT>
@@ -143,7 +157,7 @@ CHILDREN = CHILD1, CHILD2, CHILD3, LANG = children(ROOT)
 ATTR1 = CHILD1.xml_attributes.getnode(None, 'attr1')
 ATTR31 = CHILD1.xml_attributes.getnode(None, 'attr31')
 GCHILDREN1 = GCHILD11, GCHILD12 = children(CHILD1)
-TEXT1 = CHILD1.xml_children[-1]
+TEXT_WS1, TEXT_WS2, TEXT1 = children(CHILD1, type=tree.text)
 # `CHILD2` nodes
 ATTR2 = CHILD2.xml_attributes.getnode(None, 'attr1')
 IDATTR2 = CHILD2.xml_attributes.getnode(None, 'CODE')
@@ -157,20 +171,20 @@ LCHILDREN = LCHILD1, LCHILD2, NONASCIIQNAME = children(LANG)
 ########################################################################
 # unittest support
 
-class test_expression(test_xpath):
+class base_expression(base_xpath):
     # The typed evaluate method (aka, evaluate_as_XXX())
     evaluate_method = None
     test_methods = ('evaluate',)
 
-    class __metaclass__(test_metaclass):
+    class __metaclass__(base_metaclass):
         def __new__(cls, name, bases, namespace):
             if 'test_methods' not in namespace:
                 if 'evaluate_method' in namespace:
                     test_methods = ('evaluate', namespace['evaluate_method'])
                     namespace['test_methods'] = test_methods
-            return test_metaclass.__new__(cls, name, bases, namespace)
+            return base_metaclass.__new__(cls, name, bases, namespace)
 
-        def new_test_method(cls, expected, factory, args, *test_args):
+        def new_tst_method(cls, expected, factory, args, *test_args):
             if not test_args:
                 test_args = (context(DOC, 1, 1),)
             def test_method(self):
@@ -182,10 +196,11 @@ class test_expression(test_xpath):
             return test_method
 
 if __name__ == '__main__':
+    from amara.test import test_main
     test_main(# list of module names to test
-              'test_basic_expr',        # basic expressions
-              'test_function_calls',    # basic expressions
-              'test_nodeset_expr',      # basic expressions
-              'test_boolean_expr',      # number expressions
-              'test_number_expr',       # number expressions
+#              'test_basic_expr',        # basic expressions
+#              'test_function_calls',    # basic expressions
+#              'test_nodeset_expr',      # basic expressions
+#              'test_boolean_expr',      # number expressions
+#              'test_number_expr',       # number expressions
               )

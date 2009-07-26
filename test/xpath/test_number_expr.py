@@ -1,25 +1,30 @@
 #!/usr/bin/env python
-from amara.lib import testsupport
-from amara.xpath import datatypes
+from amara.xpath import datatypes, context
 from amara.xpath.expressions.basics import number_literal, string_literal
+from amara.xpath.expressions.numbers import additive_expr, multiplicative_expr, unary_expr
 
 from test_expressions import (
     # expression TestCase
-    test_expression,
+    base_expression,
     # IEEE 754 "special" numbers as expressions
-    NOT_A_NUMBER, POSITIVE_INFINITY, NEGATIVE_INFINITY
+    NOT_A_NUMBER, POSITIVE_INFINITY, NEGATIVE_INFINITY,
+
+    # for the context
+    DOC,
     )
 
-
-class test_number_expr(test_expression):
-    module_name = 'amara.xpath.expressions.numbers'
-    evaluate_method = 'evaluate_as_number'
-    return_type = datatypes.number
+default_context = context(DOC, 1, 1)
 
 
-class test_additive_expr(test_number_expr):
-    class_name = 'additive_expr'
-    test_cases = [
+def _run_test(args, result, expected):
+    assert isinstance(result, datatypes.number), (args, result, expected)
+    if hasattr(expected, "isnan") and expected.isnan():
+        assert result.isnan()
+        return
+    assert result == expected, (args, result, expected)
+
+def test_additive_expr():
+    for args, expected in (
         ((number_literal('5'), '+', number_literal('2')), 7.0),
         ((number_literal('3'), '+', number_literal('-2')), 1.0),
         ((string_literal('5'), '+', string_literal('2')), 7.0),
@@ -33,12 +38,12 @@ class test_additive_expr(test_number_expr):
         #   Infinity - Infinity = NaN
         ((POSITIVE_INFINITY, '+', POSITIVE_INFINITY), datatypes.POSITIVE_INFINITY),
         ((POSITIVE_INFINITY, '-', POSITIVE_INFINITY), datatypes.NOT_A_NUMBER),
-        ]
+        ):
+        result = additive_expr(*args).evaluate_as_number(default_context)
+        _run_test(args, result, expected)
 
-
-class test_multiplicative_expr(test_number_expr):
-    class_name = 'multiplicative_expr'
-    test_cases = [
+def test_multiplicative_expr():
+    for args, expected in (
         ((number_literal('-5'), '*', number_literal('2')), -10.0),
         ((number_literal('-4'), '*', number_literal('-2')), 8.0),
         ((number_literal('0'), '*', number_literal('2')), 0.0),
@@ -96,19 +101,22 @@ class test_multiplicative_expr(test_number_expr):
         ((POSITIVE_INFINITY, 'div', NEGATIVE_INFINITY), datatypes.NOT_A_NUMBER),
         ((NEGATIVE_INFINITY, 'div', NEGATIVE_INFINITY), datatypes.NOT_A_NUMBER),
         ((NEGATIVE_INFINITY, 'div', POSITIVE_INFINITY), datatypes.NOT_A_NUMBER),
-        ]
+        ):
+        result = multiplicative_expr(*args).evaluate_as_number(default_context)
+        _run_test(args, result, expected)
 
 
-class test_unary_expr(test_number_expr):
-    class_name = 'unary_expr'
-    test_cases = [
+def test_unary_expr():
+    for args, expected in (
         ((number_literal('5'),), -5.0),
         ((number_literal('-2'),), 2.0),
         ((string_literal('5'),), -5.0),
         ((string_literal('-2'),), 2.0),
-        ]
+        ):
+        result = unary_expr(*args).evaluate_as_number(default_context)
+        _run_test(args, result, expected)
+
     
 
 if __name__ == '__main__':
-    testsupport.test_main()
-
+    raise SystemExit("Use nosetests")

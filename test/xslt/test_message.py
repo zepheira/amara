@@ -1,12 +1,43 @@
 ########################################################################
 # test/xslt/test_message.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_message_1(xslt_test):
+import os
+
+from xslt_support import _run_xml, _run_html, _compare_text
+
+module_name = os.path.dirname(__file__)
+filename = os.path.join(module_name, "addr_book1.xml")
+SOURCE_XML = open(filename).read()
+SOURCE_URI = "file:" + filename
+TRANSFORM_URI = "file:xslt/test_message.py"
+
+from cStringIO import StringIO
+
+def _run(run_func, transform_xml, expected, expected_messages):
+    message_stream = StringIO()
+    run_func(
+        processor_kwargs = dict(message_stream = message_stream),
+        source_xml = SOURCE_XML,
+        source_uri = SOURCE_URI,
+        transform_uri = TRANSFORM_URI,
+        transform_xml = transform_xml,
+        expected = expected)
+    messages = message_stream.getvalue()
+    diff = _compare_text(messages, expected_messages)
+
+    if diff:
+        print diff
+        print "GOT MESSAGES"
+        print messages
+        print "EXPECTED MESSAGES"
+        print expected_messages
+        raise AssertionError("transform was correct but the messages were unexpected")
+
+def test_message_1():
     """<xsl:message> in top-level variable"""
-    source = filesource("""addr_book1.xml""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run(
+        run_func = _run_xml,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="xml"/>
@@ -21,18 +52,20 @@ class test_message_1(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result>hello</result>"""
-    messages = """STYLESHEET MESSAGE:
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result>hello</result>""",
+        expected_messages = """STYLESHEET MESSAGE:
 Legal xsl:message in top-level variable template
 END STYLESHEET MESSAGE
-"""
+""")
 
-class test_message_2(xslt_test):
+
+def test_message_2():
     """<xsl:message> in template body"""
-    source = filesource("""addr_book1.xml""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run(
+        run_func = _run_xml,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="xml"/>
@@ -43,18 +76,20 @@ class test_message_2(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result>hello</result>"""
-    messages = """STYLESHEET MESSAGE:
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result>hello</result>""",
+        expected_messages = """STYLESHEET MESSAGE:
 Legal xsl:message in regular template body
 END STYLESHEET MESSAGE
-"""
+""")
 
-class test_message_3(xslt_test):
+
+def test_message_3():
     """xsl:message deep in stylesheet processing"""
-    source = filesource("""addr_book1.xml""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run(
+        run_func = _run_html,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:template match="/">
@@ -82,7 +117,7 @@ class test_message_3(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
+""",
     expected = """<HTML>
   <HEAD>
     <META HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=iso-8859-1'>
@@ -105,8 +140,8 @@ class test_message_3(xslt_test):
 
     </TABLE>
   </BODY>
-</HTML>"""
-    messages = """STYLESHEET MESSAGE:
+</HTML>""",
+    expected_messages = """STYLESHEET MESSAGE:
 We're in the thick of processing NAME elements
 END STYLESHEET MESSAGE
 STYLESHEET MESSAGE:
@@ -115,12 +150,13 @@ END STYLESHEET MESSAGE
 STYLESHEET MESSAGE:
 We're in the thick of processing NAME elements
 END STYLESHEET MESSAGE
-"""
+""")
 
-class test_message_4(xslt_test):
+def test_message_4():
     """<xsl:message> in XML form"""
-    source = filesource("""addr_book1.xml""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run(
+        run_func = _run_xml,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output method="xml"/>
@@ -135,14 +171,14 @@ class test_message_4(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result>hello</result>"""
-    messages = """STYLESHEET MESSAGE:
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result>hello</result>""",
+        expected_messages = """STYLESHEET MESSAGE:
 <msg>XML <code>xsl:message</code> in top-level variable template</msg>
 END STYLESHEET MESSAGE
 """
-
+        )
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")

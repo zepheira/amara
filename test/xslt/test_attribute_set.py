@@ -1,11 +1,12 @@
 ########################################################################
 # test/xslt/test_attribute_set.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_attribute_set_1(xslt_test):
-    source = stringsource('<dummy/>')
-    transform = stringsource("""<?xml version="1.0"?>
+from xslt_support import _run_xml
+
+def test_attribute_set_1():
+    _run_xml(
+        source_xml = '<dummy/>',
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
   <xsl:output method="xml" indent="yes"/>
@@ -72,9 +73,8 @@ class test_attribute_set_1(xslt_test):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
-
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <results>
   <simple1 a="1" b="2"/>
   <simple2 c="3" d="4"/>
@@ -83,9 +83,7 @@ class test_attribute_set_1(xslt_test):
   <combined3 a="1" c="3" b="2" e="5" d="4" f="6"/>
   <combined4 a="1" c="C" b="B" e="5" d="4" f="6"/>
   <combined5 a="1" c="C" b="B" e="5" d="4" f="6"/>
-</results>
-"""
-
+</results>""")
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

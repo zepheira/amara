@@ -10,7 +10,7 @@ def _argstr(arg):
     else:
         return unicode(arg)
 
-class test_metaclass(type):
+class base_metaclass(type):
     # The name of module where the class to be tested is defined
     module_name = None
     # The name of the class to be tested
@@ -28,25 +28,25 @@ class test_metaclass(type):
         # create the test methods
         digits = len(str(len(cls.test_cases)))
         for count, test in enumerate(cls.test_cases):
-            args, expected, extra = cls.unpack_test_case(*test)
+            args, expected, extra = cls.unpack_tst_case(*test)
             if cls.return_type is not None:
                 if not isinstance(expected, cls.return_type):
                     expected = cls.return_type(expected)
-            test_method = cls.new_test_method(expected, factory, args, *extra)
+            test_method = cls.new_tst_method(expected, factory, args, *extra)
             # build the docstring
             test_method.__doc__ = cls.class_name + _argstr(args)
             method_name = 'test_%s_%0*d' % (cls.class_name, digits, count)
             setattr(cls, method_name, test_method)
 
-    def unpack_test_case(cls, args, expected, *extras):
+    def unpack_tst_case(cls, args, expected, *extras):
         return args, expected, extras
 
-    def new_test_method(cls, expected, factory, args, *extras):
+    def new_tst_method(cls, expected, factory, args, *extras):
         raise NotImplementedError
 
 
-class test_xpath(test_case, object):
-    __metaclass__ = test_metaclass
+class base_xpath(test_case, object):
+    __metaclass__ = base_metaclass
 
     def assertIsInstance(self, obj, cls):
         if isinstance(cls, tuple):

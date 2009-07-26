@@ -4,11 +4,9 @@ from amara import tree
 import os
 import tempfile
 
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
-
 from amara import bindery
-from amara.bindery.model import *
+from amara.bindery.model import examplotron_model
+
 
 MODEL_A = '''<?xml version="1.0" encoding="utf-8"?>
 <labels xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara">
@@ -100,13 +98,8 @@ class Test_parse_model_a(unittest.TestCase):
          (u'co', u'tag', u'poet')]
         
         self.assertEqual(list(metadata), EXPECTED_MD)
-        #import pprint; pprint.pprint(metadata)
-
-        #f = filesource('nastytagsoup1.html')
-        #doc = html.parse(f.source)
-        #self.assertEqual(len(doc.xml_children), 1)
-        return
 
 if __name__ == '__main__':
+    from amara.test import test_main
     testsupport.test_main()
 

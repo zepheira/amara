@@ -1,6 +1,10 @@
 <?xml version="1.0"?> 
 
 <!-- 
+# From original 4Suite cvs:
+# Dan (hitt@charybdis.zembu.com) reports non-conformance with XSLT w.r.t. variab
+le shadowing
+
      Thu Mar  8 03:17:39 PST 2001
 
      This attempts to count the children of the root by

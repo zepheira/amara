@@ -1,5 +1,4 @@
 import unittest
-from amara.lib import testsupport
 
 ### revise these imports
 from amara.lib import Parse, CreateInputSource
@@ -91,4 +90,4 @@ class Test_fragment_parse(unittest.TestCase):
         
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")

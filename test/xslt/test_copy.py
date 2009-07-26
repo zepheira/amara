@@ -1,17 +1,22 @@
 ########################################################################
 # test/xslt/test_copy.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_copy_1(xslt_test):
+import os
+from amara.lib import inputsource
+from xslt_support import _run_xml
+
+module_dirname = os.path.dirname(__file__)
+
+def test_copy_1():
     """`xsl:copy`"""
-    source = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = """<?xml version="1.0"?>
 <foo a="1" b="2">
   <?foobar baz?>
   <bar/>
 </foo>
-""")
-    transform = stringsource("""<?xml version="1.0"?>
+""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template match="foo">
@@ -19,15 +24,16 @@ class test_copy_1(xslt_test):
 </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0" encoding="UTF-8"?>
-<foo/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<foo/>""")
 
-
-class test_copy_2(xslt_test):
+def test_copy_2():
     """identity transform"""
-    source = filesource('addr_book1.xml')
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = inputsource(os.path.join(module_dirname, 'addr_book1.xml')),
+        source_uri = "file:" + module_dirname + "/addr_book1.xml",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
 <xsl:template match="@*|node()">
@@ -37,10 +43,9 @@ class test_copy_2(xslt_test):
 </xsl:template>
 
 </xsl:stylesheet>
-""")
-    expected ="""<?xml version='1.0' encoding='UTF-8'?>
-<?xml-stylesheet href="addr_book1.xsl" type="text/xml"?>
-<ADDRBOOK>
+""",
+        expected ="""<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet href="addr_book1.xsl" type="text/xml"?><ADDRBOOK>
     <ENTRY ID='pa'>
         <NAME>Pieter Aaron</NAME>
         <ADDRESS>404 Error Way</ADDRESS>
@@ -64,8 +69,7 @@ class test_copy_2(xslt_test):
         <PHONENUM DESC='Cell'>000-000-0000</PHONENUM>
         <EMAIL>vxz@magog.ru</EMAIL>
     </ENTRY>
-</ADDRBOOK>"""
-
+</ADDRBOOK>""")
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

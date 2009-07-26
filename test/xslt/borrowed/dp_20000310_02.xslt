@@ -1,4 +1,8 @@
 <?xml version='1.0'?>
+<!--
+Namespace tracer from Pawson, David <DPawson@rnib.org.uk> on 10 March 
+ 2000, with a version using the namespace axis from David Carlisle.
+-->
 
 <xsl:stylesheet 
    version="1.0" 

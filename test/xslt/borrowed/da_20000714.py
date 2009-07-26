@@ -156,6 +156,7 @@ class test_xslt_declared_iso_8859_1_encoding_da_20000714(xslt_test):
 
 \303\251e
 """
-    
+
+del xslt_test    
 if __name__ == '__main__':
     test_main()

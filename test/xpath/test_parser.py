@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-from amara.lib import testsupport
 from amara import tree
 from amara.xpath import context, datatypes, XPathError
 
 from test_expressions import (
     # expression TestCase
-    test_expression,
+    base_expression,
     # nodeset literals
     DOC, PI, PI2, ROOT, CHILDREN, CHILD1, ATTR1, GCHILDREN1, GCHILD11,
     GCHILD12, TEXT1, CHILD2, ATTR2, IDATTR2, GCHILDREN2, GCHILD21, CHILD3,
-    LANG, LCHILDREN, NONASCIIQNAME,
+    LANG, LCHILDREN, NONASCIIQNAME, TEXT_WS1, TEXT_WS2
     )
 
 CONTEXT_DOC = context(DOC, 1, 1)
@@ -45,13 +44,22 @@ del node, cdata
 CONTEXT_ELEMENT = context(ELEMENTS, 1, 1)
 ELEMENT1, ELEMENT2 = ELEMENTS
 
-
-class test_parser(test_expression):
-    module_name = 'amara.xpath.parser'
-    class_name = 'parse'
+from amara.xpath.parser import parse
 
 
-class test_parser_pass(test_parser):
+def _run_parser_pass(test_cases):
+    for args, expected, ctx in test_cases:
+        result = parse(*args).evaluate(ctx)
+        if hasattr(expected, "isnan") and expected.isnan():
+            assert result.isnan()
+            continue
+        if isinstance(expected, list):
+            # convert nodesets to lists to prevent XPath-style nodeset compares
+            result = list(result)
+            expected = list(expected)
+        assert result == expected, (args, result, expected)
+
+def test_parser_pass():
     test_cases = [
         (['child::*'], datatypes.nodeset(CHILDREN), CONTEXT_ROOT),
         (['/child::*'], datatypes.nodeset([ROOT]), CONTEXT_CHILD1),
@@ -85,8 +93,6 @@ class test_parser_pass(test_parser):
         (['CHILD2/@CODE * 0'], datatypes.number(0), CONTEXT_ROOT),
         ([u'f\xf6\xf8'], datatypes.nodeset([NONASCIIQNAME]), CONTEXT_LANG),
         (['@attr1[.="val1"]'], datatypes.nodeset([ATTR1]), CONTEXT_CHILD1),
-        (["text()"], datatypes.nodeset([TEXT1]), CONTEXT_CHILD1),
-        (["text()"], datatypes.nodeset(), CONTEXT_CHILD2),
         (["processing-instruction()"], datatypes.nodeset([PI, PI2]),
          CONTEXT_DOC),
         (["processing-instruction('no-data')"], datatypes.nodeset([PI2]),
@@ -99,7 +105,7 @@ class test_parser_pass(test_parser):
         (['3-4*1'], datatypes.number(-1), CONTEXT_ROOT),
         (['. * 0'], datatypes.NOT_A_NUMBER, CONTEXT_CHILD1),
         (['.. * 1'], datatypes.NOT_A_NUMBER, CONTEXT_CHILD1),
-        #(['@attr31 * 1'], datatypes.NOT_A_NUMBER, CONTEXT_CHILD1),
+        #(['@attr31 * 1'], datatypes.NOT_A_NUMBER, CONTEXT_CHILD1), # TODO: Why is this commented out?
 
         (["string('1')"], datatypes.string("1"), CONTEXT_ROOT),
         (["concat('1', '2')"], datatypes.string("12"), CONTEXT_ROOT),
@@ -125,38 +131,25 @@ class test_parser_pass(test_parser):
          CONTEXT_ELEMENT),
         (['//element[descendant::y[.="z"]][2]'], datatypes.nodeset(),
          CONTEXT_ELEMENT),
+        (["text()"], datatypes.nodeset(), CONTEXT_CHILD3),
+        (["text()"], datatypes.nodeset([TEXT_WS1, TEXT_WS2, TEXT1]), CONTEXT_CHILD1),
         ]
 
+    _run_parser_pass(test_cases)
 
-class test_parser_errors(test_parser):
-
-    @classmethod
-    def new_test_method(cls, expected, factory, args, context):
-        def get_error_string(code):
-            for attr, value in vars(XPathError).iteritems():
-                if value == code:
-                    return 'XPathError.' + attr
-            return 'XPathError(%s)' % (code,)
-        expected = get_error_string(expected)
-        def test_method(self):
-            try:
-                expr = factory(*args)
-            except XPathError, error:
-                self.assertEquals(expected, get_error_string(error.code))
-            else:
-                try:
-                    result = expr.evaluate(context)
-                except XPathError, error:
-                    self.assertEquals(expected, get_error_string(error.code))
-                else:
-                    self.fail('%s not raised' % expected)
-        return test_method
-
-    test_cases = [
+def test_parser_errors_new():
+    test_cases = (
         (['\\'], XPathError.SYNTAX, CONTEXT_ROOT),
         (['.//foo:*'], XPathError.UNDEFINED_PREFIX, CONTEXT_CHILD3),
         (['$foo'], XPathError.UNDEFINED_VARIABLE, CONTEXT_CHILD1),
-        ]
+        )
+    for args, expected_error_code, ctx in test_cases:
+        try:
+            _run_parser_pass([(args, None, ctx)])
+        except XPathError, error:
+            assert error.code == expected_error_code, (error, error.code, expected_error_code)
+        else:
+            raise AssertionError("Expected XPathError code %r" % (expected_error_code,))
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("Use nosetests")

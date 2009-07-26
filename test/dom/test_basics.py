@@ -1,15 +1,11 @@
 import unittest
-from amara.lib import testsupport
 from amara.dom import parse
 from xml.dom import Node
 from amara import tree
 import os
 import tempfile
 
-MONTY_XML = """<monty>
-  <python spam="eggs">What do you mean "bleh"</python>
-  <python ministry="abuse">But I was looking for argument</python>
-</monty>"""
+MONTY_XML = """<monty><python spam="eggs">What do you mean "bleh"</python><python ministry="abuse">But I was looking for argument</python></monty>"""
 
 NS_XML = """<doc xmlns:a="urn:bogus:a" xmlns:b="urn:bogus:b">
   <a:monty/>
@@ -80,4 +76,4 @@ class Test_parse_functions_2(unittest.TestCase):
         self.assertEqual(doc.xml_children[0].xml_prefix, None,)
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("use nosetests")

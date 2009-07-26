@@ -1,4 +1,4 @@
-
+<!-- Example from David Carlisle to Mark Anderson on 10 Dec 1999 -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="1.0"
                 xmlns:one="http://one"

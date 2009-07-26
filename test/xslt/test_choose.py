@@ -1,12 +1,19 @@
 ########################################################################
 # test/xslt/test_choose.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_choose_1(xslt_test):
+import os
+from xslt_support import _run_html
+from amara.lib import inputsource
+
+module_name = os.path.dirname(__file__)
+
+
+def test_choose_1():
     """`xsl:choose"""
-    source = filesource("addr_book1.xml")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_html(
+        source_xml = inputsource(os.path.join(module_name, "addr_book1.xml")),
+        source_uri = "file:" + module_name + "/addr_book1.xml",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
   <xsl:output method='html'/>
@@ -39,7 +46,7 @@ version="1.0">
   </xsl:template>
 
 </xsl:stylesheet>
-""")
+""",
     expected ="""<HTML>
   <HEAD>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
@@ -62,8 +69,7 @@ version="1.0">
 
     </TABLE>
   </BODY>
-</HTML>"""
-
+</HTML>""")
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

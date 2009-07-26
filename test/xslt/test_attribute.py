@@ -1,16 +1,19 @@
 ########################################################################
 # test/xslt/test_attribute.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.writers import WriterError, xmlwriter
 from amara.xslt import XsltError
 
 PREFIX_TEMPLATE = xmlwriter.xmlwriter.GENERATED_PREFIX
 
-class test_attribute_1(xslt_test):
+from xslt_support import _run_xml
+
+SOURCE_XML = """<?xml version="1.0"?><dummy/>"""
+
+def test_attribute_1():
     """`xsl:attribute` as child of literal result element"""
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -18,14 +21,16 @@ class test_attribute_1(xslt_test):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<result foo="bar"/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result foo="bar"/>""")
 
 
-class test_attribute_2(test_attribute_1):
+def test_attribute_2():
     """`xsl:attribute` as child of literal result element"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -33,14 +38,15 @@ class test_attribute_2(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<result foo="bar"/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result foo="bar"/>""")
 
-
-class test_attribute_3(test_attribute_1):
+def test_attribute_3():
     """`xsl:attribute` with namespace"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -49,15 +55,17 @@ class test_attribute_3(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:%(prefix0)s="http://example.com/spam" xmlns:y="http://example.com/eggs" %(prefix0)s:foo="bar" y:foo="bar"/>""" % {
-    'prefix0' : PREFIX_TEMPLATE % 0}
+    'prefix0' : PREFIX_TEMPLATE % 0})
 
 
-class test_attribute_4(test_attribute_1):
+def test_attribute_4():
     """adding attributes with the same expanded-name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -68,14 +76,15 @@ class test_attribute_4(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<result foo="maz"/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result foo="maz"/>""")
 
-
-class test_attribute_5(test_attribute_1):
+def test_attribute_5():
     """adding attributes with the same expanded-name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result foo="bar">
@@ -84,14 +93,15 @@ class test_attribute_5(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
-<result foo="baz"/>"""
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
+<result foo="baz"/>""")
 
-
-class test_attribute_6(test_attribute_1):
+def test_attribute_6():
     """adding attributes with the same expanded-name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -104,14 +114,17 @@ class test_attribute_6(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result foo="baz"/>"""
+        )
 
 
-class test_attribute_7(test_attribute_1):
+def test_attribute_7():
     """adding attributes with the same expanded-name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -121,14 +134,16 @@ class test_attribute_7(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:org.4suite.4xslt.ns0="http://some-ns/" org.4suite.4xslt.ns0:foo="baz"/>"""
+        )
 
-
-class test_attribute_8(test_attribute_1):
+def test_attribute_8():
     """adding attributes with the same expanded-name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result x:foo="bar" xmlns:x="http://some-ns/">
@@ -137,14 +152,16 @@ class test_attribute_8(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:x="http://some-ns/" x:foo="baz"/>"""
+        )
 
-
-class test_attribute_9(test_attribute_1):
+def test_attribute_9():
     """serialization of linefeed in attribute value"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -154,14 +171,16 @@ y</xsl:attribute>
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result a="x&#10;y"/>"""
+        )
 
-
-class test_attribute_10(test_attribute_1):
+def test_attribute_10():
     """substitution of xmlns prefix in attribute name"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -170,15 +189,17 @@ class test_attribute_10(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:%(prefix0)s="http://example.com/" %(prefix0)s:foo="bar"/>""" % {
-    'prefix0': PREFIX_TEMPLATE % 0}
+            'prefix0': PREFIX_TEMPLATE % 0}
+        )
 
-
-class test_attribute_11(test_attribute_1):
+def test_attribute_11():
     """attributes in various namespaces"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <result>
@@ -191,15 +212,17 @@ class test_attribute_11(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns:pre="http://ns-for-pre/" xmlns:%(prefix0)s="http://foo-ns/" xmlns:%(prefix1)s="http://explicit-ns/" %(prefix1)s:bar="local-name bar, namespace http://explicit-ns/, generated prefix" foo="local-name foo, no namespace, no prefix" in-empty-ns="local-name in-empty-ns, no namespace, no prefix" pre:foo="local-name foo, namespace http://ns-for-pre/, preferred prefix pre" %(prefix0)s:in-foo-ns="local-name in-foo-ns, namespace http://foo-ns/, generated prefix"/>""" % {'prefix0': PREFIX_TEMPLATE % 0,
                           'prefix1': PREFIX_TEMPLATE % 1}
+        )
 
-
-class test_attribute_12(test_attribute_1):
+def test_attribute_12():
     """attributes in empty and in-scope default namespaces"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <!-- the element should be in the http://foo-ns/ namespace. -->
@@ -213,15 +236,18 @@ class test_attribute_12(test_attribute_1):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    expected = """<?xml version="1.0"?>
+""",
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <result xmlns="http://foo-ns/" xmlns:%(prefix0)s="http://foo-ns/" foo="local-name foo, no namespace, no prefix" in-empty-ns="local-name in-empty-ns, no namespace, no prefix" %(prefix0)s:in-foo-ns="local-name in-foo-ns, namespace http://foo-ns/, generated prefix"/>""" % {
     'prefix0': PREFIX_TEMPLATE % 0}
+        )
 
 
-class test_attribute_13(test_attribute_1):
+def test_attribute_13():
     """attributes in empty and in-scope non-default namespaces"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <!-- element should be in http://foo-ns/ namespace, retaining prefix foo -->
@@ -232,16 +258,18 @@ class test_attribute_13(test_attribute_1):
     </foo:result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    # it's technically OK for the in-foo-ns attr to have a
-    # generated prefix, but it really should re-use the foo.
-    expected = """<?xml version="1.0"?>
+""",
+        # it's technically OK for the in-foo-ns attr to have a
+        # generated prefix, but it really should re-use the foo.
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <foo:result xmlns:foo="http://foo-ns/" foo="local-name foo, no namespace, no prefix" in-empty-ns="local-name in-empty-ns, no namespace, no prefix" foo:in-foo-ns="local-name in-foo-ns, namespace http://foo-ns/, prefix foo"/>"""
+        )
 
-
-class test_attribute_14(test_attribute_1):
+def test_attribute_14():
     """attributes using in-scope namespaces and duplicate prefixes"""
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_xml(
+        source_xml = SOURCE_XML,
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
     <!-- element should be in http://foo-ns/ namespace, retaining prefix foo -->
@@ -251,21 +279,20 @@ class test_attribute_14(test_attribute_1):
     </pre:result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-    # the bar attribute must have a generated prefix.
-    # it's technically OK for the in-foo-ns attr to have a
-    # generated prefix, but it really should re-use the pre.
-    expected = """<?xml version="1.0"?>
+""",
+        # the bar attribute must have a generated prefix.
+        # it's technically OK for the in-foo-ns attr to have a
+        # generated prefix, but it really should re-use the pre.
+        expected = """<?xml version="1.0" encoding="UTF-8"?>
 <pre:result xmlns:pre="http://foo-ns/" xmlns:%(prefix0)s="http://explicit-ns/" pre:in-foo-ns="local-name in-foo-ns, namespace http://foo-ns/, prefix pre" %(prefix0)s:bar="local-name bar, namespace http://explicit-ns/, generated prefix"/>""" % {'prefix0': PREFIX_TEMPLATE % 0}
+        )
 
-
-class test_attribute_error_1(xslt_error):
+def test_attribute_error_1():
     """adding attribute ater non-attributes"""
-    error_class = WriterError
-    error_code = WriterError.ATTRIBUTE_ADDED_TOO_LATE
-    recoverable = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -274,30 +301,39 @@ class test_attribute_error_1(xslt_error):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except WriterError, err:
+        assert err.code == WriterError.ATTRIBUTE_ADDED_TOO_LATE
+    else:
+        raise AssertionError("should have failed!")
 
 
-class test_attribute_error_2(xslt_error):
+def test_attribute_error_2():
     """adding attribute to non-element"""
-    error_class = WriterError
-    error_code = WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT
-    recoverable = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <xsl:attribute name="foo">bar</xsl:attribute>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except WriterError, err:
+        assert err.code == WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT
+    else:
+        raise AssertionError("should have failed!")
 
 
-class test_attribute_error_3(xslt_error):
+def test_attribute_error_3():
     """creating non-text during xsl:attribute instantiation"""
-    error_code = XsltError.NONTEXT_IN_ATTRIBUTE
-    recoverable = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <xsl:attribute name="foo">
@@ -305,15 +341,19 @@ class test_attribute_error_3(xslt_error):
     </xsl:attribute>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.NONTEXT_IN_ATTRIBUTE
+    else:
+        raise AssertionError("should have failed!")
 
-
-class test_attribute_error_4(xslt_error):
+def test_attribute_error_4():
     """illegal attribute name ("xmlns")"""
-    error_code = XsltError.BAD_ATTRIBUTE_NAME
-    recoverable = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -321,15 +361,19 @@ class test_attribute_error_4(xslt_error):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.BAD_ATTRIBUTE_NAME
+    else:
+        raise AssertionError("should have failed!")
 
-
-class test_attribute_error_5(xslt_error):
+def test_attribute_error_5():
     """illegal attribute name (non-QName)"""
-    error_code = XsltError.INVALID_QNAME_ATTR
-    recoverable = True
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -337,15 +381,19 @@ class test_attribute_error_5(xslt_error):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.INVALID_QNAME_ATTR
+    else:
+        raise AssertionError("should have failed!")
 
-
-class test_attribute_error_6(xslt_error):
+def test_attribute_error_6():
     """illegal namespace-uri"""
-    error_code = XsltError.INVALID_NS_URIREF_ATTR
-    recoverable = False
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:template match='/'>
     <result>
@@ -354,8 +402,12 @@ class test_attribute_error_6(xslt_error):
     </result>
   </xsl:template>
 </xsl:stylesheet>
-""")
-
+""",
+            expected = None)
+    except XsltError, err:
+        assert err.code == XsltError.INVALID_NS_URIREF_ATTR
+    else:
+        raise AssertionError("should have failed!")
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("use nosetests")

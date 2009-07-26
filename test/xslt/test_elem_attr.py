@@ -1,12 +1,18 @@
 ########################################################################
 # test/xslt/test_elem_attr.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, filesource, stringsource
 
-class test_elem_attr_1(xslt_test):
+import os
+from amara.lib import inputsource
+from xslt_support import _run_html, _run_xml
+
+module_dirname = os.path.dirname(__file__)
+
+def test_elem_attr_1():
     """`xsl:element` and `xsl:attribute` instantiation"""
-    source = filesource('addr_book1.xml')
-    transform = stringsource("""<?xml version="1.0"?>
+    _run_html(
+        source_xml = inputsource(os.path.join(module_dirname, 'addr_book1.xml')),
+        source_uri = "file:" + module_dirname + "/addr_book1.xml",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 version="1.0">
 
@@ -33,8 +39,8 @@ version="1.0">
     </xsl:element>
   </xsl:template>
 
-</xsl:transform>""")
-    expected = """<HTML>
+</xsl:transform>""",
+        expected = """<HTML>
   <HEAD>
     <META HTTP-EQUIV='Content-Type' CONTENT='text/html; charset=iso-8859-1'>
     <TITLE>Address Book</TITLE>
@@ -56,13 +62,14 @@ version="1.0">
 
     </TABLE>
   </BODY>
-</HTML>"""
+</HTML>""")
 
 
-class test_elem_attr_2(xslt_test):
+def test_elem_attr_2():
     """`xsl:element` with namespaces"""
-    source = stringsource('<?xml version="1.0"?><dummy/>')
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+    _run_xml(
+        source_xml = '<?xml version="1.0"?><dummy/>',
+        transform_xml = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:transform version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -85,15 +92,16 @@ class test_elem_attr_2(xslt_test):
     </result>
   </xsl:template>
 
-</xsl:transform>""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
+</xsl:transform>""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
 <result><xse-ns xmlns='http://foo/bar'/><xse-empty-ns/><xse/><lre-ns xmlns='http://stuff'><xse-ns xmlns='http://foo/bar'/><xse-empty-ns xmlns=''/><xse/></lre-ns></result>"""
+        )
 
-
-class test_elem_attr_3(xslt_test):
+def test_elem_attr_3():
     """`xsl:attribute` with namespaces"""
-    source = stringsource('<?xml version="1.0"?><dummy/>')
-    transform = stringsource("""<?xml version="1.0" encoding="utf-8"?>
+    _run_xml(
+        source_xml = '<?xml version="1.0"?><dummy/>',
+        transform_xml = """<?xml version="1.0" encoding="utf-8"?>
 <xsl:transform version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -124,11 +132,10 @@ class test_elem_attr_3(xslt_test):
     </result>
   </xsl:template>
 
-</xsl:transform>""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
+</xsl:transform>""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
 <result><lre xmlns:org.4suite.4xslt.ns0='http://crud' att-empty-ns='foo' att='foo' org.4suite.4xslt.ns0:att-ns='foo'/><lre xmlns='http://stuff' xmlns:org.4suite.4xslt.ns0='http://crud' att-empty-ns='foo' att='foo' org.4suite.4xslt.ns0:att-ns='foo'/><lre xmlns:org.4suite.4xslt.ns0='http://crud' xmlns:pre='http://prefix' pre:att='foo' att-empty-ns='foo' org.4suite.4xslt.ns0:att-ns='foo'/></result>"""
-
+        )
 
 if __name__ == '__main__':
-    test_main()
-
+    raise SystemExit("use nosetests")

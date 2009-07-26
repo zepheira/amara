@@ -1,12 +1,17 @@
 ########################################################################
 # test/xslt/test_apply_imports.py
-from amara.test import test_main
-from amara.test.xslt import xslt_test, xslt_error, filesource, stringsource
 from amara.xslt import XsltError
 
-class test_apply_imports_1(xslt_test):
-    source = stringsource('<example>This is an example</example>')
-    transform = stringsource("""<?xml version="1.0"?>
+from xslt_support import _run_xml
+
+import os
+module_name = os.path.dirname(__file__)
+module_uri = "file:" + module_name + "/"
+
+def test_apply_imports_1():
+    _run_xml(
+        source_xml = '<example>This is an example</example>',
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-apply-imports-1.xslt"/>
@@ -17,15 +22,17 @@ class test_apply_imports_1(xslt_test):
     </div>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
-<div style="border: solid red"><pre>This is an example</pre></div>"""
+</xsl:stylesheet>""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
+<div style="border: solid red"><pre>This is an example</pre></div>""",
+        transform_uri = module_uri)
 
 
-class test_apply_imports_2(xslt_test):
-    source = stringsource("""<?xml version="1.0"?>
-<doc><example>This is an example<inconnu/></example></doc>""")
-    transform = stringsource("""<?xml version="1.0"?>
+def test_apply_imports_2():
+    _run_xml(
+        source_xml = """<?xml version="1.0"?>
+<doc><example>This is an example<inconnu/></example></doc>""",
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-apply-imports-2.xslt"/>
@@ -40,14 +47,16 @@ class test_apply_imports_2(xslt_test):
     <unknown-element><xsl:value-of select="name()"/></unknown-element>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
-<body><div style="border: solid red"><unknown-element>example</unknown-element></div></body>"""
+</xsl:stylesheet>""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
+<body><div style="border: solid red"><unknown-element>example</unknown-element></div></body>""",
+        transform_uri = module_uri)
 
 
-class test_apply_imports_3(xslt_test):
-    source = stringsource('<example>This is an example</example>')
-    transform = stringsource("""<?xml version="1.0"?>
+def test_apply_imports_3():
+    _run_xml(
+        source_xml = '<example>This is an example</example>',
+        transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-apply-imports-1.xslt"/>
@@ -61,16 +70,18 @@ class test_apply_imports_3(xslt_test):
     <xsl:apply-imports/>
   </xsl:template>
 
-</xsl:stylesheet>""")
-    expected = """<?xml version='1.0' encoding='UTF-8'?>
-<span>main</span><span>imported</span>"""
+</xsl:stylesheet>""",
+        expected = """<?xml version='1.0' encoding='UTF-8'?>
+<span>main</span><span>imported</span>""",
+        transform_uri = module_uri)
 
 
-class test_apply_imports_error_1(xslt_error):
+def test_apply_imports_error_1():
     """xsl:apply-imports with xsl:param children"""
-    error_code = XsltError.ILLEGAL_ELEMENT_CHILD
-    source = stringsource("""<?xml version="1.0"?><dummy/>""")
-    transform = stringsource("""<?xml version="1.0"?>
+    try:
+        _run_xml(
+            source_xml = """<?xml version="1.0"?><dummy/>""",
+            transform_xml = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:import href="test-apply-imports-2.xslt"/>
@@ -88,8 +99,14 @@ class test_apply_imports_error_1(xslt_error):
   </xsl:template>
 
 </xsl:stylesheet>
-""")
+""",
+            expected = None,
+            transform_uri = module_uri)
+    except XsltError, err:
+        assert err.code == XsltError.ILLEGAL_ELEMENT_CHILD
+    else:
+        raise AssertionError("should have failed!")
 
 
 if __name__ == '__main__':
-    test_main()
+    raise SystemExit("Use nosetests")

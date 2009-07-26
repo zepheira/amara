@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-from amara import tree
 from amara.xpath import context, datatypes
 from amara.xpath.locationpaths.predicates import predicates, predicate
+from amara.xpath.expressions.nodesets import union_expr, path_expr, filter_expr
 
 from test_expressions import (
-    test_expression,
+    base_expression,
     # boolean literals
     TRUE, FALSE,
     # nodeset literals
@@ -13,38 +13,33 @@ from test_expressions import (
 
 CONTEXT = context(CHILD1, 1, 1)
 
-class test_nodeset_expr(test_expression):
-    module_name = 'amara.xpath.expressions.nodesets'
-    evaluate_method = 'evaluate_as_nodeset'
-    return_type = datatypes.nodeset
+
+def _check_nodeset_result(result, expected):
+    assert isinstance(result, datatypes.nodeset)
+    result = list(result)
+    expected = list(expected)
+    assert result == expected, (result, expected)
+
+def test_union_exr_new():
+    result = union_expr(nodeset_literal([ROOT, CHILD1]), nodeset_literal([ROOT])
+                        ).evaluate_as_nodeset(CONTEXT)
+    _check_nodeset_result(result, datatypes.nodeset([ROOT, CHILD1]))
 
 
-class test_union_exr(test_nodeset_expr):
-    class_name = 'union_expr'
-    test_cases = [
-        ([nodeset_literal([ROOT, CHILD1]), nodeset_literal([ROOT])],
-         datatypes.nodeset([ROOT, CHILD1]), CONTEXT),
-        ]
+def test_path_exr():
+    result = path_expr(nodeset_literal([ROOT, CHILD1]), '/', nodeset_literal([ROOT])
+                       ).evaluate_as_nodeset(CONTEXT)
+    _check_nodeset_result(result, datatypes.nodeset([ROOT]))
 
 
-class test_path_exr(test_nodeset_expr):
-    class_name = 'path_expr'
-    test_cases = [
-        ([nodeset_literal([ROOT, CHILD1]), '/', nodeset_literal([ROOT])],
-         datatypes.nodeset([ROOT]), CONTEXT),
-        ]
+def test_filter_exr():
+    result = filter_expr(nodeset_literal([ROOT, CHILD1]), predicates([predicate(TRUE)])
+                         ).evaluate_as_nodeset(CONTEXT)
+    _check_nodeset_result(result, datatypes.nodeset([ROOT, CHILD1]))
 
-
-class test_filter_exr(test_nodeset_expr):
-    class_name = 'filter_expr'
-    test_cases = [
-        ([nodeset_literal([ROOT, CHILD1]), predicates([predicate(TRUE)])],
-         datatypes.nodeset([ROOT, CHILD1]), CONTEXT),
-        ([nodeset_literal([ROOT, CHILD1]), predicates([predicate(FALSE)])],
-         datatypes.nodeset(), CONTEXT),
-        ]
-
+    result = filter_expr(nodeset_literal([ROOT, CHILD1]), predicates([predicate(FALSE)])
+                         ).evaluate_as_nodeset(CONTEXT)
+    _check_nodeset_result(result, datatypes.nodeset())
 
 if __name__ == '__main__':
-    from amara.lib import testsupport
-    testsupport.test_main()
+    raise SystemExit("use nosetests")
