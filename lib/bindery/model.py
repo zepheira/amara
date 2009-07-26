@@ -16,7 +16,6 @@ __all__ = [
 
 import sys
 #import re
-import sets
 import warnings
 import copy
 from cStringIO import StringIO

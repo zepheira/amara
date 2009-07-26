@@ -45,6 +45,18 @@ def xbel_merge(xbel1, xbel2):
             xbel1.xml_append(child)
     return
 
+def normalize_whitespace(doc):
+    """Normalize DOM tree and remove whitespace.
+
+    Necessary to ensure that the pretty-printed XML tree
+    looks correct.
+    """
+    doc.xml_normalize()         # Merge text nodes where possible
+    for text in list(doc.xml_select('descendant::text()')):
+        # If text node is all whitespace or empty, remove it.
+        if not text.xml_value.strip():
+            text.xml_parent.xml_remove(text)
+
 title_getter = functools.partial(property_str_getter, 'title')
 def merge(f1, f2):
     folders = sorted(itertools.chain(f1.folder or [], f2.folder or []),
@@ -57,13 +69,13 @@ def merge(f1, f2):
             merge(main, f)
         if main.xml_parent != f1:
             f1.xml_append(main)
-    #All non-folder, non-title elements
-    for e in f2.xml_select(u'*[not(self::folder or self::title)]'):
+    #All elements that are not folder, title, or info
+    for e in f2.xml_select(u'*[not(self::folder or self::title or self::info)]'):
         f1.xml_append(e)
     return
 
 
-class TestItereators(unittest.TestCase):
+class TestIterators(unittest.TestCase):
     def setUp(self):
         self.XML ="""\
 <env>
@@ -132,9 +144,12 @@ class TestItereators(unittest.TestCase):
         #BM2 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm2.xbel'
         doc1 = bindery.parse(find_file('bm1.xbel'))
         doc2 = bindery.parse(find_file('bm2.xbel'))
+
         xbel_merge(doc1.xbel, doc2.xbel)
+        normalize_whitespace(doc1)
         output = cStringIO.StringIO()
         xml_print(doc1, indent=True, stream = output)
+        output.write('\n')
         self.assertEqual(output.getvalue(), open(find_file('merged.xbel')).read())
         
     def test_xbel_2(self):  
@@ -144,8 +159,10 @@ class TestItereators(unittest.TestCase):
         doc2 = bindery.parse(find_file('bm2.xbel'))
         
         merge(doc1.xbel, doc2.xbel)
+        normalize_whitespace(doc1)
         output = cStringIO.StringIO()
         xml_print(doc1, indent=True, stream = output)
+        output.write('\n')
         self.assertEqual(output.getvalue(), open(find_file('merged.xbel')).read())
         
 if __name__ == '__main__':

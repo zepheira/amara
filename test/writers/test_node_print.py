@@ -33,7 +33,7 @@ def test_simple_atom_entry():
     #self.assertEqual(out, ATOMENTRY1)
     diff = treecompare.xml_diff(out, ATOMENTRY1)
     diff = '\n'.join(diff)
-    self.assertFalse(diff, msg=(None, diff))
+    assert not diff, "Expected=%r, returned=%r diff=%r" % (ATOMENTRY1, out, diff)
     #Make sure we can parse the result
     doc2 = bindery.parse(out)
 
@@ -89,8 +89,8 @@ class Test_domlette_serialization(unittest.TestCase):
         'minimal document with DOCTYPE'
         doc = amara.tree.entity()
         doc.xml_append(amara.tree.element(None, u'foo'))
-        doc.publicId = u'myPub'
-        doc.systemId = u'mySys'
+        doc.xml_public_id = u'myPub'
+        doc.xml_system_id = u'mySys'
         s = cStringIO.StringIO()
         xml_print(doc, stream=s)
         out = s.getvalue()
@@ -181,7 +181,6 @@ class Test_domlette_serialization(unittest.TestCase):
         self.assertFalse(diff, msg=(None, diff))
         #Make sure we can parse the result
         doc2 = bindery.parse(out)
-        return
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")

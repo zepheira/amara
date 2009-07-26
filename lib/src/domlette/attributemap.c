@@ -348,8 +348,56 @@ AttributeMap_SetNode(PyObject *self, AttrObject *node)
 int
 AttributeMap_DelNode(PyObject *self, PyObject *namespace, PyObject *name)
 {
-  PyErr_SetString(PyExc_NotImplementedError, "AttributeMap_DelNode");
-  return -1;
+  AttributeMapObject *nm = (AttributeMapObject *)self;
+  size_t entry;
+  AttrObject *old_node; 
+  long hash;
+
+  if (!AttributeMap_Check(nm)) {
+    PyErr_BadInternalCall();
+    return -1;
+  }
+  if (namespace == Py_None || PyUnicode_Check(namespace)) {
+    Py_INCREF(namespace);
+  } else {
+    namespace = XmlString_FromObject(namespace);
+    if (namespace == NULL)
+      return -1;
+  }
+  if (PyUnicode_Check(name)) {
+    Py_INCREF(name);
+  } else {
+    name = XmlString_FromObject(name);
+    if (name == NULL)
+      return -1;
+  }
+  hash = get_hash(namespace, name);
+  if (hash == -1) {
+    Py_DECREF(namespace);
+    Py_DECREF(name);
+    return -1;
+  }
+  entry = get_entry(nm, hash, name, namespace);
+  old_node = nm->nm_table[entry];
+  if (old_node == NULL) {
+    PyErr_Format(PyExc_AttributeError,
+		 "attributemap instance has no such entry");
+    Py_DECREF(namespace);
+    Py_DECREF(name);
+    return -1;
+  }
+  
+  /* Zero out entry, and decrement the count of entries */
+  nm->nm_table[entry] = NULL;
+  nm->nm_used--;
+  if (remove_attribute_node(old_node) < 0) {
+    Py_DECREF(old_node);
+    Py_DECREF(namespace);
+    Py_DECREF(name);
+    return -1;
+  }
+  Py_DECREF(old_node);
+  return 0;
 }
 
 AttrObject *

@@ -37,7 +37,7 @@ class visitor:
         elif indent:
             self.printer = _xmlprinters.xmlprettyprinter(stream, encoding)
         elif is_html:
-            self.printer = _htmlprinters.htmlprinters(stream, encoding)
+            self.printer = _htmlprinters.htmlprinter(stream, encoding)
         elif canonical:
             self.printer = _xmlprinters.CanonicalXmlPrinter(stream, encoding)
         else:

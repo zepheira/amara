@@ -6,7 +6,7 @@ from xml.dom import Node
 import os
 import tempfile
 
-from amara.test.xslt import xslt_test, filesource, stringsource
+from amara.test.xslt import filesource, stringsource
 
 
 class Test_parse_nasty_tagsoup1(unittest.TestCase):
