@@ -150,7 +150,7 @@ class TestIterators(unittest.TestCase):
         output = cStringIO.StringIO()
         xml_print(doc1, indent=True, stream = output)
         output.write('\n')
-        self.assertEqual(output.getvalue(), open(find_file('merged.xbel')).read())
+        self.assertEqual(output.getvalue(), open(find_file('merged-1.xbel')).read())
         
     def test_xbel_2(self):  
         #BM1 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm1.xbel'
@@ -163,7 +163,7 @@ class TestIterators(unittest.TestCase):
         output = cStringIO.StringIO()
         xml_print(doc1, indent=True, stream = output)
         output.write('\n')
-        self.assertEqual(output.getvalue(), open(find_file('merged.xbel')).read())
+        self.assertEqual(output.getvalue(), open(find_file('merged-2.xbel')).read())
         
 if __name__ == '__main__':
     unittest.main()
