@@ -10,7 +10,7 @@ TEST_STRING = "<test/>"
 TEST_FILE = "test/xmlcore/disclaimer.xml"
 
 ### modify this url
-TEST_URL = "http://cvs.4suite.org/viewcvs/*checkout*/4Suite/test/Xml/Core/disclaimer.xml"
+TEST_URL = "http://hg.4suite.org/amara/trunk/raw-file/tip/test/xmlcore/disclaimer.xml"
 
 
 class Test_parse_functions_1(unittest.TestCase):
