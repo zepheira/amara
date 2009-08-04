@@ -6,7 +6,7 @@ This module supports document serialization in XHTML syntax.
 
 import re
 
-from amara import XHTML_NAMESPACE
+from amara.namespaces import XHTML_NAMESPACE
 from amara.writers import _xmlstream, htmlentities
 from amara.writers._xmlprinter import xmlprinter
 
