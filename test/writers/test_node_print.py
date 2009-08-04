@@ -14,7 +14,7 @@ Content-type: Preventing XSRF in IE.
 The title is the beginning of “Heavensgate”, by Christopher Okigbo, the greatest modern Nigerian poem, and I think the greatest modern African poem.  Okigbo is my patron saint, and my personal Janus (he died in the war that gave life to me), so it’s appropriate to pour out for him before I take a [...]</summary><author><name>Uche Ogbuji</name></author><source gr:stream-id="feed/http://www.thenervousbreakdown.com/uogbuji/feed/"><id>tag:google.com,2005:reader/feed/http://www.thenervousbreakdown.com/uogbuji/feed/</id><title type="html">The Nervous Breakdown » Uche Ogbuji</title><link rel="alternate" href="http://www.thenervousbreakdown.com" type="text/html"/></source></entry></feed>
 '''
 
-ATOMENTRY1 = '<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'
+ATOMENTRY1 = '<?xml version="1.0" encoding="UTF-8"?>\n<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'
 
 def test_tnb_feed():
     doc = bindery.parse(TNBFEED)
