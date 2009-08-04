@@ -96,8 +96,8 @@ class Test_parse_model_a(unittest.TestCase):
          (u'r2e0e7e5', u'title', u"Heaven's Gate"),
          (u'co', u'tag', u'biafra'),
          (u'co', u'tag', u'poet')]
-        
-        self.assertEqual(list(metadata), EXPECTED_MD)
+        meta_list = list(metadata)
+        self.assertEqual(meta_list, EXPECTED_MD)
 
 if __name__ == '__main__':
     from amara.test import test_main
