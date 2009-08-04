@@ -160,7 +160,7 @@ class content_model:
 
     def generate_metadata(self, root):
         '''
-        Process an document for metadata according to extraction cues
+        Process a document for metadata according to extraction cues
         '''
         def handle_element(elem, resource):
             new_resource = None
@@ -216,7 +216,6 @@ class content_model:
             return ( item for elem in root.xml_elements for item in handle_element(elem, root.xml_base) )
         else:
             return ( item for item in handle_element(root, root.xml_base) )
-        return 
 
 
 #        node.xml_model.constraints.append(u'@xml:id', validate=True)      #Make xml:id required.  Will throw a constraint violation right away if there is not one.  Affects all instances of this class.
