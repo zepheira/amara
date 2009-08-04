@@ -16,7 +16,7 @@ The title is the beginning of “Heavensgate”, by Christopher Okigbo, the grea
 
 ATOMENTRY1 = '<entry xmlns=\'http://www.w3.org/2005/Atom\'><id>urn:bogus:x</id><title>boo</title></entry>'
 
-def Test_tnb_feed():
+def test_tnb_feed():
     doc = bindery.parse(TNBFEED)
     s = cStringIO.StringIO()
     xml_print(doc.feed.entry, stream=s)
@@ -100,7 +100,6 @@ class Test_domlette_serialization(unittest.TestCase):
         self.assertFalse(diff, msg=(None, diff))
         #Make sure we can parse the result
         doc2 = bindery.parse(out)
-        return
 
     def _build_namespace_free_xhtml(self):
         doc = amara.tree.entity()
@@ -148,12 +147,9 @@ class Test_domlette_serialization(unittest.TestCase):
         xml_print(doc, stream=s, is_html=True)
         out = s.getvalue()
         #self.assertEqual(out, ATOMENTRY1)
-        diff = treecompare.xml_diff(out, XHTML_EXPECTED_2)
+        diff = treecompare.document_diff(out, XHTML_EXPECTED_2)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
-        #Make sure we can parse the result
-        doc2 = bindery.parse(out)
-        return
 
     def test_namespace_free_xhtml3(self):
         'namespace-free XHTML' + '...as XML with pretty print'
@@ -162,12 +158,11 @@ class Test_domlette_serialization(unittest.TestCase):
         xml_print(doc, stream=s, indent=True)
         out = s.getvalue()
         #self.assertEqual(out, ATOMENTRY1)
-        diff = treecompare.xml_diff(out, XHTML_EXPECTED_3)
+        diff = treecompare.xml_diff(out, XHTML_EXPECTED_3, whitespace=False)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
         #Make sure we can parse the result
         doc2 = bindery.parse(out)
-        return
 
     def test_namespace_free_xhtml4(self):
         'namespace-free XHTML' + '...as HTML with pretty print'
@@ -176,11 +171,9 @@ class Test_domlette_serialization(unittest.TestCase):
         xml_print(doc, stream=s, is_html=True, indent=True)
         out = s.getvalue()
         #self.assertEqual(out, ATOMENTRY1)
-        diff = treecompare.xml_diff(out, XHTML_EXPECTED_4)
+        diff = treecompare.document_diff(out, XHTML_EXPECTED_4, whitespace=False)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
-        #Make sure we can parse the result
-        doc2 = bindery.parse(out)
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")
