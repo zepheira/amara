@@ -1,12 +1,7 @@
 import os, unittest, sys, codecs
 import warnings
-from amara.lib import iri, iriresolvers
-
-def find_file(filename):
-    for prefix in ("", "lib/", "test/lib/"):
-        if os.path.exists(prefix+filename):
-            return prefix+filename
-    return filename
+from amara.lib import iri, irihelpers, inputsource
+from amara.test.lib import find_file
 
 # Test cases for BaseJoin() ==================================================
 # (base, relative, expected)
@@ -744,13 +739,13 @@ class Test_file_uri_localhost_equiv(unittest.TestCase):
     '''uridict implementation - file:/// and file://localhost/ equivalence'''
     def test_uri_dict(self):
         '''equivalent key in UriDict'''
-        uris = iri.uridict()
+        uris = irihelpers.uridict()
         uris['file:///path/to/resource'] = 0
         self.assert_('file://localhost/path/to/resource' in uris, 'RFC 1738 localhost support failed')
 
     def test_equiv_keys(self):
         '''value of 2 equivalent keys'''
-        uris = iri.uridict()
+        uris = irihelpers.uridict()
         uris['file:///path/to/resource'] = 1
         uris['file://localhost/path/to/resource'] = 2
         self.assertEqual(2, uris['file:///path/to/resource'], 'RFC 1738 localhost support failed')
@@ -759,7 +754,7 @@ class Test_case_equiv(unittest.TestCase):
     '''uridict implementation - case equivalence'''
     def test_case_normalization(self):
         '''case normalization'''
-        uris = iri.uridict()
+        uris = irihelpers.uridict()
         for uri, expected, junk in case_normalization_tests:
             uris[uri] = 1
             uris[expected] = 2
@@ -767,7 +762,7 @@ class Test_case_equiv(unittest.TestCase):
 
     def test_percent_encoding_equivalence(self):
         '''percent-encoding equivalence'''
-        uris = iri.uridict()
+        uris = irihelpers.uridict()
         for uri, expected in pct_enc_normalization_tests:
             uris[uri] = 1
             uris[expected] = 2
@@ -1023,31 +1018,6 @@ class Test_make_urllib_safe(unittest.TestCase):
             self.assertEqual(expected, res, test_title)
 
 
-class Test_basic_uri_resolver(unittest.TestCase):
-    '''Basic Uri Resolver'''
-    def test_basic_uri_resolver(self):
-        data = [('http://foo.com/root/', 'path', 'http://foo.com/root/path'),
-                ('http://foo.com/root',  'path', 'http://foo.com/path'),
-                ]
-        for base,uri,exp in data:
-            res = iri.DEFAULT_RESOLVER.normalize(uri, base)
-            self.assertEqual(exp, res, "normalize: %s %s" % (base, uri))
-
-        base = 'foo:foo.com'
-        uri = 'path'
-        self.assertRaises(iri.IriError, lambda uri=uri, base=base: iri.DEFAULT_RESOLVER.normalize(uri, base), "normalize: %s %s" % (base, uri))
-
-        base = os.getcwd()
-        if base[-1] != os.sep:
-            base += os.sep
-        stream = iri.DEFAULT_RESOLVER.resolve(find_file('sampleresource.txt'), iri.os_path_to_uri(base))
-        self.assertEqual('Spam', stream.readline().rstrip(), 'resolve')
-        stream.close()
-
-        uuid = iri.DEFAULT_RESOLVER.generate()
-        self.assertEqual('urn:uuid:', uuid[:9], 'generate')
-
-
 class Test_scheme_registry_resolver(unittest.TestCase):
     '''scheme_registry_resolver'''
     def test_scheme_registry_resolver(self):
@@ -1061,10 +1031,10 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             uri = uri[6:]
             return ''.join([ chr(ord(c)+1) for c in uri])
 
-        resolver = iriresolvers.scheme_registry_resolver({'eval': eval_scheme_handler,
-                                           'shift': shift_scheme_handler,
-                                          })
-
+        resolver = irihelpers.scheme_registry_resolver(
+            handlers={'eval': eval_scheme_handler, 'shift': shift_scheme_handler})
+        start_isrc =  inputsource(find_file('sampleresource.txt'), resolver=resolver)
+        
         scheme_cases = [(None, 'eval:150-50', '100'),
                 (None, 'shift:abcde', 'bcdef'),
                 ('eval:150-', '50', '100'),
@@ -1072,15 +1042,16 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             ]
 
         for base, relative, expected in scheme_cases:
-            res = resolver.resolve(relative, base)
+            res = start_isrc.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
         resolver.handlers[None] = shift_scheme_handler
         del resolver.handlers['shift']
 
         for base, relative, expected in scheme_cases:
-            res = resolver.resolve(relative, base)
+            res = start_isrc.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
 if __name__ == '__main__':
     raise SystemExit("Use nosetests")
+

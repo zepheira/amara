@@ -4,7 +4,9 @@
 
 #define DEBUG_SAX
 
+/*
 static PyObject *uri_resolver;
+*/
 static PyObject *xmlns_namespace_string;
 static PyObject *feature_external_ges;
 static PyObject *feature_external_pes;
@@ -1332,7 +1334,7 @@ prepare_input_source(PyObject *source)
   }
   /* check for URL */
   else if (PyString_Check(source) || PyUnicode_Check(source)) {
-    byteStream = PyObject_CallMethod(uri_resolver, "resolve", "O", source);
+    byteStream = PyObject_CallMethod(source, "resolve", "O", source);
     if (byteStream == NULL) {
       return NULL;
     }
@@ -2201,8 +2203,9 @@ static PyTypeObject XMLParser_Type = {
 
 int _Expat_SaxFilter_Init(PyObject *module)
 {
-  PyObject *import;
+    PyObject *import;
 
+/*
   import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
   uri_resolver = PyObject_GetAttrString(import, "DEFAULT_RESOLVER");
@@ -2211,6 +2214,7 @@ int _Expat_SaxFilter_Init(PyObject *module)
     return -1;
   }
   Py_DECREF(import);
+*/
 
   import = PyImport_ImportModule("amara");
   if (import == NULL) return -1;
@@ -2309,7 +2313,9 @@ void _Expat_SaxFilter_Fini(void)
     }
   }
 
+/*
   Py_DECREF(uri_resolver);
+*/
   Py_DECREF(xmlns_namespace_string);
   Py_DECREF(feature_process_xincludes);
   Py_DECREF(feature_generator);

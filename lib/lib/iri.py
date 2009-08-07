@@ -3,9 +3,7 @@
 """
 Classes and functions related to IRI/URI processing, validation, resolution, etc.
 
-Copyright 2004-2008 Uche Ogbuji
-Detailed license and copyright information: http://4suite.org/COPYRIGHT
-Project home, documentation, distributions: http://4suite.org/
+Copyright 2008-2009 Uche Ogbuji
 """
 
 __all__ = [
@@ -23,23 +21,15 @@ __all__ = [
   'normalize_case', 'normalize_percent_encoding',
   'normalize_path_segments', 'normalize_path_segments_in_uri',
 
-  # URI resolution
-  'default_resolver',
-  'DEFAULT_RESOLVER',
-  'DEFAULT_URI_SCHEMES',
-  'urlopen',
-
   # RFC 3151 implementation
   'urn_to_public_id', 'public_id_to_urn',
 
   # Miscellaneous
   'is_absolute', 'get_scheme', 'strip_fragment',
-  'os_path_to_uri', 'uri_to_os_path', 'basejoin',
+  'os_path_to_uri', 'uri_to_os_path', 'basejoin', 'join',
   'make_urllib_safe',
   'WINDOWS_SLASH_COMPAT',
-
-  # 4Suite-specific
-  'uridict', 'path_resolve',
+  'urlopen', 'path_resolve',
 ]
 
 import os, sys
@@ -54,12 +44,6 @@ from amara.lib import IriError, importutil
 
 # whether os_path_to_uri should treat "/" same as "\" in a Windows path
 WINDOWS_SLASH_COMPAT = True
-
-# URI schemes supported by resolver_base
-DEFAULT_URI_SCHEMES = ['http', 'https', 'file', 'ftp', 'data', 'pkgdata']
-if not hasattr(urllib2, 'HTTPSHandler'):
-    DEFAULT_URI_SCHEMES.remove('https')
-DEFAULT_URI_SCHEMES = tuple(DEFAULT_URI_SCHEMES)
 
 
 def iri_to_uri(iri, convertHost=False):
@@ -108,6 +92,7 @@ def iri_to_uri(iri, convertHost=False):
 
     res = u''
     pos = 0
+    #FIXME: use re.subn with substitution function for big speed-up
     surrogate = None
     for c in iri:
         cp = ord(c)
@@ -139,33 +124,22 @@ def iri_to_uri(iri, convertHost=False):
 
 def nfc_normalize(iri):
     """
-    On Python 2.3 and higher, normalizes the given unicode string
-    according to Unicode Normalization Form C (NFC), so that it can
-    be used as an IRI or IRI reference.
+    Normalizes the given unicode string according to Unicode Normalization Form C (NFC)
+    so that it can be used as an IRI or IRI reference.
     """
-    try:
-        from unicodedata import normalize
-        iri = normalize('NFC', iri)
-    except ImportError:
-        pass
-    return iri
+    from unicodedata import normalize
+    return normalize('NFC', iri)
 
 
 def convert_ireg_name(iregname):
     """
-    On Python 2.3 and higher, converts the given ireg-name component
-    of an IRI to a string suitable for use as a URI reg-name in pre-
-    rfc2396bis schemes and resolvers. Returns the ireg-name
-    unmodified on Python 2.2.
+    Converts the given ireg-name component of an IRI to a string suitable for use
+    as a URI reg-name in pre-rfc2396bis schemes and resolvers. Returns the ireg-name
     """
-    try:
-        # I have not yet verified that the default IDNA encoding
-        # matches the algorithm required by the IRI spec, but it
-        # does work on the one simple example in the spec.
-        iregname = iregname.encode('idna')
-    except:
-        pass
-    return iregname
+    # I have not yet verified that the default IDNA encoding
+    # matches the algorithm required by the IRI spec, but it
+    # does work on the one simple example in the spec.
+    return iregname.encode('idna')
 
 
 #=============================================================================
@@ -535,6 +509,7 @@ def percent_encode(s, encoding='utf-8', encodeReserved=True, spaceToPlus=False,
     if nlChars is not None:
         for c in nlChars:
             s.replace(c, '\r\n')
+    #FIXME: use re.subn with substitution function for big speed-up
     for c in _chars(s):
         # surrogates? -> percent-encode according to given encoding
         if is_unicode and len(c) - 1:
@@ -1008,142 +983,6 @@ def normalize_path_segments_in_uri(uri):
     components[2] = normalize_path_segments(components[2])
     return unsplit_uri_ref(components)
 
-
-#=============================================================================
-# Resolvers provide normalization and resolution functions for URI references
-#
-class default_resolver:
-    """
-    This is class provides a set of functions related to the resolution of
-    URIs, including the resolution to absolute form of URI references, and
-    the retrieval of a representation of a resource that is identified by a
-    URI.
-
-    The object attribute supportedSchemes is a list of URI schemes supported
-    for dereferencing (representation retrieval). Schemes supported by
-    default are: %s.
-    """ % ', '.join(DEFAULT_URI_SCHEMES)
-    def __init__(self, lenient=True):
-        self.lenient = lenient
-        self.supportedSchemes = list(DEFAULT_URI_SCHEMES)
-        self.sep = '/' #Bad value for data URIs
-
-    def normalize(self, uriRef, baseUri):
-        """
-        Resolves a URI reference to absolute form, effecting the result of RFC
-        3986 section 5. The URI reference is considered to be relative to
-        the given base URI.
-
-        Also verifies that the resulting URI reference has a scheme that
-        resolve() supports, raising a IriError if it doesn't.
-
-        The default implementation does not perform any validation on the base
-        URI beyond that performed by absolutize().
-
-        If leniency has been turned on (self.lenient=True), accepts a base URI
-        beginning with '/', in which case the argument is assumed to be an absolute
-        path component of 'file' URI with no authority component.
-        """
-        # since we know how absolutize works, we can anticipate the scheme of
-        # its return value and verify that it's supported first
-        if self.lenient:
-            # assume file: if leading "/"
-            if baseUri.startswith('/'):
-                baseUri = 'file://' + baseUri
-        scheme = get_scheme(uriRef) or get_scheme(baseUri)
-        if scheme in self.supportedSchemes:
-            return absolutize(uriRef, baseUri)
-        else:
-            if scheme is None:
-                raise ValueError('When the URI to resolve is a relative '
-                    'reference, it must be accompanied by a base URI.')
-            else:
-                raise IriError(IriError.UNSUPPORTED_SCHEME,
-                                   scheme=scheme,
-                                   resolver=self.__class__.__name__)
-
-    def resolve(self, uri, baseUri=None):
-        """
-        This function takes a URI or a URI reference plus a base URI, produces
-        a normalized URI using the normalize function if a base URI was given,
-        then attempts to obtain access to an entity representing the resource
-        identified by the resulting URI, returning the entity as a stream (a
-        Python file-like object).
-
-        Raises a IriError if the URI scheme is unsupported or if a stream
-        could not be obtained for any reason.
-        """
-        if baseUri is not None:
-            uri = self.normalize(uri, baseUri)
-            scheme = get_scheme(uri)
-        else:
-            scheme = get_scheme(uri)
-            # since we didn't use normalize(), we need to verify here
-            if scheme not in self.supportedSchemes:
-                if scheme is None:
-                    raise ValueError('When the URI to resolve is a relative '
-                        'reference, it must be accompanied by a base URI.')
-                else:
-                    raise IriError(IriError.UNSUPPORTED_SCHEME,
-                                       scheme=scheme,
-                                       resolver=self.__class__.__name__)
-
-        # Bypass urllib for opening local files.
-        if scheme == 'file':
-            path = uri_to_os_path(uri, attemptAbsolute=False)
-            try:
-                stream = open(path, 'rb')
-            except IOError, e:
-                raise IriError(IriError.RESOURCE_ERROR,
-                                   loc='%s (%s)' % (uri, path),
-                                   uri=uri, msg=str(e))
-            # Add the extra metadata that urllib normally provides (sans
-            # the poorly guessed Content-Type header).
-            stats = os.stat(path)
-            size = stats.st_size
-            mtime = _formatdate(stats.st_mtime)
-            headers = mimetools.Message(cStringIO.StringIO(
-                'Content-Length: %s\nLast-Modified: %s\n' % (size, mtime)))
-            stream = urllib.addinfourl(stream, headers, uri)
-        else:
-            # urllib2.urlopen, wrapped by us, will suffice for http, ftp,
-            # data and gopher
-            try:
-                stream = urlopen(uri)
-            except IOError, e:
-                raise IriError(IriError.RESOURCE_ERROR,
-                                   uri=uri, loc=uri, msg=str(e))
-        return stream
-
-    def generate(self, hint=None):
-        """
-        This function generates and returns a URI.
-        The hint is an object that helps decide what to generate.
-        The default action is to generate a random UUID URN.
-        """
-        return uuid4().urn
-
-    def join(self, *uriparts):
-        """
-        Merges a series of URI reference parts, returning a new URI reference.
-    
-        Much like iri.basejoin, but takes multiple arguments
-    
-        self.sep is a separator to place between path segments
-        """
-        if len(uriparts) == 0:
-            raise TypeError("FIXME...")
-        elif len(uriparts) == 1:
-            return uriparts[0]
-        else:
-            base = uriparts[0]
-            for part in uriparts[1:]:
-                base = basejoin(base.rstrip(self.sep)+self.sep, part)
-            return base
-
-
-#Reusable resolver instance
-DEFAULT_RESOLVER = default_resolver()
 
 _urlopener = None
 class _data_handler(urllib2.BaseHandler):
@@ -1898,67 +1737,27 @@ def basejoin(base, uriRef):
             return res[len(dummyscheme)+1:]
 
 
-class uridict(dict):
+#
+def join(*uriparts):
     """
-    A dictionary that uses URIs as keys. It attempts to observe some degree of
-    URI equivalence as defined in RFC 3986 section 6. For example, if URIs
-    A and B are equivalent, a dictionary operation involving key B will return
-    the same result as one involving key A, and vice-versa.
+    Merges a series of URI reference parts, returning a new URI reference.
 
-    This is useful in situations where retrieval of a new representation of a
-    resource is undesirable for equivalent URIs, such as "file:///x" and
-    "file://localhost/x" (see RFC 1738), or "http://spam/~x/",
-    "http://spam/%7Ex/" and "http://spam/%7ex" (see RFC 3986).
-
-    Normalization performed includes case normalization on the scheme and
-    percent-encoded octets, percent-encoding normalization (decoding of
-    octets corresponding to unreserved characters), and the reduction of
-    'file://localhost/' to 'file:///', in accordance with both RFC 1738 and
-    RFC 3986 (although RFC 3986 encourages using 'localhost' and doing
-    this for all schemes, not just file).
-
-    An instance of this class is used by Ft.Xml.Xslt.XsltContext for caching
-    documents, so that the XSLT function document() will return identical
-    nodes, without refetching/reparsing, for equivalent URIs.
+    Much like iri.basejoin, but takes multiple arguments
     """
-    # RFC 3986 requires localhost to be the default host no matter
-    # what the scheme, but, being descriptive of existing practices,
-    # leaves it up to the implementation to decide whether to use this
-    # and other tests of URI equivalence in the determination of
-    # same-document references. So our implementation results in what
-    # is arguably desirable, but not strictly required, behavior.
-    #
-    #FIXME: make localhost the default for all schemes, not just file
-    def _normalizekey(self, key):
-        key = normalize_case(normalize_percent_encoding(key))
-        if key[:17] == 'file://localhost/':
-            return 'file://' + key[16:]
-        else:
-            return key
+    if len(uriparts) == 0:
+        raise TypeError("FIXME...")
+    elif len(uriparts) == 1:
+        return uriparts[0]
+    else:
+        base = uriparts[0]
+        for part in uriparts[1:]:
+            base = basejoin(base.rstrip(DEFAULT_HIERARCHICAL_SEP) + DEFAULT_HIERARCHICAL_SEP, part)
+        return base
 
-    def __getitem__(self, key):
-        return super(uridict, self).__getitem__(self._normalizekey(key))
 
-    def __setitem__(self, key, value):
-        return super(uridict, self).__setitem__(self._normalizekey(key), value)
-
-    def __delitem__(self, key):
-        return super(uridict, self).__delitem__(self._normalizekey(key))
-
-    def has_key(self, key):
-        return super(uridict, self).has_key(self._normalizekey(key))
-
-    def __contains__(self, key):
-        return super(uridict, self).__contains__(self._normalizekey(key))
-
-    def __iter__(self):
-        return iter(self.keys())
-
-    iterkeys = __iter__
-    def iteritems(self):
-        for key in self.iterkeys():
-            yield key, self.__getitem__(key)
-
+#generate_iri
+#Use:
+#from uuid import *; newuri = uuid4().urn
 
 #=======================================================================
 #

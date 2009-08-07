@@ -2,7 +2,9 @@
 
 /** Private Interface *************************************************/
 
+/*
 PyObject *uri_resolver;
+*/
 
 /** Python Interface **************************************************/
 
@@ -93,12 +95,12 @@ resolve_uri(InputSourceObject *self, PyObject *uri)
 {
   PyObject *byte_stream;
 
-  uri = PyObject_CallMethod(uri_resolver, "normalize", "OO", uri,
+  uri = PyObject_CallMethod((PyObject *)self, "normalize", "OO", uri,
                             self->base_uri);
   if (uri == NULL)
     return NULL;
 
-  byte_stream = PyObject_CallMethod(uri_resolver, "resolve", "O", uri);
+  byte_stream = PyObject_CallMethod((PyObject *)self, "resolve", "O", uri);
   if (byte_stream == NULL) {
     Py_DECREF(uri);
     return NULL;
@@ -198,9 +200,13 @@ PyTypeObject InputSource_Type = {
 
 int _Expat_InputSource_Init(PyObject *module)
 {
+/*
   PyObject *import;
+*/
 
   if (PyModule_AddType(module, &InputSource_Type) < 0) return -1;
+
+/*
   import = PyImport_ImportModule("amara.lib.iri");
   if (import == NULL) return -1;
   uri_resolver = PyObject_GetAttrString(import, "DEFAULT_RESOLVER");
@@ -209,13 +215,15 @@ int _Expat_InputSource_Init(PyObject *module)
     return -1;
   }
   Py_DECREF(import);
+*/
 
   return 0;
 }
 
 void _Expat_InputSource_Fini(void)
 {
+/*
   Py_DECREF(uri_resolver);
-
+*/
   PyType_CLEAR(&InputSource_Type);
 }

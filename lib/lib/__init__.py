@@ -24,8 +24,10 @@ class IriError(Error):
     SCHEME_REQUIRED = 200 # for SchemeRegistryResolver
     UNSUPPORTED_SCHEME = 201
     IDNA_UNSUPPORTED = 202
+    
+    DENIED_BY_RULE = 300
 
-    INVALID_PUBLIC_ID_URN = 300
+    INVALID_PUBLIC_ID_URN = 400
 
     UNSUPPORTED_PLATFORM = 1000
 
@@ -67,6 +69,8 @@ class IriError(Error):
             IriError.IDNA_UNSUPPORTED: _(
                 "The URI ref %(uri)r cannot be made urllib-safe on this "
                 "version of Python (IDNA encoding unsupported)."),
+            IriError.DENIED_BY_RULE: _(
+                "Access to IRI %(uri)r was denied by action of an IRI restriction"),
             }
 
 from amara.lib._inputsource import _inputsource as inputsource

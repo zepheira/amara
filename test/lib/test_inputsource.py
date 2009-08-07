@@ -1,8 +1,37 @@
 ########################################################################
 # test/xslt/test_inputsource.py
 
+import os, unittest, sys
 from amara.lib import inputsource, iri, treecompare
+#from amara.test.xslt import filesource
+from amara.test.lib import find_file
 
+#
+class Test_basic_uri_resolver(unittest.TestCase):
+    '''Basic Uri Resolver'''
+    def test_basic_uri_resolver(self):
+        data = [('http://foo.com/root/', 'path', 'http://foo.com/root/path'),
+                ('http://foo.com/root',  'path', 'http://foo.com/path'),
+                ]
+        #import sys; print >> sys.stderr, filesource('sampleresource.txt').uri
+        start_isrc = inputsource(find_file('sampleresource.txt'))
+        #start_isrc = inputsource(filesource('sampleresource.txt').uri)
+        for base, uri, exp in data:
+            res = start_isrc.normalize(uri, base)
+            self.assertEqual(exp, res, "normalize: %s %s" % (base, uri))
+
+        base = 'foo:foo.com'
+        uri = 'path'
+        self.assertRaises(iri.IriError, lambda uri=uri, base=base: start_isrc.normalize(uri, base), "normalize: %s %s" % (base, uri))
+
+        base = os.getcwd()
+        if base[-1] != os.sep:
+            base += os.sep
+        new_isrc = start_isrc.resolve(find_file('sampleresource.txt'), iri.os_path_to_uri(base))
+        self.assertEqual('Spam', new_isrc.stream.readline().rstrip(), 'resolve')
+
+
+#FIXME: Following tests badly need update
 rlimit_nofile = 300
 try:
     import resource
@@ -24,3 +53,8 @@ def test_many_inputsources():
         except:
             print "Failed after", i, "files"
             raise
+
+#
+if __name__ == '__main__':
+    raise SystemExit("Use nosetests")
+
