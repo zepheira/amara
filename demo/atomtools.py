@@ -272,13 +272,14 @@ def parse(isrc):
             u"title": unicode(e.title),
             #Nested list comprehension to select the alternate link,
             #then select the first result ([0]) and gets its href attribute
-            u"link": [ l for l in e.link if l.rel == u"alternate" ][0].href,
             u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
             #Nested list comprehension to create a list of category values
             u"categories": [ unicode(c.term) for c in iter(e.category or []) ],
             u"updated": unicode(e.updated),
             u"summary": unicode(e.summary),
         }
+        altlink = first_item([ l for l in e.link if l.rel == u"alternate" ])
+        data[u"link"] = altlink.href if altlink else []
         if e.summary is not None:
             data[u"summary"] = unicode(e.summary)
         if e.content is not None:
