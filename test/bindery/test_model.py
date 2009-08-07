@@ -2,7 +2,7 @@ import unittest
 from amara.lib import testsupport
 from amara import tree
 import os
-import tempfile
+import re, tempfile
 
 from amara import bindery
 from amara.bindery.model import examplotron_model
@@ -76,6 +76,21 @@ INSTANCE_A_1 = '''<?xml version="1.0" encoding="iso-8859-1"?>
 </labels>
 '''
 
+def normalize_generated_ids(meta_list):
+    pat = re.compile('r(\d+)e')
+
+    # Takes an ID such as 'r1234e0e4' and returns 'r*e0e4'.
+    def normalize_id(id):
+        m = pat.match(id)
+        if m:
+            id = 'r*e' + id[m.end():]
+        return id
+
+    for i, (s, p, o) in enumerate(meta_list):
+        s = normalize_id(s)
+        o = normalize_id(o)
+        meta_list[i] = (s,p,o)
+
 class Test_parse_model_a(unittest.TestCase):
     """Testing nasty tag soup 1"""
     def test_metadata_extraction(self):
@@ -96,8 +111,9 @@ class Test_parse_model_a(unittest.TestCase):
          (u'r2e0e7e5', u'title', u"Heaven's Gate"),
          (u'co', u'tag', u'biafra'),
          (u'co', u'tag', u'poet')]
-        meta_list = list(metadata)
-        self.assertEqual(meta_list, EXPECTED_MD)
+
+        meta_list = normalize_generated_ids(list(metadata))
+        self.assertEqual(meta_list, normalize_generated_ids(EXPECTED_MD))
 
 if __name__ == '__main__':
     from amara.test import test_main
