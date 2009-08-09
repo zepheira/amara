@@ -94,7 +94,7 @@ class Test_parse_functions_1(unittest.TestCase):
         """Iterate over attributes with the same name on elements with the same name"""
         doc = parse(SILLY_NS_XML)
         self.assertEqual(';'.join([ e.name for e in doc.parent.sillywrap.element ]), u'a;b')
-   
+
     def test_nasty_xml_1(self):
         """XML with 2 elements with same local name and different NS on same parent"""
         doc = parse(NASTY_NS_XML1)
@@ -104,7 +104,7 @@ class Test_parse_functions_1(unittest.TestCase):
         self.assertEqual(doc.top.monty.xml_namespace, u"urn:bogus:a")
         self.assertEqual(doc.top.monty_.xml_namespace, u"urn:bogus:b")
         self.assertEqual(doc.top.monty.xml_following_sibling.xml_following_sibling, doc.top.monty_)
-        
+
 
 class Test_parse_functions_2(unittest.TestCase):
     """Convenience parse functions, part 2. 

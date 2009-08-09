@@ -7,7 +7,7 @@ import uuid
 import difflib
 
 from amara import Error
-from amara.lib import inputsource, iri, treecompare
+from amara.lib import inputsource, iri, irihelper, treecompare
 from amara.xpath import datatypes, util
 from amara.xslt import XsltError, transform
 from amara.xslt.processor import processor
@@ -29,20 +29,20 @@ __unittest = True
 #            result = datatypes.string(u'id%d' % result)
 #        return result
 
-class _mapping_resolver(iri.default_resolver):
+class _mapping_resolver(irihelper.resolver):
     def __init__(self, uris):
-        iri.default_resolver.__init__(self)
+        irihelper.resolver.__init__(self)
         self._uris = uris
 
     def normalize(self, uriref, baseuri):
         if uriref in self._uris:
             return uriref
-        return iri.default_resolver.normalize(self, uriref, baseuri)
+        return irihelper.resolver.normalize(self, uriref, baseuri)
 
     def resolve(self, uri, baseuri=None):
         if uri in self._uris:
             return cStringIO.StringIO(self._uris[uri])
-        return iri.default_resolver.resolve(self, uri, baseuri)
+        return irihelper.resolver.resolve(self, uri, baseuri)
 
 def get_mapping_factory():
     return

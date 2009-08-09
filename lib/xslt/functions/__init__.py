@@ -47,11 +47,11 @@ class document_function(builtin_function):
                 if arg1 is None:
                     base_uri = node.xml_base
                 assert base_uri or iri.is_absolute(uri)
-                uris.add(iri.DEFAULT_RESOLVER.normalize(uri, base_uri))
+                uris.add(iri.absolutize(uri, base_uri))
         else:
             uri = datatypes.string(arg0)
             assert base_uri or iri.is_absolute(uri)
-            uris = [iri.DEFAULT_RESOLVER.normalize(uri, base_uri)]
+            uris = [iri.absolutize(uri, base_uri)]
 
         documents = context.documents
         sources = context.transform.root.sources

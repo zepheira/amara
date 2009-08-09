@@ -71,9 +71,9 @@ class _inputsource(InputSource):
     def __init__(self, arg, uri=None, resolver=None):
         self.resolver = resolver or DEFAULT_RESOLVER
 
-    def resolve(self, uri, baseUri=None):
+    def resolve(self, uriRef, baseUri=None):
         """
-        Takes a URI or a URI reference plus a base URI, produces a normalized URI
+        Takes a URI or a URI reference plus a base URI, produces an absolutized URI
         if a base URI was given, then attempts to obtain access to an entity
         representing the resource identified by the resulting URI,
         returning the entity as a stream (a file-like object).
@@ -82,9 +82,9 @@ class _inputsource(InputSource):
         Raises a IriError if the URI scheme is unsupported or if a stream
         could not be obtained for any reason.
         """
-        return self.__class__(self.resolver.resolve(uri, baseUri))
+        return self.__class__(self.resolver.resolve(uriRef, baseUri))
 
-    def normalize(self, uriRef, baseUri):
+    def absolutize(self, uriRef, baseUri):
         """
         Resolves a URI reference to absolute form, effecting the result of RFC
         3986 section 5. The URI reference is considered to be relative to
@@ -100,5 +100,5 @@ class _inputsource(InputSource):
         beginning with '/', in which case the argument is assumed to be an absolute
         path component of 'file' URI with no authority component.
         """
-        return self.resolver.normalize(uriRef, baseUri)
+        return self.resolver.absolutize(uriRef, baseUri)
 

@@ -95,7 +95,7 @@ resolve_uri(InputSourceObject *self, PyObject *uri)
 {
   PyObject *byte_stream;
 
-  uri = PyObject_CallMethod((PyObject *)self, "normalize", "OO", uri,
+  uri = PyObject_CallMethod((PyObject *)self, "absolutize", "OO", uri,
                             self->base_uri);
   if (uri == NULL)
     return NULL;

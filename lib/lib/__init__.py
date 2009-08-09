@@ -64,8 +64,7 @@ class IriError(Error):
                 "A public ID cannot be derived from URN %(urn)r "
                 "because it does not conform to RFC 3151."),
             IriError.UNSUPPORTED_SCHEME: _(
-                "The URI scheme %(scheme)s is not supported by resolver "
-                " %(resolver)s"),
+                "The URI scheme %(scheme)s is not supported by resolver "),
             IriError.IDNA_UNSUPPORTED: _(
                 "The URI ref %(uri)r cannot be made urllib-safe on this "
                 "version of Python (IDNA encoding unsupported)."),

@@ -1018,40 +1018,6 @@ class Test_make_urllib_safe(unittest.TestCase):
             self.assertEqual(expected, res, test_title)
 
 
-class Test_scheme_registry_resolver(unittest.TestCase):
-    '''scheme_registry_resolver'''
-    def test_scheme_registry_resolver(self):
-        def eval_scheme_handler(uri, base=None):
-            if base: uri = base+uri
-            uri = uri[5:]
-            return str(eval(uri))
-
-        def shift_scheme_handler(uri, base=None):
-            if base: uri = base+uri
-            uri = uri[6:]
-            return ''.join([ chr(ord(c)+1) for c in uri])
-
-        resolver = irihelpers.scheme_registry_resolver(
-            handlers={'eval': eval_scheme_handler, 'shift': shift_scheme_handler})
-        start_isrc =  inputsource(find_file('sampleresource.txt'), resolver=resolver)
-        
-        scheme_cases = [(None, 'eval:150-50', '100'),
-                (None, 'shift:abcde', 'bcdef'),
-                ('eval:150-', '50', '100'),
-                ('shift:ab', 'cde', 'bcdef'),
-            ]
-
-        for base, relative, expected in scheme_cases:
-            res = start_isrc.resolve(relative, base)
-            self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
-
-        resolver.handlers[None] = shift_scheme_handler
-        del resolver.handlers['shift']
-
-        for base, relative, expected in scheme_cases:
-            res = start_isrc.resolve(relative, base)
-            self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
-
 if __name__ == '__main__':
     raise SystemExit("Use nosetests")
 

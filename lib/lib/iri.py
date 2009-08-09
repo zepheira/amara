@@ -616,7 +616,7 @@ def percent_decode(s, encoding='utf-8', decodable=None):
     return s
 
 
-def absolutize(uriRef, baseUri):
+def absolutize(uriRef, baseUri, limit_schemes=None):
     """
     Resolves a URI reference to absolute form, effecting the result of RFC
     3986 section 5. The URI reference is considered to be relative to the
@@ -675,6 +675,10 @@ def absolutize(uriRef, baseUri):
     if not baseUri or not is_absolute(baseUri):
         raise IriError(IriError.RELATIVE_BASE_URI,
                            base=baseUri, ref=uriRef)
+    if limit_schemes and get_scheme(baseUri) not in limit_schemes:
+        scheme = get_scheme(baseUri)
+        raise IriError(IriError.UNSUPPORTED_SCHEME, scheme=scheme)
+    
     # shortcut for the simplest same-document reference cases
     if uriRef == '' or uriRef[0] == '#':
         return baseUri.split('#')[0] + uriRef

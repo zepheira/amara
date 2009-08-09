@@ -17,12 +17,12 @@ class Test_basic_uri_resolver(unittest.TestCase):
         start_isrc = inputsource(find_file('sampleresource.txt'))
         #start_isrc = inputsource(filesource('sampleresource.txt').uri)
         for base, uri, exp in data:
-            res = start_isrc.normalize(uri, base)
-            self.assertEqual(exp, res, "normalize: %s %s" % (base, uri))
+            res = start_isrc.absolutize(uri, base)
+            self.assertEqual(exp, res, "absolutize: %s %s" % (base, uri))
 
         base = 'foo:foo.com'
         uri = 'path'
-        self.assertRaises(iri.IriError, lambda uri=uri, base=base: start_isrc.normalize(uri, base), "normalize: %s %s" % (base, uri))
+        self.assertRaises(iri.IriError, lambda uri=uri, base=base: start_isrc.absolutize(uri, base), "absolutize: %s %s" % (base, uri))
 
         base = os.getcwd()
         if base[-1] != os.sep:

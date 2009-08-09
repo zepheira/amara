@@ -18,6 +18,7 @@ from amara.lib.iri import *
 
 __all__ = [
 'DEFAULT_URI_SCHEMES',
+'DEFAULT_RESOLVER',
 'scheme_registry_resolver',
 'facade_resolver',
 'uridict',
@@ -39,9 +40,9 @@ class resolver:
         self.authorizations = authorizations
         self.lenient = lenient
 
-    def resolve(self, uri, baseUri=None):
+    def resolve(self, uriRef, baseUri=None):
         """
-        Takes a URI or a URI reference plus a base URI, produces a normalized URI
+        Takes a URI or a URI reference plus a base URI, produces a absolutized URI
         if a base URI was given, then attempts to obtain access to an entity
         representing the resource identified by the resulting URI,
         returning the entity as a stream (a file-like object).
@@ -50,11 +51,12 @@ class resolver:
         could not be obtained for any reason.
         """
         if baseUri is not None:
-            uri = self.normalize(uri, baseUri)
+            uri = self.absolutize(uriRef, baseUri)
             scheme = get_scheme(uri)
         else:
-            scheme = get_scheme(uri)
-            # since we didn't use normalize(), we need to verify here
+            uri = uriRef
+            scheme = get_scheme(uriRef)
+            # since we didn't use absolutize(), we need to verify here
             if scheme not in self._supported_schemes:
                 if scheme is None:
                     raise ValueError('When the URI to resolve is a relative '
@@ -97,16 +99,19 @@ class resolver:
         Implement an authorization mechanism for resolvers, allowing you to create "jails" where only certain URIs are allowed
         """
         for match, allow in self.authorizations:
-            if callable(match) and match(uri):
-                return allow
+            if callable(match):
+                if match(uri):
+                    return allow
             elif match:
                 return allow
         #If authoriztions are specified, and none allow the URI, deny by default
         #The user can easily reverse this by adding an auth (True, True)
         return False
 
-    def normalize(self, uriRef, baseUri):
+    def absolutize(self, uriRef, baseUri):
         """
+        For most cases iri.absolutize is good enough, and does the main work of this function.
+        
         Resolves a URI reference to absolute form, effecting the result of RFC
         3986 section 5. The URI reference is considered to be relative to
         the given base URI.
@@ -114,8 +119,8 @@ class resolver:
         Also verifies that the resulting URI reference has a scheme that
         resolve() supports, raising a IriError if it doesn't.
 
-        The default implementation does not perform any validation on the base
-        URI beyond that performed by absolutize().
+        Default implementation does not perform any validation on the base
+        URI beyond that performed by iri.absolutize().
 
         If leniency has been turned on (self.lenient=True), accepts a base URI
         beginning with '/', in which case the argument is assumed to be an absolute
@@ -127,17 +132,7 @@ class resolver:
             # assume file: if leading "/"
             if baseUri.startswith('/'):
                 baseUri = 'file://' + baseUri
-        scheme = get_scheme(uriRef) or get_scheme(baseUri)
-        if scheme in self._supported_schemes:
-            return absolutize(uriRef, baseUri)
-        else:
-            if scheme is None:
-                raise ValueError('When the URI to resolve is a relative '
-                    'reference, it must be accompanied by a base URI.')
-            else:
-                raise IriError(IriError.UNSUPPORTED_SCHEME,
-                                   scheme=scheme,
-                                   resolver=self.__class__.__name__)
+        return absolutize(uriRef, baseUri, limit_schemes=self._supported_schemes)
 
 DEFAULT_RESOLVER = resolver()
 

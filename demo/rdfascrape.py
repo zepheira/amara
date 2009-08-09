@@ -20,7 +20,7 @@ from amara.bindery import html
 from amara.writers.struct import *
 from amara.namespaces import *
 from amara.lib.xmlstring import *
-from amara.lib.iri import DEFAULT_RESOLVER
+from amara.lib.iri import absolutize
 #from amara.bindery.model import *
 
 #Give Amara an example so it knows what structure to expect
@@ -28,7 +28,7 @@ from amara.lib.iri import DEFAULT_RESOLVER
 
 def absolutize(uriref, docuri):
     try:
-        return DEFAULT_RESOLVER.normalize(uriref, docuri)
+        return absolutize(uriref, docuri)
     except:
         return uriref
 
