@@ -88,8 +88,9 @@ def normalize_generated_ids(meta_list):
 
     for i, (s, p, o) in enumerate(meta_list):
         s = normalize_id(s)
-        o = normalize_id(o)
+        o = normalize_id(unicode(o))
         meta_list[i] = (s,p,o)
+
 
 class Test_parse_model_a(unittest.TestCase):
     """Testing nasty tag soup 1"""

@@ -38,38 +38,38 @@ ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:
    <ak:rel name="'type'" value="'atom:entry'"/>
    <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
    <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
-   <atom:id ak:rel="local-name()" ak:value="."/>
-   <atom:title type="xhtml" ak:rel="local-name()" ak:value="."/>
-   <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
-   <atom:published ak:rel="local-name()" ak:value="."></atom:published>
+   <atom:id ak:rel="local-name()"/>
+   <atom:title type="xhtml" ak:rel="local-name()"/>
+   <atom:updated ak:rel="local-name()"></atom:updated>
+   <atom:published ak:rel="local-name()"></atom:published>
    <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
-   <atom:summary type="xhtml" ak:rel="local-name()" ak:value="."  ak:coercion="'nodeset'"/>
-   <atom:category eg:occurs="*" ak:rel="local-name()" ak:value="@term"/>
+   <atom:summary type="xhtml" ak:rel="local-name()"/>
+   <atom:category eg:occurs="*" ak:rel="local-name()"/>
    <atom:author eg:occurs="*" ak:rel="local-name()" ak:resource="(atom:name|atom:uri|atom:email)[1]">
      <ak:rel name="'type'" value="'atom:author'"/>
      <atom:name ak:rel="local-name()" ak:value="." />
      <atom:uri ak:rel="local-name()" ak:value="." />
      <atom:email ak:rel="local-name()" ak:value="." />
    </atom:author>
-   <atom:content type="xhtml" eg:occurs="?" ak:rel="local-name()" ak:value="." ak:coercion="'nodeset'"/> 
+   <atom:content type="xhtml" eg:occurs="?" ak:rel="local-name()" ak:value="."/> 
  </atom:entry>"""
 
 FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
  <ak:rel name="'type'" value="'atom:feed'"/>
  <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
  <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
- <atom:title ak:rel="local-name()" ak:value="."></atom:title>
- <atom:subtitle ak:rel="local-name()" ak:value="."></atom:subtitle>
- <atom:updated ak:rel="local-name()" ak:value="."></atom:updated>
+ <atom:title ak:rel="local-name()"></atom:title>
+ <atom:subtitle ak:rel="local-name()"></atom:subtitle>
+ <atom:updated ak:rel="local-name()"></atom:updated>
  <atom:author eg:occurs="*" ak:rel="local-name()" ak:resource="(atom:name|atom:uri|atom:email)[1]">
    <ak:rel name="'type'" value="'atom:author'"/>
-   <atom:name ak:rel="local-name()" ak:value="." />
-   <atom:uri ak:rel="local-name()" ak:value="." />
-   <atom:email ak:rel="local-name()" ak:value="." />
+   <atom:name ak:rel="local-name()"/>
+   <atom:uri ak:rel="local-name()"/>
+   <atom:email ak:rel="local-name()"/>
  </atom:author>
- <atom:id ak:rel="local-name()" ak:value="."></atom:id>
+ <atom:id ak:rel="local-name()"></atom:id>
  <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
- <atom:rights ak:rel="local-name()" ak:value="."></atom:rights>
+ <atom:rights ak:rel="local-name()"></atom:rights>
 %s
 </atom:feed>
 """ % ENTRY_MODEL_XML

@@ -160,38 +160,33 @@ class content_model:
 
     def generate_metadata(self, root):
         '''
-        Process a document for metadata according to extraction cues
+        Process a document to extract metadata
+        Amara allows you to embed metadata extraction cues into an examplotron document
+        These cues are worked into the model, and are used to drive the extraction from the
+        instance at root
         '''
         def handle_element(elem, resource):
             new_resource = None
             prefixes = elem.xml_root.xml_model.prefixes
+            #Is there a cue that designates this element as a resource envelope?
             if elem.xml_model.metadata_resource_expr:
                 if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
                     new_resource = unicode(datatypes.string(elem.xml_nodeid))
                 else:
                     new_resource = unicode(datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes)))
+            #Is there a cue that designates a relationship in this element?
             if elem.xml_model.metadata_rel_expr:
+                #Execute the XPath to get the relationship name/title
                 rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
                 if elem.xml_model.metadata_value_expr:
-                    valresult = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
-                    if isinstance(valresult, datatypes.nodeset):
-                        if valresult:
-                            if elem.xml_model.metadata_coercion_expr and simplify(elem.xml_select(elem.xml_model.metadata_coercion_expr, prefixes=prefixes)) == u'nodeset':
-                                buf = StringIO()
-                                xml_print(valresult[0], stream=buf)
-                                val = buf.getvalue()
-                            elif isinstance(valresult[0], tree.attribute):
-                                val = valresult[0].xml_value
-                            else:
-                                val = unicode(valresult[0])
-                        else:
-                            val = None
-                    else:
-                        val = simplify(valresult)
+                    #Execute the XPath to get the relationship value
+                    val = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
                 elif new_resource is not None:
+                    #If the element is also a resource envelope, the default value is the new resource ID
                     val = new_resource
                 else:
-                    val = unicode(elem)
+                    #Handle the default ak:value of "."
+                    val = datatypes.nodeset([elem])
                 yield (unicode(resource), unicode(rel), val)
                 #Basically expandqname first
                 #prefix, local = splitqname(rattr)
@@ -204,8 +199,8 @@ class content_model:
 
             for rel_expr, val_expr in elem.xml_model.other_rel_exprs:
                 rel = datatypes.string(elem.xml_select(rel_expr, prefixes=prefixes))
-                val = datatypes.string(elem.xml_select(val_expr, prefixes=prefixes))
-                yield (unicode(resource), unicode(rel), simplify(val))
+                val = elem.xml_select(val_expr, prefixes=prefixes)
+                yield (unicode(resource), unicode(rel), val)
             
             for child in elem.xml_elements:
                 for item in handle_element(child, resource):
@@ -297,8 +292,6 @@ class examplotron_model(document_model):
             if relattr: e.xml_model.metadata_rel_expr = relattr
             valattr = e.xml_select(u'string(@ak:value)', NSS)
             if valattr: e.xml_model.metadata_value_expr = valattr
-            coercionattr = e.xml_select(u'string(@ak:coercion)', NSS)
-            if coercionattr: e.xml_model.metadata_coercion_expr = coercionattr
             relelem = e.xml_select(u'ak:rel', NSS)
             
             for rel in relelem:
