@@ -4,8 +4,8 @@
 XUpdate request processing
 """
 
-from amara.tree import Node
-from amara._xmlstring import SplitQName
+from amara.tree import node
+from amara.lib.xmlstring import splitqname
 from amara.xpath import context
 from amara.xupdate import XUpdateError, xupdate_primitive
 
@@ -111,7 +111,7 @@ class rename_command(xupdate_command):
             primitive.instantiate(context)
         writer = context.pop_writer()
         name = writer.get_result()
-        prefix, local = SplitQName(name)
+        prefix, local = splitqname(name)
         if prefix:
             namespace = self.namespaces[prefix]
         else:

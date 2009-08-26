@@ -5,7 +5,7 @@ XUpdate element wrappers
 """
 
 from amara import XML_NAMESPACE, XMLNS_NAMESPACE
-from amara._xmlstring import IsQName, IsNCName
+from amara.lib.xmlstring import isqname, isncname
 from amara.xslt import XsltError
 from amara.xslt.expressions.avt import avt_expression
 from amara.xupdate import XUpdateError
@@ -29,7 +29,7 @@ class xupdate_avt(avt_expression):
 class qname_avt(xupdate_avt):
     def evaluate_as_string(self, context):
         result = self._evaluate(context)
-        if not IsQName(result):
+        if not isqname(result):
             raise XUpdateError(XUpdateError.INVALID_QNAME_ATTR,
                                attribute=self._name, value=result)
         return result
@@ -47,7 +47,7 @@ class namespace_avt(xupdate_avt):
 class ncname_avt(xupdate_avt):
     def evaluate_as_string(self, context):
         result = self._evaluate(context)
-        if not IsNCName(result):
+        if not isncname(result):
             raise XUpdateError(XUpdateError.INVALID_NCNAME_ATTR,
                                attribute=self._name, value=result)
         return result

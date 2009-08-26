@@ -4,7 +4,7 @@
 XUpdate instructions
 """
 
-from amara._xmlstring import SplitQName
+from amara.lib.xmlstring import splitqname
 from amara.xpath import datatypes
 from amara.xupdate import XUpdateError, xupdate_primitive
 
@@ -41,7 +41,7 @@ class element_instruction(xupdate_instruction):
         if self.namespace:
             namespace = self.namespace.evaluate_as_string(context)
         else:
-            prefix, local = SplitQName(name)
+            prefix, local = splitqname(name)
             try:
                 namespace = self.namespaces[prefix]
             except KeyError:
@@ -78,7 +78,7 @@ class attribute_instruction(xupdate_instruction):
         if self.namespace:
             namespace = self.namespace.evaluate_as_string(context)
         else:
-            prefix, local = SplitQName(name)
+            prefix, local = splitqname(name)
             if prefix:
                 try:
                     namespace = self.namespaces[prefix]

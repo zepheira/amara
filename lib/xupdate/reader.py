@@ -7,7 +7,7 @@ XUpdate document reader
 import operator
 from amara import XML_NAMESPACE
 from amara._expat import ContentModel, Handler, Reader
-from amara._xmlstring import splitqname, isqname
+from amara.lib.xmlstring import splitqname, isqname
 from amara.xpath import XPathError
 from amara.xpath.parser import parse as parse_expression
 from amara.xupdate import XUpdateError, XUPDATE_NAMESPACE
