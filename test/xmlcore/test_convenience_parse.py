@@ -1,6 +1,6 @@
 import unittest
 import os
-from amara import tree
+from amara import tree, ReaderError
 from amara.tree import parse   ### Revise imports
 
 #More in-depth testing of DOM structure building is done in other tests.
@@ -45,6 +45,25 @@ class Test_parse_functions_1(unittest.TestCase):
         self.assertEqual(doc.xml_children[0].xml_qname, 'disclaimer')
         self.assertEqual(doc.xml_children[0].xml_namespace, None)
         self.assertEqual(doc.xml_children[0].xml_prefix, None,)
+
+    def test_expat_segfault(self):
+        "Check malformed input that caused an Expat segfault error."
+        try:
+            doc = parse("<?xml version\xc2\x85='1.0'?>\r\n")
+            self.fail()
+        except ReaderError as e:
+            self.assertTrue(str(e).endswith(
+                    'line 1, column 14: XML declaration not well-formed'))
+
+        import StringIO
+        stream = StringIO.StringIO("\0\r\n")
+        try:
+            doc = parse(stream)
+            self.fail()
+        except ReaderError as e:
+            self.assertTrue(str(e).endswith(
+                    'line 2, column 1: no element found'))
+        
         
 
 class Test_parse_functions_2(unittest.TestCase):

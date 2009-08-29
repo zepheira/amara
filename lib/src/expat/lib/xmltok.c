@@ -328,7 +328,7 @@ utf8_updatePosition(const ENCODING *enc,
                     const char *end,
                     POSITION *pos)
 {
-  while (ptr != end) {
+  while (ptr < end) {
     unsigned char ch = (unsigned char)*ptr;
     if (ch >= 32) {
       if (ch < 128)
