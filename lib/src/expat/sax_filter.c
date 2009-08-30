@@ -1333,13 +1333,16 @@ prepare_input_source(PyObject *source)
                                    source, systemId, encoding);
   }
   /* check for URL */
+  /* FIXME: This seems to be a bug.  right after confirming it's a basestring, we try to call resolve() on it  */
   else if (PyString_Check(source) || PyUnicode_Check(source)) {
-    byteStream = PyObject_CallMethod(source, "resolve", "O", source);
-    if (byteStream == NULL) {
+    source = PyObject_CallMethod(source, "resolve", "O", source);
+    if (source == NULL) {
       return NULL;
     }
+/*
     source = PyObject_CallFunction((PyObject *)&InputSource_Type, "NOO",
                                    byteStream, source, Py_None);
+*/
   }
   else {
     /* error */

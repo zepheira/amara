@@ -9,7 +9,7 @@ from amara.bindery.model import examplotron_model
 
 
 MODEL_A = '''<?xml version="1.0" encoding="utf-8"?>
-<labels xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara">
+<labels xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/xml3k/akara/xmlmodel">
   <label id="tse" added="2003-06-10" eg:occurs="*" ak:resource="@id"> <!-- use ak:resource="" for an anon resource -->
     <quote eg:occurs="?">
       <emph>Midwinter</emph> Spring is its own <strong>season</strong>...

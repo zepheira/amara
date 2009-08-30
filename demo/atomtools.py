@@ -30,11 +30,13 @@ __all__ = [
   'ENTRY_MODEL', 'FEED_MODEL', 'ENTRY_MODEL_XML', 'FEED_MODEL_XML',
   'ATOM_IMT', 'PREFIXES', 'DEFAULT_SKEL',
   'tidy_content_element', 'feed', 'aggregate_entries',
+  'ejsonize', 'entry_metadata',
+  'author', 'link', 'category',
   'atom2rss1',
 ]
 
 #From 1.1 of the spec
-ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
+ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/xml3k/akara/xmlmodel" ak:resource="atom:id">
    <ak:rel name="'type'" value="'atom:entry'"/>
    <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
    <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
@@ -42,10 +44,13 @@ ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:
    <atom:title type="xhtml" ak:rel="local-name()"/>
    <atom:updated ak:rel="local-name()"></atom:updated>
    <atom:published ak:rel="local-name()"></atom:published>
-   <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href" />
+   <atom:link eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
    <atom:summary type="xhtml" ak:rel="local-name()"/>
    <atom:category eg:occurs="*" ak:rel="local-name()"/>
+   <!--
    <atom:author eg:occurs="*" ak:rel="local-name()" ak:resource="(atom:name|atom:uri|atom:email)[1]">
+   -->
+   <atom:author eg:occurs="*" ak:rel="local-name()">
      <ak:rel name="'type'" value="'atom:author'"/>
      <atom:name ak:rel="local-name()" ak:value="." />
      <atom:uri ak:rel="local-name()" ak:value="." />
@@ -54,22 +59,25 @@ ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:
    <atom:content type="xhtml" eg:occurs="?" ak:rel="local-name()" ak:value="."/> 
  </atom:entry>"""
 
-FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara" ak:resource="atom:id">
- <ak:rel name="'type'" value="'atom:feed'"/>
- <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
- <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
- <atom:title ak:rel="local-name()"></atom:title>
- <atom:subtitle ak:rel="local-name()"></atom:subtitle>
- <atom:updated ak:rel="local-name()"></atom:updated>
+FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/xml3k/akara/xmlmodel" ak:resource="atom:id">
+  <ak:rel name="'type'" value="'atom:feed'"/>
+  <ak:rel name="'alternate_link'" value='atom:link[@rel="alternate"]/@href' />
+  <ak:rel name="'self_link'" value='atom:link[not(@rel) or @rel="self"]/@href' />
+  <atom:title ak:rel="local-name()"></atom:title>
+  <atom:subtitle ak:rel="local-name()"></atom:subtitle>
+  <atom:updated ak:rel="local-name()"></atom:updated>
+ <!--
  <atom:author eg:occurs="*" ak:rel="local-name()" ak:resource="(atom:name|atom:uri|atom:email)[1]">
-   <ak:rel name="'type'" value="'atom:author'"/>
-   <atom:name ak:rel="local-name()"/>
-   <atom:uri ak:rel="local-name()"/>
-   <atom:email ak:rel="local-name()"/>
- </atom:author>
- <atom:id ak:rel="local-name()"></atom:id>
- <atom:link eg:occurs="*" ak:rel="local-name()" ak:value="@href"/>
- <atom:rights ak:rel="local-name()"></atom:rights>
+ -->
+  <atom:author eg:occurs="*" ak:rel="local-name()">
+    <ak:rel name="'type'" value="'atom:author'"/>
+    <atom:name ak:rel="local-name()"/>
+    <atom:uri ak:rel="local-name()"/>
+    <atom:email ak:rel="local-name()"/>
+  </atom:author>
+  <atom:id ak:rel="local-name()"></atom:id>
+  <atom:link eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
+  <atom:rights ak:rel="local-name()"></atom:rights>
 %s
 </atom:feed>
 """ % ENTRY_MODEL_XML
@@ -161,6 +169,26 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
     return root
 
 #
+class author(object):
+    def __init__(self, node):
+        self.name = node.name
+        self.uri = node.uri
+        self.email = node.email
+        self.node = node
+    
+class category(object):
+    def __init__(self, node):
+        self.scheme = node.scheme
+        self.term = node.term
+        self.node = node
+    
+
+class link(object):
+    def __init__(self, node):
+        self.rel = node.rel
+        self.href = node.href
+        self.node = node
+
 
 class feed(object):
     '''
@@ -241,12 +269,100 @@ class feed(object):
         return
 
 
-def parse(isrc):
+        '''
+        '''
+
+#
+def entry_metadata(isrc):
     '''
-    Convert Atom syntax to Exhibit JSON
-    (see: http://www.ibm.com/developerworks/web/library/wa-realweb6/ ; this is based on listing 3)
+    Organize the metadata of an atom document according to its entries
+    '''
+    #metadata = doc.xml_model.generate_metadata(doc)
+    #delimited = groupby(metadata, lambda row: (row[1:] == (u'type', u'atom:entry') ))
+    #first, rows = delimited.next()
+    def handle_row(resource, rel, val):
+        #if rel in [u"id", u"title"]:
+        if rel == u"author":
+            yield rel, (unicode(val[0].name), unicode(val[0].email), unicode(val[0].uri))
+        if rel == u"link":
+            yield rel, (val[0].rel, unicode(val[0]))
+        if rel in [u"title", u"updated"]:
+            yield rel, unicode(val[0])
+        if rel in [u"id"]:
+            yield rel, unicode(val[0])
+            yield u"label", unicode(val[0])
+        #u"link": [ l for l in doc.feed.link if l.rel == u"alternate" ][0].href,
+        #u"authors": [ unicode(a.name) for a in iter(doc.feed.author or []) ],
+        #u"updated": unicode(doc.feed.updated),
+
+    if not first:
+        #Must be a full feed, so consume the first entry's delimiter
+        first, rows = delimited.next()
+    entries = []
+    for isboundary, rows in delimited:
+        entryinfo = {u"type": u"atom:entry"}
+        if isboundary:
+            #consume/skip the entry's delimiter
+            continue
+        for k, v in (kvpair for row in rows for kvpair in handle_row(*row)):
+            print k, v
+        #print isboundary, list(rows)
+        entries.append(entryinfo)
+
+    try:
+        doc_entries = iter(doc.feed.entry)
+        feedinfo = {
+            u"label": unicode(doc.feed.id),
+            u"type": u"Feed",
+            u"title": unicode(doc.feed.title),
+            u"link": [ l for l in doc.feed.link if l.rel == u"alternate" ][0].href,
+            u"authors": [ unicode(a.name) for a in iter(doc.feed.author or []) ],
+            u"updated": unicode(doc.feed.updated),
+        }
+    except AttributeError:
+        try:
+            doc_entries = iter(doc.entry)
+            feedinfo = None
+        except AttributeError:
+            return None, []
+    return
+
+
+def ejsonize(isrc):
+    '''
+    Convert Atom syntax to a dictionary
+    Note: the conventions used are designed to simplify conversion to Exhibit JSON
+    (see: http://www.ibm.com/developerworks/web/library/wa-realweb6/ ; listing 3)
     '''
     doc = bindery.parse(isrc, model=FEED_MODEL)
+    def process_entry(e):
+        known_elements = [u'id', u'title', u'link', u'author', u'category', u'updated', u'content', u'summary']
+        data = {
+            u"label": unicode(e.id),
+            u"type": u"Entry",
+            u"title": unicode(e.title),
+            #Nested list comprehension to select the alternate link,
+            #then select the first result ([0]) and gets its href attribute
+            u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
+            #Nested list comprehension to create a list of category values
+            u"categories": [ unicode(c.term) for c in iter(e.category or []) ],
+            u"updated": unicode(e.updated),
+            u"summary": unicode(e.summary),
+        }
+        data[u"link"] = first_item([ l.href for l in e.link if l.rel == u"alternate" ]) or []
+        if not data[u"categories"]: del data[u"categories"]
+        if e.summary is not None:
+            data[u"summary"] = unicode(e.summary)
+        if e.content is not None:
+            try:
+                data[u"content_src"] = unicode(e.content.src)
+            except AttributeError:
+                data[u"content_text"] = unicode(e.content)
+        for child in e.xml_elements:
+            if child.xml_namespace != ATOM_NAMESPACE and child.xml_local not in known_elements:
+                data[child.xml_local] = unicode(child)
+        return data
+
     try:
         doc_entries = iter(doc.feed.entry)
         feedinfo = {
@@ -264,35 +380,7 @@ def parse(isrc):
         except AttributeError:
             return None, []
 
-    def process_entry(e):
-        known_elements = [u'id', u'title', u'link', u'author', u'category', u'updated', u'content', u'summary']
-        data = {
-            u"label": unicode(e.id),
-            u"type": u"Entry",
-            u"title": unicode(e.title),
-            #Nested list comprehension to select the alternate link,
-            #then select the first result ([0]) and gets its href attribute
-            u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
-            #Nested list comprehension to create a list of category values
-            u"categories": [ unicode(c.term) for c in iter(e.category or []) ],
-            u"updated": unicode(e.updated),
-            u"summary": unicode(e.summary),
-        }
-        altlink = first_item([ l for l in e.link if l.rel == u"alternate" ])
-        data[u"link"] = altlink.href if altlink else []
-        if e.summary is not None:
-            data[u"summary"] = unicode(e.summary)
-        if e.content is not None:
-            try:
-                data[u"content_src"] = unicode(e.content.src)
-            except AttributeError:
-                data[u"content_text"] = unicode(e.content)
-        for child in e.xml_elements:
-            if child.xml_namespace != ATOM_NAMESPACE and child.xml_local not in known_elements:
-                data[child.xml_local] = unicode(child)
-        return data
-
-    return feedinfo, [ process_entry(e) for e in doc_entries ]
+    return [ process_entry(e) for e in doc_entries ]
 
 
 def command_line_prep():

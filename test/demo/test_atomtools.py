@@ -30,22 +30,24 @@ class Test_tidy_atom(unittest.TestCase):
         self.assertEqual(len(list(doc.entry)), 1)
         self.assertEqual(len(list(doc.entry.link)), 1)
         return
-        # TODO: Why was there a return there? XXX
-        self.assertEqual(doc.xml_children[0].xml_type, tree.element.xml_type)
-        self.assertEqual(doc.xml_children[0].xml_qname, 'html')
-        self.assertEqual(doc.xml_children[0].xml_namespace, None)
-        self.assertEqual(doc.xml_children[0].xml_prefix, None)
-        self.assertEqual(len(list(doc.html.xml_elements)), 2)
-        return
 
 
 class Test_atom2rdf_rss(unittest.TestCase):
-    """Testing untidy atom 1"""
+    """Testing atom to RSS conversion"""
     def test_atom1(self):
         #doc = bindery.parse(tidy_atom(filesource('entry1.atom')))
         isrc = tidy_atom(filesource('rfc4287-1-1-2.atom'))
         print atom2rss1(isrc)
         return 
+
+#
+class Test_ejsonize(unittest.TestCase):
+    """Testing conversion to simple data structure"""
+    def test_ejsonize1(self):
+        EXPECTED = [{u'updated': u'2005-07-31T12:29:29Z', u'title': u'Atom draft-07 snapshot', u'label': u'tag:example.org,2003:3.2397', u'content_text': u'\n     \n       [Update: The Atom draft is finished.]\n     \n   ', u'link': u'http://example.org/2005/04/02/atom', u'authors': [u'Mark Pilgrim'], u'summary': u'None', u'type': u'Entry'}]
+        results = ejsonize(filesource('rfc4287-1-1-2.atom').source)
+        self.assertEqual(results, EXPECTED)
+        return
 
 
 if __name__ == '__main__':
