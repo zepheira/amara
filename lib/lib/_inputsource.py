@@ -66,8 +66,8 @@ class _inputsource(InputSource):
         #http://docs.python.org/lib/module-bz2.html
         #http://docs.python.org/lib/zipfile-objects.html
 
-        #InputSource.__new__ is in C: expat/input_source.c:inputsource_new
         #import inspect; print inspect.stack()
+        #InputSource.__new__ is in C: expat/input_source.c:inputsource_new
         return InputSource.__new__(cls, stream, uri, encoding)
 
     def __init__(self, arg, uri=None, encoding=None, resolver=None):
