@@ -106,6 +106,36 @@ class Test_feed(unittest.TestCase):
         self.assertEqual(unicode(f.feed.entry.id), EXPECTED_ID)
         return
 
+    def test_feed_basics(self):
+        """Testing atom entry basics"""
+        #EXPECTED_TITLE = u'dive into mark'
+        f = feed(feedxml=tidy_atom(filesource('rfc4287-1-1-2.atom')))
+        self.assertEqual(unicode(f.feed.link.rel), u'alternate')
+        self.assertEqual(unicode(f.feed.link.href), u'http://example.org/')
+        self.assertEqual(unicode(f.feed.link[1].rel), u'self')
+        self.assertEqual(unicode(f.feed.link[1].href), u'http://example.org/feed.atom')
+        return
+
+    def test_entry_basics1(self):
+        """Testing atom entry basics"""
+        #EXPECTED_TITLE = u'dive into mark'
+        f = feed(feedxml=tidy_atom(filesource('rfc4287-1-1-1.atom')))
+        self.assertEqual(f.feed.entry.link.rel, None)
+        self.assertEqual(unicode(f.feed.entry.link.href), u'http://example.org/2003/12/13/atom03')
+        return
+
+    #
+    def test_entry_basics2(self):
+        """Testing atom entry basics"""
+        #EXPECTED_TITLE = u'dive into mark'
+        f = feed(feedxml=tidy_atom(filesource('rfc4287-1-1-2.atom')))
+        self.assertEqual(unicode(f.feed.entry.link.rel), u'alternate')
+        self.assertEqual(unicode(f.feed.entry.link.href), u'http://example.org/2005/04/02/atom')
+        self.assertEqual(unicode(f.feed.entry.link[1].rel), u'enclosure')
+        self.assertEqual(unicode(f.feed.entry.link[1].href), u'http://example.org/audio/ph34r_my_podcast.mp3')
+        return
+
+    
     def test_atom2rdf_rss(self):
         """Testing atom to RSS conversion"""
         EXPECTED_TITLE = u'dive into mark'

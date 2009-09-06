@@ -75,11 +75,18 @@ def replace_namespace(node, oldns, newns):
     return
 
 
-def first_item(seq, next=None):
-    if next is None:
-        return chain(seq or (), (None,)).next()
-    else:
-        return next(chain(seq or (), (None,)).next())
+def first_item(seq, default=None):
+    '''
+    Return the first item in a sequence, or the default result (None by default)
+    This is somewhat analogous to the Python get() method on dictionaries, and
+    is an idiom which in functional chains is less clumsy than its equivalent:
+
+    try:
+        return seq.next()
+    except StopIteration:
+        return default
+    '''
+    return chain(seq or (), (default,)).next()
 
 
 identity = lambda x: x

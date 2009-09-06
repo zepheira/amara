@@ -46,7 +46,7 @@ ENTRY_MODEL_XML = """<atom:entry xmlns:atom="http://www.w3.org/2005/Atom" xmlns:
    <atom:title type="xhtml" ak:rel="local-name()"/>
    <atom:updated ak:rel="local-name()"></atom:updated>
    <atom:published ak:rel="local-name()"></atom:published>
-   <atom:link eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
+   <atom:link rel="self" eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
    <atom:summary type="xhtml" ak:rel="local-name()"/>
    <atom:category eg:occurs="*" ak:rel="local-name()"/>
    <!--
@@ -78,7 +78,7 @@ FEED_MODEL_XML = """<atom:feed xmlns:atom="http://www.w3.org/2005/Atom" xmlns:eg
     <atom:email ak:rel="local-name()"/>
   </atom:author>
   <atom:id ak:rel="local-name()"></atom:id>
-  <atom:link eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
+  <atom:link rel="self" eg:occurs="*" ak:rel="concat(local-name(), '_', @rel)" ak:value="@href" />
   <atom:rights ak:rel="local-name()"></atom:rights>
 %s
 </atom:feed>
@@ -440,6 +440,7 @@ def ejsonize(isrc):
             u"label": unicode(e.id),
             u"type": u"Entry",
             u"title": unicode(e.title),
+            u"link": first_item([ l.href for l in e.link if l.rel == u"alternate" ], []),
             #Nested list comprehension to select the alternate link,
             #then select the first result ([0]) and gets its href attribute
             u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
@@ -448,7 +449,6 @@ def ejsonize(isrc):
             u"updated": unicode(e.updated),
             u"summary": unicode(e.summary),
         }
-        data[u"link"] = first_item([ l.href for l in e.link if l.rel == u"alternate" ]) or []
         if not data[u"categories"]: del data[u"categories"]
         if e.summary is not None:
             data[u"summary"] = unicode(e.summary)
@@ -468,7 +468,7 @@ def ejsonize(isrc):
             u"label": unicode(doc.feed.id),
             u"type": u"Feed",
             u"title": unicode(doc.feed.title),
-            u"link": [ l for l in doc.feed.link if l.rel == u"alternate" ][0].href,
+            u"link": first_item([ l.href for l in doc.feed.link if l.rel == u"alternate" ], []),
             u"authors": [ unicode(a.name) for a in iter(doc.feed.author or []) ],
             u"updated": unicode(doc.feed.updated),
         }
@@ -477,7 +477,7 @@ def ejsonize(isrc):
             doc_entries = iter(doc.entry)
             feedinfo = None
         except AttributeError:
-            return None, []
+            return []
 
     return [ process_entry(e) for e in doc_entries ]
 
