@@ -672,6 +672,8 @@ def absolutize(uriRef, baseUri, limit_schemes=None):
     # This procedure is based on the pseudocode in RFC 3986 sec. 5.2.
     #
     # ensure base URI is absolute
+    if is_absolute(uriRef):
+        return uriRef
     if not baseUri or not is_absolute(baseUri):
         raise IriError(IriError.RELATIVE_BASE_URI,
                            base=baseUri, ref=uriRef)

@@ -118,7 +118,7 @@ class bound_element(object):
         if child is not None:
             return child
         else:
-            #This property is defined on this element class, but does not exist on this instance
+            #Property is defined in this element class's XML model, but does not appear on this instance
             return obj.xml_model.element_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
@@ -149,7 +149,13 @@ class bound_attribute(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        return obj.xml_attributes[self.ns, self.local]
+        #FIXME: Hack until this issue is fixed: http://trac.xml3k.org/ticket/8
+        attrmap = dict(obj.xml_attributes.items())
+        if (self.ns, self.local) in attrmap:
+            return attrmap[self.ns, self.local]
+        else:
+            #Property is defined in this element class's XML model, but does not appear on this instance
+            return obj.xml_model.attribute_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
         obj.xml_attributes[self.ns, self.local].xml_value = value

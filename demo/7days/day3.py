@@ -136,7 +136,7 @@ XBEL_DTDECL = '''<!DOCTYPE xbel PUBLIC
        "http://www.python.org/topics/xml/dtds/xbel-1.0.dtd">'''
 
 XBEL_MODEL = '''<?xml version="1.0"?>
-<xbel version="1.0" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/dc/org/xml3k/akara">
+<xbel version="1.0" xmlns:eg="http://examplotron.org/0/" xmlns:ak="http://purl.org/xml3k/akara/xmlmodel">
   <info eg:occurs="?">
     <metadata owner="http://example.com" eg:occurs="?">MD1</metadata>
   </info>

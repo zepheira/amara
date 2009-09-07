@@ -93,13 +93,14 @@ inputsource_clear(InputSourceObject *self)
 Py_LOCAL_INLINE(PyObject *)
 resolve_uri(InputSourceObject *self, PyObject *uri)
 {
-  PyObject *byte_stream;
-
   uri = PyObject_CallMethod((PyObject *)self, "absolutize", "OO", uri,
                             self->base_uri);
   if (uri == NULL)
     return NULL;
 
+  return PyObject_CallMethod((PyObject *)self, "resolve", "O", uri);
+/*
+  PyObject *byte_stream;
   byte_stream = PyObject_CallMethod((PyObject *)self, "resolve", "O", uri);
   if (byte_stream == NULL) {
     Py_DECREF(uri);
@@ -108,6 +109,8 @@ resolve_uri(InputSourceObject *self, PyObject *uri)
 
   return PyObject_CallFunction((PyObject *)self->ob_type, "NN",
                                byte_stream, uri);
+*/
+
 }
 
 static PyObject *

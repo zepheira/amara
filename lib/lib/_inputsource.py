@@ -27,7 +27,7 @@ class _inputsource(InputSource):
         _supported_schemes is a list of URI schemes supported 
         for dereferencing (representation retrieval).
     """
-    def __new__(cls, arg, uri=None, resolver=None):
+    def __new__(cls, arg, uri=None, encoding=None, resolver=None):
         """
         arg - a string, Unicode object (only if you really know what you're doing),
               file-like object (stream), file path or URI.  You can also pass an
@@ -66,9 +66,12 @@ class _inputsource(InputSource):
         #http://docs.python.org/lib/module-bz2.html
         #http://docs.python.org/lib/zipfile-objects.html
 
-        return InputSource.__new__(cls, stream, uri)
+        #import inspect; print inspect.stack()
+        #InputSource.__new__ is in C: expat/input_source.c:inputsource_new
+        return InputSource.__new__(cls, stream, uri, encoding)
 
-    def __init__(self, arg, uri=None, resolver=None):
+    def __init__(self, arg, uri=None, encoding=None, resolver=None):
+        #uri is set 
         self.resolver = resolver or DEFAULT_RESOLVER
 
     def resolve(self, uriRef, baseUri=None):
@@ -82,7 +85,9 @@ class _inputsource(InputSource):
         Raises a IriError if the URI scheme is unsupported or if a stream
         could not be obtained for any reason.
         """
-        return self.__class__(self.resolver.resolve(uriRef, baseUri))
+        if baseUri:
+            uriRef = self.resolver.absolutize(uriRef, baseUri)
+        return self.__class__(uriRef)
 
     def absolutize(self, uriRef, baseUri):
         """

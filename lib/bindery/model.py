@@ -243,7 +243,7 @@ class document_model(object):
         #raise NotImplementedErr
 
 
-AKARA_NS = u'http://purl.org/dc/org/xml3k/akara'
+from amara.namespaces import *
 from amara.lib.util import *
 
 class examplotron_model(document_model):
@@ -260,12 +260,15 @@ class examplotron_model(document_model):
         '''
         Process an examplotron document for constraints
         '''
-        NSS = {u'ak': AKARA_NS, u'eg': EG_NAMESPACE}
+        NSS = {u'ak': AKARA_NAMESPACE, u'eg': EG_NAMESPACE}
         parent = parent if parent is not None else self.model_document
         allowed_elements_test = []
         if isinstance(parent, tree.element):
-            for a in parent.xml_attributes:
-                parent.xml_model.attribute_types[a] = (self.model_document.xml_pyname(a[0], a[1], iselement=False), None)
+            #for a in parent.xml_attributes:
+            #FIXME: Hack until this issue is fixed: http://trac.xml3k.org/ticket/8
+            for a in dict(parent.xml_attributes.items()):
+                if a[0] not in [EG_NAMESPACE, AKARA_NAMESPACE]:
+                    parent.xml_model.attribute_types[a] = (self.model_document.xml_pyname(a[0], a[1], iselement=False), None)
         for e in parent.xml_elements:
             #Constraint info
             eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
