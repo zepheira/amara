@@ -90,7 +90,7 @@ get_entry(AttributeMapObject *nm, Py_ssize_t hash, PyObject *name,
   register size_t perturb = hash;
   register size_t mask = (size_t)nm->nm_mask;
   register size_t i = perturb & mask;
-  register size_t entry = 0;
+  register size_t entry = i;
   AttrObject **table = nm->nm_table;
 
   while (table[entry] && !key_eq(table[entry], hash, name, namespace)) {

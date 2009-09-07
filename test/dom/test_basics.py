@@ -75,5 +75,21 @@ class Test_parse_functions_2(unittest.TestCase):
         self.assertEqual(doc.xml_children[0].xml_namespace, None)
         self.assertEqual(doc.xml_children[0].xml_prefix, None,)
 
+class Test_attributes(unittest.TestCase):
+    def test_ticket_8(self):
+        "Test for ticket #8 bug"
+        text = '<row a="" b="" c="" d="" e="" f=""/>'
+        doc = parse (text)
+        row = doc.xml_select ("row")[0]
+        attrs = row.xml_attributes
+
+        # Verify that attributemap_contains returns a sane result;
+        # for each K in attrs.keys(), 'K in attrs' is true.
+        # for a few values of K not in attrs.keys(), 'K in attrs' is false.
+        for k in attrs.keys():
+            self.assertTrue(k in attrs)
+        for k in [(None, 'g'), (None, 'h'), (None, 'z')]:
+            self.assertFalse(k in attrs)
+
 if __name__ == '__main__':
     raise SystemExit("use nosetests")
