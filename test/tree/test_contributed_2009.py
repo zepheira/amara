@@ -8,7 +8,7 @@ import amara
 
 class Test_many_attribs(unittest.TestCase):
     """http://trac.xml3k.org/ticket/8"""
-    MANY_ATTRS_XML = """<row a="" b="" c="" d="" e="" f=""/>"""
+    MANY_ATTRS_XML = """<row a="1" b="2" c="3" d="4" e="5" f="6"/>"""
     def test_many_att(self):
         doc = amara.parse(self.MANY_ATTRS_XML)
         row = doc.xml_select("row")[0]
@@ -16,13 +16,13 @@ class Test_many_attribs(unittest.TestCase):
         attrs = row.xml_attributes
         missing = [ k for k in attrs.keys() if k not in attrs ]
         #[(None, u'b'), (None, u'c'), (None, u'd'), (None, u'e')]
-        listcomp_keys = [ k for k in attrs.keys() ]
-        genexpr_keys = list( k for k in attrs.keys() )
-        items = attrs.items()
+        listcomp_keys = sorted([ k for k in attrs.keys() ])
+        genexpr_keys = sorted(list( k for k in attrs.keys() ))
+        items = sorted(attrs.items())
         self.assertEqual(missing, [])
-        self.assertEqual(listcomp_keys, [(None, u'b'), (None, u'c'), (None, u'd'), (None, u'e')])
-        self.assertEqual(genexpr_keys, [(None, u'b'), (None, u'c'), (None, u'd'), (None, u'e')])
-        self.assertEqual(items, [(None, u'b'), (None, u'c'), (None, u'd'), (None, u'e')])
+        self.assertEqual(listcomp_keys, [(None, u'a'), (None, u'b'), (None, u'c'), (None, u'd'), (None, u'e'), (None, u'f')])
+        self.assertEqual(genexpr_keys, [(None, u'a'), (None, u'b'), (None, u'c'), (None, u'd'), (None, u'e'), (None, u'f')])
+        self.assertEqual(items, [((None, u'a'), u'1'), ((None, u'b'), u'2'), ((None, u'c'), u'3'), ((None, u'd'), u'4'), ((None, u'e'), u'5'), ((None, u'f'), u'6')])
         return
 
 
