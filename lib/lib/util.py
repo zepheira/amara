@@ -148,22 +148,24 @@ def trim_word_count(node, maxcount):
     amara.xml_print(trim_word_count(x, 9))
     amara.xml_print(trim_word_count(x, 10))
     '''
-    import amara
     def trim(node, count):
         newnode = copy(node)
         for child in node.xml_children:
             if count >= maxcount:
-                continue
-            addendum = len(child.xml_select(u'string(.)').split())
-            if count + addendum > maxcount:
-                if isinstance(child, amara.tree.text):
-                    newnode.xml_append(amara.tree.text(child.xml_value.rsplit(None, maxcount-count)[0]))
+                break
+            words = len(child.xml_select(u'string(.)').split())
+            if count + words < maxcount:
+                newnode.xml_append(deepcopy(child))
+                count += words
+            else:
+                if isinstance(child, tree.text):
+                    words_required = maxcount - count
+                    chunk = child.xml_value.rsplit(None, 
+                                                   words-words_required)[0]
+                    newnode.xml_append(tree.text(chunk))
                 else:
                     newnode.xml_append(trim(child, count))
                 count = maxcount
-            else:
-                newnode.xml_append(deepcopy(child))
-                count += addendum
         return newnode
     return trim(node, 0)
 
