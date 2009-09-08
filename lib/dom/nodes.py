@@ -14,7 +14,6 @@ from xml.dom import InvalidCharacterErr#, UnspecifiedEventTypeErr
 from functools import *
 from amara.lib.xmlstring import *
 from amara import tree
-import sets
 import itertools
 import warnings
 
