@@ -5,8 +5,7 @@ import tempfile
 
 from amara.lib import testsupport
 from amara.bindery import html
-from amara import tree, xml_print, bindery
-from amara import tree
+from amara import tree, bindery
 
 from amara.lib.treecompare import xml_compare
 
@@ -19,9 +18,8 @@ def tidy_atom(source):
     doc = bindery.parse(source.source)
     tidy_content_element(doc)
     buf = StringIO()
-    xml_print(doc, stream=buf, indent=True)
-    #self.assertEqual(buf.getvalue(), expected)
-    return buf.getvalue()
+    #FIXME: indent=True soon as it's supported
+    return doc.xml_encode()
 
 
 class Test_tidy_atom(unittest.TestCase):

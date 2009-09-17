@@ -303,19 +303,19 @@ class container_mixin(object):
 
     def __delitem__(self, key):
         '''
-        from amara import bindery, xml_print
+        from amara import bindery
         DOC = "<a><b>spam</b><b>eggs</b></a>"
         doc = bindery.parse(DOC)
         del doc.a.b[1]
-        xml_print(doc)
+        doc.xml_write()
         
         --> "<a><b>spam</b></a>"
 
-        from amara import bindery, xml_print
+        from amara import bindery
         DOC = "<a><b>spam</b><b>eggs</b></a>"
         doc = bindery.parse(DOC)
         del doc.a[u'b']
-        xml_print(doc)
+        doc.xml_write()
         
         --> "<a><b>eggs</b></a>"
         '''
@@ -350,7 +350,7 @@ class container_mixin(object):
         DOC = "<a><b>spam</b></a>"
         doc = bindery.parse(DOC)
         doc.a.b[0] = u"eggs"
-        xml_print(doc)
+        doc.xml_write()
         
         --> "<a><b>eggs</b></a>"
 
@@ -358,7 +358,7 @@ class container_mixin(object):
         DOC = "<a><b>spam</b></a>"
         doc = bindery.parse(DOC)
         doc.a[u'b'] = u"eggs"
-        xml_print(doc)
+        doc.xml_write()
         
         --> "<a><b>eggs</b></a>"
         '''

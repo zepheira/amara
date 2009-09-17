@@ -158,8 +158,7 @@ def parse(source, model=None, encoding=None):
 
 def launch(source, **kwargs):
     doc = parse(source)
-    from amara import xml_print
-    xml_print(doc, indent=kwargs.get('pretty'))
+    doc.xml_write(indent=kwargs.get('pretty'))
     return
 
 
