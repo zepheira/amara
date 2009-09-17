@@ -28,7 +28,7 @@ class TestTree(unittest.TestCase):
         self.assertEqual(m.xml_name,  (None, u'monty')) #The "universal name" or "expanded name"
         self.assertEqual(m.xml_parent, doc)
         
-        p1 = m.xml_children[0]
+        p1 = m.xml_children[1]
         XML_output = '<python spam="eggs">What do you mean "bleh"</python>'
         output = cStringIO.StringIO()
         xml_print(p1, stream=output)
@@ -77,4 +77,3 @@ class TestTree(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-        
