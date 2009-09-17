@@ -27,10 +27,8 @@ class htmlprinter(xmlprinter):
 
     _disable_ouput_escaping = 0
 
-    def __init__(self, stream, encoding, byte_order_mark=None,
-                 canonical_form=None):
-        assert not canonical_form
-        xmlprinter.__init__(self, stream, encoding, byte_order_mark, False)
+    def __init__(self, stream, encoding):
+        xmlprinter.__init__(self, stream, encoding)
 
     def start_document(self, version='4.0', standalone=None):
         """
@@ -280,10 +278,8 @@ class htmlprettyprinter(htmlprinter):
     # The amount of indent for each level of nesting
     indent = '  '
 
-    def __init__(self, stream, encoding, byte_order_mark=None,
-                 canonical_form=None):
-        htmlprinter.__init__(self, stream, encoding, byte_order_mark,
-                             canonical_form)
+    def __init__(self, stream, encoding):
+        htmlprinter.__init__(self, stream, encoding)
         self._level = 0
         # indenting control variables
         self._is_inline = [1]  # prevent newline before first element

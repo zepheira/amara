@@ -1,11 +1,35 @@
-########################################################################
-# amara/writers/__init__.py
+"""amara.writers
+
+Implements Amara's support for serializing trees as XML, HTML, or XHTML.
+
+Functions for public use:
+
+    lookup(str)          : Returns a printer object for writing DOM elements.
+    register(str, class) : Record a printer class for future lookup() calls.
+
+The three most commonly-used names are available as constants: XML_W,
+XHTML_W, and HTML_W.
+
+For writing out XML and HTML, use the xml_write() and xml_encode()
+methods on Amara node objects.
+
+"""
 
 import sys
 from amara import Error
 from amara.lib.xmlstring import *
 
-__all__ = ['WriterError', 'writer', 'streamwriter']
+__all__ = ['WriterError', 'writer', 'streamwriter',
+           'HTML_W', 'XML_W', 'XHTML_W',
+           'lookup', 'register', 'xml_print'
+          ]
+
+# Constants for the most common writers
+HTML_W = 'html'
+XML_W = 'xml'
+XHTML_W = 'xhtml'
+
+_lookup_table = {}
 
 class WriterError(Error):
 
@@ -21,6 +45,85 @@ class WriterError(Error):
             WriterError.ATTRIBUTE_ADDED_TO_NON_ELEMENT: _(
                 'Attempted to add attribute to non-element'),
         }
+
+def _init_lookup_table():
+    from amara.writers import _xmlprinters, _htmlprinters, _xhtmlprinters
+
+    _lookup_table.update({XML_W: _xmlprinters.xmlprinter, 
+                          XML_W + '-indent': _xmlprinters.xmlprettyprinter,
+                          XML_W + '-canonical': _xmlprinters.canonicalxmlprinter,
+                          HTML_W: _htmlprinters.htmlprinter, 
+                          HTML_W + '-indent': _htmlprinters.htmlprettyprinter, 
+                          XHTML_W: _xhtmlprinters.xhtmlprinter,
+                          XHTML_W + '-indent': _xhtmlprinters.xhtmlprettyprinter,
+                          })
+
+
+def lookup(printer_name):
+    """(str): Printer class
+
+    Return a printer object for writing DOM elements.
+
+    Currently the following values for 'printer_name' are supported:
+      xml html xhtml
+    """
+    if not _lookup_table:
+        _init_lookup_table()
+
+    if printer_name in _lookup_table:
+        return _lookup_table[printer_name]
+    else:
+        raise ValueError("Unknown printer class %r" % printer_name)
+
+def register(printer_name, printer_class):
+    """(str, class)
+
+    Record a printer class so that future calls to lookup() will
+    return it.
+
+    """
+    if not _lookup_table:
+        _init_lookup_table()
+
+    if printer_name in _lookup_table:
+        raise ValueError("Already a printer registered for name %r"
+                         % printer_name)
+    _lookup_table[printer_name] = printer_class
+
+
+def _xml_write(N, writer=XML_W, stream=None, encoding='UTF-8', **kwargs):
+    """(node, file, str, class): None
+
+    INTERNAL function.
+
+    Serializes an XML tree, writing it to the specified 'stream' object.
+    """
+    from amara.writers import node
+    writer_class = lookup(writer)
+
+    if stream is None:
+        import sys
+        stream = sys.stdout
+
+    writer = writer_class(stream, encoding)
+    v = node._Visitor(writer, **kwargs)
+    v.visit(N)
+
+def _xml_encode(N, writer=XML_W, encoding='UTF-8', **kwargs):
+    """(node, Writer): None
+    """
+    import cStringIO
+    stream = cStringIO.StringIO()
+    _xml_write(N, writer, stream, encoding, **kwargs)
+    return stream.getvalue()
+
+
+# Backward-compatibility alias
+def xml_print(root, stream=None, encoding='UTF-8', **kwargs):
+    ##import warnings
+    ##warnings.warn("xml_print() function is deprecated; "
+    ##              "use xml_write() method instead")
+    _xml_write(root, XML_W, stream, encoding)
 
 
 class writer(object):

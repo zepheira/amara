@@ -293,11 +293,108 @@ static PyObject *node_setstate(PyObject *self, PyObject *state)
   Py_RETURN_NONE;
 }
 
+static char xml_write_doc[] = "xml_write()\n\n"
+"serialize node to a stream";
+
+static PyObject *xml_write(PyObject *self, PyObject *args, PyObject *kw)
+{
+  PyObject *writer_module, *new_args;
+  PyObject *func, *result;
+  int i;
+
+#if PY_MAJOR_VERSION <= 2 && PY_MINOR_VERSION <= 5
+  writer_module = PyImport_ImportModule("amara.writers");
+#else
+  writer_module = PyImport_ImportModuleNoBlock("amara.writers");
+#endif
+  writer_module = PyImport_ImportModule("amara.writers");
+  if (writer_module == NULL) {
+    return NULL;
+  }
+  
+  func = PyObject_GetAttrString(writer_module, "_xml_write");
+  if (func == NULL) {
+    Py_DECREF(writer_module);
+    return NULL;
+  }
+
+  new_args = PyTuple_New(1+PyTuple_Size(args));
+  if (new_args == NULL) {
+    Py_DECREF(writer_module);
+    Py_DECREF(func);
+    return NULL;
+  }
+
+  Py_INCREF(self);
+  PyTuple_SET_ITEM(new_args, 0, self);
+  for(i=0; i<PyTuple_Size(args); i++) {
+    PyObject *elem = PyTuple_GET_ITEM(args, i);
+    Py_INCREF(elem);
+    PyTuple_SET_ITEM(new_args, i+1, elem);
+  }
+  
+  result = PyObject_Call(func, new_args, kw);
+  Py_DECREF(writer_module);
+  Py_DECREF(func);
+  Py_DECREF(new_args);
+  return result;
+			 
+}
+
+static char xml_encode_doc[] = "xml_encode()\n\n"
+"serialize node to a string";
+
+static PyObject *xml_encode(PyObject *self, PyObject *args, PyObject *kw)
+{
+  PyObject *writer_module, *new_args;
+  PyObject *func, *result;
+  int i;
+
+#if PY_MAJOR_VERSION <= 2 && PY_MINOR_VERSION <= 5
+  writer_module = PyImport_ImportModule("amara.writers");
+#else
+  writer_module = PyImport_ImportModuleNoBlock("amara.writers");
+#endif
+
+  if (writer_module == NULL) {
+    return NULL;
+  }
+  
+  func = PyObject_GetAttrString(writer_module, "_xml_encode");
+  if (func == NULL) {
+    Py_DECREF(writer_module);
+    return NULL;
+  }
+
+  new_args = PyTuple_New(1+PyTuple_Size(args));
+  if (new_args == NULL) {
+    Py_DECREF(writer_module);
+    Py_DECREF(func);
+    return NULL;
+  }
+
+  Py_INCREF(self);
+  PyTuple_SET_ITEM(new_args, 0, self);
+  for(i=0; i<PyTuple_Size(args); i++) {
+    PyObject *elem = PyTuple_GET_ITEM(args, i);
+    Py_INCREF(elem);
+    PyTuple_SET_ITEM(new_args, i+1, elem);
+  }
+  
+  result = PyObject_Call(func, new_args, kw);
+  Py_DECREF(writer_module);
+  Py_DECREF(func);
+  Py_DECREF(new_args);
+  return result;
+}
+
 #define PyMethod_INIT(NAME, FLAGS) \
   { #NAME, (PyCFunction)NAME, FLAGS, NAME##_doc }
 
 static PyMethodDef node_methods[] = {
   PyMethod_INIT(xml_select, METH_KEYWORDS),
+  PyMethod_INIT(xml_write,  METH_VARARGS|METH_KEYWORDS),
+  PyMethod_INIT(xml_encode,  METH_VARARGS|METH_KEYWORDS),
   /* copy(), deepcopy(), pickle support */
   { "__copy__",       node_copy,       METH_NOARGS,  "helper for copy" },
   { "__deepcopy__",   node_deepcopy,   METH_O,       "helper for deepcopy" },
