@@ -14,7 +14,7 @@ class xmlprinter(object):
     """
     An `xmlprinter` instance provides functions for serializing an XML or
     XML-like document to a stream, based on SAX-like event calls
-    initiated by an Ft.Xml.Lib.Print.PrintVisitor instance.
+    initiated by a _Visitor instance.
 
     The methods in this base class attempt to emit a well-formed parsed
     general entity conformant to XML 1.0 syntax, with no extra
@@ -29,24 +29,20 @@ class xmlprinter(object):
     if the previous event was not startElement(), thus preventing
     spurious attribute serializations.
     """
+    _canonical_form = False
 
-    def __init__(self, stream, encoding, byte_order_mark=None,
-                 canonical_form=None):
+    def __init__(self, stream, encoding):
         """
         `stream` must be a file-like object open for writing binary
         data. `encoding` specifies the encoding which is to be used for
         writing to the stream.
         """
-        self.stream = xs = _xmlstream.xmlstream(stream, encoding,
-                                                #byte_order_mark
-                                                )
+        self.stream = xs = _xmlstream.xmlstream(stream, encoding)
         self.encoding = encoding
         self.write_ascii = xs.write_ascii
         self.write_encode = xs.write_encode
         self.write_escape = xs.write_escape
-        self._canonical_form = canonical_form
         self._element_name = None
-        return
 
     def start_document(self, version='1.0', standalone=None):
         """
@@ -135,7 +131,7 @@ class xmlprinter(object):
         if self._canonical_form:
             for name, value in attributes:
                 write_ascii(' ')
-                write_encode(name, 'attibute name')
+                write_encode(name, 'attribute name')
                 # Replace characters illegal in attribute values and wrap
                 # the value with quotes (") in accordance with Canonical XML.
                 write_ascii('="')
@@ -192,7 +188,9 @@ class xmlprinter(object):
         """
         if self._element_name:
             self._element_name = None
-            if not self._canonical_form:
+            if self._canonical_form:
+                self.write_ascii('>')
+            else:    
                 # No element content, use minimized form
                 self.write_ascii('/>')
                 return
@@ -317,17 +315,18 @@ class canonicalxmlprinter(xmlprinter):
     Note: this class is fully compatible with exclusive c14n:
       http://www.w3.org/TR/xml-exc-c14n/
     whether or not the operation is exclusive depends on preprocessing
-    operations appplied by the caller.  See Ft.Xml.Lib.Print, for example
+    operations appplied by the caller.
     """
+    # Enable canonical-form output.
+    _canonical_form = True
 
 
 class xmlprettyprinter(xmlprinter):
     """
-    An XmlPrettyPrinter instance provides functions for serializing an
-    XML or XML-like document to a stream, based on SAX-like event calls
-    initiated by an Ft.Xml.Lib.Print.PrintVisitor instance.
+    An xmlprettyprinter instance provides functions for serializing an
+    XML or XML-like document to a stream, based on SAX-like event calls.
 
-    The methods in this subclass of XmlPrinter produce the same output
+    The methods in this subclass of xmlprinter produce the same output
     as the base class, but with extra whitespace added for visual
     formatting. The indent attribute is the string used for each level
     of indenting. It defaults to 2 spaces.
@@ -336,13 +335,10 @@ class xmlprettyprinter(xmlprinter):
     # The amount of indent for each level of nesting
     indent = '  '
 
-    def __init__(self, stream, encoding, byte_order_mark=None,
-                 canonical_form=None):
-        assert not canonical_form
-        xmlprinter.__init__(self, stream, encoding, byte_order_mark, False)
+    def __init__(self, stream, encoding):
+        xmlprinter.__init__(self, stream, encoding)
         self._level = 0
         self._can_indent = False  # don't indent first element
-        return
 
     def start_element(self, namespace, name, namespaces, attributes):
         if self._element_name:

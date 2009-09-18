@@ -142,7 +142,7 @@ def tidy_content_element(root, check=u'//atom:title|//atom:summary|//atom:conten
     A = '<entry xmlns="http://www.w3.org/2005/Atom"><id>urn:bogus:x</id><title type="html">&lt;div&gt;x&lt;p&gt;y&lt;p&gt;&lt;/div&gt;</title></entry>'
     doc = amara.parse(A)
     tidy_content_element(doc)
-    amara.xml_print(doc)
+    doc.xml_write()
     """
     nodes = root.xml_select(check, prefixes)
     for node in nodes:

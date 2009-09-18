@@ -23,9 +23,9 @@ class TestBasicMods(unittest.TestCase):
         """
         Auxiliar method for testing output puposes
         """
-        output = cStringIO.StringIO()        
-        xml_print(doc, stream=output)
-        return self.assertEqual(output.getvalue(), expected)
+        #output = cStringIO.StringIO()        
+        #xml_print(doc, stream=output)
+        return self.assertEqual(doc.xml_encode(), expected)
         
     def test_basic_tree_create_doc1(self):
         EXPECTED = "<A/>"

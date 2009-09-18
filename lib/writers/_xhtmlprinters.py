@@ -8,7 +8,7 @@ import re
 
 from amara.namespaces import XHTML_NAMESPACE
 from amara.writers import _xmlstream, htmlentities
-from amara.writers._xmlprinter import xmlprinter
+from amara.writers._xmlprinters import xmlprinter
 
 __all__ = ('xhtmlprinter', 'xhtmlprettyprinter')
 
@@ -149,10 +149,8 @@ class xhtmlprettyprinter(xhtmlprinter):
     # The amount of indent for each level of nesting
     indent = '  '
 
-    def __init__(self, stream, encoding, byte_order_mark=None,
-                 canonical_form=None):
-        xhtmlprinter.__init__(self, stream, encoding, byte_order_mark,
-                              canonical_form)
+    def __init__(self, stream, encoding):
+        xhtmlprinter.__init__(self, stream, encoding)
         self._level = 0
         # indenting control variables
         self._is_inline = [1]  # prevent newline before first element
