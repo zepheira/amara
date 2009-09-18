@@ -99,7 +99,11 @@ def _xml_write(N, writer=XML_W, stream=None, encoding='UTF-8', **kwargs):
     Serializes an XML tree, writing it to the specified 'stream' object.
     """
     from amara.writers import node
-    writer_class = lookup(writer)
+    if isinstance(writer, str):
+        writer_class = lookup(writer)
+    else:
+        # Assume provided writer is a writer class
+        writer_class = writer
 
     if stream is None:
         import sys
