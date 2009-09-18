@@ -6,7 +6,7 @@
 import unittest
 import cStringIO
 import amara
-from amara import tree, xml_print, bindery
+from amara import tree, bindery
 from xml.dom import Node
 
 
@@ -617,9 +617,7 @@ class TestTransforms(unittest.TestCase):
         """
         Auxiliar method for testing output puposes
         """
-        output = cStringIO.StringIO()        
-        xml_print(doc, stream=output)
-        return self.assertEqual(output.getvalue(), expected)
+        return self.assertEqual(doc.xml_encode(), expected)
 
     def test_deep_copy_entity(self):
         #FIXME really goes in manual.py, since it's based on a manual example

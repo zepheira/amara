@@ -1,11 +1,10 @@
 import unittest
 
 ### revise these imports
-from amara import xml_print, tree
+from amara import tree
 from amara.lib import inputsource
 from amara.tree import parse_fragment
 from xml.dom import Node
-import cStringIO
 
 SOURCE1 = "<p>hello<b>world</b>.  How ya doin'?</p>"
 
@@ -30,9 +29,7 @@ class Test_fragment_parse(unittest.TestCase):
         """Parse plain text"""
         isrc = inputsource(SOURCE1)
         doc = parse_fragment(isrc)
-        stream = cStringIO.StringIO()
-        xml_print(doc, stream)
-        self.assertEqual(EXPECTED1, stream.getvalue())
+        self.assertEqual(EXPECTED1, doc.xml_encode())
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)
         first_child = doc.xml_children[0]
@@ -47,9 +44,7 @@ class Test_fragment_parse(unittest.TestCase):
                None: u'http://www.w3.org/1999/xhtml'}
         isrc = inputsource(SOURCE1)
         doc = parse_fragment(isrc, nss)
-        stream = cStringIO.StringIO()
-        xml_print(doc, stream)
-        self.assertEqual(EXPECTED2, stream.getvalue())
+        self.assertEqual(EXPECTED2, doc.xml_encode())
         #doc = parse_fragment(TEST_STRING)
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)
@@ -58,16 +53,14 @@ class Test_fragment_parse(unittest.TestCase):
         self.assertEqual(first_child.xml_qname, u'p')
         self.assertEqual(first_child.xml_namespace, u'http://www.w3.org/1999/xhtml')
         self.assertEqual(first_child.xml_prefix, None,)    
-        
+    
     def test_parse_overridden_default_namespace_reoverridden_child(self):
         """Parse with overridden default namespace and re-overridden child"""
         nss = {u'xml': u'http://www.w3.org/XML/1998/namespace',
                None: u'http://www.w3.org/1999/xhtml'}
         isrc = inputsource(SOURCE2)
         doc = parse_fragment(isrc, nss)
-        stream = cStringIO.StringIO()
-        xml_print(doc, stream)
-        self.assertEqual(EXPECTED3, stream.getvalue())
+        self.assertEqual(EXPECTED3, doc.xml_encode())
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)
         first_child = doc.xml_children[0]
@@ -75,16 +68,14 @@ class Test_fragment_parse(unittest.TestCase):
         self.assertEqual(first_child.xml_qname, u'p')
         self.assertEqual(first_child.xml_namespace, u'http://www.w3.org/1999/xhtml')
         self.assertEqual(first_child.xml_prefix, None,)    
-        
+    
     def test_parse_overridden_non_default_namespace(self):
         """Parse with overridden non-default namespace"""
         nss = {u'xml': u'http://www.w3.org/XML/1998/namespace',
                u'h': u'http://www.w3.org/1999/xhtml'}
         isrc = inputsource(SOURCE3)
         doc = parse_fragment(isrc, nss)
-        stream = cStringIO.StringIO()
-        xml_print(doc, stream)
-        self.assertEqual(EXPECTED4, stream.getvalue())
+        self.assertEqual(EXPECTED4, doc.xml_encode())
         #doc = parse_fragment(TEST_STRING)
         #Minimal node testing
         self.assertEqual(len(doc.xml_children), 1)

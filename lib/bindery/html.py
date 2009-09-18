@@ -102,7 +102,8 @@ class comment(tree.comment):
     type = 6
     value = tree.text.xml_value
     def __init__(self, data):
-        tree.comment.__init__(self, data)
+        #tree.comment.__init__(self, data)
+        tree.comment.__init__(self)
         self.data = data
 
     def toxml(self):
@@ -158,7 +159,10 @@ def parse(source, model=None, encoding=None):
 
 def launch(source, **kwargs):
     doc = parse(source)
-    doc.xml_write(indent=kwargs.get('pretty'))
+    if 'pretty' in kwargs:
+        doc.xml_write('xml-indent')
+    else:
+        doc.xml_write()
     return
 
 

@@ -138,15 +138,16 @@ def trim_word_count(node, maxcount):
     import amara
     from amara.lib.util import trim_word_count
     x = amara.parse('<a>one two <b>three four </b><c>five <d>six seven</d> eight</c> nine</a>')
-    amara.xml_print(trim_word_count(x, 1))
-    amara.xml_print(trim_word_count(x, 2))
-    amara.xml_print(trim_word_count(x, 3))
-    amara.xml_print(trim_word_count(x, 5))
-    amara.xml_print(trim_word_count(x, 6))
-    amara.xml_print(trim_word_count(x, 7))
-    amara.xml_print(trim_word_count(x, 8))
-    amara.xml_print(trim_word_count(x, 9))
-    amara.xml_print(trim_word_count(x, 10))
+    trim_word_count(x, 1).xml_write()
+    trim_word_count(x, 2).xml_write()
+    trim_word_count(x, 3).xml_write()
+    trim_word_count(x, 4).xml_write()
+    trim_word_count(x, 5).xml_write()
+    trim_word_count(x, 6).xml_write()
+    trim_word_count(x, 7).xml_write()
+    trim_word_count(x, 8).xml_write()
+    trim_word_count(x, 9).xml_write()
+    trim_word_count(x, 10).xml_write()
     '''
     def trim(node, count):
         newnode = copy(node)

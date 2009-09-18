@@ -286,7 +286,7 @@ class XIncludeError(ReaderError):
 
 from amara.tree import parse
 from amara.lib import xmlstring as string
-from amara.writers import xml_print
+#from amara.writers import xml_print
 ##from amara.writers._treevisitor import xml_print
 
 import sys
@@ -305,7 +305,10 @@ def writer(stream=sys.stdout, **kwargs):
 
 def launch(source, **kwargs):
     doc = parse(source, validate=kwargs['validate'], standalone=kwargs['standalone'])
-    xml_print(doc, indent=kwargs['pretty'])
+    if 'pretty' in kwargs:
+        doc.xml_write('xml-indent')
+    else:
+        doc.xml_write()
     return
 
 
@@ -325,6 +328,9 @@ def command_line_prep():
     parser.add_option("-v", "--validate",
                       action="store_true", dest="validate", default=False,
                       help="Apply DTD validation")
+    parser.add_option("-V", "--version",
+                      action="store_true", dest="version", default=False,
+                      help="Print the Amara version and exit")
     parser.add_option("-s", "--standalone",
                       action="store_true", dest="standalone", default=False,
                       help="Parse the XML with standalone rules")
@@ -362,6 +368,9 @@ def main(argv=None):
     #    xpath = None
     #xpattern = xpattern.decode('utf-8')
     #sentinel = options.sentinel and options.sentinel.decode('utf-8')
+    if options.version:
+        print __version__
+        return
     pretty = options.pretty
     validate = options.validate
     standalone = options.standalone
