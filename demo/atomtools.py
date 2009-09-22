@@ -477,7 +477,8 @@ def ejsonize(isrc):
             doc_entries = iter(doc.entry)
             feedinfo = None
         except AttributeError:
-            return []
+            #FIXME L10N
+            raise ValueError("Does not appear to be a valid Atom file")
 
     return [ process_entry(e) for e in doc_entries ]
 

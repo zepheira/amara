@@ -20,10 +20,10 @@ MODEL_A = '''<?xml version="1.0" encoding="utf-8"?>
       <city>Stamford</city>
       <province>CT</province>
     </address>
-    <opus year="1932" ak:rel="name()" ak:resource="">
+    <opus year="1932" ak:rel="" ak:resource="">
       <title ak:rel="name()">The Wasteland</title>
     </opus>
-    <tag eg:occurs="*" ak:rel="name()">old possum</tag>
+    <tag eg:occurs="*" ak:rel="">old possum</tag>
   </label>
 </labels>
 '''

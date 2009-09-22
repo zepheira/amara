@@ -23,7 +23,7 @@ from itertools import *
 from functools import *
 from operator import *
 
-from amara import tree, xml_print
+from amara import tree
 from amara.namespaces import *
 from amara.lib.xmlstring import *
 from amara.lib.util import *
@@ -285,21 +285,46 @@ class examplotron_model(document_model):
 
             #Metadata extraction cues
             #FIXME: Compile these XPath expressions
+            mod = e.xml_model
             rattr = e.xml_select(u'@ak:resource', NSS)
             if rattr:
                 #ak:resource="" should default to a generated ID
-                e.xml_model.metadata_resource_expr = rattr[0].xml_value or NODE_ID_MARKER
+                mod.metadata_resource_expr = rattr[0].xml_value or NODE_ID_MARKER
             #rattr = e.xml_select(u'string(@ak:resource)', NSS)
-            #if rattr: e.xml_model.metadata_resource_expr = rattr
-            relattr = e.xml_select(u'string(@ak:rel)', NSS)
-            if relattr: e.xml_model.metadata_rel_expr = relattr
-            valattr = e.xml_select(u'string(@ak:value)', NSS)
-            if valattr: e.xml_model.metadata_value_expr = valattr
+            #if rattr: mod.metadata_resource_expr = rattr
+            relattr = e.xml_select(u'@ak:rel', NSS)
+            if relattr:
+                if relattr[0].xml_value:
+                    mod.metadata_rel_expr = relattr[0].xml_value
+                else:
+                    mod.metadata_rel_expr = u'local-name()'
+            valattr = e.xml_select(u'@ak:value', NSS)
+            if valattr:
+                if valattr[0].xml_value:
+                    mod.metadata_value_expr = valattr[0].xml_value
+                else:
+                    mod.metadata_value_expr = u'.'
+
+            #Apply default relationship or value expression
+            #If there's ak:rel but no ak:value or ak:resource, ak:value=u'.'
+            #If there's ak:value but no ak:rel or ak:resource, ak:rel=u'local-name()'
+            if mod.metadata_resource_expr:
+                if (mod.metadata_value_expr
+                    and not mod.metadata_rel_expr):
+                    mod.metadata_rel_expr = u'local-name()'
+            else:
+                if (mod.metadata_rel_expr
+                    and not mod.metadata_value_expr):
+                    mod.metadata_value_expr = u'.'
+                elif (mod.metadata_value_expr
+                    and not mod.metadata_rel_expr):
+                    mod.metadata_rel_expr = u'local-name()'
+
             relelem = e.xml_select(u'ak:rel', NSS)
             
             for rel in relelem:
-                e.xml_model.other_rel_exprs.append((unicode(rel.name),unicode(rel.value)))
-            #print e.xml_name, (e.xml_model.metadata_resource_expr, e.xml_model.metadata_rel_expr, e.xml_model.metadata_value_expr)
+                mod.other_rel_exprs.append((unicode(rel.name),unicode(rel.value)))
+            #print e.xml_name, (mod.metadata_resource_expr, mod.metadata_rel_expr, mod.metadata_value_expr)
             
             #Recurse to process children
             self.setup_model(e)
