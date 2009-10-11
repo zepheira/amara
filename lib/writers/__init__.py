@@ -123,10 +123,10 @@ def _xml_encode(N, writer=XML_W, encoding='UTF-8', **kwargs):
 
 
 # Backward-compatibility alias
+#FIXME: Remove this function when amara goes beta
 def xml_print(root, stream=None, encoding='UTF-8', **kwargs):
-    ##import warnings
-    ##warnings.warn("xml_print() function is deprecated; "
-    ##              "use xml_write() method instead")
+    import warnings
+    warnings.warn("xml_print() function is deprecated; use xml_write() or xml_encode() method instead")
     _xml_write(root, XML_W, stream, encoding)
 
 

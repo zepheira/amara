@@ -95,13 +95,13 @@ class Test_doc_ns2(unittest.TestCase):
         self.assertEqual(
             [ f.xml_avt(u'Big up, {.}, rank {@rank}') for f in doc.friends.bff ],
             [u'Big up, Suzie Q, rank 1', u'Big up, Betty Boost, rank 2'])
-        print repr(attrgetter("rank")(doc.friends.bff))
+        #print repr(attrgetter("rank")(doc.friends.bff))
         self.assertEqual(
             [ f.xml_avt(u'{@rank}: {.}') for f in sorted(doc.friends.bff, key=attrgetter("rank")) ],
             [u'1: Suzie Q', u'2: Betty Boost'])
         return
 
+
 if __name__ == '__main__':
-    from amara.test import test_main
-    testsupport.test_main()
+    raise SystemExit("Use nosetests")
 

@@ -286,7 +286,14 @@ class XIncludeError(ReaderError):
 
 from amara.tree import parse
 from amara.lib import xmlstring as string
-#from amara.writers import xml_print
+
+#FIXME: Remove this function when amara goes beta
+def xml_print(*args, **kwargs):
+    import warnings
+    from amara.writers import xml_print as _xml_print
+    warnings.warn("xml_print() function is deprecated; use xml_write() or xml_encode() method instead")
+    return _xml_print(*args, **kwargs)
+
 ##from amara.writers._treevisitor import xml_print
 
 import sys
