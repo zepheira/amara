@@ -10,7 +10,8 @@ import itertools
 from amara.lib import xmlstring
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 from amara.writers import WriterError, streamwriter
-from amara.writers._xmlprinters import xmlprinter, xmlprettyprinter
+from amara.writers._xmlprinters import xmlprinter, xmlprettyprinter, \
+                                       canonicalxmlprinter
 
 DEFAULT_GENERATED_PREFIX = u"org.4suite.4xslt.ns"
 
@@ -77,13 +78,13 @@ class xmlwriter(streamwriter):
             bom = params.byte_order_mark
             omit_decl = params.setdefault('omit_xml_declaration', False)
 
-        if indent:
+        if self._canonical_form:
+            printer_class = canonicalxmlprinter
+        elif indent:
             printer_class = xmlprettyprinter
         else:
             printer_class = xmlprinter
-        #FIXME
-        #self._printer = printer_class(self.stream, encoding, bom,
-        #                              self._canonical_form)
+        #FIXME: need to take 'bom' value into account.
         self._printer = printer_class(self.stream, encoding)
 
         if not omit_decl:
