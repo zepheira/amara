@@ -61,6 +61,7 @@ class xmlwriter(streamwriter):
         version = params.setdefault('version', '1.0')
         media_type = params.setdefault('media_type', 'text/xml')
         self._canonical_form = params.setdefault('canonical_form', False)
+        #FIXME bom and canonical_form not working now
         if self._canonical_form:
             self._need_doctype = False
             if version != '1.0':
@@ -80,8 +81,10 @@ class xmlwriter(streamwriter):
             printer_class = xmlprettyprinter
         else:
             printer_class = xmlprinter
-        self._printer = printer_class(self.stream, encoding, bom,
-                                      self._canonical_form)
+        #FIXME
+        #self._printer = printer_class(self.stream, encoding, bom,
+        #                              self._canonical_form)
+        self._printer = printer_class(self.stream, encoding)
 
         if not omit_decl:
             standalone = self.output_parameters.standalone
