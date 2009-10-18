@@ -1,4 +1,33 @@
 #!/usr/bin/env python
+
+import sys
+
+# Check for the --user option.  This was first added in Python 2.6. 
+# For older versions, we'll print out some advice.
+
+if '--user' in sys.argv and sys.version_info[:3] < (2,6,0):
+    print """\
+************************************************************
+The --user option is not supported by this version of Python
+(you might consider upgrading to Python 2.6 or newer).  To
+install Amara into a user-directory, use the --prefix option to 
+setup.py such as this:
+
+    python setup.py install --prefix=$HOME/.local/lib/site-packages
+
+Be sure to change the directory name in the above command to the
+actual location where you want the software installed.
+
+To use Amara from a custom install directory, make sure the 
+PYTHONPATH environment variable includes the directory. For
+example:
+
+    env PYTHONPATH=$HOME/.local/lib/site-packages python ...
+
+************************************************************
+"""
+    raise SystemExit(True)
+
 def customize_compiler(compiler):
     """Customized to add debugging information to release builds"""
     customize_compiler.__base__(compiler)
