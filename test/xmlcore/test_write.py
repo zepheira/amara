@@ -1,7 +1,9 @@
 import sys
 import unittest
 from cStringIO import StringIO
+
 from amara import xml_print, tree
+from amara.lib.treecompare import xml_compare
 from amara.writers import lookup, register, XML_W, HTML_W, XHTML_W
 
 class Test_xml_write(unittest.TestCase):
@@ -28,20 +30,20 @@ class Test_xml_write(unittest.TestCase):
         t = tree.parse("<root>entr&#233;e</root>")
 
         # Default is UTF-8.
-        self.assertEqual(t.xml_encode(),
-                         '<?xml version="1.0" encoding="UTF-8"?>\n'
-                         '<root>entr\xc3\xa9e</root>')
-        self.assertEqual(t.xml_encode(XML_W),
-                         '<?xml version="1.0" encoding="UTF-8"?>\n'
-                         '<root>entr\xc3\xa9e</root>')
-        self.assertEqual(t.xml_encode(xml_w),
-                         '<?xml version="1.0" encoding="UTF-8"?>\n'
-                         '<root>entr\xc3\xa9e</root>')
+        self.assert_(xml_compare(t.xml_encode(),
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<root>entr\xc3\xa9e</root>'))
+        self.assert_(xml_compare(t.xml_encode(XML_W),
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<root>entr\xc3\xa9e</root>'))
+        self.assert_(xml_compare(t.xml_encode(xml_w),
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<root>entr\xc3\xa9e</root>'))
 
         # Try latin-1 output.
-        self.assertEqual(t.xml_encode(encoding='iso-8859-1'),
-                         '<?xml version="1.0" encoding="iso-8859-1"?>\n'
-                         '<root>entr\xe9e</root>')
+        self.assert_(xml_compare(t.xml_encode(encoding='iso-8859-1'),
+                    '<?xml version="1.0" encoding="iso-8859-1"?>\n'
+                    '<root>entr\xe9e</root>'))
 
     def test_html(self):
         "Simple check of HTML output"
@@ -81,7 +83,7 @@ class Test_xml_write(unittest.TestCase):
             sys.stdout = sys.__stdout__
 
     def test_canonical(self):
-        "Tests output of canonical XML"
+        "Tests output of canonical XML (see also test_c14n)"
         t = tree.parse("<root><empty/>"
                        "</root>")
         self.assertEqual(t.xml_encode('xml-canonical'),

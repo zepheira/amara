@@ -13,14 +13,31 @@ __all__ = [
     'U',
     ]
 
-def U(s):
+def U(s, encoding='utf-8'):
+    """
+    Apply a set of heuristics to the object to figure out how best
+    to get text from it.
+    
+    XML is just text. Unfortunately there's a lot that gets in the way of the
+    text in common usage: data types, XPath strings (very close, but not exactly
+    the same thing as Python Unicode objects), Python string objects, character
+    encodings, etc.  This function does its best to cut through all the complexity
+    and get you back as conveniently as possible to what's important: the text
+    """
+    from amara.xpath import datatypes
+    #If it's already a Unicode object, nothing to do
     if isinstance(s, unicode): return s
-    if isinstance(s, str): return s.decode('utf-8')
+    #If it's a string, decode it to yield Unicode
+    if isinstance(s, str): return s.decode(encoding)
+    #If it's an XPath data type object, apply the equivalent of the XPath string() function
+    if isinstance(s, datatypes.xpathobject): return unicode(datatypes.string(s))
+    #Otherwise just leap into default coercions
     try:
         return unicode(s)
-    except TypeError:
-        if s is None: return None
-        return str(s).decode('utf-8')
+    except TypeError, e:
+        if s is None:
+            raise e
+        return str(s).decode(encoding)
 
 #Basic idea is as old as the XML spec, but was good to reuse a regex at
 #http://maxharp3r.wordpress.com/2008/05/15/pythons-minidom-xml-and-illegal-unicode-characters/
