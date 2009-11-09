@@ -3,9 +3,10 @@ from amara.lib import testsupport
 from amara import tree
 import os
 import re, tempfile
+from amara.lib import U
 
 from amara import bindery
-from amara.bindery.model import examplotron_model
+from amara.bindery.model import examplotron_model, generate_metadata
 
 
 MODEL_A = '''<?xml version="1.0" encoding="utf-8"?>
@@ -88,8 +89,9 @@ def normalize_generated_ids(meta_list):
 
     for i, (s, p, o) in enumerate(meta_list):
         s = normalize_id(s)
-        o = normalize_id(unicode(o))
-        meta_list[i] = (s,p,o)
+        o = normalize_id(U(o))
+        meta_list[i] = (s, p, o)
+    return meta_list
 
 
 class Test_parse_model_a(unittest.TestCase):
@@ -98,7 +100,7 @@ class Test_parse_model_a(unittest.TestCase):
         """Test metadata extraction"""
         model = examplotron_model(MODEL_A)
         doc = bindery.parse(INSTANCE_A_1, model=model)
-        metadata = doc.xml_model.generate_metadata(doc)
+        metadata = generate_metadata(doc)
         EXPECTED_MD = [(u'ep', u'place', u'Hailey,ID'),
          (u'tse', u'place', u'Stamford,CT'),
          (u'tse', u'opus', u'r2e0e3e5'),
@@ -113,6 +115,7 @@ class Test_parse_model_a(unittest.TestCase):
          (u'co', u'tag', u'biafra'),
          (u'co', u'tag', u'poet')]
 
+        #print list(metadata)
         meta_list = normalize_generated_ids(list(metadata))
         self.assertEqual(meta_list, normalize_generated_ids(EXPECTED_MD))
 
