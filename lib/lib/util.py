@@ -77,7 +77,12 @@ def replace_namespace(node, oldns, newns):
 
 def first_item(seq, default=None):
     '''
-    Return the first item in a sequence, or the default result (None by default)
+    Return the first item in a sequence, or the default result (None by default),
+    or if it can reasonably determine it's not a seqyence, just return the identity
+    
+    This is a useful, blind unpacker tool, e.g. when dealing with XML models that
+    sometimes provide scalars and sometimes sequences, which are sometimes empty.
+    
     This is somewhat analogous to the Python get() method on dictionaries, and
     is an idiom which in functional chains is less clumsy than its equivalent:
 
@@ -86,6 +91,8 @@ def first_item(seq, default=None):
     except StopIteration:
         return default
     '''
+    from amara import tree
+    if isinstance(seq, basestring) or isinstance(seq, tree.node): return seq
     return chain(seq or (), (default,)).next()
 
 

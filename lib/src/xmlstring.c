@@ -584,6 +584,10 @@ document. (see http://www.w3.org/TR/REC-xml/#sec-guessing).";
 
 static PyObject *string_isxml(PyObject *self, PyObject *args)
 {
+  /*
+    #See this article about XML detection heuristics
+    #http://www.xml.com/pub/a/2007/02/28/what-does-xml-smell-like.html
+  */
   char *str, *encoding;
   Py_ssize_t len;
   PyObject *characters, *result;

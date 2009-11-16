@@ -23,6 +23,11 @@ def U(s, encoding='utf-8'):
     the same thing as Python Unicode objects), Python string objects, character
     encodings, etc.  This function does its best to cut through all the complexity
     and get you back as conveniently as possible to what's important: the text
+    
+    import amara
+    from amara.lib import U
+    x = amara.parse('<a x="1">spam</a>')
+    U(x.xml_select('a'))
     """
     from amara.xpath import datatypes
     #If it's already a Unicode object, nothing to do
