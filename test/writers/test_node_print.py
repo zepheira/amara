@@ -1,4 +1,8 @@
 # -*- encoding: utf-8 -*-
+# 
+# amara.lib.xmlstring
+# © 2008, 2009 by Uche Ogbuji and Zepheira LLC
+#
 
 import unittest
 import cStringIO
