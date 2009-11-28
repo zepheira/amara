@@ -229,14 +229,14 @@ class structwriter(object):
             for subobj in obj.content:
                 try:
                     buf = self.cofeed(subobj, prefixes=None)
+                    try:
+                        while True:
+                            val = (yield)
+                            buf.send(val)
+                    except GeneratorExit:
+                        buf.close()
                 except StopIteration:
                     pass
-                try:
-                    while True:
-                        val = (yield)
-                        buf.send(val)
-                except GeneratorExit:
-                    buf.close()
                 #self.feed(subobj)
             self.printer.end_document()
             return
@@ -263,8 +263,8 @@ class structwriter(object):
                 prefixes.update(dict(new_prefixes))
             self.printer.start_element(obj.ns, obj.qname, new_prefixes, attrs)
 
-            buf = obj.do(self)
             try:
+                buf = obj.do(self)
                 while True:
                     val = (yield)
                     buf.send(val)
@@ -456,8 +456,11 @@ class E_CURSOR(E):
     @coroutine
     def do(self, sink):
         while True:
-            obj = (yield)
-            sink.feed(obj)
+            try:
+                obj = (yield)
+                sink.feed(obj)
+            except GeneratorExit:
+                break
 
 
 class NS(object):

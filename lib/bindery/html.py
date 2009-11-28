@@ -18,6 +18,8 @@ from amara import tree
 from amara.lib import inputsource
 from amara.bindery import nodes
 from amara.lib.xmlstring import *
+from amara.namespaces import XML_NAMESPACE
+
 
 class node(html5lib.treebuilders._base.Node):
     appendChild = tree.element.xml_append
@@ -139,7 +141,9 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         self.entity = entity_factory()
         html5lib.treebuilders._base.TreeBuilder.__init__(self)
         def eclass(name):
-            return self.entity.xml_element_factory(None, str(name))
+            #Deal with some broken HTML that uses bogus colons in tag names
+            ns = XML_NAMESPACE if ":" in str(name) else None
+            return self.entity.xml_element_factory(ns, str(name))
         self.elementClass = eclass
     
 

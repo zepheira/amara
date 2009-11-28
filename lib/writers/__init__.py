@@ -20,6 +20,24 @@ methods on Amara node objects.
 
 """
 
+"""
+The writers architecture needs a major overhaul.  It's presently a confusing jumble of
+layers with all sorts of inefficiency.
+
+Principles of redesign:
+
+* eliminate writer/printer distinction.  Everything is a writer
+* What are now printers become the main code base for the lowest level writers,
+  which are really no more than a set of ultra-efficient routines for e.g. character encoding
+* Lowest-level writer (a "writerbase" class?) manages no state, and requires a smart caller
+  For example it would do nothing about namespace consistenct, and would rely on
+  intelligence by the caller
+* Higher level writers do try to modularize as much as possible, but with less misuse of OO
+  More callbacks & decorators & such
+
+"""
+
+
 import sys
 from amara import Error
 from amara.lib.xmlstring import *
