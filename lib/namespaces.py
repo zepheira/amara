@@ -2,7 +2,12 @@
 # amara/namespaces.py
 """
 Common namespaces, for sake of convenience
+
+Note: NULL_NAMESPACE is useful in case you can't easily remember that
+None is the prefered way to write the null namespace in API
 """
+
+NULL_NAMESPACE = None
 
 COMMON_NAMESPACES = {}
 

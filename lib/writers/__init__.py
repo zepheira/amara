@@ -1,3 +1,8 @@
+# -*- encoding: utf-8 -*-
+# 
+# amara.writers
+# © 2008, 2009 by Uche Ogbuji and Zepheira LLC
+#
 """amara.writers
 
 Implements Amara's support for serializing trees as XML, HTML, or XHTML.
@@ -110,6 +115,11 @@ def _xml_write(N, writer=XML_W, stream=None, encoding='UTF-8', **kwargs):
         stream = sys.stdout
 
     writer = writer_class(stream, encoding)
+    if hasattr(writer, "prepare"):
+        #Do any writer-specific massaging of the arguments,
+        #for example applying exclusive c14n rules
+        kwargs = writer.prepare(N, kwargs)
+
     v = node._Visitor(writer, **kwargs)
     v.visit(N)
 

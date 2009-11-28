@@ -36,6 +36,15 @@ _starttag_find = re.compile("<[^!?]").search
 _html_find = re.compile("(<!DOCTYPE html)|(<html)", re.IGNORECASE).search
 
 
+def check_xml(result, expected):
+    '''
+    A useful XML comparison routine for test cases, error reports, etc.
+    '''
+    diff = xml_diff(result, expected)
+    diff = '\n'.join(diff)
+    assert not diff, "Expected=%r\nresult=%r\ndiff=%r" % (expected, result, diff)
+
+
 def document_compare(expected, compared, whitespace=True):
     for line in document_diff(expected, compared, whitespace):
         # There is a difference

@@ -1,8 +1,11 @@
-########################################################################
-# amara/lib/util.py
+# -*- encoding: utf-8 -*-
+# 
+# amara.lib.util
+# © 2008, 2009 by Uche Ogbuji and Zepheira LLC
+#
 
 """
-Some utilities for Amara overall
+Some utilities for general use in Amara
 """
 
 from amara import tree

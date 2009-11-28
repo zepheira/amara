@@ -18,6 +18,8 @@ __all__ = [
 '_inputsource',
 ]
 
+MAX_URI_LENGTH_FOR_HEURISTIC = 1024
+
 class _inputsource(InputSource):
     """
     The representation of a resource. Supports further, relative resolution of
@@ -51,14 +53,20 @@ class _inputsource(InputSource):
             uri = uri or uuid4().urn
             stream = arg
         elif isxml(arg):
+            #See this article about XML detection heuristics
+            #http://www.xml.com/pub/a/2007/02/28/what-does-xml-smell-like.html
             uri = uri or uuid4().urn
             stream = StringIO(arg)
         elif is_absolute(arg) and not os.path.isfile(arg):
             uri = arg
             stream = resolver.resolve(uri)
-        else:
+        #If the arg is beyond a certain length, don't even try it as a URI
+        elif len(arg) < MAX_URI_LENGTH_FOR_HEURISTIC:
             uri = os_path_to_uri(arg)
             stream = resolver.resolve(uri)
+        else:
+            #FIXME L10N
+            raise ValueError("Does not appear to be well-formed XML")
 
         #We might add the ability to load zips, gzips & bzip2s
         #http://docs.python.org/lib/module-zlib.html

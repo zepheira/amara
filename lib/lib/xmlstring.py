@@ -1,5 +1,8 @@
-########################################################################
-# amara/lib/xmlstring.py
+# -*- encoding: utf-8 -*-
+# 
+# amara.lib.xmlstring
+# © 2008, 2009 by Uche Ogbuji and Zepheira LLC
+#
 
 import re
 from string import *
@@ -30,6 +33,9 @@ def U(s, encoding='utf-8'):
     U(x.xml_select('a'))
     """
     from amara.xpath import datatypes
+    #xpath.datatypes.string is a subclass of Unicode object, so it won't fall through
+    #the test below into the XPath section proper
+    if isinstance(s, datatypes.string): return unicode(s)
     #If it's already a Unicode object, nothing to do
     if isinstance(s, unicode): return s
     #If it's a string, decode it to yield Unicode

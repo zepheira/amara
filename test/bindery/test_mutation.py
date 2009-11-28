@@ -7,6 +7,8 @@ import unittest
 import cStringIO
 import amara
 from amara import tree, bindery
+from amara.lib import treecompare
+
 from xml.dom import Node
 
 
@@ -14,6 +16,30 @@ XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 output = cStringIO.StringIO()
 
 ATTRIBUTE_NODE = tree.attribute.xml_type
+
+def test_simpe_attr_update1():
+    EXPECTED = """<a x="2"/>"""
+    doc = bindery.parse('<a x="1"/>')
+    doc.a.x = unicode(int(doc.a.x)+1)
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    return
+
+def test_simpe_attr_update2():
+    EXPECTED = """<a xmlns="urn:bogus:x" x="2"/>"""
+    doc = bindery.parse('<a xmlns="urn:bogus:x" x="1"/>')
+    doc.a.x = unicode(int(doc.a.x)+1)
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    return
+
+def test_simpe_attr_update3():
+    EXPECTED = """<n:a xmlns:n="urn:bogus:x" x="2"/>"""
+    doc = bindery.parse('<n:a xmlns:n="urn:bogus:x" x="1"/>')
+    doc.a.x = unicode(int(doc.a.x)+1)
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    return
+
+
+#XXX The rest are in old unittest style.  Probably best to add new test cases above in nose test style
 
 class TestBasicMods(unittest.TestCase):
     #def setUp(self):
@@ -647,5 +673,5 @@ class TestTransforms(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    raise SystemExit("use nosetests")
 

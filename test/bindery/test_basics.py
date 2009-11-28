@@ -104,6 +104,12 @@ class Test_parse_functions_1(unittest.TestCase):
         self.assertEqual(doc.top.monty.xml_namespace, u"urn:bogus:a")
         self.assertEqual(doc.top.monty_.xml_namespace, u"urn:bogus:b")
         self.assertEqual(doc.top.monty.xml_following_sibling.xml_following_sibling, doc.top.monty_)
+        
+    #
+    def test_non_xml_1(self):
+        """XML with 2 elements with same local name and different NS on same parent"""
+        arg = '{spam}{eggs}'*500
+        self.assertRaises(ValueError, lambda arg=arg: parse(arg))
 
 
 class Test_parse_functions_2(unittest.TestCase):

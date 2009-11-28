@@ -4,7 +4,9 @@
 import os, unittest, sys
 from amara.lib import inputsource, iri, treecompare
 #from amara.test.xslt import filesource
-from amara.test.lib import find_file
+from amara.test import file_finder
+
+FILE = file_finder(__file__)
 
 #
 class Test_basic_uri_resolver(unittest.TestCase):
@@ -14,7 +16,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
                 ('http://foo.com/root',  'path', 'http://foo.com/path'),
                 ]
         #import sys; print >> sys.stderr, filesource('sampleresource.txt').uri
-        start_isrc = inputsource(find_file('sampleresource.txt'))
+        start_isrc = inputsource(FILE('sampleresource.txt'))
         #start_isrc = inputsource(filesource('sampleresource.txt').uri)
         for base, uri, exp in data:
             res = start_isrc.absolutize(uri, base)
@@ -27,7 +29,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
         base = os.getcwd()
         if base[-1] != os.sep:
             base += os.sep
-        new_isrc = start_isrc.resolve(find_file('sampleresource.txt'), iri.os_path_to_uri(base))
+        new_isrc = start_isrc.resolve(FILE('sampleresource.txt'), iri.os_path_to_uri(base))
         self.assertEqual('Spam', new_isrc.stream.readline().rstrip(), 'resolve')
 
 

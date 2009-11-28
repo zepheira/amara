@@ -16,12 +16,6 @@ ATOMENTRY1 = '<?xml version="1.0" encoding="UTF-8"?>\n<entry xmlns=\'http://www.
 
 XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
-def check_xml(result, expected):
-    diff = treecompare.xml_diff(result, expected)
-    diff = '\n'.join(diff)
-    assert not diff, "Expected=%r\nresult=%r\ndiff=%r" % (expected, result, diff)
-
-
 def test_coroutine_example1():
     EXPECTED = """<a><b attr1="val1"><c>1</c><c>2</c><c>3</c></b></a>"""
     output = structencoder()
@@ -31,7 +25,7 @@ def test_coroutine_example1():
     f.send(E(u'c', u'3'))
     f.close()
     result = output.read()
-    check_xml(result, XMLDECL+EXPECTED)
+    treecompare.check_xml(result, XMLDECL+EXPECTED)
     return
 
 #
@@ -44,7 +38,7 @@ def test_coroutine_example2():
     f.send(E(u'c', u'3'))
     f.close()
     result = output.read()
-    check_xml(result, XMLDECL+EXPECTED)
+    treecompare.check_xml(result, XMLDECL+EXPECTED)
     return
 
 #
@@ -58,12 +52,15 @@ def test_coroutine_with_nsdecls1():
     f.send(E(u'c', u'3'))
     f.close()
     result = output.read()
-    check_xml(result, XMLDECL+EXPECTED)
+    treecompare.check_xml(result, XMLDECL+EXPECTED)
     return
 
 #
-def Xtest_coroutine_with_nsdecls2():
+def DISABLEDtest_coroutine_with_nsdecls2():
     #FIXME: Puts out redundant nsdecls for now.  Needs to be fixed in code
+    #Trick for skipping tests:
+    from nose.plugins.skip import SkipTest
+    raise SkipTest('reason')
     EXPECTED = """<a><b attr1="val1"><c>1</c><c>2</c><c>3</c></b></a>"""
     XNS = u'urn:bogus:x'
     output = structencoder()
@@ -73,7 +70,7 @@ def Xtest_coroutine_with_nsdecls2():
     f.send(E((XNS, u'c'), u'3'))
     f.close()
     result = output.read()
-    check_xml(result, XMLDECL+EXPECTED)
+    treecompare.check_xml(result, XMLDECL+EXPECTED)
     return
 
 

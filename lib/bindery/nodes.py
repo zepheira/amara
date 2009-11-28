@@ -158,7 +158,12 @@ class bound_attribute(object):
             return obj.xml_model.attribute_types.get((self.ns, self.local), (None, None))[1]
 
     def __set__(self, obj, value):
-        obj.xml_attributes[self.ns, self.local].xml_value = value
+        #from amara import bindery; doc = bindery.parse('<a x="1"/>'); doc.a.x = unicode(int(doc.a.x)+1)
+        if isinstance(value, basestring):
+            attr = tree.attribute(self.ns, self.local, unicode(value))
+            obj.xml_attributes.setnode(attr)
+        else:
+            obj.xml_attributes[self.ns, self.local].xml_value = value
         return
 
     def __delete__(self, obj):

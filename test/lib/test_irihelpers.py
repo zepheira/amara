@@ -1,12 +1,14 @@
 import os, unittest, sys, codecs
 import warnings
 from amara.lib import iri, irihelpers, inputsource
-from amara.test.lib import find_file
+from amara.test import file_finder
+
+FILE = file_finder(__file__)
 
 class Test_default_resolver(unittest.TestCase):
     '''irihelpers.resolver'''
     def test_uri_jail(self):
-        start_uri = iri.os_path_to_uri(find_file('test_irihelpers.py'))
+        start_uri = iri.os_path_to_uri(FILE('test_irihelpers.py'))
         #raise start_uri
         #print >> sys.stderr, "GRIPPO", start_uri
         start_base = start_uri.rsplit('/', 1)[0] + '/'
@@ -34,7 +36,7 @@ class Test_scheme_registry_resolver(unittest.TestCase):
 
         resolver = irihelpers.scheme_registry_resolver(
             handlers={'eval': eval_scheme_handler, 'shift': shift_scheme_handler})
-        start_isrc =  inputsource(find_file('sampleresource.txt'), resolver=resolver)
+        start_isrc =  inputsource(FILE('sampleresource.txt'), resolver=resolver)
         
         scheme_cases = [(None, 'eval:150-50', '100'),
                 (None, 'shift:abcde', 'bcdef'),

@@ -17,6 +17,15 @@ import types
 import operator
 import time
 
+class file_finder(object):
+    def __init__(self, context):
+        self.context = context
+
+    def __call__(self, fname):
+        stem = os.path.split(self.context)[0]
+        return os.path.join(stem, fname)
+        return 
+
 # Defined here as to have stack frames originating in this module removed
 # from unittest reports. See `unittest.TestResult._is_relevant_tb_level()`
 __unittest = True

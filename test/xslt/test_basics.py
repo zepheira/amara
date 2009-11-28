@@ -3,16 +3,19 @@
 import cStringIO
 
 from xslt_support import _run_html, _run_xml
+from amara.test import file_finder
 
-import os
-module_name = os.path.dirname(__file__)
+FILE = file_finder(__file__)
 
-def find_file(filename):
-    return os.path.join(module_name, filename)
+#import os
+#module_name = os.path.dirname(__file__)
+
+#def find_file(filename):
+#    return os.path.join(module_name, filename)
 
 
 def test_basics_1():
-    _run_html(find_file('addr_book1.xml'), find_file('addr_book1.xsl'), 
+    _run_html(FILE('addr_book1.xml'), FILE('addr_book1.xsl'), 
          """<html>
   <head>
     <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
@@ -51,7 +54,7 @@ def test_basics_1():
  """
 
 def test_basics_2():
-    _run_html(find_file('addr_book1.xml'),
+    _run_html(FILE('addr_book1.xml'),
          """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -107,7 +110,7 @@ def test_basics_2():
 
 # This fails because of differences in whitespace
 def test_basics_3():
-    _run_html(find_file('addr_book1.xml'),
+    _run_html(FILE('addr_book1.xml'),
          """<?xml version="1.0"?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"

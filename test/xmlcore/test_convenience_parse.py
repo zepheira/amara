@@ -2,12 +2,15 @@ import unittest
 import os
 from amara import tree, ReaderError
 from amara.tree import parse   ### Revise imports
+from amara.test import file_finder
+
+FILE = file_finder(__file__)
 
 #More in-depth testing of DOM structure building is done in other tests.
 #Just checking the API for now
 
 TEST_STRING = "<test/>"
-TEST_FILE = "test/xmlcore/disclaimer.xml"
+TEST_FILE = FILE('disclaimer.xml') #test/xmlcore/disclaimer.xml
 
 ### modify this url
 TEST_URL = "http://hg.4suite.org/amara/trunk/raw-file/tip/test/xmlcore/disclaimer.xml"

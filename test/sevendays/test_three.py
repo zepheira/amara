@@ -7,14 +7,13 @@ import itertools
 import functools
 import amara
 from amara.writers.struct import *
-from amara import bindery, xml_print
+from amara.writer import lookup
+from amara import bindery
 from amara.bindery.util import property_str_getter
 
-def find_file(filename):
-    for prefix in ("", "sevendays/", "test/sevendays/"):
-        if os.path.exists(prefix+filename):
-            return prefix+filename
-    return filename
+from amara.test import file_finder
+
+FILE = file_finder(__file__)
 
 def merge_folders(folder1, folder2):
     #Yes, the list must be copied to avoid mutate-while-iterate bugs
@@ -128,10 +127,10 @@ class TestIterators(unittest.TestCase):
     def test_combined(self):
         #ATOM1 = 'http://zepheira.com/news/atom/entries/'
         #ATOM2 = 'http://ma.gnolia.com/atom/full/people/Uche'
-        ATOM1 = find_file('zepheira_atom.xml')  #local download for testing
-        ATOM2 = find_file('magnolia_uche.xml')  #local download for testing
+        ATOM1 = FILE('zepheira_atom.xml')  #local download for testing
+        ATOM2 = FILE('magnolia_uche.xml')  #local download for testing
         output = cStringIO.StringIO()
-        combined_output = open(find_file('entries_combined.txt')).read()  #local file for testing
+        combined_output = open(FILE('entries_combined.txt')).read()  #local file for testing
         doc1 = bindery.parse(ATOM1)
         doc2 = bindery.parse(ATOM2)
         combined = itertools.chain(*[doc.feed.entry for doc in (doc1, doc2)])
@@ -142,28 +141,24 @@ class TestIterators(unittest.TestCase):
     def test_xbel_1(self):
         #BM1 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm1.xbel'
         #BM2 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm2.xbel'
-        doc1 = bindery.parse(find_file('bm1.xbel'))
-        doc2 = bindery.parse(find_file('bm2.xbel'))
+        doc1 = bindery.parse(FILE('bm1.xbel'))
+        doc2 = bindery.parse(FILE('bm2.xbel'))
 
         xbel_merge(doc1.xbel, doc2.xbel)
         normalize_whitespace(doc1)
-        output = cStringIO.StringIO()
-        xml_print(doc1, indent=True, stream = output)
-        output.write('\n')
-        self.assertEqual(output.getvalue(), open(find_file('merged-1.xbel')).read())
+        output = doc1.xml_encode(lookup("xml-indent")) + '\n'
+        self.assertEqual(output, open(FILE('merged-1.xbel')).read())
         
     def test_xbel_2(self):  
         #BM1 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm1.xbel'
         #BM2 = 'http://hg.4suite.org/amara/trunk/raw-file/bb6c40828b2d/demo/7days/bm2.xbel'
-        doc1 = bindery.parse(find_file('bm1.xbel'))
-        doc2 = bindery.parse(find_file('bm2.xbel'))
+        doc1 = bindery.parse(FILE('bm1.xbel'))
+        doc2 = bindery.parse(FILE('bm2.xbel'))
         
         merge(doc1.xbel, doc2.xbel)
         normalize_whitespace(doc1)
-        output = cStringIO.StringIO()
-        xml_print(doc1, indent=True, stream = output)
-        output.write('\n')
-        self.assertEqual(output.getvalue(), open(find_file('merged-2.xbel')).read())
+        output = doc1.xml_encode(lookup("xml-indent")) + '\n'
+        self.assertEqual(output, open(FILE('merged-2.xbel')).read())
         
 if __name__ == '__main__':
     unittest.main()

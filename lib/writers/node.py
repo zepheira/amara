@@ -1,7 +1,7 @@
 """amara.writers.node
 
-This is an internal module containing the logic for
-traversing an Amara tree.
+Internal module containing the logic for traversing an Amara tree in order to
+serialize it.
 
 """
 

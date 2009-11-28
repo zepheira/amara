@@ -1,0 +1,23 @@
+#In this file a list of URLs to sample XML files directly available on the Web, e.g. for use by optional test scripts
+#Feel free to add URLs, one per line.  Blank lines are ignored, as well as lines starting with "#"
+
+#From w3schools; see: http://www.w3schools.com/xml/xml_examples.asp
+
+http://www.w3schools.com/xml/note.xml
+http://www.w3schools.com/xml/plant_catalog.xml
+
+#First a CD catalog, then CSS for it, finally the catalog with CSS declaration
+http://www.w3schools.com/xml/cd_catalog.xml
+http://www.w3schools.com/xml/cd_catalog_with_css.xml
+
+#First a food menu, then an XSLT for it, finally the menu with XSLT declaration
+http://www.w3schools.com/xml/simple.xml
+http://www.w3schools.com/xml/simple.xsl
+http://www.w3schools.com/xml/simplexsl.xml
+
+
+#From www.jenitennison.com
+
+#Document with namespaces and XSLT decl
+http://www.jenitennison.com/xslt/namespaces.xml
+

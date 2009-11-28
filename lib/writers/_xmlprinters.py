@@ -6,9 +6,14 @@ This module supports document serialization in XML syntax.
 
 import itertools
 
+from amara import tree
 from amara.writers import _xmlstream
+from amara.namespaces import NULL_NAMESPACE, XML_NAMESPACE, XMLNS_NAMESPACE
 
-__all__ = ('xmlprinter', 'xmlprettyprinter')
+__all__ = ('xmlprinter', 'xmlprettyprinter', "BASIC", "EXCLUSIVE")
+
+BASIC = "BASIC"
+EXCLUSIVE = "EXCLUSIVE"
 
 class xmlprinter(object):
     """
@@ -28,8 +33,13 @@ class xmlprinter(object):
     name, "--" in a comment, etc. However, attribute() will do nothing
     if the previous event was not startElement(), thus preventing
     spurious attribute serializations.
+
+    `canonical_form` must be None, BASIC or EXCLUSIVE
+    It controls c14n of the serialization, according to
+    http://www.w3.org/TR/xml-c14n ("basic") or
+    http://www.w3.org/TR/xml-exc-c14n/ ("exclusive")
     """
-    _canonical_form = False
+    _canonical_form = None
 
     def __init__(self, stream, encoding):
         """
@@ -43,6 +53,7 @@ class xmlprinter(object):
         self.write_encode = xs.write_encode
         self.write_escape = xs.write_escape
         self._element_name = None
+        self.omit_declaration = False
 
     def start_document(self, version='1.0', standalone=None):
         """
@@ -50,11 +61,12 @@ class xmlprinter(object):
 
         Writes XML declaration or text declaration to the stream.
         """
-        self.write_ascii('<?xml version="%s" encoding="%s"' % (version,
-                                                               self.encoding))
-        if standalone is not None:
-            self.write_ascii(' standalone="%s"' % standalone)
-        self.write_ascii('?>\n')
+        if not self.omit_declaration:
+            self.write_ascii('<?xml version="%s" encoding="%s"' % (version,
+                                                                   self.encoding))
+            if standalone is not None:
+                self.write_ascii(' standalone="%s"' % standalone)
+            self.write_ascii('?>\n')
         return
 
     def end_document(self):
@@ -80,6 +92,8 @@ class xmlprinter(object):
 
         Writes a document type declaration to the stream.
         """
+        if self._canonical_form:
+            return
         if self._element_name:
             self.write_ascii('>')
             self._element_name = None
@@ -99,7 +113,7 @@ class xmlprinter(object):
             self.write_ascii('">\n')
         return
 
-    def start_element(self, namespace, name, namespaces, attributes):
+    def start_element(self, namespace, name, nsdecls, attributes):
         """
         Handles a start-tag event.
 
@@ -122,14 +136,20 @@ class xmlprinter(object):
         write_ascii('<')
         write_encode(name, 'start-tag name')
 
-        # Create the namespace "attributes"
-        namespaces = [ (prefix and u'xmlns:' + prefix or u'xmlns', uri)
-                       for prefix, uri in namespaces
-                      ]
-        # Merge the namespace and attribute sequences for output
-        attributes = itertools.chain(namespaces, attributes)
         if self._canonical_form:
-            for name, value in attributes:
+            # Create the namespace "attributes"
+            namespace_attrs = [ (prefix and u'xmlns:' + prefix or u'xmlns', uri)
+                           for prefix, uri in nsdecls
+                          ]
+            namespace_attrs.sort()
+            # Write the namespaces decls, in alphabetical order of prefixes, with
+            # the default coming first (easy since None comes before any actual
+            # Unicode value)
+            #sorted_attributes = [ name, value for (name, value) in sorted(attributes) ]
+            sorted_attributes = sorted(attributes)
+            #FIXME: attributes must be sorted using nsuri / local combo (where nsuri is "" for null namespace)
+            for name, value in namespace_attrs:
+                #FIXME: check there are no redundant NSDecls
                 write_ascii(' ')
                 write_encode(name, 'attribute name')
                 # Replace characters illegal in attribute values and wrap
@@ -137,7 +157,22 @@ class xmlprinter(object):
                 write_ascii('="')
                 write_escape(value, self._attr_entities_quot)
                 write_ascii('"')
+            for name, value in sorted_attributes:
+                write_ascii(' ')
+                write_encode(name, 'attribute name')
+                # Replace characters illegal in attribute values and wrap
+                # the value with quotes (") in accordance with Canonical XML.
+                write_ascii('="')
+                write_escape(value, self._attr_entities_quot)
+                write_ascii('"')
+            
         else:
+            # Create the namespace "attributes"
+            nsdecls = [ (prefix and u'xmlns:' + prefix or u'xmlns', uri)
+                           for prefix, uri in nsdecls
+                          ]
+            # Merge the namespace and attribute sequences for output
+            attributes = itertools.chain(nsdecls, attributes)
             for name, value in attributes:
                 # Writes an attribute to the stream as a space followed by
                 # the name, '=', and quote-delimited value. It is the caller's
@@ -211,6 +246,9 @@ class xmlprinter(object):
         are written to the stream with no escaping of any kind, which
         will result in an exception if there are unencodable characters.
         """
+        if self._canonical_form:
+            text.replace(u'\r\n', u'\r')
+        
         if self._element_name:
             self.write_ascii('>')
             self._element_name = None
@@ -235,6 +273,8 @@ class xmlprinter(object):
             self._element_name = None
 
         if self._canonical_form:
+            #No CDATA sections in c14n
+            text.replace(u'\r\n', u'\r')
             self.write_escape(data, self._text_entities)
         else:
             sections = data.split(u']]>')
@@ -320,6 +360,76 @@ class canonicalxmlprinter(xmlprinter):
     # Enable canonical-form output.
     _canonical_form = True
 
+    #FIXME: A bit inelegant to require the encoding, then throw it away.  Perhaps
+    #we should at least issue a warning if they send a non-UTF8 encoding
+    def __init__(self, stream, encoding):
+        """
+        `stream` must be a file-like object open for writing binary
+        data.
+        """
+        xmlprinter.__init__(self, stream, 'utf-8')
+        self.omit_declaration = True
+
+    def prepare(self, node, kwargs):
+        """
+        `inclusive_prefixes` is a list (or None) of namespaces representing the
+        "InclusiveNamespacesPrefixList" list in exclusive c14n.
+        It may only be a non-empty list if `canonical_form` == EXCLUSIVE
+        """
+        exclusive = kwargs.get("exclusive", False)
+        nshints = kwargs.get("nshints", {})
+        inclusive_prefixes = kwargs.get("inclusive_prefixes", [])
+        added_attributes = {}  #All the contents should be XML NS attrs
+        if not exclusive:
+            #Roll in ancestral xml:* attributes
+            parent_xml_attrs = node.xml_select(u'ancestor::*/@xml:*')
+            for attr in parent_xml_attrs:
+                aname = (attr.xml_namespace, attr.xml_qname)
+                if (aname not in added_attributes
+                    and aname not in node.xml_attributes):
+                    added_attributes[attr.xml_qname] = attr.xml_value
+        nsnodes = node.xml_select('namespace::*')
+        inclusive_prefixes = inclusive_prefixes or []
+        if u'#default' in inclusive_prefixes:
+            inclusive_prefixes.remove(u'#default')
+            inclusive_prefixes.append(u'')
+        decls_to_remove = []
+        if exclusive:
+            used_prefixes = [ n.xml_prefix for n in node.xml_select('self::*|@*') ]
+            declared_prefixes = []
+            for ans, anodename in node.xml_attributes:
+                if ans == XMLNS_NAMESPACE:
+                    attr = node.xml_attributes[ans, anodename]
+                    prefix = attr.xml_local
+                    declared_prefixes.append(prefix)
+                    #print attr.prefix, attr.localName, attr.nodeName
+                    if attr.xml_local not in used_prefixes:
+                        decls_to_remove.append(prefix)
+            #for prefix in used_prefixes:
+            #    if prefix not in declared_prefixes:
+            #        nshints[ns.nodeName] = ns.value
+        #Roll in ancestral  NS nodes
+        for ns in nsnodes:
+            #prefix = ns.xml_qname if isinstance(ns, tree.namespace) else ns.xml_qname
+            #print (ns.xml_name, ns.xml_value)
+            prefix = ns.xml_name
+            if (ns.xml_value != XML_NAMESPACE
+                and ns.xml_name not in node.xml_namespaces
+                and (not exclusive or ns.xml_name in inclusivePrefixes)):
+                #added_attributes[(XMLNS_NAMESPACE, ns.nodeName)] = ns.value
+                nshints[prefix] = ns.xml_value
+            elif (exclusive
+                  and prefix in used_prefixes
+                  and prefix not in declared_prefixes):
+                nshints[prefix] = ns.xml_value
+        kwargs["nshints"] = nshints
+        if "inclusive_prefixes" in kwargs: del kwargs["inclusive_prefixes"]
+        if "exclusive" in kwargs: del kwargs["exclusive"]
+        if "nshints" in kwargs: del kwargs["nshints"]
+        #FIXME: nshints not yet actually used.  Required for c14n of nodes below the top-level
+        self._nshints = nshints or {}
+        return kwargs
+    
 
 class xmlprettyprinter(xmlprinter):
     """
