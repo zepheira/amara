@@ -142,6 +142,7 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
         html5lib.treebuilders._base.TreeBuilder.__init__(self)
         def eclass(name):
             #Deal with some broken HTML that uses bogus colons in tag names
+            #Note: we're abusing the xml perma-namespace, but for a good cause ;)
             ns = XML_NAMESPACE if ":" in str(name) else None
             return self.entity.xml_element_factory(ns, str(name))
         self.elementClass = eclass

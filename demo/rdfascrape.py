@@ -1,9 +1,10 @@
 """
-Scrape RDFa [1] [2] from an XHTML Web page
+Scrape RDFa [1] [2] [3] from an XHTML Web page
 Works on any HTML, though people who put what they call RDFa into tag soup are naughty and need their ears boxed
 
 [1] http://en.wikipedia.org/wiki/RDFa
-[2] 
+[2] http://www.alistapart.com/articles/introduction-to-rdfa/
+[3] http://www.alistapart.com/articles/introduction-to-rdfa-ii/
 
 Sample usage:
 

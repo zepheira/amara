@@ -7,7 +7,7 @@ import itertools
 import functools
 import amara
 from amara.writers.struct import *
-from amara.writer import lookup
+from amara.writers import lookup
 from amara import bindery
 from amara.bindery.util import property_str_getter
 
