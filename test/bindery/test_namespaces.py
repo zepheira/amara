@@ -45,7 +45,45 @@ class Test_sane_default_1(unittest.TestCase):
         #print doc.xml_namespaces
         self.assertEqual(len(list(doc.xml_select(u'//x:monty'))), 1)
         return
+    
+    def test_attr_assignment(self):
+        doc = parse(SANE_DEFAULT_XML, prefixes=SANE_DEFAULT_XML_PREFIXES)
+        monty = doc.doc.monty
 
+        # Create attribute node 
+        attr_node = tree.attribute(u'urn:bogus:a', 'setitem', 'value')
+        monty[u'urn:bogus:a', 'setitem'] = attr_node
+        self.assertEqual(monty.xml_attributes[(u'urn:bogus:a', u'setitem')], 
+                         'value')
+
+        # Check for mismatched namespace
+        attr_node = tree.attribute(u'urn:bogus:a', 'setitem2', 'value')
+        def f():
+            monty[u'urn:wrong-value', 'setitem2'] = attr_node
+        self.assertRaises(ValueError, f)
+
+        # Check for mismatched local name
+        def f():
+            monty[u'urn:bogus:a', 'setitem'] = attr_node
+        self.assertRaises(ValueError, f)
+
+        # Test with no namespace supplied on node.
+        attr_node = tree.attribute(None, 'setitem3', 'value')
+        monty[u'urn:bogus:a', 'setitem3'] = attr_node
+        self.assertEqual(monty.xml_attributes[(u'urn:bogus:a', u'setitem3')], 
+                         'value')
+
+        # Test with no namespace supplied in key.
+        attr_node = tree.attribute(u'urn:bogus:a', 'setitem4', 'value')
+        monty[None, 'setitem4'] = attr_node
+        self.assertEqual(monty.xml_attributes[(u'urn:bogus:a', u'setitem4')], 
+                         'value')
+
+        # Test with no namespace supplied at all.
+        attr_node = tree.attribute(None, 'setitem5', 'value')
+        monty[None, 'setitem5'] = attr_node
+        self.assertEqual(monty.xml_attributes[(u'urn:bogus:a', u'setitem5')], 
+                         'value')
 
 if __name__ == '__main__':
     testsupport.test_main()

@@ -379,7 +379,33 @@ class container_mixin(object):
                 raise TypeError('Inappropriate key (%s)'%(key))
             if force_type in (None, tree.attribute.xml_type) and hasattr(self, 'xml_attributes'):
                 target = None
-                self.xml_attributes[key] = value
+                if isinstance(value, tree.attribute):
+                    # Check that the namespaces match
+                    ns, local = key
+                    if (ns and value.xml_namespace and
+                        ns != value.xml_namespace):
+                        raise ValueError(
+                            "Namespaces don't match: key ns==%r, attrnode ns=%r"
+                            % (ns, value.xml_namespace))
+                    if local != value.xml_local:
+                        raise ValueError(
+                            "Local names don't match: key name==%r, attrnode name=%r"
+                            % (local, value.xml_local))
+
+                    # If either namespace value is None, use the other
+                    # as the default.
+                    if value.xml_namespace is None:
+                        if ns is None:
+                            # If no namespaces specified at all,
+                            # use the default one.
+                            ns = self.xml_namespaces[None]
+                        value = tree.attribute(ns, value.xml_local, value.xml_value)
+                    elif ns is None:
+                        ns = value.xml_namespace
+                    # If they match, perform the assignment.
+                    self.xml_attributes.setnode(value)
+                else:    
+                    self.xml_attributes[key] = value
             elif force_type in (None, tree.element.xml_type):
                 target = self.xml_find_named_child(*key)
                 if target is None:
