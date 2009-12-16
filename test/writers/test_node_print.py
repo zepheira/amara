@@ -98,8 +98,6 @@ class Test_domlette_serialization(unittest.TestCase):
         diff = treecompare.xml_diff(out, DOCTYPE_EXPECTED_1)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
-        #Make sure we can parse the result
-        doc2 = bindery.parse(out)
 
     def _build_namespace_free_xhtml(self):
         doc = amara.tree.entity()
