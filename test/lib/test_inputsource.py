@@ -52,7 +52,6 @@ def test_many_inputsources():
             sources.append(inputsource(filename))
         except:
             print "Failed after", i, "files"
-            raise
 
 #
 if __name__ == '__main__':
