@@ -28,7 +28,7 @@ absolutize_test_cases = [
     ('/foo/../bar',       'zz:abc', 'zz:/bar'),
     ('foo/../../../bar',  'zz:abc', 'zz:bar'),
     ('foo/../bar',        'zz:abc', 'zz:bar'),
-    ('zz:.',              'zz:abc', 'zz:'),
+    ('zz:.',              'zz:abc', 'zz:.'),
     ('/.'      , BASE_URI[0], 'http://a/'),
     ('/.foo'   , BASE_URI[0], 'http://a/.foo'),
     ('.foo'    , BASE_URI[0], 'http://a/b/c/.foo'),
