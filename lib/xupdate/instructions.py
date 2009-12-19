@@ -192,4 +192,4 @@ class literal_element(xupdate_instruction):
 class literal_text(unicode):
 
     def instantiate(self, context):
-        context.characters(self)
+        context.text(self)
