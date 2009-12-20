@@ -324,22 +324,22 @@ class xmlprinter(object):
     _text_entities = _xmlstream.entitymap({'<' : '&lt;',
                                            '>' : '&gt;',
                                            '&' : '&amp;',
-                                           '\r' : '&#D;',
+                                           '\r' : '&#13;',
                                            })
 
     _attr_entities_quot = _xmlstream.entitymap({'<' : '&lt;',
                                                 '&' : '&amp;',
                                                 '\t' : '&#9;',
-                                                '\n' : '&#A;',
-                                                '\r' : '&#D;',
+                                                '\n' : '&#10;',
+                                                '\r' : '&#13;',
                                                 '"' : '&quot;',
                                                 })
 
     _attr_entities_apos = _xmlstream.entitymap({'<' : '&lt;',
                                                 '&' : '&amp;',
                                                 '\t' : '&#9;',
-                                                '\n' : '&#A;',
-                                                '\r' : '&#D;',
+                                                '\n' : '&#10;',
+                                                '\r' : '&#13;',
                                                 "'" : '&apos;',
                                                 })
 

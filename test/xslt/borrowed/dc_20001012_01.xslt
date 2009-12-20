@@ -1,8 +1,7 @@
+<?xml version="1.0"?>
 <!--
   From Daniel Chudnov <daniel.chudnov@yale.edu>
 -->
-<?xml version="1.0"?>
-
 <!-- Identify transformation -->
 <xsl:stylesheet version="1.1"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">

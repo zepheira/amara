@@ -263,7 +263,7 @@ def test_key_7():
 </xsl:stylesheet>
 """,
         expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result xmlns:x="http://spam.com/x"><x:drei xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="zwo"/><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+<result xmlns:x="http://spam.com/x"><x:drei id="zwo"/><x:zwo id="drei"/></result>"""
         )
 
 
@@ -304,7 +304,7 @@ def test_key_8():
 </xsl:stylesheet>
 """,
         expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/><y:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+<result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo id="drei"/><y:zwo id="drei"/></result>"""
         )
 
 
@@ -346,7 +346,7 @@ def test_key_9():
 </xsl:stylesheet>
 """,
         expected = """<?xml version="1.0" encoding="UTF-8"?>
-<result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/><y:zwo xmlns:xsl="http://www.w3.org/1999/XSL/Transform" id="drei"/></result>"""
+<result xmlns:x="http://spam.com/x" xmlns:y="http://spam.com/y"><x:zwo id="drei"/><y:zwo id="drei"/></result>"""
         )
 
 

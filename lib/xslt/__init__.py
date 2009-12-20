@@ -30,7 +30,7 @@ class XsltError(Error):
     MISSING_REQUIRED_ELEMENT = 50
     ILLEGAL_ELEMENT_CHILD = 51
     ILLEGAL_TEXT_CHILD = 52
-    UNDEFINED_PREFIX = 53
+    UNDEFINED_PREFIX = 12
 
     # misc attribute validation
     MISSING_REQUIRED_ATTRIBUTE = 70

@@ -385,9 +385,37 @@ class test_rename(test_xupdate):
 
 #-----------------------------------------------------------------------
 
-class test_xupdate_error(test_xupdate):
+class test_xupdate_error(unittest.TestCase):
     # trick __metaclass__ into not treating this as a test-case
-    __metaclass__ = test_xupdate.__metaclass__
+    class __metaclass__(type):
+        def __init__(cls, name, bases, members):
+            if '__metaclass__' not in members:
+                test_method = cls.new_test_method()
+                setattr(cls, 'runTest', test_method)
+            return
+
+        @classmethod
+        def new_test_method(cls):
+            def format_error(error_code):
+                for name, value in XUpdateError.__dict__.iteritems():
+                    if value == error_code:
+                        error_code = 'XUpdateError.' + name
+                        break
+                return 'XUpdateError(%s)' % error_code
+            def test_method(self):
+                source = inputsource(self.source, 'source')
+                xupdate = inputsource(self.xupdate, 'xupdate-error-source')
+                expected = format_error(self.error_code)
+                try:
+                    document = apply_xupdate(source, xupdate)
+                except XUpdateError, error:
+                    compared = format_error(error.code)
+                    self.assertEquals(expected, compared)
+                else:
+                    self.fail('%s not raised' % expected)
+                return
+            return test_method
+
     source = """<?xml version="1.0"?>
 <addresses>
   <address>
@@ -395,28 +423,6 @@ class test_xupdate_error(test_xupdate):
   </address>
 </addresses>
 """
-    @classmethod
-    def new_test_method(cls):
-        def format_error(error_code):
-            for name, value in XUpdateError.__dict__.iteritems():
-                if value == error_code:
-                    error_code = 'XUpdateError.' + name
-                    break
-            return 'XUpdateError(%s)' % error_code
-        expected = format_error(cls.error_code)
-        def test_method(self):
-            source = inputsource(self.source, 'source')
-            xupdate = inputsource(self.xupdate, 'xupdate-error-source')
-            try:
-                document = apply_xupdate(source, xupdate)
-            except XUpdateError, error:
-                compared = format_error(error.code)
-                self.assertEquals(expected, compared)
-            else:
-                self.fail('%s not raised' % expected)
-            return
-        return test_method
-
 
 class test_version_missing(test_xupdate_error):
     xupdate = """<?xml version="1.0"?>

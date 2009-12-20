@@ -33,7 +33,6 @@ class Test_increment_over_core_tree(unittest.TestCase):
         #self.base_tree_time = min(t0.repeat(3))
         self.base_tree_time = t0.timeit(TIMER_COUNT)
         print self.base_tree_time
-        return
 
     def test_bindery_parse(self):
         #self.assert_(diff/SCALE < 0.01)
@@ -43,7 +42,6 @@ class Test_increment_over_core_tree(unittest.TestCase):
         print t, (t - self.base_tree_time)/self.base_tree_time
         #self.assert_(diff/SCALE < 0.01)
         self.assert_(t < 3)
-        return
 
 
 if __name__ == '__main__':
