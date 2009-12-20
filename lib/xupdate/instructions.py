@@ -101,8 +101,7 @@ class text_instruction(xupdate_instruction):
         return '<text children=%s>' % xupdate_instruction.__repr__(self)
 
     def instantiate(self, context):
-        context.characters(self[0])
-        return
+        context.text(self[0])
 
 
 class processing_instruction_instruction(xupdate_instruction):
@@ -163,8 +162,7 @@ class value_of_instruction(xupdate_instruction):
             for node in result:
                 context.copy_node(node)
         else:
-            context.characters(datatypes.string(result))
-        return
+            context.text(datatypes.string(result))
 
 
 class literal_element(xupdate_instruction):
