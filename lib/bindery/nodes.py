@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from functools import *
+from operator import itemgetter
 import re
 import itertools
 import keyword
@@ -199,7 +200,7 @@ class container_mixin(object):
 
     @property
     def xml_element_pnames(self):
-        return itertools.chain(itertools.imap(self.xml_model.element_types.itervalues(), operator.itemgetter(0)),
+        return itertools.chain(itertools.imap(itemgetter(0), self.xml_model.element_types.itervalues()),
                                (self.xml_extra_children or {}).iterkeys())
 
     @property
@@ -394,6 +395,7 @@ class container_mixin(object):
             else:
                 raise KeyError('namespace/local name combination not found (%s)'%(str(key)))
         if target is not None:
+            #No target.xml_clear()...
             for child in target.xml_children:
                 target.xml_remove(child)
             target.xml_append(value)
@@ -460,7 +462,7 @@ class element_base(container_mixin, tree.element):
 
     @property
     def xml_attribute_pnames(self):
-        return itertools.chain(itertools.imap(self.xml_model.attribute_types.itervalues(), operator.itemgetter(0)),
+        return itertools.chain(itertools.imap(itemgetter(0), self.xml_model.attribute_types.itervalues()),
                                (self.xml_extra_attributes or {}).iterkeys())
 
     @property

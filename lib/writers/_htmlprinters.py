@@ -26,6 +26,7 @@ class htmlprinter(xmlprinter):
     """
 
     _disable_ouput_escaping = 0
+    _raze_namespaces = False
 
     def __init__(self, stream, encoding):
         xmlprinter.__init__(self, stream, encoding)
@@ -102,6 +103,8 @@ class htmlprinter(xmlprinter):
         the content of certain elements (SCRIPT and STYLE).
         """
         if namespace is not None:
+            if self._raze_namespaces:
+                namespace, namespaces = None, {}
             xmlprinter.start_element(self, namespace, name, namespaces,
                                      attributes)
             return
@@ -130,6 +133,8 @@ class htmlprinter(xmlprinter):
         generated for certain elements.
         """
         if namespace is not None:
+            if self._raze_namespaces:
+                namespace, namespaces = None, {}
             xmlprinter.end_element(self, namespace, name)
             return
 
@@ -388,3 +393,11 @@ class htmlprettyprinter(htmlprinter):
     _no_indent_elements = frozenset([
         'script', 'style', 'pre', 'textarea', 'xmp',
         ])
+
+#
+class html_ns_stripper(htmlprinter):
+    """
+    Specialization of `htmlprinter` that forcibly suppresses any specified namespaces
+    """
+    _raze_namespaces = True
+

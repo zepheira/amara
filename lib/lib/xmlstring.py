@@ -42,12 +42,13 @@ def U(s, encoding='utf-8'):
     if isinstance(s, str): return s.decode(encoding)
     #If it's an XPath data type object, apply the equivalent of the XPath string() function
     if isinstance(s, datatypes.xpathobject): return unicode(datatypes.string(s))
+    if s is None:
+        #FIXME: L10N
+        raise TypeError('Refusing to coerce None into Unicode')
     #Otherwise just leap into default coercions
     try:
         return unicode(s)
     except TypeError, e:
-        if s is None:
-            raise e
         return str(s).decode(encoding)
 
 #Basic idea is as old as the XML spec, but was good to reuse a regex at

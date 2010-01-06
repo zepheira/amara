@@ -79,6 +79,8 @@ def _init_lookup_table():
                           HTML_W + '-indent': _htmlprinters.htmlprettyprinter, 
                           XHTML_W: _xhtmlprinters.xhtmlprinter,
                           XHTML_W + '-indent': _xhtmlprinters.xhtmlprettyprinter,
+                          HTML_W + '-nsstrip': _htmlprinters.html_ns_stripper,
+                          HTML_W + '-nsstrip-indent': _htmlprinters.html_ns_stripper,
                           })
 
 

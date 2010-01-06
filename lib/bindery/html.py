@@ -63,7 +63,17 @@ class element(nodes.element_base, node):
     _flags - A list of miscellaneous flags that can be set on the node
     '''
     name = nodes.element_base.xml_qname
-    childNodes = nodes.element_base.xml_children
+    def xml_get_childNodes_(self):
+        return self.xml_children
+
+    def xml_set_childNodes_(self, l):
+        #No self.xml_clear() ...
+        for child in self.xml_children:
+            self.xml_remove(child)
+        for i in l: self.xml_append(i)
+        return
+
+    childNodes = property(xml_get_childNodes_, xml_set_childNodes_, None, "html5lib uses this property to manage HTML element children")
     def __init__(self, ns, qname):
         nodes.element_base.__init__(self, ns, qname)
         self._flags = []
