@@ -15,10 +15,11 @@ class Test_default_resolver(unittest.TestCase):
         #Only allow access files in the same directory as sampleresource.txt via URL jails
         auths = [(lambda u: u.rsplit('/', 1)[0] + '/' == start_base, True)]
         resolver = irihelpers.resolver(authorizations=auths)
-        start_isrc =  inputsource(start_uri, resolver=resolver)
+        start_isrc = inputsource(start_uri, resolver=resolver)
         new_isrc = start_isrc.resolve('sampleresource.txt', start_base)
         self.assertEqual('Spam', new_isrc.stream.read().strip())
-        self.assertRaises(iri.IriError, lambda uriref='http://google.com': start_isrc.resolve(uriref, start_base))
+        self.assertRaises(iri.IriError, resolver.resolve,
+                          'http://google.com', start_base)
 
 
 class Test_scheme_registry_resolver(unittest.TestCase):
@@ -35,8 +36,10 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             return ''.join([ chr(ord(c)+1) for c in uri])
 
         resolver = irihelpers.scheme_registry_resolver(
-            handlers={'eval': eval_scheme_handler, 'shift': shift_scheme_handler})
-        start_isrc =  inputsource(FILE('sampleresource.txt'), resolver=resolver)
+            handlers={'eval': eval_scheme_handler,
+                      'shift': shift_scheme_handler})
+        start_isrc =  inputsource(FILE('sampleresource.txt'),
+                                        resolver=resolver)
         
         scheme_cases = [(None, 'eval:150-50', '100'),
                 (None, 'shift:abcde', 'bcdef'),
@@ -45,14 +48,14 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             ]
 
         for base, relative, expected in scheme_cases:
-            res = start_isrc.resolve(relative, base)
+            res = resolver.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
         resolver.handlers[None] = shift_scheme_handler
         del resolver.handlers['shift']
 
         for base, relative, expected in scheme_cases:
-            res = start_isrc.resolve(relative, base)
+            res = resolver.resolve(relative, base)
             self.assertEqual(expected, res, "URI: base=%s uri=%s" % (base, relative))
 
 

@@ -57,7 +57,7 @@ He left it dead, and with its head
 XHTML_EXPECTED_1 = """<?xml version="1.0" encoding="UTF-8"?>\n<html><head><title>test</title></head><body><h1>xhtml test</h1><hr noshade="noshade"/><pre>%s</pre></body></html>""" % JABBERWOCKY
 
 # as HTML, with Print
-XHTML_EXPECTED_2 = """<html><head><title>test</title></head><body><h1>xhtml test</h1><hr noshade><pre>%s</pre></body></html>""" % JABBERWOCKY
+XHTML_EXPECTED_2 = """<?xml version="1.0" encoding="UTF-8"?>\n<html><head><title>test</title></head><body><h1>xhtml test</h1><hr noshade="noshade"/><pre>%s</pre></body></html>""" % JABBERWOCKY
 
 # as XML, with PrettyPrint
 XHTML_EXPECTED_3 = """<?xml version="1.0" encoding="UTF-8"?>
@@ -74,13 +74,13 @@ XHTML_EXPECTED_3 = """<?xml version="1.0" encoding="UTF-8"?>
 """ % JABBERWOCKY
 
 # as HTML, with PrettyPrint
-XHTML_EXPECTED_4 = """<html>
+XHTML_EXPECTED_4 = """<?xml version="1.0" encoding="UTF-8"?>\n<html>
   <head>
     <title>test</title>
   </head>
   <body>
     <h1>xhtml test</h1>
-    <hr noshade>
+    <hr noshade="noshade"/>
     <pre>%s</pre>
   </body>
 </html>
@@ -102,8 +102,6 @@ class Test_domlette_serialization(unittest.TestCase):
         diff = treecompare.xml_diff(out, DOCTYPE_EXPECTED_1)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
-        #Make sure we can parse the result
-        doc2 = bindery.parse(out)
 
     def _build_namespace_free_xhtml(self):
         doc = amara.tree.entity()
@@ -175,7 +173,8 @@ class Test_domlette_serialization(unittest.TestCase):
         xml_print(doc, stream=s, is_html=True, indent=True)
         out = s.getvalue()
         #self.assertEqual(out, ATOMENTRY1)
-        diff = treecompare.document_diff(out, XHTML_EXPECTED_4, whitespace=False)
+        diff = treecompare.document_diff(out, XHTML_EXPECTED_4,
+                                         whitespace=False)
         diff = '\n'.join(diff)
         self.assertFalse(diff, msg=(None, diff))
 

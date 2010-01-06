@@ -24,7 +24,7 @@ class text_element(xslt_element):
         value = self._value
         if value:
             if self._disable_output_escaping:
-                context.text(value, False)
+                context.text(value, True)
             else:
                 context.text(value)
         return

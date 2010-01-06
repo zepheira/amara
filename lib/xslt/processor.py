@@ -232,16 +232,12 @@ class processor(object):
         The optional `output` argument is a Python file-like object
         to be used as the destination for the writer's output.
         """
-        #Update the strip elements
-        #Assume that the ones from XSLT have higher priority
-        ns = self.getStripElements()
-        ignorePis = False
         try:
             document = tree.parse(source)
         except ReaderError, e:
             raise XsltError(XsltError.SOURCE_PARSE_ERROR,
                             uri=(source.uri or '<Python string>'), text=e)
-        if not ignorePis and self.__checkStylesheetPis(document, source):
+        if self.__checkStylesheetPis(document, source):
             #Do it again with updates WS strip lists
 
             #NOTE:  There is a case where this will produce the wrong results.  If, there were
@@ -272,9 +268,6 @@ class processor(object):
         entity that the node represents, and should be explicitly
         provided, even if it is available from the node itself.
 
-        ignorePis - (flag) If set, will cause xml-stylesheet
-        processing instructions in the source document to be ignored.
-
         `parameters` - optional dictionary of
         stylesheet parameters, the keys of which may be given as
         strings if they have no namespace, or as (uri, localname)
@@ -296,8 +289,6 @@ class processor(object):
         isrc - optional input source used strictly for further resolution
         relative the given DOM
         """
-        ignorePis = False
-
         if not isinstance(node, tree.entity):
             raise ValueError(MessageSource.g_errorMessages[
                              XsltError.CANNOT_TRANSFORM_FRAGMENT])
@@ -327,7 +318,7 @@ class processor(object):
                 stripElements=self.getStripElements(),
                 factory=self.inputSourceFactory)
 
-        if not ignorePis and self.__checkStylesheetPis(node, docInputSource):
+        if self.__checkStylesheetPis(node, docInputSource):
             #Do it again with updated WS strip lists
 
             #NOTE:  There is a case where this will produce the wrong results.  If, there were

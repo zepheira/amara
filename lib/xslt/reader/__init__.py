@@ -661,7 +661,8 @@ class stylesheet_reader(object):
     def _combine_stylesheet(self, element, is_import):
         href = element._href
         try:
-            new_source = self._input_source.resolve(href)
+            new_source = self._input_source.resolve(href,
+                                                    self._input_source.uri)
         except (OSError, IriError):
             # FIXME: create special inputsource for 4xslt command-line
             #for uri in self._alt_base_uris:

@@ -24,7 +24,7 @@ class Test_basic_uri_resolver(unittest.TestCase):
 
         base = 'foo:foo.com'
         uri = 'path'
-        self.assertRaises(iri.IriError, lambda uri=uri, base=base: start_isrc.absolutize(uri, base), "absolutize: %s %s" % (base, uri))
+        self.assertRaises(iri.IriError, start_isrc.absolutize, uri, base)
 
         base = os.getcwd()
         if base[-1] != os.sep:
@@ -54,7 +54,6 @@ def test_many_inputsources():
             sources.append(inputsource(filename))
         except:
             print "Failed after", i, "files"
-            raise
 
 #
 if __name__ == '__main__':

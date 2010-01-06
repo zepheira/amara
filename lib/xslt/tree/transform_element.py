@@ -114,7 +114,7 @@ class _key_dispatch_table(dict):
             context.node = context.current_node = node
             context.position = position
             position += 1
-            # Get the possible maches for `node`
+            # Get the possible matches for `node`
             type_key = node.xml_typecode
             type_table = self._match_table
             if type_key in type_table:
@@ -132,7 +132,12 @@ class _key_dispatch_table(dict):
 
             for pattern, axis_type, namespaces, use_expr in matches:
                 context.namespaces = namespaces
-                if pattern.match(context, node, axis_type):
+                try:
+                    m = pattern.match(context, node, axis_type)
+                except XPathError, exc:
+                    raise XsltError(exc.code)
+                    
+                if m:
                     focus = context.node, context.position, context.size
                     context.node, context.position, context.size = node, 1, 1
                     value = use_expr.evaluate(context)
@@ -546,7 +551,12 @@ class transform_element(xslt_element):
             # what was specified.
             if sort_key[0] < precedence:
                 context.namespaces = template.namespaces
-                if pattern.match(context, node, axis_type):
+                try:
+                    m = pattern.match(context, node, axis_type)
+                except XpathError, exc:
+                    raise XsltError(exc.code, node, locations)
+
+                if m:
                     # Make sure the template starts with a clean slate
                     state = context.template, context.variables
                     context.template = template

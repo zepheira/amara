@@ -415,15 +415,16 @@ class xupdate_handler(Handler):
     def characters(self, data):
         current_state = self._state_stack[-1]
         # verify that the current node can have text content
-        try:
-            next = current_state.validation[_text_event]
-        except KeyError:
-            raise XUpdateError(XUpdateError.INVALID_TEXT,
-                               element=current_state.name)
-        else:
-            current_state.validation = next
-        current_state.item.append(instructions.literal_text(data))
-        return
+        is_whitespace = (data.strip() == '')
+        if not is_whitespace:
+            try:
+                next = current_state.validation[_text_event]
+            except KeyError:
+                raise XUpdateError(XUpdateError.INVALID_TEXT,
+                                   element=current_state.name)
+            else:
+                current_state.validation = next
+            current_state.item.append(instructions.literal_text(data))
 
 
 def parse(source):

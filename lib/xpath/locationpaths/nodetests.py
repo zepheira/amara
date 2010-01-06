@@ -177,8 +177,8 @@ class namespace_test(name_test):
         try:
             return node.xml_namespace == context.namespaces[self._prefix]
         except KeyError:
-            raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
-                                   prefix=self._prefix)
+            raise XPathError(XPathError.UNDEFINED_PREFIX,
+                             prefix=self._prefix)
 
     def __str__(self):
         return self._prefix + ':*'
@@ -206,8 +206,8 @@ class qualified_name_test(name_test):
                 try:
                     return node.xml_namespace == context.namespaces[prefix]
                 except KeyError:
-                    raise RuntimeException(RuntimeException.UNDEFINED_PREFIX,
-                                           prefix=prefix)
+                    raise XPathError(XPathError.UNDEFINED_PREFIX,
+                                     prefix=prefix)
         return 0
 
     def __str__(self):
