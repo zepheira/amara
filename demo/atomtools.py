@@ -437,10 +437,12 @@ def ejsonize(isrc):
     def process_entry(e):
         known_elements = [u'id', u'title', u'link', u'author', u'category', u'updated', u'content', u'summary']
         data = {
+            u"id": unicode(e.id),
+            #XXX Shall we use title for label?
             u"label": unicode(e.id),
             u"type": u"Entry",
             u"title": unicode(e.title),
-            u"link": first_item([ l.href for l in e.link if l.rel == u"alternate" ], []),
+            u"link": first_item([ l.href for l in e.link if l.rel in [None, u"alternate"] ], []),
             #Nested list comprehension to select the alternate link,
             #then select the first result ([0]) and gets its href attribute
             u"authors": [ unicode(a.name) for a in iter(e.author or []) ],
@@ -465,10 +467,12 @@ def ejsonize(isrc):
     try:
         doc_entries = iter(doc.feed.entry)
         feedinfo = {
+            u"id": unicode(doc.feed.id),
+            #XXX Shall we use title for label?
             u"label": unicode(doc.feed.id),
             u"type": u"Feed",
             u"title": unicode(doc.feed.title),
-            u"link": first_item([ l.href for l in doc.feed.link if l.rel == u"alternate" ], []),
+            u"link": first_item([ l.href for l in doc.feed.link if l.rel in [None, u"alternate"] ], []),
             u"authors": [ unicode(a.name) for a in iter(doc.feed.author or []) ],
             u"updated": unicode(doc.feed.updated),
         }

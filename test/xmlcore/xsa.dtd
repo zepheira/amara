@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  XML Software Autoupdate DTD, version 1.00
+  Lars Marius Garshol
+
+  See http://www.garshol.priv.no/download/xsa/ for more information.
+-->
+
+  <!-- The root element -->
+  <!ELEMENT xsa (vendor, product+)>
+
+  <!ATTLIST xsa version CDATA #FIXED "1.0">
+
+  <!-- Contains information about the vendor whose products are described
+       in this document -->
+  <!ELEMENT vendor   (name,email,url?)>
+
+  <!-- The name of a vendor or a product -->
+  <!ELEMENT name     (#PCDATA)>
+
+  <!-- The email address of the vendor (as in info@foo-corp.com) -->
+  <!ELEMENT email    (#PCDATA)>
+
+  <!-- The home page URL of the vendor (as in http://www.foo-corp.com/) -->
+  <!ELEMENT url      (#PCDATA)>
+
+
+  <!-- Contains information about a software product -->
+  <!ELEMENT product  (name,version,last-release,info-url?,
+              changes?)>
+
+  <!-- A unique identifier (within the XSA document) of the product. This
+       is used to point from the outside into the XSA document, for example
+       in order to only monitor a subset of the available products. -->
+  <!ATTLIST product id ID #REQUIRED>
+
+  <!-- The current version of a product. -->
+  <!ELEMENT version      (#PCDATA)>
+
+  <!-- The data of the last release of a product (YYYYMMDD) -->
+  <!ELEMENT last-release (#PCDATA)>
+
+  <!-- The URL of a page with information about a product, such as
+       http://www.foo-corp.com/products/bar/ -->
+  <!ELEMENT info-url     (#PCDATA)>
+
+  <!-- An element with information about changes made to the product
+       between the previous release and the current one. -->
+  <!ELEMENT changes      ANY>
