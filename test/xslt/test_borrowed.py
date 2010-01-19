@@ -32,9 +32,9 @@ def _bootstrap():
             warnings.warn('SKIP: missing XSLT for %r' % source_xml)
             continue
 
-        expected_out = basename + '.out'
-        expected_txt = basename + '.txt'
-        expected_html = basename + '.html'
+        expected_out = basename + '.out.xml'
+        expected_txt = basename + '.out.txt'
+        expected_html = basename + '.out.html'
         if os.path.exists(expected_out):
             def test_borrowed(source_xml=source_xml, transform_xml=transform_xml, expected=expected_out):
                 _run_xml(
