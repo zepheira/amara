@@ -26,7 +26,6 @@ from amara.lib.xmlstring import *
 from amara.xpath import datatypes
 from amara.lib.util import *
 from amara.writers.struct import *
-import model
 
 #Only need to list IDs that do not start with "xml", "XML", etc.
 RESERVED_NAMES = [
@@ -625,4 +624,5 @@ class entity_base(container_mixin, tree.entity):
 #    #Specialize any aspects of attribute here
 #    pass
 
+import model
 

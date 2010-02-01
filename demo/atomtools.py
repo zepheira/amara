@@ -427,6 +427,16 @@ def entry_metadata(isrc):
     return
 
 
+def deserialize_text_construct(node):
+    #FIXME: Need to fix a nasty bug in models before using node.type
+    type_ = node.type
+    if type_ in [None, u'text', u'html']:
+        return unicode(node)
+    elif type_ == u'xhtml':
+        encoded = node.div.xml_encode()
+        return encoded
+    
+
 def ejsonize(isrc):
     '''
     Convert Atom syntax to a dictionary
@@ -458,7 +468,7 @@ def ejsonize(isrc):
             try:
                 data[u"content_src"] = unicode(e.content.src)
             except AttributeError:
-                data[u"content_text"] = unicode(e.content)
+                data[u"content_text"] = deserialize_text_construct(e.content)
         for child in e.xml_elements:
             if child.xml_namespace != ATOM_NAMESPACE and child.xml_local not in known_elements:
                 data[child.xml_local] = unicode(child)

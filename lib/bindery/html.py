@@ -18,7 +18,7 @@ from amara import tree
 from amara.lib import inputsource
 from amara.bindery import nodes
 from amara.lib.xmlstring import *
-from amara.namespaces import XML_NAMESPACE
+from amara.namespaces import XML_NAMESPACE, XHTML_NAMESPACE
 
 
 class node(html5lib.treebuilders._base.Node):
@@ -63,6 +63,19 @@ class element(nodes.element_base, node):
     _flags - A list of miscellaneous flags that can be set on the node
     '''
     name = nodes.element_base.xml_qname
+    namespace = nodes.element_base.xml_namespace
+    #@property
+    #def name(self):
+    #    return self.xml_qname
+    #@property
+    #def namespace(self):
+    #    return self.xml_namespace
+
+    @property
+    def nameTuple(self):
+        #return XHTML_NAMESPACE, self.xml_name
+        return self.xml_namespace, self.xml_qname
+
     def xml_get_childNodes_(self):
         return self.xml_children
 
@@ -141,22 +154,27 @@ def doctype_create(dummy, name, publicId=None, systemId=None):
     c.xml_name = name
     return c
 
+
+BOGUS_NAMESPACE = u'urn:bogus:x'
+
 class treebuilder(html5lib.treebuilders._base.TreeBuilder):
     documentClass = entity
     #elementClass = xml_element_factory
     commentClass = comment
     doctypeClass = doctype_create
     
-    def __init__(self, entity_factory=None):
+    def __init__(self, entity_factory=None, ns_aware=False):
         self.entity = entity_factory()
-        html5lib.treebuilders._base.TreeBuilder.__init__(self)
-        def eclass(name):
+        html5lib.treebuilders._base.TreeBuilder.__init__(self, ns_aware)
+        def eclass(name, namespace):
+            namespace, name = (U(namespace) if namespace else None), U(name)
             #Deal with some broken HTML that uses bogus colons in tag names
-            #Note: we're abusing the xml perma-namespace, but for a good cause ;)
-            ns = XML_NAMESPACE if ":" in str(name) else None
-            return self.entity.xml_element_factory(ns, str(name))
+            if (u":" in name and not namespace):
+                namespace = BOGUS_NAMESPACE
+            #Yes! Amara ns, name convention this is reverse order from html5lib's
+            return self.entity.xml_element_factory(namespace, name)
         self.elementClass = eclass
-    
+
 
 def parse(source, model=None, encoding=None):
     '''
@@ -164,9 +182,10 @@ def parse(source, model=None, encoding=None):
     '''
     #from amara.bindery import html; doc = html.parse("http://www.hitimewine.net/istar.asp?a=6&id=161153!1247")
     #parser = html5lib.HTMLParser()
-    def get_tree_instance():
+    def get_tree_instance(ns_aware=False):
+        #ns_aware is a boolean, whether or not to use http://www.w3.org/1999/xhtml
         entity_factory = model.clone if model else entity
-        return treebuilder(entity_factory)
+        return treebuilder(entity_factory, ns_aware)
     parser = html5lib.HTMLParser(tree=get_tree_instance)
     return parser.parse(inputsource(source, None).stream, encoding=encoding)
     #return parser.parse(inputsource(source, None).stream, model)

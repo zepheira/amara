@@ -238,7 +238,7 @@ from distutils.core import setup, Extension
 kw = {}
 
 setup(name='Amara',
-      version='2.0a3',
+      version='2.0a4',
       description="Library for XML processing in Python",
       long_description="Library for XML processing in Python, designed to balance the native idioms of Python with the native character of XML.",
       url='http://wiki.xml3k.org/Amara2',
@@ -258,6 +258,7 @@ setup(name='Amara',
       packages=['amara',
                 'amara.lib',
                 'amara.bindery',
+                'amara.bindery.model',
                 'amara.dom',
                 'amara.writers',
                 'amara.xpath',

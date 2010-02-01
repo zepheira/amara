@@ -5,7 +5,6 @@
 Extra friendly XML node API for Python
 """
 
-import nodes
 from amara import Error
 from amara.lib.util import set_namespaces
 from amara import tree
@@ -36,3 +35,4 @@ class BinderyError(Error):
 #FIXME: Use proper L10N (gettext)
 def _(t): return t
 
+import nodes
