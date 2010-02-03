@@ -333,16 +333,52 @@ def abspath(node, prefixes=None):
         return u'/' + step
 
 
-def named_node_test(child_ns, child_local, node, axis=u''):
+def named_node_test(exemplar_ns, exemplar_local, context, axis=u''):
     '''
     Return an XPath node test for the given child element on the given node
     '''
-    for prefix, ns in node.xml_namespaces.items():
-        if ns == child_ns:
+    if axis:
+        if axis in (u'parent', u'ancestor', u'preceding', u'following', u'preceding-sibling', u'following-sibling'):
+            axis += u'::'
+        elif axis in (u'.', u'..', u'@'):
+            axis += u'/'
+    if not exemplar_ns:
+        return axis + exemplar_local
+    for prefix, ns in context.xml_namespaces.items():
+        if ns == exemplar_ns:
             #Use this prefix, as long as it's not the default NS
             if not prefix: break
-            return axis + prefix + u':' + child_local
+            return axis + prefix + u':' + exemplar_local
     #Probably better to just pass in a temp prefix mapping here
-    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, child_ns or u'', child_local)
+    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, exemplar_ns or u'', exemplar_local)
 
+
+def node_test(exemplar, context, axis=u''):
+    '''
+    Return an XPath node test for an element like the exemplar (same node type,
+    and, if applicable, universal name)
+    
+    It is a special case when the exemplar is a root node.  In this case, the axis is forced
+    as parent
+    '''
+    if axis:
+        if axis in (u'parent', u'ancestor', u'preceding', u'following', u'preceding-sibling', u'following-sibling'):
+            axis += u'::'
+        elif axis in (u'.', u'..', u'@'):
+            axis += u'/'
+    if isinstance(exemplar, tree.entity):
+        return u'parent::node()[self::node() = /]'
+    if isinstance(exemplar, tree.comment):
+        return axis + u'comment()'
+    if isinstance(exemplar, tree.processing_instruction):
+        return axis + u'processing-instruction()'
+    if not exemplar.xml_namespace:
+        return axis + exemplar.xml_local
+    for prefix, ns in context.xml_namespaces.items():
+        if ns == exemplar.xml_namespace:
+            #Use this prefix, as long as it's not the default NS
+            if not prefix: break
+            return axis + prefix + u':' + exemplar.xml_local
+    #Probably better to just pass in a temp prefix mapping here
+    return u'%s*[namespace-uri()="%s" and local-name()="%s"]'%(axis, exemplar.xml_namespace or u'', exemplar.xml_local)
 

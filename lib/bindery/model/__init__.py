@@ -24,10 +24,9 @@ from functools import *
 from operator import *
 
 from amara import tree
-from amara.lib.xmlstring import *
-from amara.lib.util import *
+from amara.lib.xmlstring import U
 from amara.xpath import datatypes
-from amara.xpath.util import *
+from amara.xpath.util import named_node_test
 from amara.bindery import BinderyError
 from amara.namespaces import AKARA_NAMESPACE
 
@@ -122,6 +121,7 @@ class content_model:
         self.metadata_rel_expr = None
         self.metadata_value_expr = None
         self.metadata_coercion_expr = None
+        self.metadata_context_expr = None
         self.other_rel_exprs = []
         self.prefixes = {}
         return
@@ -166,9 +166,18 @@ class content_model:
         These cues are worked into the model, and are used to drive the extraction from the
         instance at root
         '''
+        #FIXME: investigate the requirement for prefixes=prefixes for XPath, even for prefixes defined in source doc
         def handle_element(elem, resource):
             new_resource = None
             prefixes = elem.xml_root.xml_model.prefixes
+            if elem.xml_model.metadata_context_expr:
+                cnode = elem
+                while cnode.xml_parent is not None:
+                    if cnode.xml_select(elem.xml_model.metadata_context_expr, prefixes=prefixes):
+                        break
+                    cnode = cnode.xml_parent
+                else:
+                    return
             #Is there a cue that designates this element as a resource envelope?
             if elem.xml_model.metadata_resource_expr:
                 if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
@@ -274,3 +283,4 @@ def metadata_dict(metadata):
 
 from examplotron import examplotron_model
 
+__all__.append('examplotron_model')

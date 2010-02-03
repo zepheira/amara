@@ -23,6 +23,9 @@ XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_NAMESPACES[XSL_N
 RNG_NAMESPACE = u"http://relaxng.org/ns/structure/1.0"; COMMON_NAMESPACES[RNG_NAMESPACE] = u'rng'
 EG_NAMESPACE = u"http://examplotron.org/0/"; COMMON_NAMESPACES[EG_NAMESPACE] = u'eg'
 
+OLD_STRON_NAMESPACE = 'http://www.ascc.net/xml/schematron'
+STRON_NAMESPACE = 'http://purl.oclc.org/dsdl/schematron'
+
 #XML Linking Language: http://www.w3.org/TR/xlink/
 XLINK_NAMESPACE = u"http://www.w3.org/1999/xlink"; COMMON_NAMESPACES[XLINK_NAMESPACE] = u'xlink'
 XINCLUDE_NAMESPACE = u'http://www.w3.org/2001/XInclude'; COMMON_NAMESPACES[XINCLUDE_NAMESPACE] = u'xinclude'
@@ -42,6 +45,7 @@ RDF_GROUP = [RDF_NAMESPACE, RDFS_NAMESPACE, DC_NAMESPACE, OWL_NAMESPACE, SKOS_NA
 ATOM_NAMESPACE = u'http://www.w3.org/2005/Atom'; COMMON_NAMESPACES[ATOM_NAMESPACE] = u'atom'
 ATOMPUB_NAMESPACE = u'http://www.w3.org/2007/app'; COMMON_NAMESPACES[ATOMPUB_NAMESPACE] = u'app'
 ATOMTHR_EXT_NAMESPACE = u'http://purl.org/syndication/thread/1.0'; COMMON_NAMESPACES[ATOMTHR_EXT_NAMESPACE] = u'thr'
+
 
 
 #obsolete

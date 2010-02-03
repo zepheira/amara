@@ -19,15 +19,14 @@ from functools import *
 from operator import *
 
 from amara import tree
-from amara.lib.xmlstring import *
-from amara.lib.util import *
+from amara.lib.xmlstring import U
 from amara.bindery import BinderyError
 from amara.bindery.model import document_model, constraint, child_element_constraint, named_node_test, NODE_ID_MARKER
 from amara.xpath import datatypes
-from amara.xpath.util import top_namespaces
+from amara.xpath.util import top_namespaces, named_node_test, node_test
+
 
 from amara.namespaces import AKARA_NAMESPACE, EG_NAMESPACE
-from amara.lib.util import *
 
 class examplotron_model(document_model):
     '''
@@ -38,6 +37,7 @@ class examplotron_model(document_model):
         self.model_document = bindery.parse(egdoc)
         self.model_document.xml_model.prefixes = top_namespaces(self.model_document)
         self.setup_model()
+        return
     
     def setup_model(self, parent=None):
         '''
@@ -87,6 +87,12 @@ class examplotron_model(document_model):
                     mod.metadata_value_expr = valattr[0].xml_value
                 else:
                     mod.metadata_value_expr = u'.'
+            context_attr = e.xml_select(u'@ak:context', NSS)
+            if context_attr:
+                #ak:resource="" should default to a generated ID
+                mod.metadata_context_expr = context_attr[0].xml_value
+            else:
+                mod.metadata_context_expr = node_test(parent, e, 'parent')
 
             #Apply default relationship or value expression
             #If there's ak:rel but no ak:value or ak:resource, ak:value=u'.'
