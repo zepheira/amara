@@ -103,11 +103,11 @@ class function_call(expression):
         for arg in self._args:
             arg.pprint(indent + '  ', stream)
 
-    def __str__(self):
+    def __unicode__(self):
         func_name = self._name[0] and u':'.join(self._name) or self._name[1]
         func_name = func_name.encode('unicode_escape')
-        arg_spec = ', '.join(map(str, self._args))
-        return '%s(%s)' % (func_name, arg_spec)
+        arg_spec = u', '.join(map(unicode, self._args))
+        return u'%s(%s)' % (func_name, arg_spec)
 
 
 class extension_function(function_call):

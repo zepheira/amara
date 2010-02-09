@@ -42,7 +42,7 @@ class axis_specifier(object):
         if ptr < 0: ptr += 0x100000000L
         return '<%s at 0x%x: %s>' % (self.__class__.__name__, ptr, self)
 
-    def __str__(self):
+    def __unicode__(self):
         return self.name
 
 

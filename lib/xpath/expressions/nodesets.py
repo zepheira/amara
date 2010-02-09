@@ -165,8 +165,8 @@ class union_expr(nodeset_expression):
         for path in self._paths:
             path.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return ' | '.join(map(str, self._paths))
+    def __unicode__(self):
+        return u' | '.join(map(unicode, self._paths))
 
 
 class path_expr(nodeset_expression):
@@ -203,8 +203,8 @@ class path_expr(nodeset_expression):
         self._expression.pprint(indent + '  ', stream)
         self._path.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '%s/%s' % (self._expression, self._path)
+    def __unicode__(self):
+        return u'%s/%s' % (self._expression, self._path)
 
 
 class filter_expr(nodeset_expression):
@@ -240,5 +240,5 @@ class filter_expr(nodeset_expression):
         self._expression.pprint(indent + '  ', stream)
         self._predicates.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '%s%s' % (self._expression, self._predicates)
+    def __unicode__(self):
+        return u'%s%s' % (self._expression, self._predicates)

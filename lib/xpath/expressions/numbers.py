@@ -43,8 +43,8 @@ class _binary_expr(number_expression):
         self._left.pprint(indent + '  ', stream)
         self._right.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '%s %s %s' % (self._left, self._op, self._right)
+    def __unicode__(self):
+        return u'%s %s %s' % (self._left, self._op, self._right)
 
 
 class additive_expr(_binary_expr):
@@ -81,5 +81,5 @@ class unary_expr(number_expression):
         print >> stream, indent + repr(self)
         self._expr.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '-%s' % self._expr
+    def __unicode__(self):
+        return u'-%s' % self._expr
