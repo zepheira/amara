@@ -3,6 +3,18 @@
 
 """
 Bindery node XML model tools
+
+An Amara element model (e.xml_model) is a collection of metadata and rules that characterize
+the nature of an XML element
+
+An Amara Document model (e.xml_model.) is a collection of metadata and rules that characterize the nature
+of an overall XML document type
+
+A document model might be implemented as a set of element models, or as something more
+centrally expressed.
+
+A constraint is one possible component of an element model.  
+
 """
 
 __all__ = [
@@ -171,12 +183,7 @@ class content_model:
             new_resource = None
             prefixes = elem.xml_root.xml_model.prefixes
             if elem.xml_model.metadata_context_expr:
-                cnode = elem
-                while cnode.xml_parent is not None:
-                    if cnode.xml_select(elem.xml_model.metadata_context_expr, prefixes=prefixes):
-                        break
-                    cnode = cnode.xml_parent
-                else:
+                if not elem.xml_select(elem.xml_model.metadata_context_expr, prefixes=prefixes):
                     return
             #Is there a cue that designates this element as a resource envelope?
             if elem.xml_model.metadata_resource_expr:

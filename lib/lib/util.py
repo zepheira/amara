@@ -233,4 +233,3 @@ def assert_not_equal(other, obj, msg=None):
     if obj == other:
         raise AssertionError(msg or '%r == %r' % (obj, other))
     return obj
-

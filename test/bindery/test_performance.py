@@ -6,6 +6,7 @@
 #   http://www.oreillynet.com/onlamp/blog/2007/09/pymotw_timeit.html
 
 import unittest
+import gc
 import os
 from cStringIO import StringIO
 import commands, os
@@ -32,14 +33,23 @@ class Test_increment_over_core_tree(unittest.TestCase):
         t0 = Timer('amara.parse(doc)', 'import amara; doc = %r'%(self.bigdoc1))
         #self.base_tree_time = min(t0.repeat(3))
         self.base_tree_time = t0.timeit(TIMER_COUNT)
-        print self.base_tree_time
+        print >> sys.stderr, self.base_tree_time
 
     def test_bindery_parse(self):
         #self.assert_(diff/SCALE < 0.01)
         t1 = Timer('bindery.parse(doc)', 'from amara import bindery; doc = %r'%(self.bigdoc1))
         #t = min(t1.repeat(3))
         t = t1.timeit(TIMER_COUNT)
-        print t, (t - self.base_tree_time)/self.base_tree_time
+        print >> sys.stderr, t, (t - self.base_tree_time)/self.base_tree_time
+        #self.assert_(diff/SCALE < 0.01)
+        self.assert_(t < 3)
+
+    def test_bindery_parse_gcdisabled(self):
+        #self.assert_(diff/SCALE < 0.01)
+        t1 = Timer('gc.disable(); bindery.parse(doc); gc.enable(); gc.collect()', 'from amara import bindery; doc = %r'%(self.bigdoc1))
+        #t = min(t1.repeat(3))
+        t = t1.timeit(TIMER_COUNT)
+        print >> sys.stderr, t, (t - self.base_tree_time)/self.base_tree_time
         #self.assert_(diff/SCALE < 0.01)
         self.assert_(t < 3)
 

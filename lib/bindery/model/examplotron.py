@@ -92,7 +92,9 @@ class examplotron_model(document_model):
                 #ak:resource="" should default to a generated ID
                 mod.metadata_context_expr = context_attr[0].xml_value
             else:
-                mod.metadata_context_expr = node_test(parent, e, 'parent')
+                #If it doesn't state context, don't check context
+                mod.metadata_context_expr = None
+                #mod.metadata_context_expr = node_test(parent, e, 'parent')
 
             #Apply default relationship or value expression
             #If there's ak:rel but no ak:value or ak:resource, ak:value=u'.'

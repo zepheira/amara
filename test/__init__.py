@@ -1,3 +1,77 @@
+# -*- encoding: utf-8 -*-
+# http://code.activestate.com/recipes/440700/
+# by Tarek Ziadé
+
+# let's use pystone instead of seconds here
+# (from Stephan Richter idea)
+import time
+
+# TOLERANCE in Pystones
+kPS = 1000
+TOLERANCE = 0.5*kPS 
+
+class DurationError(AssertionError): pass
+
+def local_pystone():
+    #import test, sys; print >> sys.stderr, test.__file__
+    from test import pystone
+    return pystone.pystones(loops=pystone.LOOPS)
+
+def func_not_to_exceed_pystone(max_num_pystones, current_pystone=local_pystone()):
+    """ decorator func_not_to_exceed_pystone """
+    if not isinstance(max_num_pystones, float):
+        max_num_pystones = float(max_num_pystones)
+
+    def _timedtest(function):
+        def wrapper(*args, **kw):
+            start_time = time.time()
+            try:
+                return function(*args, **kw)
+            finally:
+                total_time = time.time() - start_time
+                if total_time == 0:
+                    pystone_total_time = 0
+                else:
+                    pystone_rate = current_pystone[0] / current_pystone[1]
+                    pystone_total_time = total_time / pystone_rate
+                if pystone_total_time > (max_num_pystones + TOLERANCE):
+                    raise DurationError((('Test too long (%.2f Ps, '
+                                        'need at most %.2f Ps)')
+                                        % (pystone_total_time,
+                                            max_num_pystones)))
+        return wrapper
+
+    return _timedtest
+
+
+# http://www.dabeaz.com/blog/2010/02/context-manager-for-timing-benchmarks.html
+# benchmark.py
+class time_benchmark_block(object):
+    def __init__(self,name):
+        self.name = name
+    def __enter__(self):
+        self.start = time.time()
+    def __exit__(self,ty,val,tb):
+        end = time.time()
+        print("%s : %0.3f seconds" % (self.name, end-self.start))
+        return False
+
+
+class file_finder(object):
+    def __init__(self, context):
+        self.context = context
+
+    def __call__(self, fname):
+        stem = os.path.split(self.context)[0]
+        return os.path.join(stem, fname)
+        return 
+
+
+#
+# The stuff below should no longer be used.  It predates the move to nosetests
+#
+
+
 """
 Supporting definitions for the Python regression tests.
 
@@ -16,15 +90,6 @@ import unittest
 import types
 import operator
 import time
-
-class file_finder(object):
-    def __init__(self, context):
-        self.context = context
-
-    def __call__(self, fname):
-        stem = os.path.split(self.context)[0]
-        return os.path.join(stem, fname)
-        return 
 
 # Defined here as to have stack frames originating in this module removed
 # from unittest reports. See `unittest.TestResult._is_relevant_tb_level()`

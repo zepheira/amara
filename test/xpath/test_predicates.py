@@ -10,7 +10,7 @@ PLACES = """<places>
 </places>
 """
 
-def test_simpe_attr_update3():
+def test_simple_attr_update3():
     import amara
     doc = amara.parse(PLACES)
     ns = doc.xml_select(u'/places/place[@name="Santiago, Regi\xf3n Metro De Santiago"]')
