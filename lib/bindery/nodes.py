@@ -149,10 +149,8 @@ class bound_attribute(object):
         self.local = local
 
     def __get__(self, obj, owner):
-        #FIXME: Hack until this issue is fixed: http://trac.xml3k.org/ticket/8
-        attrmap = dict(obj.xml_attributes.items())
-        if (self.ns, self.local) in attrmap:
-            return attrmap[self.ns, self.local]
+        if (self.ns, self.local) in obj.xml_attributes:
+            return obj.xml_attributes[self.ns, self.local]
         else:
             #Property is defined in this element class's XML model, but does not appear on this instance
             return obj.xml_model.attribute_types.get((self.ns, self.local), (None, None))[1]

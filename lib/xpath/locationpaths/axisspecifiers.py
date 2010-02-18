@@ -191,18 +191,25 @@ class parent_axis(axis_specifier):
 
 
 class preceding_axis(axis_specifier):
+    """
+    The preceding axis contains all nodes in the same document as the context node that
+    are before the context node in document order, excluding any ancestors and
+    excluding attribute nodes and namespace nodes 
+    """
     name = 'preceding'
     reverse = True
     def select(self, node):
         """
-        Select all of the nodes the precede the context node, not
-        including ancestors.
+        Select all nodes in the same document as the context node that
+        are before the context node in document order, excluding any ancestors and
+        excluding attribute nodes and namespace nodes 
         """
         def preceding(node):
             while node:
-                child = node.xml_last_child
-                if child:
-                    for x in preceding(child): yield x
+                if isinstance(node, tree.element):
+                    child = node.xml_last_child
+                    if child:
+                        for x in preceding(child): yield x
                 yield node
                 node = node.xml_preceding_sibling
             return
