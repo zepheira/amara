@@ -5,6 +5,7 @@
 # let's use pystone instead of seconds here
 # (from Stephan Richter idea)
 import time
+from subprocess import Popen, PIPE
 
 # TOLERANCE in Pystones
 kPS = 1000
@@ -13,9 +14,16 @@ TOLERANCE = 0.5*kPS
 class DurationError(AssertionError): pass
 
 def local_pystone():
-    #import test, sys; print >> sys.stderr, test.__file__
-    from test import pystone
-    return pystone.pystones(loops=pystone.LOOPS)
+    #Can't do the simple thing here because nosetest interferes :(
+    #from test import pystone
+    #return pystone.pystones(loops=pystone.LOOPS)
+    #CMD = ['python', '-c', '"from test import pystone; print pystone.pystones(loops=pystone.LOOPS)"']
+    CMD = 'python -c "from test import pystone; print pystone.pystones(loops=pystone.LOOPS)"'
+    process = Popen(CMD, stdout=PIPE, shell=True)
+    #result = process.stdout.read()
+    result = process.communicate()[0]
+    return eval(result)
+    #import sys; print >> sys.stderr, result
 
 def func_not_to_exceed_pystone(max_num_pystones, current_pystone=local_pystone()):
     """ decorator func_not_to_exceed_pystone """

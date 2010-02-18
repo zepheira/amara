@@ -115,7 +115,7 @@ class entity(node, nodes.entity_base):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
-    xml_exclude_pnames = ('name', 'parent', 'appendChild', 'removeChild', 'removeChild', 'value', 'attributes', 'childNodes')
+    xml_exclude_pnames = frozenset(('name', 'parent', 'appendChild', 'removeChild', 'removeChild', 'value', 'attributes', 'childNodes'))
     xml_element_base = element
     def __init__(self, document_uri=None):
         nodes.entity_base.__init__(self, document_uri)

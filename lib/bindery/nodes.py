@@ -219,7 +219,7 @@ class container_mixin(object):
         """
         if isinstance(child, tree.element):
             pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_local, self, True)
-            if not hasattr(self, pname):
+            if pname not in self.__class__.__dict__:
                 setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
 #            if isinstance(child, tree.element):
 #                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
@@ -512,7 +512,7 @@ class entity_base(container_mixin, tree.entity):
     #xml_processing_instruction_factory = tree.processing_instruction
     #xml_text_factory = tree.text
     xml_element_base = element_base
-    xml_exclude_pnames = ()
+    xml_exclude_pnames = frozenset()
     xml_encoding = 'utf-8'
 
     def __new__(cls, document_uri=None):
@@ -559,7 +559,7 @@ class entity_base(container_mixin, tree.entity):
         try:
             python_id = self._names[(local, ns)]
         except (KeyError, AttributeError):
-            python_id = str(self.PY_REPLACE_PAT.sub('_', local))
+            python_id = self.PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
             while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
                 python_id += '_'
             # self._names may not be present when copy.deepcopy() is
@@ -569,12 +569,15 @@ class entity_base(container_mixin, tree.entity):
         if parent is not None:
             name_checks_out = False
             while not name_checks_out:
-                if hasattr(parent, python_id):
-                    descriptor = parent.__class__.__dict__.get(python_id)
-                    if descriptor is not None and iselement and (descriptor.ns, descriptor.local) == (ns, local):
-                        name_checks_out = True
-                        break
-                    python_id += '_'
+                if python_id in parent.__class__.__dict__ or python_id in parent.__dict__:
+                    #In case of attribute, just always disambiguate
+                    if iselement:
+                        descriptor = parent.__class__.__dict__.get(python_id)
+                        if descriptor is not None and (descriptor.ns, descriptor.local) == (ns, local):
+                            name_checks_out = True
+                            break
+                    else:
+                        python_id += '_'
 #                    print (parent, parent.__dict__)
 #                    obj = getattr(parent, python_id)
 #                    if obj is None or (iselement and obj.xml_name == (ns, local)):
