@@ -116,7 +116,7 @@ class Test_parse_model_a(unittest.TestCase):
          (u'co', u'tag', u'biafra'),
          (u'co', u'tag', u'poet')]
 
-        #print list(metadata)
+        import sys; print >> sys.stderr, list(metadata)
         meta_list = normalize_generated_ids(list(metadata))
         self.assertEqual(meta_list, normalize_generated_ids(EXPECTED_MD))
 

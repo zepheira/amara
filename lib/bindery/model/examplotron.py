@@ -24,7 +24,7 @@ from amara.bindery import BinderyError
 from amara.bindery.model import document_model, constraint, child_element_constraint, named_node_test, NODE_ID_MARKER
 from amara.xpath import datatypes
 from amara.xpath.util import top_namespaces, named_node_test, node_test
-
+from amara.xpath import context, parser
 
 from amara.namespaces import AKARA_NAMESPACE, EG_NAMESPACE
 
@@ -78,19 +78,18 @@ class examplotron_model(document_model):
             relattr = e.xml_select(u'@ak:rel', NSS)
             if relattr:
                 if relattr[0].xml_value:
-                    mod.metadata_rel_expr = relattr[0].xml_value
+                    mod.metadata_rel_expr = parser.parse(relattr[0].xml_value)
                 else:
-                    mod.metadata_rel_expr = u'local-name()'
+                    mod.metadata_rel_expr = parser.parse(u'local-name()')
             valattr = e.xml_select(u'@ak:value', NSS)
             if valattr:
                 if valattr[0].xml_value:
-                    mod.metadata_value_expr = valattr[0].xml_value
+                    mod.metadata_value_expr = parser.parse(valattr[0].xml_value)
                 else:
-                    mod.metadata_value_expr = u'.'
+                    mod.metadata_value_expr = parser.parse(u'.')
             context_attr = e.xml_select(u'@ak:context', NSS)
             if context_attr:
-                #ak:resource="" should default to a generated ID
-                mod.metadata_context_expr = context_attr[0].xml_value
+                mod.metadata_context_expr = parser.parse(context_attr[0].xml_value)
             else:
                 #If it doesn't state context, don't check context
                 mod.metadata_context_expr = None
@@ -102,15 +101,21 @@ class examplotron_model(document_model):
             if mod.metadata_resource_expr:
                 if (mod.metadata_value_expr
                     and not mod.metadata_rel_expr):
-                    mod.metadata_rel_expr = u'local-name()'
+                    mod.metadata_rel_expr = parser.parse(u'local-name()')
             else:
                 if (mod.metadata_rel_expr
                     and not mod.metadata_value_expr):
-                    mod.metadata_value_expr = u'.'
+                    mod.metadata_value_expr = parser.parse(u'.')
                 elif (mod.metadata_value_expr
                     and not mod.metadata_rel_expr):
-                    mod.metadata_rel_expr = u'local-name()'
+                    mod.metadata_rel_expr = parser.parse(u'local-name()')
 
+            if mod.metadata_resource_expr not in (NODE_ID_MARKER, None):
+                mod.metadata_resource_expr = parser.parse(mod.metadata_resource_expr)
+            #if mod.metadata_rel_expr is not None:
+            #    mod.metadata_rel_expr = parser.parse(mod.metadata_rel_expr)
+            #if mod.metadata_value_expr is not None:
+            #    mod.metadata_value_expr = parser.parse(mod.metadata_value_expr)
             relelem = e.xml_select(u'ak:rel', NSS)
             
             for rel in relelem:

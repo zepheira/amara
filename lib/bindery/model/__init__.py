@@ -41,6 +41,7 @@ from amara.xpath import datatypes
 from amara.xpath.util import named_node_test
 from amara.bindery import BinderyError
 from amara.namespaces import AKARA_NAMESPACE
+from amara.xpath import context, parser
 
 ATTIBUTE_AXIS = u'@'
 NODE_ID_MARKER = u'generate-id()'
@@ -183,7 +184,7 @@ class content_model:
             new_resource = None
             prefixes = elem.xml_root.xml_model.prefixes
             if elem.xml_model.metadata_context_expr:
-                if not elem.xml_select(elem.xml_model.metadata_context_expr, prefixes=prefixes):
+                if not elem.xml_model.metadata_context_expr.evaluate(context(elem, namespaces=prefixes)):
                     return
             #Is there a cue that designates this element as a resource envelope?
             if elem.xml_model.metadata_resource_expr:
@@ -191,14 +192,14 @@ class content_model:
                     #FIXME: Isn't going from unicode -> xpath str -> unicode wasteful?
                     new_resource = unicode(datatypes.string(elem.xml_nodeid))
                 else:
-                    new_resource = unicode(datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes)))
+                    new_resource = unicode(datatypes.string(elem.xml_model.metadata_resource_expr.evaluate(context(elem, namespaces=prefixes))))
             #Is there a cue that designates a relationship in this element?
             if elem.xml_model.metadata_rel_expr:
                 #Execute the XPath to get the relationship name/title
-                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
+                rel = datatypes.string(elem.xml_model.metadata_rel_expr.evaluate(context(elem, namespaces=prefixes)))
                 if elem.xml_model.metadata_value_expr:
                     #Execute the XPath to get the relationship value
-                    val = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
+                    val = elem.xml_model.metadata_value_expr.evaluate(context(elem, namespaces=prefixes))
                 elif new_resource is not None:
                     #If the element is also a resource envelope, the default value is the new resource ID
                     val = new_resource
