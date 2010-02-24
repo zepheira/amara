@@ -1,1 +1,4 @@
-uo_20010717-1.xml
+<?xml version="1.0" encoding="utf-8"?>
+<z:doc xmlns:z="http://example.com/z">
+  <hello/>
+</z:doc>

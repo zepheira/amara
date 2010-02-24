@@ -125,7 +125,8 @@ class child_element_constraint(constraint):
 
 class content_model:
     def __init__(self):
-        #{(ns, local): (python-name, default)}
+        #Used to be: {(ns, local): (python-name, default)}
+        #Now, for performance, is: {(ns, local): (python-name, default)}
         self.element_types = {}
         self.attribute_types = {}
         self.constraints = []

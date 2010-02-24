@@ -8,6 +8,8 @@ print datetime.datetime(2008, 10, 8, 19, 38, 8, 0, timezone('-0700')).isoformat(
 import datetime
 from amara.lib.date import timezone, UTC
 print datetime.datetime(2008, 10, 8, 19, 38, 8, 0, UTC).isoformat()
+
+If you need even more timezone mojo, try pytz: http://pypi.python.org/pypi/pytz/
 '''
 
 import datetime

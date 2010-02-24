@@ -173,6 +173,9 @@ ELEMENT_TYPE = tree.element.xml_type
 
 class container_mixin(object):
     xml_model_ = None
+    xml_exclude_pnames = frozenset()
+    xml_pname_cache = {}
+    XML_PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
 
     def xml_get_model(self): return self.xml_model_
     def xml_set_model(self, model):
@@ -213,14 +216,60 @@ class container_mixin(object):
     def xml_elements(self):
         return ( ch for ch in self.xml_children if isinstance(ch, tree.element) )
 
+    @property
+    def xml_pname(self):
+        #FIXME: account for special elems/attrs
+        return self.xml_child_pnames
+
+    def xml_new_pname_mapping(self, ns, local, iselement):
+        '''
+        Called to create a new name, or where disambiguation is required
+
+        First generate a Python ID (as a *string*) from an XML universal name
+        used to prepare an object for binding
+
+        ns - the XML namespace
+        local - the XML local name
+        iselement - a flag as to whether the object to be bound is an element or attribute
+        '''
+        root = self.xml_root
+        try:
+            pname = self.xml_pname_cache[(local, ns)]
+        #except (KeyError, AttributeError):
+        except (KeyError, ):
+            pname = self.XML_PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
+            while pname in RESERVED_NAMES or pname in self.xml_exclude_pnames:
+                pname += '_'
+            # self._names may not be present when copy.deepcopy() is
+            # creating a copy, so only try to cache if it's present.
+            self.xml_pname_cache[(local, ns)] = pname
+
+        while not True:
+            pname_info = self.xml_pname.get(pname)
+            if pname_info is None:
+                break
+            #elif pname_info == (child.xml_namespace, child.xml_local, iselement):
+            elif pname_info == (ns, local, iselement):
+                break
+            else:
+                pname += '_'
+        
+        if iselement:
+            setattr(self.__class__, pname, bound_element(ns, local))
+        else:
+            setattr(self.__class__, pname, bound_attribute(ns, local))
+        self.xml_child_pnames[pname] = (ns, local)
+        return
+
     def xml_child_inserted(self, child):
         """
         called after the node has been added to `self.xml_children`
         """
         if isinstance(child, tree.element):
-            pname = self.factory_entity.xml_pyname(child.xml_namespace, child.xml_local, self, True)
-            if pname not in self.__class__.__dict__:
-                setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
+            #pname_info = self.xml_pname.get(pname)
+            #if pname_info is None or pname_info != (child.xml_namespace, child.xml_local, True):
+            self.xml_new_pname_mapping(child.xml_namespace, child.xml_local, True)
+                #setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
 #            if isinstance(child, tree.element):
 #                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
 #                #Need to treat it using element binding rules
@@ -432,6 +481,7 @@ class element_base(container_mixin, tree.element):
 
     def __init__(self, ns, qname):
         #These are the children that do not come from schema information
+        #{pname: (ns, local)}
         self.xml_extra_children = None
         self.xml_extra_attributes = None
         #self.xml_iter_next = None
@@ -446,8 +496,9 @@ class element_base(container_mixin, tree.element):
         """
         called after the attribute has been added to `self.xml_attributes`
         """
-        pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self, False)
-        setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
+        self.xml_new_pname_mapping(attr_node.xml_namespace, attr_node.xml_local, False)
+        #pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self, False)
+        #setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
     def xml_attribute_removed(self, attr_node):
@@ -503,16 +554,19 @@ class element_base(container_mixin, tree.element):
 
 #This class also serves as the factory for specializing the core Amara tree parse
 
+TOTAL_DICT_SIZE = 0
+DICT_LOOKUP_COUNT = 0
+NAME_GENERATIONS = 0
+
 class entity_base(container_mixin, tree.entity):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
-    PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
     #xml_comment_factory = tree.comment
     #xml_processing_instruction_factory = tree.processing_instruction
     #xml_text_factory = tree.text
     xml_element_base = element_base
-    xml_exclude_pnames = frozenset()
+    #xml_exclude_pnames = frozenset()
     xml_encoding = 'utf-8'
 
     def __new__(cls, document_uri=None):
@@ -536,6 +590,7 @@ class entity_base(container_mixin, tree.entity):
         self._class_names = {}
         self._names = {}
         self.factory_entity = self
+        self.xml_child_pnames = {}
         return
 
     #Defined for elements and not doc nodes in core tree.  Add as convenience.
@@ -557,15 +612,14 @@ class entity_base(container_mixin, tree.entity):
         iselement - a flag as to whether the object to be bound is an element or attribute
         '''
         try:
-            python_id = self._names[(local, ns)]
+            python_id = self.xml_pname_cache[(local, ns)]
         except (KeyError, AttributeError):
-            python_id = self.PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
+            python_id = self.XML_PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
             while python_id in RESERVED_NAMES or python_id in self.xml_exclude_pnames:
                 python_id += '_'
             # self._names may not be present when copy.deepcopy() is
             # creating a copy, so only try to cache if it's present.
-            if hasattr(self, '_names'):
-                self._names[(local, ns)] = python_id
+            self.xml_pname_cache[(local, ns)] = python_id
         if parent is not None:
             name_checks_out = False
             while not name_checks_out:
@@ -596,7 +650,7 @@ class entity_base(container_mixin, tree.entity):
         if not pname: pname = self.xml_pyname(ns, local)
         if (ns, local) not in self._eclasses:
             class_name = pname
-            eclass = type(class_name, (self.xml_element_base,), {})
+            eclass = type(class_name, (self.xml_element_base,), dict(xml_child_pnames={}))
             self._eclasses[(ns, local)] = eclass
             eclass.xml_model_ = model.content_model()
             eclass.xml_model_.entities.add(self)
