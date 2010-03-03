@@ -261,8 +261,6 @@ class container_mixin(object):
             else:
                 setattr(self.__class__, pname, bound_attribute(ns, local))
             self.xml_child_pnames[pname] = (ns, local), self.__class__.__dict__
-        else:
-            setattr(self.__class__, "qwe", 2)
         return
 
     def xml_child_inserted(self, child):
