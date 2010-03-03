@@ -3,8 +3,9 @@ from itertools import chain
 from amara import bindery
 import time
 import datetime
+import sys
 
-N = 10000
+N = 5000
 
 SIMPLEDOC = ''.join(chain(['<a>'], [ '<b/>' for i in xrange(N) ], ['</a>']))
 ATTRDOC = ''.join(chain(['<a>'], [ "<b c='%i'/>"%i for i in xrange(N) ], ['</a>']))
@@ -110,16 +111,43 @@ amara_parse_tests = [amara_parse1, amara_parse2, amara_parse3, amara_parse4, ama
 bindery_parse_tests = [bindery_parse1, bindery_parse2, bindery_parse3, bindery_parse4,
                        bindery_parse5]
 
+now = datetime.datetime.now().isoformat().split("T")[0]
 
-def report():
-    now = datetime.datetime.now().isoformat().split(".")[0]
-    now = now.replace("T", " at ")
-    print "Parse and select timings for Amara", amara.__version__
-    print "Started on %s. Reporting best of 3 tries" % (now,)
-    print header_format % ("", "core tree", "bindery")
+class TextReporter(object):
+    def start(self):
+        print "Parse and select timings for Amara", amara.__version__
+        print "Started on %s. Reporting best of 3 tries" % (now,)
+    def header(self):
+        print header_format % ("", "core tree", "bindery")
+    def row(self, cols):
+        print row_format % cols
+
+class MarkupReporter(object):
+    def __init__(self):
+        self.exercise = 1
+    def start(self):
+        print "== Amara", amara.__version__, "on", now, "=="
+    def header(self):
+        print "||Exercise||N||Amara 2.x core tree||Amara 2.x bindery||"
+    def row(self, cols):
+        label, dt1, dt2 = cols
+        print "||%d||%d||%.2f msec||%.2f msec||" % (self.exercise, N,
+                                                    dt1, dt2)
+        self.exercise += 1
+
+def report(reporter):
+    reporter.start()
+    reporter.header()
     for (label, f1, f2) in zip(row_names, amara_parse_tests, bindery_parse_tests):
-        print row_format % (label, f1(), f2())
-
+        reporter.row( (label, f1(), f2()) )
 
 if __name__ == "__main__":
-    report()
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("--markup", dest="markup", action="store_true")
+    options, args = parser.parse_args()
+    if options.markup:
+        reporter = MarkupReporter()
+    else:
+        reporter = TextReporter()
+    report(reporter)
