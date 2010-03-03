@@ -42,7 +42,7 @@ class Node(object):
     @property
     def prefix(self): return self.xml_prefix
     @property
-    def nodeType(self): return self.xml_node_type
+    def nodeType(self): return self.xml_type
     #@property
     #def ownerDocument(self):
     #    result = self.xml_select(u'/')

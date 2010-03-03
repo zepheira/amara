@@ -39,8 +39,8 @@ class _logical_expr(boolean_expression):
         self._left.pprint(indent + '  ', stream)
         self._right.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '%s %s %s' % (self._left, self._op, self._right)
+    def __unicode__(self):
+        return u'%s %s %s' % (self._left, self._op, self._right)
 
         
 class or_expr(_logical_expr):
@@ -82,8 +82,8 @@ class _comparison_expr(boolean_expression):
         self._left.pprint(indent + '  ', stream)
         self._right.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        return '%s %s %s' % (self._left, self._op, self._right)
+    def __unicode__(self):
+        return u'%s %s %s' % (self._left, self._op, self._right)
 
         
 class equality_expr(_comparison_expr):

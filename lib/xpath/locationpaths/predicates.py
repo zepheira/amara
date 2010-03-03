@@ -43,10 +43,11 @@ class predicates(tuple):
         if ptr < 0: ptr += 0x100000000L
         return '<%s at 0x%x: %s>' % (self.__class__.__name__, ptr, self)
 
-    def __str__(self):
-        return ''.join(map(str, self))
+    def __unicode__(self):
+        return u''.join(map(unicode, self))
 
 
+#FIXME: should this derive from boolean_expression?
 class predicate:
     def __init__(self, expression):
         self._expr = expression
@@ -172,10 +173,13 @@ class predicate:
         print >> stream, indent + repr(self)
         self._expr.pprint(indent + '  ', stream)
 
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
     def __repr__(self):
         ptr = id(self)
         if ptr < 0: ptr += 0x100000000L
         return '<%s at 0x%x: %s>' % (self.__class__.__name__, ptr, self)
 
-    def __str__(self):
-        return '[%s]' % self._expr
+    def __unicode__(self):
+        return u'[%s]' % self._expr

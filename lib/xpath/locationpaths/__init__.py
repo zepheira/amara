@@ -57,10 +57,10 @@ class location_path(nodesets.nodeset_expression):
         for step in self._steps:
             step.pprint(indent + '  ', stream)
 
-    def __str__(self):
-        path = '/'.join(map(unicode, self._steps))
+    def __unicode__(self):
+        path = u'/'.join(map(unicode, self._steps))
         if self.absolute:
-            path = '/' + path
+            path = u'/' + path
         return path
 
 
@@ -164,7 +164,7 @@ class location_step(object):
         if ptr < 0: ptr += 0x100000000L
         return '<%s at 0x%x: %s>' % (self.__class__.__name__, ptr, self)
 
-    def __str__(self):
+    def __unicode__(self):
         # allows display abbreviated syntax, if possible
         if isinstance(self.node_test, nodetests.any_node_test):
             if isinstance(self.axis, axisspecifiers.self_axis):
@@ -173,7 +173,7 @@ class location_step(object):
                 return '..'
             if isinstance(self.axis, axisspecifiers.descendant_or_self_axis):
                 return ''
-        return '%s::%s%s' % (self.axis, self.node_test, self.predicates or '')
+        return u'%s::%s%s' % (self.axis, self.node_test, self.predicates or u'')
 
 
 class abbreviated_step(location_step):

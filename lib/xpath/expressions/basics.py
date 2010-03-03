@@ -62,8 +62,8 @@ class string_literal(literal):
 
     compile = literal.compile_as_string
 
-    def __str__(self):
-        return '"%s"' % self._literal.replace('"', '\\"')
+    def __unicode__(self):
+        return u'"%s"' % self._literal.replace(u'"', u'\\"')
 
 
 class number_literal(literal):
@@ -76,8 +76,8 @@ class number_literal(literal):
 
     compile = literal.compile_as_number
 
-    def __str__(self):
-        return str(self._literal)
+    def __unicode__(self):
+        return unicode(self._literal)
 
 
 class variable_reference(expressions.expression):
@@ -139,5 +139,5 @@ class variable_reference(expressions.expression):
     def pprint(self, indent='', stream=None):
         print >> stream, indent + repr(self)
 
-    def __str__(self):
-        return '$' + self._name
+    def __unicode__(self):
+        return u'$' + self._name

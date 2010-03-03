@@ -48,8 +48,8 @@ class boolean_literal(base_literal):
 
     compile = base_literal.compile_as_boolean
 
-    def __str__(self):
-        return self._literal and 'true()' or 'false()'
+    def __unicode__(self):
+        return self._literal and u'true()' or u'false()'
 TRUE = boolean_literal(True)
 FALSE = boolean_literal(False)
 
@@ -70,21 +70,21 @@ class nodeset_literal(base_literal):
                       )
     compile = compile_as_nodeset
 
-    def __str__(self):
+    def __unicode__(self):
         def nodestr(node):
             if isinstance(node, tree.entity):
-                return '#document'
+                return u'#document'
             if isinstance(node, (tree.text, tree.comment)):
                 data = node.xml_value
                 if len(data) > 20:
-                    data = data[:15] + '...' + data[-3:]
-                return '(#%s: %s)' % (node.xml_type, data)
+                    data = data[:15] + u'...' + data[-3:]
+                return u'(#%s: %s)' % (node.xml_type, data)
             if isinstance(node, tree.element):
-                return '<%s>' % node.xml_qname
+                return u'<%s>' % node.xml_qname
             if isinstance(node, tree.attribute):
-                return '@%s' % node.xml_qname
-        nodes = ', '.join(map(nodestr, self._literal))
-        return '{%s}' % (nodes,)
+                return u'@%s' % node.xml_qname
+        nodes = u', '.join(map(nodestr, self._literal))
+        return u'{%s}' % (nodes,)
 EMPTY_NODESET = nodeset_literal([])
 
 
@@ -93,7 +93,7 @@ class number_constant(number_literal):
     def __init__(self, name, literal):
         self._name = name
         number_literal.__init__(self, literal)
-    def __str__(self):
+    def __unicode__(self):
         return self._name
 NOT_A_NUMBER = number_constant('NaN', datatypes.NOT_A_NUMBER)
 POSITIVE_INFINITY = number_constant('Infinity', datatypes.POSITIVE_INFINITY)

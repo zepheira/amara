@@ -97,6 +97,9 @@ class expression(object):
         return self.evaluate_as_nodeset(context)
 
     def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
+    def __unicode__(self):
         raise NotImplementedError('subclass %r must override' %
                                   self.__class__.__name__)
 

@@ -1,14 +1,26 @@
 ########################################################################
-# amara/bindery/model.py
+# amara/bindery/model/__init__.py
 
 """
 Bindery node XML model tools
+
+An Amara element model (e.xml_model) is a collection of metadata and rules that characterize
+the nature of an XML element
+
+An Amara Document model (e.xml_model.) is a collection of metadata and rules that characterize the nature
+of an overall XML document type
+
+A document model might be implemented as a set of element models, or as something more
+centrally expressed.
+
+A constraint is one possible component of an element model.  
+
 """
 
 __all__ = [
 'constraint', 'child_element_constraint', 'attribute_constraint',
 'content_model',
-'named_node_test', 'document_model', 'examplotron_model',
+'named_node_test', 'document_model',
 'ATTIBUTE_AXIS',
 'metadata_dict',
 'generate_metadata',
@@ -24,11 +36,12 @@ from functools import *
 from operator import *
 
 from amara import tree
-from amara.namespaces import *
-from amara.lib.xmlstring import *
-from amara.lib.util import *
+from amara.lib.xmlstring import U
 from amara.xpath import datatypes
-from amara.xpath.util import *
+from amara.xpath.util import named_node_test
+from amara.bindery import BinderyError
+from amara.namespaces import AKARA_NAMESPACE
+from amara.xpath import context, parser
 
 ATTIBUTE_AXIS = u'@'
 NODE_ID_MARKER = u'generate-id()'
@@ -112,7 +125,8 @@ class child_element_constraint(constraint):
 
 class content_model:
     def __init__(self):
-        #{(ns, local): (python-name, default)}
+        #Used to be: {(ns, local): (python-name, default)}
+        #Now, for performance, is: {(ns, local): (python-name, default)}
         self.element_types = {}
         self.attribute_types = {}
         self.constraints = []
@@ -121,6 +135,7 @@ class content_model:
         self.metadata_rel_expr = None
         self.metadata_value_expr = None
         self.metadata_coercion_expr = None
+        self.metadata_context_expr = None
         self.other_rel_exprs = []
         self.prefixes = {}
         return
@@ -165,23 +180,27 @@ class content_model:
         These cues are worked into the model, and are used to drive the extraction from the
         instance at root
         '''
+        #FIXME: investigate the requirement for prefixes=prefixes for XPath, even for prefixes defined in source doc
         def handle_element(elem, resource):
             new_resource = None
             prefixes = elem.xml_root.xml_model.prefixes
+            if elem.xml_model.metadata_context_expr:
+                if not elem.xml_model.metadata_context_expr.evaluate(context(elem, namespaces=prefixes)):
+                    return
             #Is there a cue that designates this element as a resource envelope?
             if elem.xml_model.metadata_resource_expr:
                 if elem.xml_model.metadata_resource_expr == NODE_ID_MARKER:
                     #FIXME: Isn't going from unicode -> xpath str -> unicode wasteful?
                     new_resource = unicode(datatypes.string(elem.xml_nodeid))
                 else:
-                    new_resource = unicode(datatypes.string(elem.xml_select(elem.xml_model.metadata_resource_expr, prefixes=prefixes)))
+                    new_resource = unicode(datatypes.string(elem.xml_model.metadata_resource_expr.evaluate(context(elem, namespaces=prefixes))))
             #Is there a cue that designates a relationship in this element?
             if elem.xml_model.metadata_rel_expr:
                 #Execute the XPath to get the relationship name/title
-                rel = datatypes.string(elem.xml_select(elem.xml_model.metadata_rel_expr, prefixes=prefixes))
+                rel = datatypes.string(elem.xml_model.metadata_rel_expr.evaluate(context(elem, namespaces=prefixes)))
                 if elem.xml_model.metadata_value_expr:
                     #Execute the XPath to get the relationship value
-                    val = elem.xml_select(elem.xml_model.metadata_value_expr, prefixes=prefixes)
+                    val = elem.xml_model.metadata_value_expr.evaluate(context(elem, namespaces=prefixes))
                 elif new_resource is not None:
                     #If the element is also a resource envelope, the default value is the new resource ID
                     val = new_resource
@@ -244,105 +263,8 @@ class document_model(object):
         #raise NotImplementedErr
 
 
-from amara.namespaces import *
-from amara.lib.util import *
-
-class examplotron_model(document_model):
-    '''
-    XML model information and metadata extraction cues from an examplotron document
-    '''
-    def __init__(self, egdoc):
-        from amara import bindery
-        self.model_document = bindery.parse(egdoc)
-        self.model_document.xml_model.prefixes = top_namespaces(self.model_document)
-        self.setup_model()
-    
-    def setup_model(self, parent=None):
-        '''
-        Process an examplotron document for constraints
-        '''
-        NSS = {u'ak': AKARA_NAMESPACE, u'eg': EG_NAMESPACE}
-        parent = parent if parent is not None else self.model_document
-        allowed_elements_test = []
-        if isinstance(parent, tree.element):
-            #for a in parent.xml_attributes:
-            #FIXME: Hack until this issue is fixed: http://trac.xml3k.org/ticket/8
-            for a in dict(parent.xml_attributes.items()):
-                if a[0] not in [EG_NAMESPACE, AKARA_NAMESPACE]:
-                    parent.xml_model.attribute_types[a] = (self.model_document.xml_pyname(a[0], a[1], iselement=False), None)
-        for e in parent.xml_elements:
-            #Constraint info
-            eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
-            if not (e.xml_namespace, e.xml_local) in parent.xml_model.element_types:
-                parent.xml_model.element_types[e.xml_namespace, e.xml_local] = (self.model_document.xml_pyname(e.xml_namespace, e.xml_local), None)
-            if not eg_occurs in [u'?', u'*']:
-                c = child_element_constraint(e.xml_namespace, e.xml_local)
-                parent.xml_model.add_constraint(c)
-            if not eg_occurs in [u'+', u'*']:
-                parent.xml_model.add_constraint(
-                    constraint(u'count(%s) = 1'%named_node_test(e.xml_namespace, e.xml_local, parent), msg=u'Only one instance of element allowed')
-                )
-            allowed_elements_test.append(named_node_test(e.xml_namespace, e.xml_local, parent))
-
-            #Metadata extraction cues
-            #FIXME: Compile these XPath expressions
-            mod = e.xml_model
-            rattr = e.xml_select(u'@ak:resource', NSS)
-            if rattr:
-                #ak:resource="" should default to a generated ID
-                mod.metadata_resource_expr = rattr[0].xml_value or NODE_ID_MARKER
-            #rattr = e.xml_select(u'string(@ak:resource)', NSS)
-            #if rattr: mod.metadata_resource_expr = rattr
-            relattr = e.xml_select(u'@ak:rel', NSS)
-            if relattr:
-                if relattr[0].xml_value:
-                    mod.metadata_rel_expr = relattr[0].xml_value
-                else:
-                    mod.metadata_rel_expr = u'local-name()'
-            valattr = e.xml_select(u'@ak:value', NSS)
-            if valattr:
-                if valattr[0].xml_value:
-                    mod.metadata_value_expr = valattr[0].xml_value
-                else:
-                    mod.metadata_value_expr = u'.'
-
-            #Apply default relationship or value expression
-            #If there's ak:rel but no ak:value or ak:resource, ak:value=u'.'
-            #If there's ak:value but no ak:rel or ak:resource, ak:rel=u'local-name()'
-            if mod.metadata_resource_expr:
-                if (mod.metadata_value_expr
-                    and not mod.metadata_rel_expr):
-                    mod.metadata_rel_expr = u'local-name()'
-            else:
-                if (mod.metadata_rel_expr
-                    and not mod.metadata_value_expr):
-                    mod.metadata_value_expr = u'.'
-                elif (mod.metadata_value_expr
-                    and not mod.metadata_rel_expr):
-                    mod.metadata_rel_expr = u'local-name()'
-
-            relelem = e.xml_select(u'ak:rel', NSS)
-            
-            for rel in relelem:
-                mod.other_rel_exprs.append((unicode(rel.name),unicode(rel.value)))
-            #print e.xml_name, (mod.metadata_resource_expr, mod.metadata_rel_expr, mod.metadata_value_expr)
-            
-            #Recurse to process children
-            self.setup_model(e)
-
-        if allowed_elements_test:
-            parent.xml_model.add_constraint(
-                constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Invalid elements present')
-            )
-        else:
-            parent.xml_model.add_constraint(
-                constraint(u'not(*)', msg=u'Element should be empty')
-            )
-        #To do:
-        #Add <ak:product ak:name="AVT" ak:value="AVT"/>
-
-
-def generate_metadata(root): return root.xml_model.generate_metadata(root)
+def generate_metadata(root):
+    return root.xml_model.generate_metadata(root)
 
 #Singleton/sentinel
 MARK = object()
@@ -367,3 +289,7 @@ def metadata_dict(metadata):
         resources[rid] = resource
     return resources, first_id
 
+
+from examplotron import examplotron_model
+
+__all__.append('examplotron_model')

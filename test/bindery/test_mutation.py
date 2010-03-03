@@ -4,7 +4,6 @@
 
 
 import unittest
-import cStringIO
 import amara
 from amara import tree, bindery
 from amara.lib import treecompare
@@ -13,7 +12,6 @@ from xml.dom import Node
 
 
 XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
-output = cStringIO.StringIO()
 
 ATTRIBUTE_NODE = tree.attribute.xml_type
 
@@ -38,8 +36,23 @@ def test_simpe_attr_update3():
     treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
     return
 
+def test_simple_elem_and_attr_addition1():
+    EXPECTED = """<spam><eggs eggs="1"/><eggs eggs="2"/></spam>"""
+    doc = bindery.nodes.entity_base()
+    doc.xml_append(doc.xml_element_factory(None, u'spam'))
+    doc.spam.xml_append_fragment('<eggs eggs="1"/>')
+    doc.spam.xml_append_fragment('<eggs eggs="2"/>')
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    result = [ k for k in doc.spam.eggs if 'eggs' in dir(k) ]
+    assert len(result) == 2, result
+    #unittest.TestCase.assertEquals([k for k in dir(doc.spam.eggs) if 'eggs' in k], [])
+    return
+
 
 #XXX The rest are in old unittest style.  Probably best to add new test cases above in nose test style
+
+import cStringIO
+output = cStringIO.StringIO()
 
 class TestBasicMods(unittest.TestCase):
     #def setUp(self):

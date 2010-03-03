@@ -8,6 +8,15 @@ import tempfile
 
 from amara.test.xslt import filesource, stringsource
 
+def test_simpe_attr_update3():
+    EXPECTED = """<html xmlns="http://www.w3.org/1999/xhtml"><head><title>HELLO</title></head><body><p>WORLD</body></html>"""
+    doc = html.parse('<n:a xmlns:n="urn:bogus:x" x="1"/>')
+    doc.a.x = unicode(int(doc.a.x)+1)
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    return
+
+
+#XXX The rest are in old unittest style.  Probably best to add new test cases above in nose test style
 
 class Test_parse_nasty_tagsoup1(unittest.TestCase):
     """Testing nasty tag soup 1"""

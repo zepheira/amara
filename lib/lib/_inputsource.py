@@ -10,7 +10,7 @@ from uuid import UUID, uuid1, uuid4
 
 from amara.lib import IriError
 from amara._expat import InputSource
-from amara.lib.iri import *
+from amara.lib.iri import is_absolute, os_path_to_uri
 from amara.lib.xmlstring import isxml
 from amara.lib.irihelpers import DEFAULT_RESOLVER
 
@@ -48,10 +48,16 @@ class _inputsource(InputSource):
         if isinstance(arg, InputSource):
             return arg
 
+        #if arg == (u'', ''): -> UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+        if arg == '':
+            #FIXME L10N
+            raise ValueError("Cannot parse an empty string as XML")
+        
         if hasattr(arg, 'read'):
             #Create dummy Uri to use as base
             uri = uri or uuid4().urn
             stream = arg
+        #XXX: Should we at this point refuse to proceed unless it's a basestring?
         elif isxml(arg):
             #See this article about XML detection heuristics
             #http://www.xml.com/pub/a/2007/02/28/what-does-xml-smell-like.html

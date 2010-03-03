@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+<!DOCTYPE xsa PUBLIC "-//LM Garshol//DTD XML Software Autoupdate 1.0//EN//XML"
+                     "http://www.garshol.priv.no/download/xsa/xsa.dtd">
+		     -->
+<!DOCTYPE xsa PUBLIC "-//LM Garshol//DTD XML Software Autoupdate 1.0//EN//XML"
+                     "xsa.dtd">
+<xsa>
+  <vendor>
+    <name>Fourthought, Inc.</name>
+    <email>info@fourthought.com</email>
+    <url>http://fourthought.com</url>
+  </vendor>
+  <product id="FourSuite">
+    <name>4Suite</name>
+    <version>0.12.0</version>
+    <last-release>20020630</last-release>
+    <info-url>http://4Suite.org</info-url>
+    <changes>
+ - Merge the core library and repository/server
+ - Add bundled demos
+    </changes>
+  </product>
+</xsa>
+

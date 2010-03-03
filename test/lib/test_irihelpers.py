@@ -36,10 +36,10 @@ class Test_scheme_registry_resolver(unittest.TestCase):
             return ''.join([ chr(ord(c)+1) for c in uri])
 
         resolver = irihelpers.scheme_registry_resolver(
-            handlers={'eval': eval_scheme_handler, 
+            handlers={'eval': eval_scheme_handler,
                       'shift': shift_scheme_handler})
-        start_isrc =  inputsource(find_file('sampleresource.txt'),
-                                  resolver=resolver)
+        start_isrc =  inputsource(FILE('sampleresource.txt'),
+                                        resolver=resolver)
         
         scheme_cases = [(None, 'eval:150-50', '100'),
                 (None, 'shift:abcde', 'bcdef'),
