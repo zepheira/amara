@@ -252,12 +252,17 @@ class container_mixin(object):
                 break
             else:
                 pname += '_'
-        
-        if iselement:
-            setattr(self.__class__, pname, bound_element(ns, local))
+
+        # setattr on a class has a surprisingly large overhead with descriptors.
+        # This check reduces parsebench.py:bindery_parse4 from 161 ms to 127 ms.
+        if pname not in self.__class__.__dict__:
+            if iselement:
+                setattr(self.__class__, pname, bound_element(ns, local))
+            else:
+                setattr(self.__class__, pname, bound_attribute(ns, local))
+            self.xml_child_pnames[pname] = (ns, local), self.__class__.__dict__
         else:
-            setattr(self.__class__, pname, bound_attribute(ns, local))
-        self.xml_child_pnames[pname] = (ns, local)
+            setattr(self.__class__, "qwe", 2)
         return
 
     def xml_child_inserted(self, child):
