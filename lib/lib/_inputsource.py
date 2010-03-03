@@ -15,10 +15,15 @@ from amara.lib.xmlstring import isxml
 from amara.lib.irihelpers import DEFAULT_RESOLVER
 
 __all__ = [
-'_inputsource',
+'_inputsource', 'XMLSTRING', 'XMLURI', 'XMLFILE',
 ]
 
 MAX_URI_LENGTH_FOR_HEURISTIC = 1024
+
+#Classifications of raw input sources
+XMLSTRING = 1
+XMLURI = 2
+XMLFILE = 3
 
 class _inputsource(InputSource):
     """
@@ -29,7 +34,7 @@ class _inputsource(InputSource):
         _supported_schemes is a list of URI schemes supported 
         for dereferencing (representation retrieval).
     """
-    def __new__(cls, arg, uri=None, encoding=None, resolver=None):
+    def __new__(cls, arg, uri=None, encoding=None, resolver=None, sourcetype=0):
         """
         arg - a string, Unicode object (only if you really know what you're doing),
               file-like object (stream), file path or URI.  You can also pass an
@@ -58,7 +63,7 @@ class _inputsource(InputSource):
             uri = uri or uuid4().urn
             stream = arg
         #XXX: Should we at this point refuse to proceed unless it's a basestring?
-        elif isxml(arg):
+        elif sourcetype == XMLSTRING or isxml(arg):
             #See this article about XML detection heuristics
             #http://www.xml.com/pub/a/2007/02/28/what-does-xml-smell-like.html
             uri = uri or uuid4().urn
@@ -84,9 +89,19 @@ class _inputsource(InputSource):
         #InputSource.__new__ is in C: expat/input_source.c:inputsource_new
         return InputSource.__new__(cls, stream, uri, encoding)
 
-    def __init__(self, arg, uri=None, encoding=None, resolver=None):
+    def __init__(self, arg, uri=None, encoding=None, resolver=None, sourcetype=0):
         #uri is set 
         self.resolver = resolver or DEFAULT_RESOLVER
+
+    @staticmethod
+    def text(arg, uri=None, encoding=None, resolver=None):
+        '''
+        Set up an input source from text, according to the markup convention of the term
+        (i.e. in Python terms a string with XML, HTML, fragments thereof, or tag soup)
+        
+        Supports processing content sources that are not unambiguously XMl or HTML strings
+        '''
+        return _inputsource(arg, uri, encoding, resolver, sourcetype=XMLSTRING)
 
     def resolve(self, uriRef, baseUri=None):
         """

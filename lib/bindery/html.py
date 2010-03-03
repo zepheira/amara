@@ -191,6 +191,23 @@ def parse(source, model=None, encoding=None):
     #return parser.parse(inputsource(source, None).stream, model)
 
 
+def markup_fragment(source):
+    '''
+    Parse a fragment if markup in HTML mode, and return a bindery node
+    
+    You might want to wrap source with amara.lib.inputsource.text if it's not obviously XML or HTML
+    
+    from amara.lib import inputsource
+    from amara.bindery import html
+    doc = html.markup_fragment(inputsource.text('XXX<html><body onload="" color="white"><p>Spam!<p>Eggs!</body></html>YYY'))
+    
+    See also: http://wiki.xml3k.org/Amara2/Tagsoup
+    '''
+    doc = html.parse(source)
+    frag = doc.html.body
+    return frag
+
+
 def launch(source, **kwargs):
     doc = parse(source)
     if 'pretty' in kwargs:

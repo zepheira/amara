@@ -1,5 +1,6 @@
 ########################################################################
 # amara/bindery/nodes.py
+# See: http://wiki.xml3k.org/Amara2/Architecture/Bindery
 
 """
 Bindery node implementations
@@ -235,7 +236,6 @@ class container_mixin(object):
         root = self.xml_root
         try:
             pname = self.xml_pname_cache[(local, ns)]
-        #except (KeyError, AttributeError):
         except (KeyError, ):
             pname = self.XML_PY_REPLACE_PAT.sub('_', local.encode('utf-8'))
             while pname in RESERVED_NAMES or pname in self.xml_exclude_pnames:
@@ -248,7 +248,6 @@ class container_mixin(object):
             pname_info = self.xml_pname.get(pname)
             if pname_info is None:
                 break
-            #elif pname_info == (child.xml_namespace, child.xml_local, iselement):
             elif pname_info == (ns, local, iselement):
                 break
             else:
@@ -266,19 +265,7 @@ class container_mixin(object):
         called after the node has been added to `self.xml_children`
         """
         if isinstance(child, tree.element):
-            #pname_info = self.xml_pname.get(pname)
-            #if pname_info is None or pname_info != (child.xml_namespace, child.xml_local, True):
             self.xml_new_pname_mapping(child.xml_namespace, child.xml_local, True)
-                #setattr(self.__class__, pname, bound_element(child.xml_namespace, child.xml_local))
-#            if isinstance(child, tree.element):
-#                #FIXME: A property is just a standard construct that implements the descriptor protocol, so this is a silly distinction.  Just use descriptors.
-#                #Need to treat it using element binding rules
-#                if pname in self.xml_model.element_types:
-#                    #Then this is a declared type of element; add it as a property
-#                    setattr(self.__class__, pname, partial(self.xml_getter, pname))
-#                else:
-#                    #An ad-hoc member, for this instance only.
-#                    setattr(self.__class__, pname, ad_hoc_element(child.xml_namespace, child.xml_local))
         return
 
     def xml_child_removed(self, child):
@@ -291,7 +278,7 @@ class container_mixin(object):
     def xml_find_named_child(self, ns, local, childiter=None):
         #This function is very heavily used, and should be carefully optimized
         found = False
-        #could use dropwhile (with negation)...
+        #XXX: could use dropwhile (with negation)...
         #self.children = dropwhile(lambda c, n=self.name: (c.xml_namespace, c.xml_name) != n, self.children)
         childiter = iter(self.xml_children) if childiter is None else childiter
         name = (ns, local)
@@ -329,6 +316,7 @@ class container_mixin(object):
         return
 
     def __getitem__(self, key):
+        #Example:
         #$ python -c "from amara.bindery import parse; from itertools import *; doc = parse('<x><a b=\"1\"/><a b=\"2\"/><a b=\"3\"/><a b=\"4\"/></x>'); print list(islice(doc.x.a, 2,3))[0].xml_attributes.items()"
         # => [((None, u'b'), u'3')]
         if isinstance(key, int):
@@ -417,7 +405,6 @@ class container_mixin(object):
         target = None
         if isinstance(key, int):
             target = list(itertools.islice(element_iterator(self.xml_parent, self.xml_namespace, self.xml_qname), key, key+1))[0]
-            #self.xml_parent.xml_remove(target)
             parent = self.xml_parent
         else:
             parent = self
@@ -459,11 +446,8 @@ class container_mixin(object):
             KeyError: (None, u'foo')
         """
         #FIXME: Should technically use a new binding class, since those are related to ns/local
-        #self.xml_parent.xml_replace(self, self)
-        #print self.xml_children, []
         if target:
             offset = self.xml_index(target)
-            #ref = self.xml_preceding_sibling
             self.xml_remove(target)
             self.xml_insert(offset, target)
             return
@@ -484,12 +468,6 @@ class element_base(container_mixin, tree.element):
         #{pname: (ns, local)}
         self.xml_extra_children = None
         self.xml_extra_attributes = None
-        #self.xml_iter_next = None
-        #if isinstance(name, tuple):
-        #    ns, qname = name
-        #else:
-        #    ns, qname = None, name #FIXME: Actually name must not have a prefix.  Should probably error check here
-        #tree.element.__init__(self, ns, qname)
         return
 
     def xml_attribute_added(self, attr_node):
@@ -497,8 +475,6 @@ class element_base(container_mixin, tree.element):
         called after the attribute has been added to `self.xml_attributes`
         """
         self.xml_new_pname_mapping(attr_node.xml_namespace, attr_node.xml_local, False)
-        #pname = self.factory_entity.xml_pyname(attr_node.xml_namespace, attr_node.xml_local, self, False)
-        #setattr(self.__class__, pname, bound_attribute(attr_node.xml_namespace, attr_node.xml_local))
         return
 
     def xml_attribute_removed(self, attr_node):
@@ -539,8 +515,6 @@ class element_base(container_mixin, tree.element):
         return unicode(datatypes.string(self))
 
     def __str__(self):
-        #Amara 1 note: Should we make the encoding configurable? (self.defencoding?)
-        #For Amara 2, consider using the document node encoding property
         return unicode(self).encode(self.factory_entity.xml_encoding)
 
     def __iter__(self):
@@ -562,11 +536,7 @@ class entity_base(container_mixin, tree.entity):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
-    #xml_comment_factory = tree.comment
-    #xml_processing_instruction_factory = tree.processing_instruction
-    #xml_text_factory = tree.text
     xml_element_base = element_base
-    #xml_exclude_pnames = frozenset()
     xml_encoding = 'utf-8'
 
     def __new__(cls, document_uri=None):
@@ -580,9 +550,7 @@ class entity_base(container_mixin, tree.entity):
     def __init__(self, document_uri=None):
         #These are the children that do not come from schema information
         self.xml_extra_children = None
-        #self.xml_iter_next = None
-        #tree.entity.__init__(self, document_uri=document_uri)
-        #Should we share the following across documents, perhaps by using an auxilliary class,
+        #XXX: Should we share the following across documents, perhaps by using an auxilliary class,
         #Of which one global, default instance is created/used
         #Answer: probably yes
         self.xml_model_ = model.content_model()
@@ -632,9 +600,6 @@ class entity_base(container_mixin, tree.entity):
                             break
                     else:
                         python_id += '_'
-#                    print (parent, parent.__dict__)
-#                    obj = getattr(parent, python_id)
-#                    if obj is None or (iselement and obj.xml_name == (ns, local)):
                 else:
                     name_checks_out = True
                     break
@@ -674,10 +639,6 @@ class entity_base(container_mixin, tree.entity):
             eclass = self._eclasses[(ns, local)]
         return eclass
 
-
-#class myattribute(tree.attribute)
-#    #Specialize any aspects of attribute here
-#    pass
 
 import model
 

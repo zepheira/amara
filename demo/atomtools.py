@@ -14,6 +14,7 @@ from datetime import datetime
 import amara
 from amara.namespaces import *
 from amara.bindery import html
+from amara.lib import inputsource
 from amara.bindery.model import *
 from amara.lib.util import *
 from amara.lib.xmlstring import *
@@ -205,7 +206,7 @@ class feed(bindery.nodes.entity_base):
     def __new__(cls, document_uri=None, feedxml=None, skel=None, title=None, updated=None, id=None):
         return bindery.nodes.entity_base.__new__(cls, document_uri)
 
-    def __init__(self, document_uri=None, feedxml=None, skel=None, title=None, updated=None, id=None):
+    def __init__(self, feedxml=None, skel=None, title=None, updated=None, id=None):
         '''
         skel - an input source with a starting Atom document, generally a skeleton
         '''
@@ -225,6 +226,19 @@ class feed(bindery.nodes.entity_base):
         #if not(hasattr)
         #self.feed.xml_append(E((ATOM_NAMESPACE, u'updated'), updated or datetime.now().isoformat()))
         self.feed.updated = updated or datetime.now().isoformat()
+        return
+
+    @staticmethod
+    def from_rss2(feedxml):
+        '''
+        feedxml - an input source with an RSS 2.0 document
+        '''
+        source = bindery.parse(feedxml)#, model=FEED_MODEL)
+        title = html.markup_fragment(str(source.rss.channel.title)).body.xml_encode()
+        updated = unicode(source.rss.channel.pubDate)
+        link = unicode(source.rss.channel.link)
+        f = feed(title=title, updated=updated, id=link)
+        #FIXME: Add description
         return
 
     def append(self, id_, title, updated=None, summary=None, content=None, authors=None, categories=None, links=None, elements=None):
@@ -435,7 +449,7 @@ def deserialize_text_construct(node):
     elif type_ == u'xhtml':
         encoded = node.div.xml_encode()
         return encoded
-    
+
 
 def ejsonize(isrc):
     '''
