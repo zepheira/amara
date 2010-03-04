@@ -45,6 +45,9 @@ class axis_specifier(object):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
 
 class ancestor_axis(axis_specifier):
     name = 'ancestor'
