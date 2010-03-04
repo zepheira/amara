@@ -6,6 +6,8 @@ from amara import xml_print, tree
 from amara.lib.treecompare import xml_compare
 from amara.writers import lookup, register, XML_W, HTML_W, XHTML_W
 
+from amara.test import KnownFailure
+
 class Test_xml_write(unittest.TestCase):
     "Test the new xml_write and xml_encode methods"
 
@@ -84,6 +86,7 @@ class Test_xml_write(unittest.TestCase):
 
     def test_canonical(self):
         "Tests output of canonical XML (see also test_c14n)"
+        raise KnownFailure("See http://trac.xml3k.org/ticket/23")
         t = tree.parse("<root><empty/>"
                        "</root>")
         self.assertEqual(t.xml_encode('xml-canonical'),

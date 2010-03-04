@@ -20,12 +20,15 @@ from amara.lib import testsupport
 import amara
 from amara import bindery
 
+from nose.plugins.skip import SkipTest
+
 SCALE = 100
-TIMER_COUNT = 2000
+TIMER_COUNT = 100
 
 class Test_increment_over_core_tree(unittest.TestCase):
     '''Warning. SLOW TEST'''
     def setUp(self):
+        raise SkipTest("Too slow and will make for a good deal of thrashing")
         self.bigdoc1 = ["<A>"]
         self.bigdoc1.extend(["<B/>"]*SCALE)
         self.bigdoc1.extend(["</A>"])
@@ -64,5 +67,5 @@ class Test_increment_over_core_tree(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    testsupport.test_main()
+    raise SystemExit("Use nosetests")
 

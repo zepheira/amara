@@ -7,6 +7,15 @@
 import time
 from subprocess import Popen, PIPE
 
+from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
+
+class KnownFailure(Exception):
+    pass
+
+class KnownFailureError(ErrorClassPlugin):
+    todo = ErrorClass(KnownFailure, label='KNOWNFAIL', isfailure=True)
+
+
 # TOLERANCE in Pystones
 kPS = 1000
 TOLERANCE = 0.5*kPS 
