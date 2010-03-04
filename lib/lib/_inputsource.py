@@ -6,7 +6,7 @@ from __future__ import with_statement
 import os
 import urllib, urllib2
 from cStringIO import StringIO
-from uuid import UUID, uuid1, uuid4
+from uuid import uuid4
 
 from amara.lib import IriError
 from amara._expat import InputSource

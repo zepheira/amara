@@ -141,13 +141,28 @@ def report(reporter):
     for (label, f1, f2) in zip(row_names, amara_parse_tests, bindery_parse_tests):
         reporter.row( (label, f1(), f2()) )
 
-if __name__ == "__main__":
+def main():
     import optparse
     parser = optparse.OptionParser()
     parser.add_option("--markup", dest="markup", action="store_true")
+    parser.add_option("--profile", dest="profile")
     options, args = parser.parse_args()
+    if options.profile:
+        # See if I can find the function.
+        func = globals()[options.profile]
+        # 
+        import profile, pstats
+        profile.run(options.profile + "()", "profile.out")
+        p = pstats.Stats("profile.out")
+        p.strip_dirs().sort_stats(-1).print_stats()
+        print "Profile saved in 'profile.out'"
+        return
     if options.markup:
         reporter = MarkupReporter()
     else:
         reporter = TextReporter()
     report(reporter)
+    
+
+if __name__ == "__main__":
+    main()
