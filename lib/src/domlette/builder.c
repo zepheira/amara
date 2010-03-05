@@ -648,9 +648,7 @@ builder_UnparsedEntityDecl(void *userState, PyObject *name, PyObject *publicId,
 
 /** Python Interface **************************************************/
 
-static ExpatHandlers builder_handlers = {
-  /* start_element          */ NULL,
-  /* end_element            */ NULL,
+static ExpatHandlerFuncs builder_handlers = {
   /* start_document         */ builder_StartDocument,
   /* end_document           */ builder_EndDocument,
   /* start_element          */ builder_StartElement,
@@ -674,16 +672,16 @@ static ExpatHandlers builder_handlers = {
 Py_LOCAL_INLINE(ExpatReader *)
 create_reader(ParserState *state)
 {
-  ExpatFilter *filters[1];
+  ExpatHandler *handler;
   ExpatReader *reader;
 
-  filters[0] = ExpatFilter_New(state, &builder_handlers,
-                               ExpatFilter_HANDLER_TYPE, NULL);
-  if (filters[0] == NULL)
+  handler = ExpatHandler_New(state, &builder_handlers,
+                               ExpatHandler_HANDLER_TYPE, NULL);
+  if (handler == NULL)
     return NULL;
-  reader = ExpatReader_New(filters, 1);
+  reader = ExpatReader_New(handler);
   if (reader == NULL) {
-    ExpatFilter_Del(filters[0]);
+    ExpatHandler_Del(handler);
     return NULL;
   }
   return reader;

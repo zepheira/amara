@@ -429,6 +429,6 @@ class xupdate_handler(Handler):
 
 def parse(source):
     handler = xupdate_handler()
-    reader = Reader((handler,))
+    reader = Reader(handler)
     reader.parse(source)
     return handler.modifications[0]

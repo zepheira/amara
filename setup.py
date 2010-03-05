@@ -334,18 +334,16 @@ setup(name='Amara',
                              'lib/src/expat/content_model.c',
                              # DTD validation support
                              'lib/src/expat/validation.c',
-                             # StateTable implementation
-                             'lib/src/expat/state_machine.c',
                              # basic InputSource object
                              'lib/src/expat/input_source.c',
                              # Attributes object
                              'lib/src/expat/attributes.c',
                              # ExpatReader object
                              'lib/src/expat/reader.c',
-                             # Filter and Handler classes
-                             'lib/src/expat/filter.c',
+                             # Handler
+                             'lib/src/expat/handler.c',
                              # SaxReader object
-                             'lib/src/expat/sax_filter.c',
+                             'lib/src/expat/sax_handler.c',
                              # Module interface
                              'lib/src/expat/expat.c',
                              ],

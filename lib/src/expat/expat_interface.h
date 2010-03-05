@@ -25,10 +25,10 @@ extern "C" {
 #include "validation.h"
 #include "input_source.h"
 
-  struct ExpatFilterStruct;
-  typedef struct ExpatFilterStruct ExpatFilter;
+  struct ExpatHandlerStruct;
+  typedef struct ExpatHandlerStruct ExpatHandler;
 
-#include "filter.h"
+#include "handler.h" 
 
   struct ExpatReaderStruct;
   typedef struct ExpatReaderStruct ExpatReader;
@@ -53,15 +53,6 @@ extern "C" {
     EXPAT_STATUS_SUSPENDED,
   } ExpatStatus;
 
-  /* name is a PyUnicodeObject, atts is a PyDictObject */
-  typedef ExpatStatus (*ExpatStartFilterHandler)(
-                                    void *arg,
-                                    ExpatName *name);
-
-  /* name is a PyUnicodeObject */
-  typedef ExpatStatus (*ExpatEndFilterHandler)(
-                                    void *arg,
-                                    ExpatName *name);
 
   typedef ExpatStatus (*ExpatStartDocumentHandler)(void *arg);
 
@@ -210,8 +201,6 @@ extern "C" {
                                                  PyObject *systemId);
 
   typedef struct {
-    ExpatStartFilterHandler start_filter;
-    ExpatEndFilterHandler end_filter;
     ExpatStartDocumentHandler start_document;
     ExpatEndDocumentHandler end_document;
     ExpatStartElementHandler start_element;
@@ -240,19 +229,19 @@ extern "C" {
     ExpatNotificationHandler fatal_error;
 
     ExpatResolveEntityHandler resolve_entity;
-  } ExpatHandlers;
+  } ExpatHandlerFuncs;
 
-#define ExpatFilter_HANDLER_TYPE (1L<<0)
+#define ExpatHandler_HANDLER_TYPE (1L<<0)
 
-#define ExpatFilter_HasFlag(filter, flag) \
-  ((((ExpatFilter *)(filter))->flags & (flag)) == (flag))
+#define ExpatHandler_HasFlag(handler, flag) \
+  ((((ExpatHandler *)(handler))->flags & (flag)) == (flag))
 
   typedef struct {
-    ExpatFilter *(*Filter_New)(void *arg, ExpatHandlers *handlers,
-                               unsigned long flags, FilterCriterion *criteria);
-    void (*Filter_Del)(ExpatFilter *filter);
+    ExpatHandler *(*Handler_New)(void *arg, ExpatHandlerFuncs *handlers,
+                               unsigned long flags, void *criteria);
+    void (*Handler_Del)(ExpatHandler *handler);
 
-    ExpatReader *(*Reader_New)(ExpatFilter *filters[], size_t nfilters);
+    ExpatReader *(*Reader_New)(ExpatHandler *handler);
     void (*Reader_Del)(ExpatReader *reader);
 
     void (*Reader_SetValidation)(ExpatReader *reader, int doValidation);
@@ -279,11 +268,11 @@ extern "C" {
 #include "util.h"
 #include "debug.h"
 
-  ExpatFilter *ExpatFilter_New(void *arg, ExpatHandlers *handlers,
-                               unsigned long flags, FilterCriterion *criteria);
-  void ExpatFilter_Del(ExpatFilter *filter);
+  ExpatHandler *ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers,
+                               unsigned long flags);
+  void ExpatHandler_Del(ExpatHandler *handler);
 
-  ExpatReader *ExpatReader_New(ExpatFilter *filters[], size_t nfilters);
+  ExpatReader *ExpatReader_New(ExpatHandler *handler);
   void ExpatReader_Del(ExpatReader *reader);
 
   int ExpatReader_GetValidation(ExpatReader *reader);
@@ -319,8 +308,8 @@ extern "C" {
 
 #define Expat_EXPORT(name) Expat_API->name
 
-#define ExpatFilter_New         Expat_EXPORT(Filter_New)
-#define ExpatFilter_Del         Expat_EXPORT(Filter_Del)
+#define ExpatHandler_New         Expat_EXPORT(Handler_New)
+#define ExpatHandler_Del         Expat_EXPORT(Handler_Del)
 #define ExpatReader_New         Expat_EXPORT(Reader_New)
 #define ExpatReader_Del         Expat_EXPORT(Reader_Del)
 

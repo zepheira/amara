@@ -2,7 +2,7 @@
 #include "attributes.h"
 #include "../domlette/domlette_interface.h"
 
-#define DEBUG_SAX
+#define DEBUG_SAX 1
 
 /*
 static PyObject *uri_resolver;
@@ -277,6 +277,7 @@ static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
   Debug_Print("})\n");
 #endif
 
+  printf("Here!*\n");
 
   if (handler != NULL) {
     /* handler.startElement((namespaceURI, localName), tagName, attributes) */
@@ -859,9 +860,7 @@ static PyObject *sax_ResolveEntity(void *userData, PyObject *publicId,
   return result;
 }
 
-static ExpatHandlers sax_handlers = {
-  /* start_filter           */ NULL,
-  /* end_filter             */ NULL,
+static ExpatHandlerFuncs sax_handlers = {
   /* start_document         */ sax_StartDocument,
   /* end_document           */ sax_EndDocument,
   /* start_element          */ sax_StartElement,
@@ -2061,7 +2060,7 @@ static PyObject *
 parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
   static char *kwlist[] = { NULL };
-  ExpatFilter *filters[2];
+  ExpatHandler *handler;
   XMLParserObject *self;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, ":SaxReader", kwlist))
@@ -2069,13 +2068,13 @@ parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
   self = (XMLParserObject *)type->tp_alloc(type, 0);
   if (self != NULL) {
-    filters[0] = ExpatFilter_New(self, &sax_handlers,
-                                 ExpatFilter_HANDLER_TYPE, NULL);
-    if (filters[0] == NULL) {
+    handler = ExpatHandler_New(self, &sax_handlers,
+                                 ExpatHandler_HANDLER_TYPE);
+    if (handler == NULL) {
       Py_DECREF(self);
       return NULL;
     }
-    self->reader = ExpatReader_New(filters, 1);
+    self->reader = ExpatReader_New(handler);
     if (self->reader == NULL) {
       Py_DECREF(self);
       return NULL;
@@ -2204,7 +2203,7 @@ static PyTypeObject XMLParser_Type = {
 /** External interfaces ***********************************************/
 /**********************************************************************/
 
-int _Expat_SaxFilter_Init(PyObject *module)
+int _Expat_SaxHandler_Init(PyObject *module)
 {
     PyObject *import;
 
@@ -2304,7 +2303,7 @@ int _Expat_SaxFilter_Init(PyObject *module)
   return 0;
 }
 
-void _Expat_SaxFilter_Fini(void)
+void _Expat_SaxHandler_Fini(void)
 {
   int i;
 

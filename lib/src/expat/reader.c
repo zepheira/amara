@@ -5,94 +5,57 @@
 typedef struct {
   PyObject_HEAD
   ExpatReader *reader;
-  PyObject *filters;
 } ReaderObject;
 
 /** Python Interface **************************************************/
 
 static char reader_doc[] =
-"Reader([filters]) -> Reader object\n\
+"Reader([handler]) -> Reader object\n\
 \n\
 Interface for reading an XML document using callbacks.";
 
 static PyObject *
 reader_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-  static char *kwlist[] = { "filters", NULL };
-  PyObject *seq = NULL;
-  ExpatFilter **filters;
-  Py_ssize_t nfilters, i;
+  static char *kwlist[] = { "handler", NULL };
+  PyObject    *pyhandler = NULL;
+  ExpatHandler *handler;
   ReaderObject *newobj;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:Reader", kwlist,
-                                   &seq))
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:Reader", kwlist,
+                                   &pyhandler))
     return NULL;
 
-  if (seq == NULL) {
-    filters = NULL;
-    nfilters = 0;
+  if (pyhandler == NULL) {
+    handler = NULL;
   }
   else {
-    seq = PySequence_Tuple(seq);
-    if (seq == NULL)
-      return NULL;
-    nfilters = PyTuple_GET_SIZE(seq);
-    filters = PyMem_New(ExpatFilter *, nfilters);
-    if (filters == NULL) {
-      Py_DECREF(seq);
-      return NULL;
-    }
-    for (i = 0; i < nfilters; i++) {
-      PyObject *filter = PyTuple_GET_ITEM(seq, i);
-      if (!Filter_Check(filter)) {
-        PyErr_SetString(PyExc_TypeError, "expected sequence of Filters");
-        Py_DECREF(seq);
-        PyMem_Del(filters);
+    if (!Handler_Check(pyhandler)) {
+        PyErr_SetString(PyExc_TypeError, "expected a Handler");
         return NULL;
       }
-      filters[i] = Filter_GET_FILTER(filter);
-    }
+    handler = Handler_GET_HANDLER(pyhandler);
   }
   newobj = (ReaderObject *)type->tp_alloc(type, 0);
   if (newobj != NULL) {
-    newobj->filters = seq;
-    newobj->reader = ExpatReader_New(filters, nfilters);
+    newobj->reader = ExpatReader_New(handler);
     if (newobj->reader == NULL) {
       Py_CLEAR(newobj);
       goto finally;
     }
-  } else {
-    Py_DECREF(seq);
   }
 finally:
-  if (filters) PyMem_Del(filters);
   return (PyObject *)newobj;
 }
 
 static void
 reader_dealloc(ReaderObject *self)
 {
-  PyObject_GC_UnTrack((PyObject *)self);
-
   if (self->reader) {
     ExpatReader_Del(self->reader);
     self->reader = NULL;
   }
-  Py_CLEAR(self->filters);
-
   ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
-}
-
-static int
-reader_traverse(ReaderObject *self, visitproc visit, void *arg)
-{
-  return 0;
-}
-
-static int
-reader_clear(ReaderObject *self)
-{
-  return 0;
 }
 
 /** Reader Methods **/
@@ -235,11 +198,10 @@ static PyTypeObject Reader_Type = {
   /* tp_as_buffer      */ (PyBufferProcs *) 0,
   /* tp_flags          */ (Py_TPFLAGS_DEFAULT |
                            Py_TPFLAGS_BASETYPE | /* allow subclassing */
-                           Py_TPFLAGS_HAVE_GC |  /* support cyclic GC */
                            0),
   /* tp_doc            */ (char *) reader_doc,
-  /* tp_traverse       */ (traverseproc) reader_traverse,
-  /* tp_clear          */ (inquiry) reader_clear,
+  /* tp_traverse       */ (traverseproc) 0,
+  /* tp_clear          */ (inquiry) 0,
   /* tp_richcompare    */ (richcmpfunc) 0,
   /* tp_weaklistoffset */ 0,
   /* tp_iter           */ (getiterfunc) 0,
