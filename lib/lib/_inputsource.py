@@ -45,8 +45,7 @@ class _inputsource(InputSource):
 
         Returns an input source which can be passed to Amara APIs.
         """
-        #do the imports within the function: a tad bit less efficient, but
-        #avoid circular crap
+        #do the imports within the function to avoid circular crap
         #from amara._xmlstring import IsXml as isxml
         resolver = resolver or DEFAULT_RESOLVER
 
