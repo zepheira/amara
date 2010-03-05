@@ -1,5 +1,5 @@
-Amara XML Toolkit 2.0a1 (released 17 December 2008)
-===================================================
+Amara XML Toolkit 2.0a3 (released 5 March 2010)
+===============================================
 
 A library for XML processing in Python, designed to balance the native idioms
 of Python with the native character of XML.
@@ -19,7 +19,7 @@ See the files LICENSE and NOTICE for details.
 Installation
 ------------
 
-Amara requires Python 2.5 or more recent.  It supports setuptools and easy_install,
+Amara requires Python 2.5 or 2.6.  It supports setuptools and easy_install,
 so you can just do the following:
 
 easy_install amara

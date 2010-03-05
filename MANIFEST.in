@@ -1,23 +1,22 @@
 include MANIFEST CHANGES LICENSE NOTICE
 
 # Add BisonGen source files for XPath
-include amara/xpath/parser/xpath.bgen
-include amara/xpath/parser/xpath_grammar.bgen.frag
-include amara/xpath/parser/xpath_lexer_defines.bgen.frag
-include amara/xpath/parser/xpath_lexer_patterns.bgen.frag
-include amara/xpath/parser/xpath_modules.bgen.frag
-include amara/xpath/parser/xpath_tokens.bgen.frag
+include lib/xpath/parser/xpath.bgen
+include lib/xpath/parser/xpath_grammar.bgen.frag
+include lib/xpath/parser/xpath_lexer_defines.bgen.frag
+include lib/xpath/parser/xpath_lexer_patterns.bgen.frag
+include lib/xpath/parser/xpath_modules.bgen.frag
+include lib/xpath/parser/xpath_tokens.bgen.frag
 
 # Add BisonGen source files for XSLT
-include amara/xslt/expressions/avt.bgen
-include amara/xslt/xpatterns/xpattern.bgen
+include lib/xslt/expressions/avt.bgen
+include lib/xslt/xpatterns/xpattern.bgen
 
-# Add the `demo` directory en masse
+# Recursively add contents of named directory
 graft demo
-
-# Add the `test` directory en masse
 graft test
+graft sandbox
 
 # Include Expat licensing requirements
-include amara/src/expat/COPYING
-include amara/src/expat/README
+include lib/src/expat/COPYING
+include lib/src/expat/README
