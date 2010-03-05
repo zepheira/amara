@@ -38,6 +38,9 @@ class predicates(tuple):
         for pred in self:
             pred.pprint(indent + '  ', stream)
 
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
     def __repr__(self):
         ptr = id(self)
         if ptr < 0: ptr += 0x100000000L

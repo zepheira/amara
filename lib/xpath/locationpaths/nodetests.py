@@ -20,6 +20,9 @@ class node_test(object):
     # category for the principal type
     name_key = None
 
+    def __str__(self):
+        return self.__unicode__().encode('utf-8')
+
     def pprint(self, indent='', stream=None):
         print >> stream, indent + repr(self)
 
