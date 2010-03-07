@@ -54,6 +54,8 @@ class predicates(tuple):
 class predicate:
     def __init__(self, expression):
         self._expr = expression
+        self._provide_context_size = False #See http://trac.xml3k.org/ticket/62
+        #FIXME: There are probably many code paths which need self._provide_context_size set
         # Check for just "Number"
         if isinstance(expression, literal):
             const = datatypes.number(expression._literal)
@@ -77,6 +79,9 @@ class predicate:
                     else:
                         self.select = izip()
                 else:
+                    #FIXME: This will kick in the non-lazy behavior too broadly, e.g. in the case of [position = 1+1]
+                    #See: http://trac.xml3k.org/ticket/62
+                    self._provide_context_size = True
                     self._expr = expression
                     self.select = self._number
                 return
@@ -136,6 +141,9 @@ class predicate:
     def _number(self, context, nodes):
         expr = self._expr
         position = 1
+        if self._provide_context_size:
+            nodes = list(nodes)
+            context.size = len(nodes)
         context.current_node = context.node
         for node in nodes:
             context.node, context.position = node, position
@@ -186,3 +194,8 @@ class predicate:
 
     def __unicode__(self):
         return u'[%s]' % self._expr
+
+    @property
+    def children(self):
+        'Child of the parse tree of a predicate is its expression'
+        return (self._expr,)

@@ -109,6 +109,11 @@ class function_call(expression):
         arg_spec = u', '.join(map(unicode, self._args))
         return u'%s(%s)' % (func_name, arg_spec)
 
+    @property
+    def children(self):
+        'Children of the parse tree of a function are its arguments'
+        return self._args
+    
 
 class extension_function(function_call):
 

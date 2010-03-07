@@ -6,7 +6,8 @@ XPath location path expressions.
 
 from amara.xpath import XPathError
 from amara.xpath.expressions import nodesets
-from amara.xpath.locationpaths import axisspecifiers, nodetests, _paths
+from amara.xpath.locationpaths import axisspecifiers, nodetests
+from amara.xpath.locationpaths import _paths #i.e. lib/xpath/src/paths.c
 
 class location_path(nodesets.nodeset_expression):
     """
@@ -177,6 +178,11 @@ class location_step(object):
             if isinstance(self.axis, axisspecifiers.descendant_or_self_axis):
                 return ''
         return u'%s::%s%s' % (self.axis, self.node_test, self.predicates or u'')
+
+    @property
+    def children(self):
+        'Children of the parse tree of a location step are its axis, node test and predicates'
+        return (self.axis, self.node_test, self.predicates)
 
 
 class abbreviated_step(location_step):

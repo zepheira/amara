@@ -206,7 +206,7 @@ class feed(bindery.nodes.entity_base):
     def __new__(cls, document_uri=None, feedxml=None, skel=None, title=None, updated=None, id=None):
         return bindery.nodes.entity_base.__new__(cls, document_uri)
 
-    def __init__(self, feedxml=None, skel=None, title=None, updated=None, id=None):
+    def __init__(self, document_uri=None, feedxml=None, skel=None, title=None, updated=None, id=None):
         '''
         skel - an input source with a starting Atom document, generally a skeleton
         '''

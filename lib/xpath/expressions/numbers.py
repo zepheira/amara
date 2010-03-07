@@ -46,6 +46,11 @@ class _binary_expr(number_expression):
     def __unicode__(self):
         return u'%s %s %s' % (self._left, self._op, self._right)
 
+    @property
+    def children(self):
+        'Parse tree children of a binary expression are the operator, left and right hand expressions'
+        return (self._left, self._op, self._right)
+
 
 class additive_expr(_binary_expr):
     """

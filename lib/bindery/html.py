@@ -20,8 +20,6 @@ from amara.bindery import nodes
 from amara.lib.xmlstring import *
 from amara.namespaces import XML_NAMESPACE, XHTML_NAMESPACE
 
-HTML5LIB_VERSION = html5lib.__version__
-
 class node(html5lib.treebuilders._base.Node):
     appendChild = tree.element.xml_append
     removeChild = tree.element.xml_remove
@@ -48,7 +46,7 @@ class node(html5lib.treebuilders._base.Node):
         """Return a shallow copy of the current node i.e. a node with the same
         name and attributes but with no parent or child nodes
         """
-        return copy.deepcopy(self)
+        raise NotImplementedError
 
     def hasContent(self):
         """Return true if the node has children or text, false otherwise
@@ -63,17 +61,23 @@ class element(nodes.element_base, node):
     include all elements but not necessarily other node types
     _flags - A list of miscellaneous flags that can be set on the node
     '''
-    name = nodes.element_base.xml_qname
-    namespace = nodes.element_base.xml_namespace
-    #@property
-    #def name(self):
-    #    return self.xml_qname
-    #@property
-    #def namespace(self):
-    #    return self.xml_namespace
+    #name = nodes.element_base.xml_qname
+    #namespace = nodes.element_base.xml_namespace
+    xml_exclude_pnames = frozenset(('name', 'parent', 'appendChild', 'removeChild', 'removeChild', 'value', 'attributes', 'childNodes'))
+    @property
+    def name(self):
+        return getattr(self, 'xml_html5lib_name', self.xml_qname)
+
+    @property
+    def namespace(self):
+        return getattr(self, 'xml_html5lib_namespace', self.xml_namespace)
 
     @property
     def nameTuple(self):
+        name = getattr(self, 'xml_html5lib_name', self.xml_qname)
+        namespace = getattr(self, 'xml_html5lib_namespace', self.xml_namespace)
+        return namespace, name
+        self.xml_html5lib_name
         #return XHTML_NAMESPACE, self.xml_name
         return self.xml_namespace, self.xml_qname
 
@@ -111,12 +115,29 @@ class element(nodes.element_base, node):
 
     attributes = property(xml_get_attributes_, xml_set_attributes_, None, "html5lib uses this property to manage HTML element attrs")
 
+    def cloneNode(self):
+        """Return a shallow copy of the current node i.e. a node with the same
+        name and attributes but with no parent or child nodes
+        """
+        newelem = self.xml_root.xml_element_factory(self.xml_namespace, self.xml_local)
+        for k, v in self.xml_attributes.items():
+            newelem.xml_attributes[k] = v
+        return newelem
+
+    def xml_child_inserted(self, child):
+        """
+        called after the node has been added to `self.xml_children`
+        """
+        if isinstance(child, tree.element):
+            self.xml_new_pname_mapping(child.xml_namespace, child.xml_local, True)
+        return
+
+
 
 class entity(node, nodes.entity_base):
     """
     Base class for entity nodes (root nodes--similar to DOM documents and document fragments)
     """
-    xml_exclude_pnames = frozenset(('name', 'parent', 'appendChild', 'removeChild', 'removeChild', 'value', 'attributes', 'childNodes'))
     xml_element_base = element
     def __init__(self, document_uri=None):
         nodes.entity_base.__init__(self, document_uri)
@@ -157,6 +178,28 @@ def doctype_create(dummy, name, publicId=None, systemId=None):
 
 
 BOGUS_NAMESPACE = u'urn:bogus:x'
+NAME_FOR_ELEMENTS_UNNAMED_BY_HTML5LIB = u'UNNAMED_BY_HTML5LIB'
+
+class treebuilder_pre_0_90(html5lib.treebuilders._base.TreeBuilder):
+    documentClass = entity
+    #elementClass = xml_element_factory
+    commentClass = comment
+    doctypeClass = doctype_create
+    
+    def __init__(self, entity_factory=None):
+        self.entity = entity_factory()
+        html5lib.treebuilders._base.TreeBuilder.__init__(self)
+        def eclass(name):
+            if not name: name = NAME_FOR_ELEMENTS_UNNAMED_BY_HTML5LIB
+            namespace, name = None, U(name)
+            #Deal with some broken HTML that uses bogus colons in tag names
+            if (u":" in name and not namespace):
+                namespace = BOGUS_NAMESPACE
+            return self.entity.xml_element_factory(namespace, name)
+        self.elementClass = eclass
+
+
+MARKER = object()
 
 class treebuilder(html5lib.treebuilders._base.TreeBuilder):
     documentClass = entity
@@ -164,31 +207,60 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
     commentClass = comment
     doctypeClass = doctype_create
     
-    def __init__(self, entity_factory=None, ns_aware=False):
+    def __init__(self, entity_factory=None, use_xhtml_ns=False):
         self.entity = entity_factory()
-        html5lib.treebuilders._base.TreeBuilder.__init__(self, ns_aware)
+        #html5lib.treebuilders._base.TreeBuilder breaks if you do not pass in True for namespaceHTMLElements
+        #We'll take care of that ourselves with the if not use_xhtml_ns... below
+        html5lib.treebuilders._base.TreeBuilder.__init__(self, True)
         def eclass(name, namespace):
-            namespace, name = (U(namespace) if namespace else None), U(name)
+            xml_html5lib_name, xml_html5lib_namespace = MARKER, MARKER
+            if not use_xhtml_ns and namespace == XHTML_NAMESPACE:
+                #html5lib feints support for HTML5 elements kept in the null namespace
+                #But in reality this support is broken.  We have to in effect keep
+                #Two namespaces for each element, the real one from an amara perspective
+                #And another that is always XHTML for HTML5 elements, so html5lib doesn't break
+                xml_html5lib_namespace = namespace
+                namespace = None
+            #For some reason html5lib sometimes sends None as name
+            if not name:
+                xml_html5lib_name = name
+                name = NAME_FOR_ELEMENTS_UNNAMED_BY_HTML5LIB
+            namespace, name = U(namespace) if namespace else None, U(name)
+            #import sys; print >> sys.stderr, (namespace, name, use_xhtml_ns)
             #Deal with some broken HTML that uses bogus colons in tag names
             if (u":" in name and not namespace):
+                xml_html5lib_namespace = namespace
                 namespace = BOGUS_NAMESPACE
             #Yes! Amara ns, name convention this is reverse order from html5lib's
-            return self.entity.xml_element_factory(namespace, name)
+            elem = self.entity.xml_element_factory(namespace, name)
+            if xml_html5lib_namespace != MARKER:
+                elem.xml_html5lib_namespace = xml_html5lib_namespace
+            if xml_html5lib_name != MARKER:
+                elem.xml_html5lib_name = xml_html5lib_name
+            return elem
         self.elementClass = eclass
 
 
-def parse(source, model=None, encoding=None):
+def parse(source, prefixes=None, model=None, encoding=None, use_xhtml_ns=False):
     '''
     
     '''
+    from amara.lib.util import set_namespaces
     #from amara.bindery import html; doc = html.parse("http://www.hitimewine.net/istar.asp?a=6&id=161153!1247")
     #parser = html5lib.HTMLParser()
-    def get_tree_instance(ns_aware=False):
-        #ns_aware is a boolean, whether or not to use http://www.w3.org/1999/xhtml
-        entity_factory = model.clone if model else entity
-        return treebuilder(entity_factory, ns_aware)
+    if PRE_0_90:
+        def get_tree_instance():
+            entity_factory = model.clone if model else entity
+            return treebuilder(entity_factory)
+    else:
+        def get_tree_instance(namespaceHTMLElements, use_xhtml_ns=use_xhtml_ns):
+            #use_xhtml_ns is a boolean, whether or not to use http://www.w3.org/1999/xhtml
+            entity_factory = model.clone if model else entity
+            return treebuilder(entity_factory, use_xhtml_ns)
     parser = html5lib.HTMLParser(tree=get_tree_instance)
-    return parser.parse(inputsource(source, None).stream, encoding=encoding)
+    doc = parser.parse(inputsource(source, None).stream, encoding=encoding)
+    if prefixes: set_namespaces(doc, prefixes)
+    return doc
     #return parser.parse(inputsource(source, None).stream, model)
 
 
@@ -207,6 +279,18 @@ def markup_fragment(source):
     doc = html.parse(source)
     frag = doc.html.body
     return frag
+
+
+try:
+    HTML5LIB_VERSION = html5lib.__version__
+    PRE_0_90 = False
+except AttributeError:
+    #0.11.1 and earlier do not seem to have __version__
+    #Note later versions seem to have a broken __version__
+    #This logic is really there for when they fix that
+    HTML5LIB_VERSION = 'PRE_0.90'
+    PRE_0_90 = True
+    treebuilder = treebuilder_pre_0_90
 
 
 def launch(source, **kwargs):
