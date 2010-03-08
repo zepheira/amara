@@ -1,3 +1,20 @@
+/* ----------------------------------------------------------------------
+ * reader.c
+ *
+ * Implements the _expat.Reader class.  This class is used to drive
+ * parsing of XML documents using the Handler objects defined in 
+ * handler.c.  Here is an example of how a reader would be used:
+ *
+ * class MyHandler(_expat.Handler):
+ *    # User-defined handler class
+ *    ...
+ *
+ * r = _expat.Reader(MyHandler())
+ * r.parse(somedocument)
+ *
+ * The only part of Amara that uses Reader() objects is xupdate.
+ * ---------------------------------------------------------------------- */
+
 #include "expat_interface.h"
 
 /** Private Interface *************************************************/

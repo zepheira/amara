@@ -231,14 +231,13 @@ extern "C" {
     ExpatResolveEntityHandler resolve_entity;
   } ExpatHandlerFuncs;
 
-#define ExpatHandler_HANDLER_TYPE (1L<<0)
+  // #define ExpatHandler_HANDLER_TYPE (1L<<0)
 
 #define ExpatHandler_HasFlag(handler, flag) \
   ((((ExpatHandler *)(handler))->flags & (flag)) == (flag))
 
   typedef struct {
-    ExpatHandler *(*Handler_New)(void *arg, ExpatHandlerFuncs *handlers,
-                               unsigned long flags, void *criteria);
+    ExpatHandler *(*Handler_New)(void *arg, ExpatHandlerFuncs *handlers);
     void (*Handler_Del)(ExpatHandler *handler);
 
     ExpatReader *(*Reader_New)(ExpatHandler *handler);
@@ -268,8 +267,7 @@ extern "C" {
 #include "util.h"
 #include "debug.h"
 
-  ExpatHandler *ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers,
-                               unsigned long flags);
+  ExpatHandler *ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers);
   void ExpatHandler_Del(ExpatHandler *handler);
 
   ExpatReader *ExpatReader_New(ExpatHandler *handler);

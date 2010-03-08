@@ -675,8 +675,8 @@ create_reader(ParserState *state)
   ExpatHandler *handler;
   ExpatReader *reader;
 
-  handler = ExpatHandler_New(state, &builder_handlers,
-                               ExpatHandler_HANDLER_TYPE, NULL);
+  handler = ExpatHandler_New(state, &builder_handlers);
+
   if (handler == NULL)
     return NULL;
   reader = ExpatReader_New(handler);

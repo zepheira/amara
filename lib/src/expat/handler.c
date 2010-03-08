@@ -1,3 +1,43 @@
+/* ----------------------------------------------------------------------
+ * handler.c
+ *
+ * This file defines the _expat.Handler base class.   There are two
+ * parts to the implementation:
+ *
+ * First, a Python class called Handler is defined with the following
+ * interface (shown in Python pseudocode):
+ *
+ * class Handler:
+ *     def start_document(self):
+ *         pass
+ *     def end_documnet(self):
+ *         pass
+ *     def start_element(self,expandedName,qualifiedName,namespaces,attributes):
+ *         pass
+ *     def end_element(self,expandedName,qualifiedName):
+ *         pass
+ *     def attribute(self,expandedName,qualifiedName,value):
+ *         pass
+ *     def characters(self,data):
+ *         pass
+ *     def whitespace(self,data):
+ *         pass
+ *      
+ * The above class does nothing---it is only meant to serve as a base
+ * class.
+ *
+ * Second, a set of functions (handler_*) are defined and placed into
+ * an ExpatHandlerFuncs dispatch table.  This table provides a bridge
+ * between the above Python class and the low-level parsing code in
+ * expat.c.  Specifically, during parsing, the parser calls handler_* 
+ * functions in the dispatch table, which it turn, dispatch methods on the 
+ * above Handler class.   If a user has defined their own handler
+ * by inheriting from _expat.Handler, their methods should be trigger.
+ *
+ * Note:  The only part of Amara that appears to use Handler directly
+ * is the xupdate module.
+ * ---------------------------------------------------------------------- */
+
 #include "expat_interface.h"
 #include "attributes.h"
 
@@ -336,8 +376,7 @@ handler_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
   }
   handler = (HandlerObject *)type->tp_alloc(type, 0);
   if (handler != NULL) {
-    handler->handler = ExpatHandler_New(handler, &handler_handlers,
-                                     ExpatHandler_HANDLER_TYPE);
+    handler->handler = ExpatHandler_New(handler, &handler_handlers);
     handler->new_namespaces = PyDict_New();
     if (handler->new_namespaces == NULL) {
       Py_DECREF(handler);

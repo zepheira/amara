@@ -1,3 +1,24 @@
+/* ----------------------------------------------------------------------
+ * sax_handler.c
+ *
+ * This file implements the _expat.SaxReader object and provides
+ * a set of handler functions that connect the low-level expat parsing 
+ * code in expat.c to the SAX interface implemented by SaxReader.
+ *
+ * Functions of the form sax_* are handler functions that get placed
+ * into an ExpatHandlerFuncs table for use by the expat.c file.
+ * During parsing, these handlers are triggered.  In turn, the
+ * handler functions here try to invoke Python methods defined in
+ * SAX ContentHandler, DTDHandler, and related objects.
+ *
+ * Functions declared as XMLPARSER_METHOD_DEF are part of the
+ * _expat.SaxReader object interface.
+ *
+ * Note:  The SaxReader appears to be the handler of choice for  
+ * almost all XML in Amara.
+ * ---------------------------------------------------------------------- */
+
+# 
 #include "expat_interface.h"
 #include "attributes.h"
 #include "../domlette/domlette_interface.h"
@@ -2068,8 +2089,7 @@ parser_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
   self = (XMLParserObject *)type->tp_alloc(type, 0);
   if (self != NULL) {
-    handler = ExpatHandler_New(self, &sax_handlers,
-                                 ExpatHandler_HANDLER_TYPE);
+    handler = ExpatHandler_New(self, &sax_handlers);
     if (handler == NULL) {
       Py_DECREF(self);
       return NULL;

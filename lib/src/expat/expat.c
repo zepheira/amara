@@ -1,6 +1,60 @@
-/***********************************************************************/
-/* amara/src/expat/expat.c                                             */
-/***********************************************************************/
+/* ----------------------------------------------------------------------
+ * amara/src/expat/expat.c                                             
+ *
+ * Implements the core of the expat parsing engine.  
+ *
+ * There are two major parts of this module.  First, there are a
+ * set of low-level handler functions which plug directly into the
+ * expat C library.  These handler functions are identified by names
+ * of the form expat_* and are mostly found near the end of this file.
+ *
+ * Second, there is a parsing interface that is used by high-level code
+ * that wants to parse XML data.  The main entry point for parsing is 
+ * 
+ *    ExpatReader_Parse(ExpatReader *reader, PyObject *source)
+ *
+ * source must be an instance of InputSource (see input_source.c). 
+ * reader is an instance of ExpatReader.  An ExpatReader is created
+ * using the following function:
+ *
+ *    ExpatReader * ExpatReader_New(ExpatHandler *handler)
+ *
+ * The handler argument represents a dispatch table of handler
+ * functions that get triggered during parsing.  To create
+ * a handler, you use this function:
+ *
+ *    ExpatHandler * ExpatHandler_New(void *arg,
+ *                                    ExpatHandlerFuncs *handlers)
+ *
+ * arg is PyObject *.  Typically, this is an instance of a Python class
+ * on which methods will eventually be triggered (implemented elsewhere).
+ *
+ * handlers is a dispatch table of C functions that get invoked by
+ * various expat_* functions during parsing.  The definition for
+ * ExpatHandlerFuncs is found in expat_interface.h.  Usually, the
+ * handlers are just declared as a static variable with various slots
+ * filled in to refer to other C functions in the same file.
+ *
+ * For example of how all of this gets plugged together, see
+ * handler.c and reader.c or the file sax_handler.c.   In these
+ * files, you will first see a set of handler functions that make up the
+ * ExpatHandlerFuncs table.  For example:
+ *
+ *    static ExpatHandlerFuncs handler_methods = {
+ *        ...
+ *    };
+ *
+ * You will then see some initialization code that plugs everything
+ * together.
+ *
+ *    void parse(...) {
+ *        ...
+ *        ExpatHandler *handler = ExpatHandler_New(arg, &handler_methods);
+ *        ExpatReader *reader = ExpatReader_New(handler);
+ *        ExpatReader_Parse(reader,source)
+ *        ...
+ *    }
+ * ---------------------------------------------------------------------- */
 
 static char module_doc[] = "\
 Expat wrapper library";
@@ -107,7 +161,6 @@ typedef struct DTD {
 struct ExpatHandlerStruct {
   void *arg;
   ExpatHandlerFuncs handlers;
-  unsigned long flags;
 };
 
 typedef struct Context {
@@ -296,7 +349,7 @@ Py_LOCAL(void) DTD_Del(DTD *dtd)
 /** ExpatHandler *******************************************************/
 
 ExpatHandler *
-ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers, unsigned long flags) 
+ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers) 
 {
   ExpatHandler *handler;
   handler = PyMem_New(ExpatHandler, 1);
@@ -305,7 +358,6 @@ ExpatHandler_New(void *arg, ExpatHandlerFuncs *handlers, unsigned long flags)
     if (handlers != NULL) {
       memcpy(&handler->handlers, handlers, sizeof(ExpatHandlerFuncs));
     }
-    handler->flags = flags;
   } else {
     PyErr_NoMemory();
   }
