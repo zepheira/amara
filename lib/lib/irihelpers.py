@@ -281,3 +281,16 @@ class uridict(dict):
             yield key, self.__getitem__(key)
 
 
+#FIXME: Port to more amara.lib.iri functions
+def get_filename_from_url(url):
+    fullname = url.split('/')[-1].split('#')[0].split('?')[0]
+    return fullname
+
+
+def get_filename_parts_from_url(url):
+    fullname = url.split('/')[-1].split('#')[0].split('?')[0]
+    t = list(os.path.splitext(fullname))
+    if t[1]:
+        t[1] = t[1][1:]
+    return t
+

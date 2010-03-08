@@ -38,7 +38,7 @@ class examplotron_model(document_model):
         self.model_document.xml_model.prefixes = top_namespaces(self.model_document)
         self.setup_model()
         return
-    
+
     def setup_model(self, parent=None):
         '''
         Process an examplotron document for constraints
@@ -51,12 +51,12 @@ class examplotron_model(document_model):
             #FIXME: Hack until this issue is fixed: http://trac.xml3k.org/ticket/8
             for a in dict(parent.xml_attributes.items()):
                 if a[0] not in [EG_NAMESPACE, AKARA_NAMESPACE]:
-                    parent.xml_model.attribute_types[a] = (self.model_document.xml_pyname(a[0], a[1], iselement=False), None)
+                    parent.xml_model.attribute_types[a] = (self.model_document.xml_new_pname_mapping(a[0], a[1], iselement=False, update_class=False), None)
         for e in parent.xml_elements:
             #Constraint info
             eg_occurs = e.xml_attributes.get((EG_NAMESPACE, 'occurs'))
             if not (e.xml_namespace, e.xml_local) in parent.xml_model.element_types:
-                parent.xml_model.element_types[e.xml_namespace, e.xml_local] = (self.model_document.xml_pyname(e.xml_namespace, e.xml_local), None)
+                parent.xml_model.element_types[e.xml_namespace, e.xml_local] = (self.model_document.xml_new_pname_mapping(e.xml_namespace, e.xml_local, update_class=False), None)
             if not eg_occurs in [u'?', u'*']:
                 c = child_element_constraint(e.xml_namespace, e.xml_local)
                 parent.xml_model.add_constraint(c)
