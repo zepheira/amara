@@ -18,7 +18,6 @@
  * almost all XML in Amara.
  * ---------------------------------------------------------------------- */
 
-# 
 #include "expat_interface.h"
 #include "attributes.h"
 #include "../domlette/domlette_interface.h"
@@ -297,8 +296,6 @@ static ExpatStatus sax_StartElement(void *userData, ExpatName *name,
   }
   Debug_Print("})\n");
 #endif
-
-  printf("Here!*\n");
 
   if (handler != NULL) {
     /* handler.startElement((namespaceURI, localName), tagName, attributes) */

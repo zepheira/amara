@@ -22,6 +22,7 @@
 typedef struct {
   PyObject_HEAD
   ExpatReader *reader;
+  PyObject *handler;
 } ReaderObject;
 
 /** Python Interface **************************************************/
@@ -50,11 +51,13 @@ reader_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (!Handler_Check(pyhandler)) {
         PyErr_SetString(PyExc_TypeError, "expected a Handler");
         return NULL;
-      }
+    }
     handler = Handler_GET_HANDLER(pyhandler);
   }
   newobj = (ReaderObject *)type->tp_alloc(type, 0);
   if (newobj != NULL) {
+    newobj->handler = pyhandler;
+    Py_INCREF(pyhandler);
     newobj->reader = ExpatReader_New(handler);
     if (newobj->reader == NULL) {
       Py_CLEAR(newobj);
@@ -71,6 +74,9 @@ reader_dealloc(ReaderObject *self)
   if (self->reader) {
     ExpatReader_Del(self->reader);
     self->reader = NULL;
+  }
+  if (self->handler) {
+    Py_DECREF(self->handler);
   }
   ((PyObject *)self)->ob_type->tp_free((PyObject *)self);
 }

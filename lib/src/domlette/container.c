@@ -13,6 +13,8 @@
 #define Container_SET_ALLOCATED(op, v) (Container_GET_ALLOCATED(op) = (v))
 #define Container_GET_CHILD(op, i) (((ContainerObject *)(op))->nodes[i])
 #define Container_SET_CHILD(op, i, v) (Container_GET_CHILD((op), (i)) = (v))
+#define Container_GET_FROZEN(op)   (((ContainerObject *)(op))->frozen)
+#define Container_SET_FROZEN(op,i) (Container_GET_FROZEN(op) = (i))
 
 static PyObject *inserted_event;
 static PyObject *removed_event;
@@ -39,8 +41,12 @@ container_resize(ContainerObject *self, Py_ssize_t newsize) {
   /* Bypass realloc() when a previous overallocation is large enough
      to accommodate the newsize.  If the newsize falls lower than half
      the allocated size, then proceed with the realloc() to shrink the list.
+
+     The size is not reduced if the container is using a working
+     children array. 
   */
-  if (allocated >= newsize && newsize >= (allocated >> 1)) {
+
+  if (allocated >= newsize && ((newsize >= (allocated >> 1)) || (!self->frozen))) {
     self->count = newsize;
     return 0;
   }
@@ -146,6 +152,7 @@ container_index(NodeObject *self, NodeObject *child,
 
 /** Public C API ******************************************************/
 
+
 void _Container_Del(NodeObject *node)
 {
   NodeObject **nodes = Container_GET_NODES(node);
@@ -154,15 +161,77 @@ void _Container_Del(NodeObject *node)
     while (--i >= 0) {
       Py_DECREF(nodes[i]);
     }
-    PyMem_Free(nodes);
+
+    /* Only release the nodes array if frozen. Otherwise memory belongs
+       to the builder. */
+
+    if (Container_GET_FROZEN(node)) {
+      PyMem_Free(nodes);
+    }
   }
   _Node_Del(node);
 }
+
+/* Semi-private routine that sets a temporary working array on the
+   node object for collecting children.  This array can be manipulated
+   by various container functions such as Append, Insert, etc. 
+   However, the container is not the owner of this array until 
+   the _Container_FreezeChildren function is set */
+
+int _Container_SetWorkingChildren(NodeObject *self, NodeObject **array, 
+				  Py_ssize_t allocated) {
+  
+  Container_SET_NODES(self,array);
+  Container_SET_ALLOCATED(self,allocated);
+  Container_SET_FROZEN(self,0);
+  return 0;
+}
+
+NodeObject ** _Container_GetWorkingChildren(NodeObject *self, Py_ssize_t *allocated) {
+  *allocated = Container_GET_ALLOCATED(self);
+  return Container_GET_NODES(self);
+}
+
+/* Semi-private routine that freezes the set of children assigned to a
+ * node.  This is done by making a copy of the working children set 
+ * initialized by _Container_SetWorkingChildren above.
+ */
+int _Container_FreezeChildren(NodeObject *self) {
+  NodeObject **nodes;
+  Py_ssize_t i, size;
+
+  assert(Container_GET_NODES(self) != NULL);
+
+  size = Container_GET_COUNT(self);
+
+  /* Create a copy of the working array */
+  nodes = PyMem_New(NodeObject *, size);
+  if (nodes == NULL) {
+    PyErr_NoMemory();
+    return -2;
+  }
+  memcpy(nodes, Container_GET_NODES(self), sizeof(NodeObject *)*size);
+
+  /* Save the new array */
+  Container_SET_NODES(self, nodes);
+  Container_SET_ALLOCATED(self, size);
+  Container_SET_FROZEN(self,1);
+
+  if (!Element_CheckExact(self) && !Entity_CheckExact(self)) {
+    for (i = 0; i < size; i++) {
+      if (Node_DispatchEvent(self, inserted_event, nodes[i]) < 0)
+        return -1;
+    }
+  }
+  return 0;
+}
+
 
 /* Semi-private routine for bulk addition of children to a node.
  * This routine is valid for newly contructed container-style nodes which
  * haven't had any children added to them.
  */
+#if 0
 int _Container_SetChildren(NodeObject *self, NodeObject **array,
                            Py_ssize_t size)
 {
@@ -184,9 +253,14 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
 
   /* Set the parent relationship */
   for (i = 0; i < size; i++) {
-    assert(Node_GET_PARENT(nodes[i]) == NULL);
-    Py_INCREF(self);
-    Node_SET_PARENT(nodes[i], self);
+    /* Note: This code has been relaxed from previous implementation to support
+       incremental processing.  If no parent is set, go ahead and set it.  Otherwise,
+       leave the original parent in place. */
+    if (Node_GET_PARENT(nodes[i]) == NULL) {
+      // assert(Node_GET_PARENT(nodes[i]) == NULL);        /* DB: Relaxed this requirement */
+      Py_INCREF(self);
+      Node_SET_PARENT(nodes[i], self);
+    }
   }
 
   /* Save the new array */
@@ -203,6 +277,38 @@ int _Container_SetChildren(NodeObject *self, NodeObject **array,
   return 0;
 }
 
+#endif
+
+int _Container_FastAppend(NodeObject *self, NodeObject *child)
+{
+  NodeObject **children;
+  Py_ssize_t newsize;
+  Py_ssize_t allocated;
+
+  children = Container_GET_NODES(self);
+  allocated = Container_GET_ALLOCATED(self);
+  newsize = Container_GET_COUNT(self) + 1;
+
+  if (newsize >= allocated) {
+    size_t new_allocated = newsize << 1;
+    if (PyMem_Resize(children, NodeObject *, new_allocated) == NULL) {
+      PyErr_NoMemory();
+      return -1;
+    }
+    Container_SET_NODES(self,children);
+    Container_SET_ALLOCATED(self,new_allocated);
+  }
+  /* Add the node to the children array and set the parent*/
+  children[newsize-1] = child;
+  Container_SET_COUNT(self,newsize);
+  Py_INCREF(child);
+  Node_SET_PARENT(child,self);
+  Py_INCREF(self);
+
+  //  printf("FastAppend %d\n", newsize);
+  return 0;
+}
+
 int Container_Remove(NodeObject *self, NodeObject *child)
 {
   register NodeObject **nodes;
@@ -214,6 +320,7 @@ int Container_Remove(NodeObject *self, NodeObject *child)
   /* Find the index of the child to be removed */
   nodes = Container_GET_NODES(self);
   count = Container_GET_COUNT(self);
+  //  printf("Remove %d\n", count);
   for (index = count; --index >= 0;) {
     if (nodes[index] == child)
       break;
@@ -646,8 +753,10 @@ static int container_traverse(PyObject *self, visitproc visit, void *arg)
 {
   register NodeObject **nodes = Container_GET_NODES(self);
   register Py_ssize_t i = Container_GET_COUNT(self);
-  while (--i >= 0)
-    Py_VISIT(nodes[i]);
+  if (Container_GET_FROZEN(self)) {
+    while (--i >= 0)
+      Py_VISIT(nodes[i]);
+  }
   return DomletteNode_Type.tp_traverse(self, visit, arg);
 }
 
@@ -656,13 +765,15 @@ static int container_clear(PyObject *self)
   register NodeObject **nodes = Container_GET_NODES(self);
   register Py_ssize_t i = Container_GET_COUNT(self);
   if (nodes != NULL) {
-    Container_SET_NODES(self, NULL);
     Container_SET_COUNT(self, 0);
-    Container_SET_ALLOCATED(self, 0);
     while (--i >= 0) {
       Py_DECREF(nodes[i]);
     }
-    PyMem_Free(nodes);
+    if (Container_GET_FROZEN(self)) {
+      Container_SET_NODES(self,NULL);
+      Container_SET_ALLOCATED(self,0);
+      PyMem_Free(nodes);
+    }
   }
   return DomletteNode_Type.tp_clear(self);
 }

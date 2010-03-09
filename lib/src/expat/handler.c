@@ -118,6 +118,9 @@ handler_StartDocument(void *arg)
   PyObject *self = (PyObject *)arg;
   PyObject *handler, *args, *result;
 
+  PyObject_Print(self, stdout, 0);
+  fflush(stdout);
+
   handler = PyObject_GetAttrString(self, "start_document");
   if (handler == NULL)
     return EXPAT_STATUS_ERROR;

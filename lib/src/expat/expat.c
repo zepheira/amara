@@ -4416,7 +4416,7 @@ static Expat_APIObject Expat_API = {
   ExpatReader_GetBase,
   ExpatReader_GetLineNumber,
   ExpatReader_GetColumnNumber,
-
+  Attributes_New
 };
 
 struct submodule_t {

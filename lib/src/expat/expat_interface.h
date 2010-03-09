@@ -255,6 +255,7 @@ extern "C" {
     PyObject *(*Reader_GetBase)(ExpatReader *reader);
     unsigned long (*Reader_GetLineNumber)(ExpatReader *reader);
     unsigned long (*Reader_GetColumnNumber)(ExpatReader *reader);
+    PyObject *(*Attributes_New)(ExpatAttribute atts[], Py_ssize_t length);
 
   } Expat_APIObject;
 
@@ -293,7 +294,7 @@ extern "C" {
   ExpatStatus ExpatReader_Suspend(ExpatReader *reader);
   ExpatStatus ExpatReader_Resume(ExpatReader *reader);
   int ExpatReader_GetParsingStatus(ExpatReader *reader);
-
+  PyObject *Attributes_New(ExpatAttribute atts[], Py_ssize_t length);
 
 #else /* !Expat_BUILDING_MODULE */
 
@@ -322,6 +323,7 @@ extern "C" {
 #define ExpatReader_GetBase         Expat_EXPORT(Reader_GetBase)
 #define ExpatReader_GetLineNumber   Expat_EXPORT(Reader_GetLineNumber)
 #define ExpatReader_GetColumnNumber Expat_EXPORT(Reader_GetColumnNumber)
+#define Attributes_New  Expat_EXPORT(Attributes_New)
 
 #endif /* Expat_BUILDING_MODULE */
 

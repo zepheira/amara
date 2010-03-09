@@ -276,6 +276,7 @@ setup(name='Amara',
                 'amara.bindery',
                 'amara.bindery.model',
                 'amara.dom',
+                'amara.pushtree',
                 'amara.writers',
                 'amara.xpath',
                 'amara.xpath.compiler',
@@ -369,6 +370,8 @@ setup(name='Amara',
                              'lib/src/domlette/builder.c',
                              # Reference count testing
                              'lib/src/domlette/refcounts.c',
+                             # Rule matcher
+                             'lib/src/domlette/rulematch.c',
                              # Module interface
                              'lib/src/domlette/domlette.c',
                              ],

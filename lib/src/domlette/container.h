@@ -13,7 +13,8 @@ extern "C" {
     Node_HEAD               \
     Py_ssize_t count;       \
     NodeObject **nodes;     \
-    Py_ssize_t allocated;
+    Py_ssize_t allocated;   \
+    int        frozen;
 
   /* Nothing is actually declared to be a ContainerObject, but every pointer 
    * to a Domlette container object can be cast to a ContainerObject*.
@@ -43,6 +44,14 @@ extern "C" {
 
   int _Container_SetChildren(NodeObject *self, NodeObject **children,
                              Py_ssize_t size);
+
+  int _Container_SetWorkingChildren(NodeObject *self, NodeObject **children, 
+				    Py_ssize_t allocated);
+
+  NodeObject ** _Container_GetWorkingChildren(NodeObject *self, Py_ssize_t *allocated);
+
+  int _Container_FreezeChildren(NodeObject *self);
+  int _Container_FastAppend(NodeObject *self, NodeObject *child);
 
   int Container_Append(NodeObject *self, NodeObject *child);
   int Container_Remove(NodeObject *self, NodeObject *child);

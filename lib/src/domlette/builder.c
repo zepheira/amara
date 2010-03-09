@@ -1,6 +1,8 @@
 #define PY_SSIZE_T_CLEAN
 #include "domlette_interface.h"
 #include "expat_interface.h"
+#include "container.h"
+#include "rulematch.h"
 
 /*#define DEBUG_PARSER */
 #define INITIAL_CHILDREN 4
@@ -9,9 +11,9 @@ typedef struct _context {
   struct _context *next;
   NodeObject *node;
 
+  /* Add warning about how these work */
   NodeObject **children;
   Py_ssize_t children_allocated;
-  Py_ssize_t children_size;
 } Context;
 
 typedef struct {
@@ -29,6 +31,7 @@ typedef struct {
   PyObject *comment_factory;
 
   EntityObject *owner_document;
+  RuleMatchObject *rule_matcher; 
 } ParserState;
 
 typedef enum {
@@ -46,6 +49,85 @@ static PyObject *gc_disable_function;
 static PyObject *gc_isenabled_function;
 
 /** Context ************************************************************/
+
+/** Implementation notes:
+ * 
+ * Context objects are used when processing containers such as Elements
+ * and Entities.  In a nutshell, a Context is a thin wrapper around
+ * element while it is being constructed.  The context holds a reference
+ * to the element under construction as well as an underlying working
+ * array of child nodes.
+ *
+ * There is a critical memory management detail concerning the handling
+ * of child nodes.  When constructing trees, the implementation has been
+ * optimized to reduce the overhead of collecting child nodes and adding
+ * them to elements.   This optimization works as follows:
+ *
+ *    1.  Each Context object keeps an array (children) of NodeObject *.
+ *    2.  Context objects are constantly reused, but the children
+ *        array is never freed in the process.  Thus, when a Context is 
+ *        reused, the child array is also reused.
+ *    3.  The underlying children array may grow in size during parsing,
+ *        but is never reduced in size.   Memory is only reclaimed when
+ *        Contexts are deleted at the end of parsing.
+ * 
+ * Together, the above optimizations greatly reduce the number of memory
+ * allocations that must be performed to collect child nodes.
+ *
+ * The above optimization has a tricky interaction with how container
+ * objects work under the covers.   During an incremental parse (sendtree,
+ * pushbind, etc.) user code may want to modify parts of the document
+ * parse tree such as appending, removing, or inserting new elements.
+ * During construction, these tree modifications must manipulate the
+ * children array associated with Context objects, not the children
+ * array that's part of the completed Element after parsing.
+ *
+ * To allow documentation modification, the following conventions must 
+ * be followed during tree construction:
+ *
+ * 1.  When new container nodes are created (Element, Entity), the 
+ *     following function call must be made:
+ *
+ *        _Container_SetWorkingChildren(node, 
+ *                                      context->children, 
+ *                                      context->children_allocated);
+ *
+ *     This function makes the container use the working array that's
+ *     part of the context. All functions such as Append(), Remove(),
+ *     Insert() that manipulate children will use the working array.
+ *
+ * 2. When new container codes are fully parsed (e.g., no more children),
+ *    The following function calls must be made:
+ *
+ *       context->children = _Container_GetWorkingChildren(node, 
+ *                                          &content->children_allocated)
+ *
+ *       _Container_FreezeChildren(node);
+ *
+ *    The first function returns the current state of the working
+ *    children array and stores it back in the context.  This is 
+ *    required in the event that the array had to be reallocated to
+ *    store more items.   
+ *
+ *    The Freeze function makes the container object store its own
+ *    local copy of the children array and detach from the context
+ *    working array.   Think of this as a finalization step.
+ *
+ * 3. To add new children to a node during tree construction, use the
+ *    following function:
+ *
+ *       _Container_FastAppend(parent,child);
+ *
+ *    This is implementation is optimized for manipulating the working
+ *    array and has far-less error checking and other details.
+ *
+ *
+ * 4. The builder code should never assume ownership over any nodes
+ *    added as children or stored in the working children arrays.
+ *    When deleting a context, it is okay to simply DECREF the node
+ *    and free the children array without freeing the contents of
+ *    the children array (if any).
+ */
 
 Py_LOCAL_INLINE(Context *)
 Context_New(NodeObject *node)
@@ -66,22 +148,29 @@ Context_New(NodeObject *node)
     return NULL;
   }
   self->children_allocated = INITIAL_CHILDREN;
+
+  /* Set the node's children array to the working array defined by
+     context. A local copy of this array is made later, when container
+     nodes are finalized.  This is a performance optimization to speed
+     up tree building */
+
+  _Container_SetWorkingChildren(node, self->children, self->children_allocated);
+
   return self;
 }
 
 Py_LOCAL_INLINE(void)
 Context_Del(Context *self)
 {
-  Py_ssize_t i;
-
   /* This will only be set when an error has occurred, so it must be freed. */
+  /* Note: If the node is container and has any children, they are freed
+     in the process */
+
   if (self->node) {
     Py_DECREF(self->node);
   }
 
-  for (i = self->children_size; --i >= 0;) {
-    Py_DECREF(self->children[i]);
-  }
+  /* Free the working children array */
   PyMem_Free(self->children);
 
   if (self->next) {
@@ -110,6 +199,7 @@ ParserState_New(PyObject *entity_factory)
       self->entity_factory = entity_factory;
       Py_INCREF(entity_factory);
     }
+    self->rule_matcher = NULL;
   }
   return self;
 }
@@ -129,6 +219,9 @@ static void ParserState_Del(ParserState *self)
   Py_CLEAR(self->processing_instruction_factory);
   Py_CLEAR(self->comment_factory);
   Py_CLEAR(self->owner_document);
+  if (self->rule_matcher) {
+    RuleMatchObject_Del(self->rule_matcher);
+  }
   PyMem_Free(self);
 }
 
@@ -139,6 +232,10 @@ ParserState_AddContext(ParserState *self, NodeObject *node)
   if (context != NULL) {
     /* reuse an existing context */
     context->node = node;
+
+    /* Set the node children working set */
+    _Container_SetWorkingChildren(node,context->children,context->children_allocated);
+
     self->free_context = context->next;
   } else {
     /* create a new context */
@@ -166,15 +263,12 @@ ParserState_FreeContext(ParserState *self)
 
     /* reset its values */
     context->node = NULL;
-    context->children_size = 0;
   }
 }
 
 static int ParserState_AddNode(ParserState *self, NodeObject *node)
 {
   Context *context = self->context;
-  NodeObject **children;
-  Py_ssize_t newsize;
 
   if (node == NULL || context == NULL) {
 #ifdef DEBUG_PARSER
@@ -184,24 +278,7 @@ static int ParserState_AddNode(ParserState *self, NodeObject *node)
     return -1;
 #endif
   }
-
-  /* increase size of child array, if needed */
-  children = context->children;
-  newsize = context->children_size + 1;
-  if (newsize >= context->children_allocated) {
-    size_t new_allocated = newsize << 1;
-    if (PyMem_Resize(children, NodeObject *, new_allocated) == NULL) {
-      PyErr_NoMemory();
-      return -1;
-    }
-    context->children = children;
-    context->children_allocated = new_allocated;
-  }
-
-  /* add the node to the children array */
-  children[context->children_size] = node;
-  context->children_size = newsize;
-  return 0;
+  return _Container_FastAppend(context->node, node);
 }
 
 /** handlers ***********************************************************/
@@ -265,6 +342,15 @@ builder_StartDocument(void *userState)
   if (document == NULL)
     return EXPAT_STATUS_ERROR;
 
+
+  /* Callout to matcher */
+  if (state->rule_matcher) {
+    if (RuleMatch_StartDocument(state->rule_matcher, (PyObject *) document) < 0) {
+      Py_DECREF(document);
+      return EXPAT_STATUS_ERROR;
+    }
+  }
+
   if (ParserState_AddContext(state, (NodeObject *)document) == NULL) {
     Py_DECREF(document);
     return EXPAT_STATUS_ERROR;
@@ -285,9 +371,11 @@ builder_EndDocument(void *userState)
   fprintf(stderr, "--- builder_EndDocument()\n");
 #endif
 
-  /* Set the document's children */
-  switch (_Container_SetChildren(context->node, context->children,
-                                 context->children_size)) {
+  /* Get the working children set */
+  context->children = _Container_GetWorkingChildren(context->node, &context->children_allocated);
+
+  /* Freeze the document's children */
+  switch (_Container_FreezeChildren(context->node)) {
     case 0:
       break;
     case -1:
@@ -402,6 +490,14 @@ builder_StartElement(void *userState, ExpatName *name,
     Py_DECREF(attr);
   }
 
+  /* Check for rule matching */
+  if (state->rule_matcher) {
+    if (RuleMatch_StartElement(state->rule_matcher,(PyObject *) elem,name,atts,natts) < 0) {
+      Py_DECREF(elem);
+      return EXPAT_STATUS_ERROR;
+    }
+  }
+
   /* save states on the context */
   if (ParserState_AddContext(state, (NodeObject *) elem) == NULL) {
     Py_DECREF(elem);
@@ -426,9 +522,11 @@ builder_EndElement(void *userState, ExpatName *name)
   /* Get the newly constructed element */
   node = context->node;
 
+  /* Get the working children array */
+  context->children = _Container_GetWorkingChildren(node, &context->children_allocated);
+
   /* Set the element's children */
-  switch (_Container_SetChildren(node, context->children,
-                                 context->children_size)) {
+  switch (_Container_FreezeChildren(node)) {
     case 0:
       break;
     case -1:
@@ -444,6 +542,13 @@ builder_EndElement(void *userState, ExpatName *name)
   if (ParserState_AddNode(state, node) < 0) {
     Py_DECREF(node);
     return EXPAT_STATUS_ERROR;
+  }
+  /* Hook to send the formed node to any target */
+
+  if (state->rule_matcher) {
+    if (RuleMatch_EndElement(state->rule_matcher,(PyObject *) node,name) < 0) {
+      return EXPAT_STATUS_ERROR;
+    }
   }
   return EXPAT_STATUS_OK;
 }
@@ -552,6 +657,13 @@ builder_ProcessingInstruction(void *userState, PyObject *target, PyObject *data)
   if (ParserState_AddNode(state, node) < 0) {
     Py_DECREF(node);
     return EXPAT_STATUS_ERROR;
+  }
+
+  /* Callout to rule  matching */
+  if (state->rule_matcher) {
+    if (RuleMatch_ProcessingInstruction(state->rule_matcher,(PyObject *) node,target,data) < 0) {
+      return EXPAT_STATUS_ERROR;
+    }
   }
   return EXPAT_STATUS_OK;
 }
@@ -689,7 +801,7 @@ create_reader(ParserState *state)
 
 static PyObject *builder_parse(PyObject *inputSource, ParseFlags flags,
                                PyObject *entity_factory, int asEntity,
-                               PyObject *namespaces)
+                               PyObject *namespaces, PyObject *rule_handler)
 {
   ParserState *state;
   PyObject *result;
@@ -714,6 +826,10 @@ static PyObject *builder_parse(PyObject *inputSource, ParseFlags flags,
   if (state->reader == NULL) {
     ParserState_Del(state);
     return NULL;
+  }
+
+  if (rule_handler) {
+    state->rule_matcher = RuleMatchObject_New(rule_handler);
   }
 
   /* Disable GC (if enabled) while building the DOM tree */
@@ -763,34 +879,42 @@ finally:
 
 PyObject *Domlette_Parse(PyObject *self, PyObject *args, PyObject *kw)
 {
-  static char *kwlist[] = {"source", "flags", "entity_factory", NULL};
+  static char *kwlist[] = {"source", "flags", "entity_factory", "rule_handler", NULL};
   PyObject *source, *entity_factory=NULL;
+  PyObject *rule_handler=NULL;   /* DB: May be temporary */
   int flags=default_parse_flags;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|iO:parse", kwlist,
-                                   &source, &flags, &entity_factory))
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|iOO:parse", kwlist,
+                                   &source, &flags, &entity_factory,&rule_handler))
     return NULL;
+
   if (entity_factory == Py_None)
     entity_factory = NULL;
 
-  return builder_parse(source, flags, entity_factory, 0, NULL);
+  if (rule_handler == Py_None)
+    rule_handler = NULL;
+
+  return builder_parse(source, flags, entity_factory, 0, NULL, rule_handler);
 }
 
 PyObject *Domlette_ParseFragment(PyObject *self, PyObject *args, PyObject *kw)
 {
-  static char *kwlist[] = {"source", "namespaces", "entity_factory", NULL};
+  static char *kwlist[] = {"source", "namespaces", "entity_factory", "rule_handler", NULL};
   PyObject *source, *namespaces=NULL, *entity_factory=NULL;
+  PyObject *rule_handler = NULL;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OO:parse_fragment", kwlist,
-                                   &source, &namespaces, &entity_factory))
+  if (!PyArg_ParseTupleAndKeywords(args, kw, "O|OOO:parse_fragment", kwlist,
+                                   &source, &namespaces, &entity_factory,&rule_handler))
     return NULL;
   if (namespaces == Py_None)
     namespaces = NULL;
   if (entity_factory == Py_None)
     entity_factory = NULL;
+  if (rule_handler == Py_None)
+    rule_handler = NULL;
 
   return builder_parse(source, PARSE_FLAGS_STANDALONE, entity_factory, 1,
-                       namespaces);
+                       namespaces,rule_handler);
 }
 
 /** Module Interface **************************************************/
@@ -800,6 +924,7 @@ int DomletteBuilder_Init(PyObject *module)
   PyObject *import;
 
   if (Expat_IMPORT == NULL) return -1;
+  if (RuleMatch_Init() < 0) return -1;
 
   empty_args_tuple = PyTuple_New(0);
   if (empty_args_tuple == NULL) return -1;

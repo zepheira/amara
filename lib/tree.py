@@ -23,7 +23,7 @@ from amara.lib import inputsource
 
 #FIXME: and so on
 
-def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False):
+def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False, rule_handler=None):
     '''
     Parse an XML input source and return a tree
     
@@ -40,6 +40,7 @@ def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False):
                  external resources if they are encountered (which is where it diverges
                  from XML core.  In XML core that would be a fatal error)
     validate - whether or not to apply DTD validation
+    rule_handler - Handler object used to perform rule matching in incremental processing.
     '''
     if standalone:
         flags = PARSE_FLAGS_STANDALONE
@@ -47,7 +48,7 @@ def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False):
         flags = PARSE_FLAGS_VALIDATE
     else:
         flags = PARSE_FLAGS_EXTERNAL_ENTITIES
-    return _parse(inputsource(obj, uri), flags, entity_factory=entity_factory)
+    return _parse(inputsource(obj, uri), flags, entity_factory=entity_factory,rule_handler=rule_handler)
 
 #Rest of the functions are deprecated, and will be removed soon
 
@@ -97,3 +98,22 @@ def ParseFragment(*args, **kwds):
                 "instead",
                 DeprecationWarning)
     return parse_fragment(*args, **kwds)
+
+
+# ------------------------------------------------------------
+# Experimental sendtree() support.   This should not be used
+# for any kind of production.  It is an experimental prototype
+# ------------------------------------------------------------
+
+def sendtree(obj, pattern, target, uri=None, entity_factory=None, standalone=False, validate=False):
+    # This callback does "pattern matching".  Nothing really implemented now--just a simple check
+    # for an element name match.  Eventually build into a pattern matching system.
+    def callback(node):
+        if node.xml_local == pattern:
+            target.send(node)
+
+    # Run the parser
+    return parse(obj,uri,entity_factory,standalone,validate,callback)
+
+
+        
