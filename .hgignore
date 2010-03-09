@@ -4,3 +4,4 @@
 ^MANIFEST$
 ^dist$
 ^scratch$
+__hgid__.py$

@@ -230,6 +230,22 @@ class sdist(cmdclass):
 from distutils.command import sdist as cmdmodule
 cmdmodule.sdist = sdist
 
+def hgversionstamp():
+    #python -c "from subprocess import *; check_call(['hg -q id'], shell=True)"
+    import os
+    from subprocess import Popen, check_call, CalledProcessError, PIPE
+    try:
+        #check_call(['hg -q id'], shell=True)
+        p = Popen(['hg -q id'], stdout=PIPE, shell=True)
+        hgid = p.communicate()[0].strip()
+        hgid_file = os.path.join('lib', '__hgid__.py')
+        open(hgid_file, 'w').write('HGID = \'%s\'\n'%hgid)
+        print >> sys.stderr, 'Setup run from a Mercurial repository, so putting the version ID,', hgid, ', in ', hgid_file
+    except CalledProcessError:
+        pass
+
+hgversionstamp()
+
 # -- end of custimzation ----------------------------------------------
 
 from distutils.core import setup, Extension
@@ -238,7 +254,7 @@ from distutils.core import setup, Extension
 kw = {}
 
 setup(name='Amara',
-      version='2.0a4',
+      version='2.0a5',
       description="Library for XML processing in Python",
       long_description="Library for XML processing in Python, designed to balance the native idioms of Python with the native character of XML.",
       url='http://wiki.xml3k.org/Amara2',
