@@ -32,6 +32,14 @@ def U(s, encoding='utf-8', noneok=False):
     from amara.lib import U
     x = amara.parse('<a x="1">spam</a>')
     U(x.xml_select('a'))
+    
+    Note: you can make U always just convert None to u'' as follows:
+    
+    >>> from functools import partial
+    >>> from amara.lib import U
+    >>> U = partial(U, noneok=True)
+    >>> U(None)
+    u''
     """
     from amara.xpath import datatypes
     #xpath.datatypes.string is a subclass of Unicode object, so it won't fall through

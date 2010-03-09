@@ -93,7 +93,7 @@ class resolver:
             # urllib2.urlopen, wrapped by us, will suffice for http, ftp,
             # data and gopher
             try:
-                stream = urllib2.urlopen(robj)
+                stream = urllib2.urlopen(req)
             except IOError, e:
                 raise IriError(IriError.RESOURCE_ERROR,
                                    uri=uri, loc=uri, msg=str(e))
