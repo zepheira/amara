@@ -13,8 +13,8 @@
 #define Container_SET_ALLOCATED(op, v) (Container_GET_ALLOCATED(op) = (v))
 #define Container_GET_CHILD(op, i) (((ContainerObject *)(op))->nodes[i])
 #define Container_SET_CHILD(op, i, v) (Container_GET_CHILD((op), (i)) = (v))
-#define Container_GET_FROZEN(op)   (((ContainerObject *)(op))->frozen)
-#define Container_SET_FROZEN(op,i) (Container_GET_FROZEN(op) = (i))
+//#define Container_GET_FROZEN(op)   (((ContainerObject *)(op))->frozen)
+#define Container_SET_FROZEN(op,v) (Container_GET_FROZEN(op) = (v))
 
 static PyObject *inserted_event;
 static PyObject *removed_event;
@@ -754,8 +754,9 @@ static int container_traverse(PyObject *self, visitproc visit, void *arg)
   register NodeObject **nodes = Container_GET_NODES(self);
   register Py_ssize_t i = Container_GET_COUNT(self);
   if (Container_GET_FROZEN(self)) {
-    while (--i >= 0)
+    while (--i >= 0) {
       Py_VISIT(nodes[i]);
+    }
   }
   return DomletteNode_Type.tp_traverse(self, visit, arg);
 }

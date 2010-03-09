@@ -165,8 +165,16 @@ Context_Del(Context *self)
   /* This will only be set when an error has occurred, so it must be freed. */
   /* Note: If the node is container and has any children, they are freed
      in the process */
+  
 
   if (self->node) {
+    if (!Container_GET_FROZEN(self->node)) {
+      /* If the container was not frozen, it means that we're deleting the
+	 context before construction was complete.  We need to make sure
+	 we get the children working set back before freeing it */
+      self->children = _Container_GetWorkingChildren(self->node, &self->children_allocated);
+    }
+    
     Py_DECREF(self->node);
   }
 
