@@ -20,6 +20,7 @@ from amara.bindery import nodes
 from amara.lib.xmlstring import *
 from amara.namespaces import XML_NAMESPACE, XHTML_NAMESPACE
 
+HTML5LIB_VERSION = html5lib.__version__
 
 class node(html5lib.treebuilders._base.Node):
     appendChild = tree.element.xml_append

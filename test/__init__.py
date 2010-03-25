@@ -1,4 +1,7 @@
 # -*- encoding: utf-8 -*-
+
+#Also of interest: http://allmydata.org/trac/pyutil/browser/pyutil/pyutil/benchutil.py
+
 # http://code.activestate.com/recipes/440700/
 # by Tarek Ziadé
 
@@ -28,10 +31,15 @@ def local_pystone():
     #return pystone.pystones(loops=pystone.LOOPS)
     #CMD = ['python', '-c', '"from test import pystone; print pystone.pystones(loops=pystone.LOOPS)"']
     CMD = 'python -c "from test import pystone; print pystone.pystones(loops=pystone.LOOPS)"'
-    process = Popen(CMD, stdout=PIPE, shell=True)
+    process = Popen(CMD, stdout=PIPE, stderr=PIPE, shell=True)
     #result = process.stdout.read()
-    result = process.communicate()[0]
-    return eval(result)
+    result = process.communicate()[0].strip()
+    #For security purposes, make sure it's strictly in the form (N, N)
+    import re
+    if re.match('\([\d\.]+,\s*[\d\.]+\)', result):
+        return eval(result)
+    else:
+        return None
     #import sys; print >> sys.stderr, result
 
 def func_not_to_exceed_pystone(max_num_pystones, current_pystone=local_pystone()):

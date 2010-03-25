@@ -22,6 +22,7 @@ __all__ = [
 'scheme_registry_resolver',
 'facade_resolver',
 'uridict',
+'resolver',
 ]
 
 # URI schemes supported by resolver_base
