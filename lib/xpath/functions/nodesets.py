@@ -21,6 +21,8 @@ class last_function(builtin_function):
     def evaluate_as_number(self, context):
         return datatypes.number(context.size)
     evaluate = evaluate_as_number
+    #See http://trac.xml3k.org/ticket/62 re: idea of following flag
+    #requires_context_size = True
 
 
 class position_function(builtin_function):

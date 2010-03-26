@@ -6,7 +6,8 @@ XPath location path expressions.
 
 from amara.xpath import XPathError
 from amara.xpath.expressions import nodesets
-from amara.xpath.locationpaths import axisspecifiers, nodetests, _paths
+from amara.xpath.locationpaths import axisspecifiers, nodetests
+from amara.xpath.locationpaths import _paths #i.e. lib/xpath/src/paths.c
 
 class location_path(nodesets.nodeset_expression):
     """
