@@ -179,6 +179,11 @@ class location_step(object):
                 return ''
         return u'%s::%s%s' % (self.axis, self.node_test, self.predicates or u'')
 
+    @property
+    def children(self):
+        'Children of the parse tree of a location step are its axis, node test and predicates'
+        return (self.axis, self.node_test, self.predicates)
+
 
 class abbreviated_step(location_step):
     """

@@ -194,3 +194,8 @@ class predicate:
 
     def __unicode__(self):
         return u'[%s]' % self._expr
+
+    @property
+    def children(self):
+        'Child of the parse tree of a predicate is its expression'
+        return (self._expr,)

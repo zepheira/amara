@@ -168,6 +168,11 @@ class union_expr(nodeset_expression):
     def __unicode__(self):
         return u' | '.join(map(unicode, self._paths))
 
+    @property
+    def children(self):
+        'Children of the parse tree of a union expression are the left and right hand expressions'
+        return self._paths
+    
 
 class path_expr(nodeset_expression):
     """
