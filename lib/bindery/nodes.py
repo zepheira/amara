@@ -174,9 +174,9 @@ ELEMENT_TYPE = tree.element.xml_type
 
 class container_mixin(object):
     xml_model_ = None
-    xml_exclude_pnames = frozenset()
     xml_pname_cache = {}
     XML_PY_REPLACE_PAT = re.compile(u'[^a-zA-Z0-9_]')
+    xml_exclude_pnames = frozenset()
 
     def xml_get_model(self): return self.xml_model_
     def xml_set_model(self, model):
