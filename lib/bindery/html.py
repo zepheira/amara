@@ -223,7 +223,7 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
                 namespace = None
             #For some reason html5lib sometimes sends None as name
             if not name:
-                xml_html5lib_name = U(name)
+                xml_html5lib_name = name
                 name = NAME_FOR_ELEMENTS_UNNAMED_BY_HTML5LIB
             namespace, name = U(namespace) if namespace else None, U(name)
             #import sys; print >> sys.stderr, (namespace, name, use_xhtml_ns)
