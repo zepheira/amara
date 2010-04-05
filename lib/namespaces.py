@@ -17,7 +17,7 @@ AKARA_XSLT_NAMESPACE = u"http://purl.org/xml3k/akara/xslt"; COMMON_NAMESPACES[AK
 XML_NAMESPACE = u"http://www.w3.org/XML/1998/namespace"
 XMLNS_NAMESPACE = u"http://www.w3.org/2000/xmlns/"
 
-XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_NAMESPACES[XHTML_NAMESPACE] = u'xhtml'
+XHTML_NAMESPACE = u"http://www.w3.org/1999/xhtml"; COMMON_NAMESPACES[XHTML_NAMESPACE] = u'html'
 XSL_NAMESPACE = u'http://www.w3.org/1999/XSL/Transform'; COMMON_NAMESPACES[XSL_NAMESPACE] = u'xsl'
 
 RNG_NAMESPACE = u"http://relaxng.org/ns/structure/1.0"; COMMON_NAMESPACES[RNG_NAMESPACE] = u'rng'

@@ -45,6 +45,8 @@ from amara.lib import IriError, importutil
 # whether os_path_to_uri should treat "/" same as "\" in a Windows path
 WINDOWS_SLASH_COMPAT = True
 
+DEFAULT_HIERARCHICAL_SEP = '/'
+
 
 def iri_to_uri(iri, convertHost=False):
     r"""
@@ -1743,7 +1745,6 @@ def basejoin(base, uriRef):
             return res[len(dummyscheme)+1:]
 
 
-#
 def join(*uriparts):
     """
     Merges a series of URI reference parts, returning a new URI reference.
