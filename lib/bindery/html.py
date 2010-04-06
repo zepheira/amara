@@ -77,9 +77,7 @@ class element(nodes.element_base, node):
         name = getattr(self, 'xml_html5lib_name', self.xml_qname)
         namespace = getattr(self, 'xml_html5lib_namespace', self.xml_namespace)
         return namespace, name
-        self.xml_html5lib_name
         #return XHTML_NAMESPACE, self.xml_name
-        return self.xml_namespace, self.xml_qname
 
     def xml_get_childNodes_(self):
         return self.xml_children
@@ -123,15 +121,6 @@ class element(nodes.element_base, node):
         for k, v in self.xml_attributes.items():
             newelem.xml_attributes[k] = v
         return newelem
-
-    def xml_child_inserted(self, child):
-        """
-        called after the node has been added to `self.xml_children`
-        """
-        if isinstance(child, tree.element):
-            self.xml_new_pname_mapping(child.xml_namespace, child.xml_local, True)
-        return
-
 
 
 class entity(node, nodes.entity_base):
