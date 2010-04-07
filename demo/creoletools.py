@@ -145,9 +145,14 @@ class Rules(creole.Rules):
                           self.text]), re.X | re.U | re.M)
 
 
+from amara.lib import inputsource
 def parse(source):
-    #root = 
-    doc = Parser(source).parse()
+    if isinstance(source, str):
+        doc = Parser(source).parse()
+    elif isinstance(source, unicode):
+        doc = Parser(source.encode('utf-8')).parse()
+    else:
+        doc = Parser(inputsource.text(source).stream.read()).parse()
     return doc
 
 #Monkeypatching

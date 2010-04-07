@@ -98,7 +98,7 @@ class _inputsource(InputSource):
         Set up an input source from text, according to the markup convention of the term
         (i.e. in Python terms a string with XML, HTML, fragments thereof, or tag soup)
         
-        Supports processing content sources that are not unambiguously XMl or HTML strings
+        Supports processing content sources that are not unambiguously XML or HTML strings
         '''
         return _inputsource(arg, uri, encoding, resolver, sourcetype=XMLSTRING)
 

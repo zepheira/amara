@@ -16,7 +16,7 @@ __all__ = [
     'U',
     ]
 
-def U(s, encoding='utf-8'):
+def U(s, encoding='utf-8', noneok=False):
     """
     Apply a set of heuristics to the object to figure out how best
     to get text from it.
@@ -44,7 +44,10 @@ def U(s, encoding='utf-8'):
     if isinstance(s, datatypes.xpathobject): return unicode(datatypes.string(s))
     if s is None:
         #FIXME: L10N
-        raise TypeError('Refusing to coerce None into Unicode')
+        if noneok:
+            return u''
+        else:
+            raise TypeError('Refusing to coerce None into Unicode')
     #Otherwise just leap into default coercions
     try:
         return unicode(s)
