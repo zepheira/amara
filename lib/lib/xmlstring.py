@@ -5,6 +5,7 @@
 #
 
 import re
+import datetime
 from string import *
 
 from amara._xmlstring import *
@@ -42,6 +43,8 @@ def U(s, encoding='utf-8', noneok=False):
     if isinstance(s, str): return s.decode(encoding)
     #If it's an XPath data type object, apply the equivalent of the XPath string() function
     if isinstance(s, datatypes.xpathobject): return unicode(datatypes.string(s))
+    #Specialize datetime object treatment, because the default unicode coercion doesn't go to W3C ISO flavor
+    if isinstance(s, datetime.datetime): return s.isoformat()
     if s is None:
         #FIXME: L10N
         if noneok:

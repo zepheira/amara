@@ -57,7 +57,10 @@ class _inputsource(InputSource):
             #FIXME L10N
             raise ValueError("Cannot parse an empty string as XML")
         
-        if hasattr(arg, 'read'):
+        if isinstance(arg, urllib2.Request):
+            uri = arg.get_full_url() #One of the rightly labeled "lame" helper methods in urllib2 ;)
+            stream = resolver.resolve(arg)
+        elif hasattr(arg, 'read'):
             #Create dummy Uri to use as base
             uri = uri or uuid4().urn
             stream = arg

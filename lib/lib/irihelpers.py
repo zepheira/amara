@@ -51,20 +51,24 @@ class resolver:
         Raises a IriError if the URI scheme is unsupported or if a stream
         could not be obtained for any reason.
         """
-        if baseUri is not None:
-            uri = self.absolutize(uriRef, baseUri)
-            scheme = get_scheme(uri)
+        if not isinstance(uriRef, urllib2.Request):
+            if baseUri is not None:
+                uri = self.absolutize(uriRef, baseUri)
+                scheme = get_scheme(uri)
+            else:
+                uri = uriRef
+                scheme = get_scheme(uriRef)
+                # since we didn't use absolutize(), we need to verify here
+                if scheme not in self._supported_schemes:
+                    if scheme is None:
+                        raise ValueError('When the URI to resolve is a relative '
+                            'reference, it must be accompanied by a base URI.')
+                    else:
+                        raise IriError(IriError.UNSUPPORTED_SCHEME,
+                                           scheme=scheme, resolver=self.__class__.__name__)
+            req = urllib2.Request(uri)
         else:
-            uri = uriRef
-            scheme = get_scheme(uriRef)
-            # since we didn't use absolutize(), we need to verify here
-            if scheme not in self._supported_schemes:
-                if scheme is None:
-                    raise ValueError('When the URI to resolve is a relative '
-                        'reference, it must be accompanied by a base URI.')
-                else:
-                    raise IriError(IriError.UNSUPPORTED_SCHEME,
-                                       scheme=scheme, resolver=self.__class__.__name__)
+            req, uri = uriRef, uriRef.get_full_url()
 
         if self.authorizations and not self.authorize(uri):
             raise IriError(IriError.DENIED_BY_RULE, uri=uri)
@@ -89,7 +93,7 @@ class resolver:
             # urllib2.urlopen, wrapped by us, will suffice for http, ftp,
             # data and gopher
             try:
-                stream = urlopen(uri)
+                stream = urllib2.urlopen(robj)
             except IOError, e:
                 raise IriError(IriError.RESOURCE_ERROR,
                                    uri=uri, loc=uri, msg=str(e))
