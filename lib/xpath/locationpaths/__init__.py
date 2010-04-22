@@ -64,6 +64,11 @@ class location_path(nodesets.nodeset_expression):
             path = u'/' + path
         return path
 
+    @property
+    def children(self):
+        'Parse tree children of a location path are its steps'
+        return tuple(self._steps)
+
 
 class absolute_location_path(location_path):
     """
