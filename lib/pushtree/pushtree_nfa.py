@@ -647,7 +647,7 @@ class RuleMachineHandler(object):
         self.stack = [0]
 
     def startElementNS(self, node, name, qname, attrs):
-        print "startElementNS", name, qname, attrs
+        #print "startElementNS", name, qname, attrs
         state = self.stack[-1]
         if state == -1:
             self.stack.append(-1)
