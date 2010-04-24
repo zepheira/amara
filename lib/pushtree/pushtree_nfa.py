@@ -160,32 +160,39 @@ def _add_initial_loop(nfa):
     nfa.connect(any_node, any_node, AnyNodeTest()) # loop
 
 def to_nfa(expr, namespaces):
+    #print "Eval", expr.__class__
     if (expr.__class__ is locationpaths.relative_location_path):
         # This is a set of path specifiers like
         #  "a" "a/b", "a/b/c[0]/d[@x]"   (relative location path)
         #  "@a", "a/@b", and even "@a/@b", which gives nothing
-        # It should match with an arbitrary number of nodes as parents.
         nfa = NFA()
         for step in expr._steps:
             nfa.extend(to_nfa(step, namespaces))
-        # The above is rooted. I want an unrooted version
-        # That means allowing any number of nodes as parents.
-        _add_initial_loop(nfa)
-
         return nfa
 
-    if (expr.__class__ is locationpaths.absolute_location_path or
-        expr.__class__ is locationpaths.abbreviated_absolute_location_path):
-        
+    if (expr.__class__ is locationpaths.absolute_location_path):
         # This is an absolute path like
         #   "/a", "/a[0]/b[@x]"
-        # or an abbreviated_absolute_location_path
-        #  "//a" (?? did I do this right? I don't thinks so. XXX)
+        nfa = NFA()
+        for step in expr._steps:
+            axis = step.axis
+            axis_name = axis.name
+            assert axis_name in ("child", "descendant"), axis_name
+            subnfa = to_nfa(step, namespaces)
+            if axis_name == "descendant":
+                _add_initial_loop(subnfa)
+            nfa.extend(subnfa)
+        return nfa
         
+    if (expr.__class__ is locationpaths.abbreviated_absolute_location_path):
+        # This is an abbreviated_absolute_location_path
+        #  "//a", "a//b"
         nfa = NFA()
         for step in expr._steps:
             nfa.extend(to_nfa(step, namespaces))
+        _add_initial_loop(nfa)
         return nfa
+        
 
     if expr.__class__ is locationpaths.location_step:
         # This is a step along some axis, such as:
@@ -219,13 +226,16 @@ def to_nfa(expr, namespaces):
         elif node_test.__class__ is nodetests.processing_instruction_test:
             node_id = nfa.new_node(None,
                                    ProcessingInstructionTest(node_test._target))
+        elif node_test.__class__ is locationpaths.nodetests.principal_type_test:
+            node_id = nfa.new_node(None,
+                                   klass((None, None), None))
         else:
             die(node_test)
 
         nfa.terminal_nodes.add(node_id)
 
-        if axis_name == "descendant":
-            _add_initial_loop(nfa)
+        #if axis_name == "descendant":
+        #    _add_initial_loop(nfa)
             
         #print "QWERQWER"
         #nfa.dump()
@@ -548,7 +558,7 @@ def build_instructions(nfa, dfa, numbering):
                 #print "Access", i, len(node_ops)
                 tree = node_ops[i]
                 if isinstance(tree.if_true, set):
-                    if tree:
+                    if tree.if_true:
                         if_true = -numbering[frozenset(tree.if_true)]
                     else:
                         if_true = 0
@@ -557,7 +567,7 @@ def build_instructions(nfa, dfa, numbering):
                     node_ops.append(tree.if_true)
                     
                 if isinstance(tree.if_false, set):
-                    if tree:
+                    if tree.if_false:
                         if_false = -numbering[frozenset(tree.if_false)]
                     else:
                         if_false = 0
@@ -639,21 +649,39 @@ class ExpressionManager(object):
 # Implemented by beazley.  Note:  This is not a proper SAX handler
 
 class RuleMachineHandler(object):
-    def __init__(self, machine_states, node_handler=None):
+    def __init__(self, machine_states,
+                 start_node_handler = None,
+                 end_node_handler = None,
+                 attr_handler = None,
+                 processing_instruction_handler = None,
+                 comment_handler = None,
+                 ):
         self.machine_states = machine_states
-        self.node_handler = node_handler
+        self.start_node_handler = start_node_handler
+        self.end_node_handler = end_node_handler
+        self.attr_handler = attr_handler
+        self.processing_instruction_handler = processing_instruction_handler
+        self.comment_handler = comment_handler
 
     def startDocument(self,node):
         self.stack = [0]
+        #dump_machine_states(self.machine_states)
 
     def startElementNS(self, node, name, qname, attrs):
-        #print "startElementNS", name, qname, attrs
         state = self.stack[-1]
+        #print "startElementNS", name, qname, attrs, "state", state
         if state == -1:
+            #print "goto -1"
             self.stack.append(-1)
             return
         
         element_ops = self.machine_states[state][1]
+        if not element_ops:
+            # This was a valid target, but there's nothing leading off from it
+            #print "GOTO -1"
+            self.stack.append(-1)
+            return
+        
         namespace, localname = name
         i = 0
         while 1:
@@ -665,44 +693,58 @@ class RuleMachineHandler(object):
             else:
                 i = if_false
             if i == 0:
-                # dead-end ?
-                1/0
+                # dead-end; no longer part of the DFA and the
+                # 0 node is defined to have no attributes
+                self.stack.append(-1)
+                return
             if i < 0:
                 next_state = -i
                 break
             # otherwise, loop
 
+        #print "GoTo", next_state
         self.stack.append(next_state)
 
-        #event_ids = self.machine_states[next_state][0]
-        #if event_ids:
-        #    print "Notify node match:", event_ids, name
+        if self.start_node_handler is not None:
+            event_ids = self.machine_states[next_state][0]
+            if event_ids:
+                #print "Notify node match:", event_ids, name
+                self.start_node_handler(event_ids, node)
 
         # Also handle any attributes
         attr_ops = self.machine_states[next_state][2]
 
+        if self.attr_handler is None:
+            #print "No attr"
+            return
+        
         for namespace, localname in attrs.keys():
             for (ns, ln, attr_state_id) in attr_ops:
+                #print "attr test:", (ns, ln), (namespace, localname)
                 if ((ns is None or namespace == ns) and
                     (ln is None or localname == ln)):
                     # Match!
                     event_ids = self.machine_states[attr_state_id][0]
                     if event_ids:
-                        # print "Notify attribute match:", event_ids, (namespace, localname)
-                        if self.node_handler:
-                            self.node_handler(node)
+                        #print "Notify attribute match:", event_ids, (namespace, localname)
+                        # This is a hack until I can figure out how to get
+                        # the attribute node
+                        self.attr_handler(event_ids, (node, (namespace, localname)))
 
     def endElementNS(self, node, name, qname):
         #print "endElementNS", node, name, qname
         last_state = self.stack.pop()
+        if last_state == -1 or self.end_node_handler is None:
+            return
         event_ids = self.machine_states[last_state][0]
         if event_ids:
-            #print "Notify node match:", event_ids, name
-            if self.node_handler:
-                self.node_handler(node)
+            #print "Notify node match:", last_state, event_ids, name
+            self.end_node_handler(event_ids, node)
         
     def processingInstruction(self, node, target, data):
-        print "PI", node, repr(target), "AND", data
+        #print "PI", node, repr(target), "AND", data
+        if self.processing_instruction_handler is None:
+            return
         state = self.stack[-1]
         if state == -1:
             return
@@ -710,33 +752,21 @@ class RuleMachineHandler(object):
         for (pi_target, pi_state) in pi_ops:
             if pi_target == target:
                 event_ids = self.machine_states[pi_state][0]
-                if event_ids:
-                    #print "Notify PI match:", event_ids, target
-                    if self.node_handler:
-                        self.node_handler(node)
+                #print "Notify PI match:", event_ids, target
+                self.processingInstruction(self.event_ids, node)
 
+# For Dave
 class RulePatternHandler(RuleMachineHandler):
-    def __init__(self, pattern,node_handler=None,namespaces=None):
-        xpm = ExpressionManager(namespaces=namespaces);
+    def __init__(self, pattern, end_node_handler, attr_handler, namespaces=None):
+        self.xpm = xpm = ExpressionManager(namespaces=namespaces);
         xpm.add(pattern)
         nfa, dfa, numbering = xpm.build_dfa_tables()
         machine_states = build_instructions(nfa,dfa,numbering)
-        RuleMachineHandler.__init__(self,machine_states,node_handler)
-                    
-if __name__ == '__main__':
-    #1/0
-    print "========="
-    xpm = ExpressionManager(namespaces = {"q": "http://spam.com/"})
-    xpm.add("/a")
-    xpm.add("/a//q:a")
-    xpm.add("processing-instruction('xml-stylesheet')")
-    #xpm.add("/b//c")
-    xpm.add("c/@d")
-    nfa, dfa, numbering = xpm.build_dfa_tables()
-    dfa_dump(dfa, numbering)
+        RuleMachineHandler.__init__(self, machine_states,
+                                    end_node_handler = end_node_handler,
+                                    attr_handler = attr_handler)
 
-    print "FINAL"
-    machine_states = build_instructions(nfa, dfa, numbering)
+def dump_machine_states(machine_states):
     for i, x in enumerate(machine_states):
         print "== INFO FOR", i, "=="
         event_ids, node_ops, attr_ops, pi_ops, comment_state = x
@@ -751,6 +781,22 @@ if __name__ == '__main__':
         for pi_op in pi_ops:
             print pi_op
         print " COMMENT STATE =", comment_state
+    
+if __name__ == '__main__':
+    #1/0
+    print "========="
+    xpm = ExpressionManager(namespaces = {"q": "http://spam.com/"})
+    xpm.add("/a")
+    xpm.add("/a//q:a")
+    xpm.add("processing-instruction('xml-stylesheet')")
+    #xpm.add("/b//c")
+    xpm.add("c/@d")
+    nfa, dfa, numbering = xpm.build_dfa_tables()
+    dfa_dump(dfa, numbering)
+
+    print "FINAL"
+    machine_states = build_instructions(nfa, dfa, numbering)
+    dump_machine_states(machine_states)
 
     import cStringIO as StringIO
     import amara
