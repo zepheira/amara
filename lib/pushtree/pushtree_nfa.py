@@ -310,6 +310,14 @@ def comment_intersect(parent_test, child_test):
     assert isinstance(child_test, CommentTest), child_test
     return True, False
 
+
+# Used to make a decision tree. Either the test passes or it fails.
+# TODO: something more sophisticated? For example, if there are a
+# large number of element tag tests then sort the tags and start
+# in the middle. Should give O(log(number of tags)) performance
+# instead of O(n). However, for now, n is no more than 10 or so.
+
+
 class Branch(object):
     def __init__(self, test, if_true, if_false):
         self.test = test
