@@ -81,7 +81,7 @@ class NFA(object):
         self.terminal_nodes = set()
         # The start node has no type
         self.match_types = {}  # node_id -> match_type
-        self.event_ids = {}
+        self.labeled_handlers = {} # node_id -> (label, PushtreeHandler)
 
     def copy(self):
         nfa = NFA()
@@ -89,16 +89,17 @@ class NFA(object):
         nfa.edges.update(self.edges)
         nfa.terminal_nodes.update(self.terminal_nodes)
         nfa.match_types.update(self.match_types)
-        nfa.event_ids.update(self.event_ids)
+        nfa.labeled_handlers.update(self.labeled_handlers)
+        return nfa
 
     def get_edges(self, node_id):
         if node_id is None:
             return self.start_edges
         return self.edges[node_id]
 
-    def add_event_id(self, event_id):
+    def add_handler(self, labeled_handler):
         for node_id in self.terminal_nodes:
-            self.event_ids[node_id].append(event_id)
+            self.labeled_handlers[node_id].append(labeled_handler)
 
 
     def new_node(self, from_node_id, test):
@@ -106,7 +107,7 @@ class NFA(object):
         to_node_id = next(counter)
         self.edges[to_node_id] = []
         self.match_types[to_node_id] = test.match_type
-        self.event_ids[to_node_id] = []
+        self.labeled_handlers[to_node_id] = []
         edges.append( (to_node_id, test) )
         return to_node_id
 
@@ -123,7 +124,7 @@ class NFA(object):
             self.edges[node_id].extend(other.start_edges)
         self.terminal_nodes.clear()
         self.terminal_nodes.update(other.terminal_nodes)
-        self.event_ids.update(other.event_ids)
+        self.labeled_handlers.update(other.labeled_handlers)
 
     def union(self, other):
         assert not set(self.edges) & set(other.edges), "non-empty intersection"
@@ -131,19 +132,19 @@ class NFA(object):
         self.edges.update(other.edges)
         self.match_types.update(other.match_types)
         self.terminal_nodes.update(other.terminal_nodes)
-        self.event_ids.update(other.event_ids)
+        self.labeled_handlers.update(other.labeled_handlers)
 
     def dump(self):
         for node_id, edges in [(None, self.start_edges)] + sorted(self.edges.items()):
             if node_id is None:
                 node_name = "(start)"
-                events = ""
+                labels = ""
             else:
                 node_name = str(node_id)
                 action = str(self.match_types[node_id])
-                events += " " + str(self.event_ids[node_id])
+                labels += " " + str([x[0] for x in self.labeled_handlers[node_id]])
             is_terminal = "(terminal)" if (node_id in self.terminal_nodes) else ""
-            print node_name, is_terminal, events
+            print node_name, is_terminal, labels
             self._dump_edges(edges)
         print "======"
 
@@ -168,6 +169,7 @@ def to_nfa(expr, namespaces):
         nfa = NFA()
         for step in expr._steps:
             nfa.extend(to_nfa(step, namespaces))
+        _add_initial_loop(nfa)
         return nfa
 
     if (expr.__class__ is locationpaths.absolute_location_path):
@@ -192,7 +194,6 @@ def to_nfa(expr, namespaces):
             nfa.extend(to_nfa(step, namespaces))
         _add_initial_loop(nfa)
         return nfa
-        
 
     if expr.__class__ is locationpaths.location_step:
         # This is a step along some axis, such as:
@@ -241,14 +242,12 @@ def to_nfa(expr, namespaces):
         #nfa.dump()
         return nfa
 
-
     if expr.__class__ is amara.xpath.expressions.nodesets.union_expr:
         # "a|b"
         nfa = to_nfa(expr._paths[0], namespaces)
         for path in expr._paths[1:]:
             nfa.union(to_nfa(path, namespaces))
         return nfa
-
 
     die(expr)
 
@@ -319,7 +318,8 @@ class Branch(object):
 
 
 class StateTable(object):
-    def __init__(self, nfa, nfa_node_ids):
+    def __init__(self, match_type, nfa, nfa_node_ids):
+        self.match_type = match_type # 'None' for the start node
         self.nfa = nfa
         self.nfa_node_ids = nfa_node_ids
         self.node_tree = Branch(None, set(), set())
@@ -372,26 +372,29 @@ class StateTable(object):
             self._add_to_leaves(tree.if_false, to_node_id)
 
     def get_final_nodes(self):
-        result = set()
-        for tree in (self.node_tree, self.attr_tree, self.pi_tree, self.comment_tree):
+        result = {}
+        for match_type, tree in ( (BaseNodeTest.match_type, self.node_tree),
+                                  (AttributeTest.match_type, self.attr_tree),
+                                  (ProcessingInstructionTest.match_type, self.pi_tree),
+                                  (CommentTest.match_type, self.comment_tree) ):
             visit = [tree]
             while visit:
                 node = visit.pop()
                 if isinstance(node, set):
                     if node:
-                        result.add(frozenset(node))
+                        result[frozenset(node)] = match_type
                 elif node is not None:
                     visit.append(node.if_true)
                     visit.append(node.if_false)
-        return result
+        return result.items()
 
     def dump(self, numbering):
         # Do I report anything for having reached here?
         if list(self.nfa_node_ids) != [None]:
             for nfa_node in self.nfa_node_ids:
-                event_ids = self.nfa.event_ids[nfa_node]
-                if event_ids:
-                    print "Report", self.nfa.match_types[nfa_node], event_ids
+                labels = [x[0] for x in self.nfa.labeled_handlers[nfa_node]]
+                if labels:
+                    print "Report", self.nfa.match_types[nfa_node], labels
         for (name, tree) in ( ("NODE", self.node_tree),
                               ("ATTR", self.attr_tree),
                               ("PROCESSING-INSTRUCTION", self.pi_tree),
@@ -415,30 +418,6 @@ class StateTable(object):
             self._dump(tree.if_true, depth+1, numbering)
             self._dump(tree.if_false, depth+1, numbering)
 
-'''
-    def prune(self, dfa):
-        self.tree = self._prune(dfa, self.tree)
-    def _prune(self, dfa, tree):
-        if tree is None:
-            return tree
-        if isinstance(tree.if_true, Branch):
-            tree.if_true = self._prune(dfa, tree.if_true)
-        if isinstance(tree.if_false, Branch):
-            tree.if_false = self._prune(dfa, tree.if_false)
-            
-        if isinstance(tree.if_true, set):
-            x = frozenset(tree.if_true)
-            if x not in dfa:
-                tree.if_true = set()
-        if isinstance(tree.if_false, set):
-            x = frozenset(tree.if_false)
-            if x not in dfa:
-                tree.if_false = set()
-        if not tree.if_true and not tree.if_false:
-            return set()
-        return tree
-'''
-                
 def all_transitions(nfa, current_dfa):
     transitions = []
     for node_id in current_dfa:
@@ -446,9 +425,9 @@ def all_transitions(nfa, current_dfa):
             new_transitions = nfa.start_edges
         else:
             # XXX I can't transition from something
-            # which wasn't a node
+            # which wasn't a node or a record
             match_type = nfa.match_types[node_id]
-            if match_type != "node":
+            if match_type not in ("node", "record"):
                 continue
             new_transitions = nfa.edges[node_id]
 
@@ -470,31 +449,32 @@ def nfa_to_dfa(nfa):
     dfa_start = frozenset([None]) # nfa start node
     result = {} # []
     seen = set([dfa_start])
-    todo = [dfa_start]
+    todo = [(dfa_start, None)]
     while todo:
-        current_dfa = todo.pop()
+        current_dfa, match_type = todo.pop()
         #print "All transitions from", current_dfa
         transitions = all_transitions(nfa, current_dfa)
-        #print transitions
         if not transitions:
             # Make sure there's always a target.
-            # This also stores any reporting events.
-            result[current_dfa] = StateTable(nfa, current_dfa)
+            # This also stores any handler events
+            result[current_dfa] = StateTable(match_type, nfa, current_dfa)
             numbering[current_dfa] = len(numbering)
             continue
 
         # This adds element, attribute, comment, etc. transitions
-        state_table = StateTable(nfa, current_dfa)
+        state_table = StateTable(match_type, nfa, current_dfa)
         for to_node_id, test in transitions:
             state_table.add(test, to_node_id)
 
-        for nfa_nodes in state_table.get_final_nodes():
+        for nfa_nodes, match_type in state_table.get_final_nodes():
             some_dfa = frozenset(nfa_nodes)
             if some_dfa not in seen:
                 seen.add(some_dfa)
-                todo.append(some_dfa)
+                todo.append( (some_dfa, match_type) )
         result[current_dfa] = state_table
         numbering[current_dfa] = len(numbering)
+
+    
 
 #    for k, table in sorted(result.items(), key=lambda x:sorted(x[0])):
 #        print "State", sorted(k)
@@ -502,15 +482,6 @@ def nfa_to_dfa(nfa):
 
     return result, numbering
 
-def dfa_dump(dfa, numbering):
-    if not dfa:
-        print "EMPTY DFA"
-        return
-    
-    for id, k, table in sorted((numbering[k], k, v) for (k,v) in dfa.items()):
-        print "State", id, k
-        table.dump(numbering)
-        
 def die(expr):
     import inspect
     print "  == FAILURE =="
@@ -523,7 +494,7 @@ def die(expr):
     raise AssertionError(expr)
 
 
-def build_instructions(nfa, dfa, numbering):
+def build_states(nfa, dfa, numbering):
     # unique node numbers
     states = []
     for dfa_id, node_ids in sorted( (dfa_id, node_ids)
@@ -531,16 +502,23 @@ def build_instructions(nfa, dfa, numbering):
         assert dfa_id == len(states)
         if dfa_id == 0:
             assert node_ids == set([None])
+            
 
-        # event identifiers
+        # handlers (which are in (id, class) pairs)
         table = dfa[node_ids]
         if dfa_id == 0:
-            event_identifiers = ()
+            handlers = ()
         else:
-            event_ids = set()
+            handler_map = {}
             for node_id in node_ids:
-                event_ids.update(nfa.event_ids[node_id])
-            event_identifiers = tuple(sorted(event_ids))
+                for (label, handler) in nfa.labeled_handlers[node_id]:
+                    handler_map[label] = handler
+            # This are PushtreeHandler instances. I could find the
+            # actual instances I need except the startElement and
+            # endElement use different method.
+            handlers = []
+            for (label, handler) in sorted(handler_map.items()):
+                handlers.append(handler)
 
         # node tree
         tree = table.node_tree.if_true
@@ -616,7 +594,8 @@ def build_instructions(nfa, dfa, numbering):
         else:
             comment_state = 0
         
-        states.append( (event_identifiers, node_ops, attr_ops, pi_ops, comment_state) )
+        states.append( (handlers, node_ops, attr_ops, pi_ops, comment_state) )
+
 
     return tuple(states)
 
@@ -626,42 +605,41 @@ class Expression(object):
         self.xpath = xpath
         self._nfa = nfa
 
-class ExpressionManager(object):
-    def __init__(self, namespaces = None):
+
+def nfas_to_machine_states(nfas):
+    union_nfa = nfas[0].copy() # XXX start with empty and union everything?
+    for nfa in nfas[1:]:
+        union_nfa.union(nfa)
+    dfa, numbering = nfa_to_dfa(union_nfa)
+    return build_states(union_nfa, dfa, numbering)
+        
+
+class PushtreeManager(object):
+    def __init__(self, subtree_xpath, subtree_handler = None, namespaces = None):
         if namespaces is None:
             namespaces = {}
-        self._expressions = []
         self.namespaces = namespaces
-    def add(self, xpath, context=None): # XXX context
+        self.expressions = []
+        self._add(subtree_xpath, subtree_handler)
+    def _add(self, xpath, xpath_handler):
         nfa = to_nfa(xpath_parser.parse(xpath), self.namespaces)
-        i = len(self._expressions)
-        nfa.add_event_id(i)
-        self._expressions.append(Expression(i, xpath, nfa))
+        i = len(self.expressions)
+        nfa.add_handler((i, xpath_handler))
+        exp = Expression(i, xpath, nfa)
+        self.expressions.append(exp)
+        return exp
+    def add(self, xpath, xpath_handler=None):
+        return self._add(xpath, xpath_handler)
 
-    def build_dfa_tables(self):
-        nfa = self._expressions[0]._nfa
-        for expr in self._expressions[1:]:
-            nfa.union(expr._nfa)
-        dfa, numbering = nfa_to_dfa(nfa)
-        return nfa, dfa, numbering
-
+    def build_machine_states(self):
+        return nfas_to_machine_states([x._nfa for x in self.expressions])
+    
 # Special handler object to bridge with pushbind support in the builder
 # Implemented by beazley.  Note:  This is not a proper SAX handler
 
 class RuleMachineHandler(object):
-    def __init__(self, machine_states,
-                 start_node_handler = None,
-                 end_node_handler = None,
-                 attr_handler = None,
-                 processing_instruction_handler = None,
-                 comment_handler = None,
-                 ):
+    def __init__(self, machine_states):
         self.machine_states = machine_states
-        self.start_node_handler = start_node_handler
-        self.end_node_handler = end_node_handler
-        self.attr_handler = attr_handler
-        self.processing_instruction_handler = processing_instruction_handler
-        self.comment_handler = comment_handler
 
     def startDocument(self,node):
         self.stack = [0]
@@ -705,55 +683,47 @@ class RuleMachineHandler(object):
         #print "GoTo", next_state
         self.stack.append(next_state)
 
-        if self.start_node_handler is not None:
-            event_ids = self.machine_states[next_state][0]
-            if event_ids:
-                #print "Notify node match:", event_ids, name
-                self.start_node_handler(event_ids, node)
+        handlers = self.machine_states[next_state][0]
+        for handler in handlers:
+            handler.startElementMatch(node)
 
         # Also handle any attributes
         attr_ops = self.machine_states[next_state][2]
-
-        if self.attr_handler is None:
-            #print "No attr"
+        if not attr_ops:
             return
-        
+
         for namespace, localname in attrs.keys():
             for (ns, ln, attr_state_id) in attr_ops:
                 #print "attr test:", (ns, ln), (namespace, localname)
                 if ((ns is None or namespace == ns) and
                     (ln is None or localname == ln)):
                     # Match!
-                    event_ids = self.machine_states[attr_state_id][0]
-                    if event_ids:
+                    handlers = self.machine_states[attr_state_id][0]
+                    for handler in handlers:
                         #print "Notify attribute match:", event_ids, (namespace, localname)
                         # This is a hack until I can figure out how to get
                         # the attribute node
-                        self.attr_handler(event_ids, (node, (namespace, localname)))
+                        handler.attributeMatch( (node, (namespace, localname) ) )
 
     def endElementNS(self, node, name, qname):
         #print "endElementNS", node, name, qname
         last_state = self.stack.pop()
-        if last_state == -1 or self.end_node_handler is None:
+        if last_state == -1:
             return
-        event_ids = self.machine_states[last_state][0]
-        if event_ids:
-            #print "Notify node match:", last_state, event_ids, name
-            self.end_node_handler(event_ids, node)
+        handlers = self.machine_states[last_state][0]
+        for handler in reversed(handlers):
+            handler.endElementMatch(node)
         
     def processingInstruction(self, node, target, data):
-        #print "PI", node, repr(target), "AND", data
-        if self.processing_instruction_handler is None:
-            return
         state = self.stack[-1]
         if state == -1:
             return
         pi_ops = self.machine_states[state][3]
         for (pi_target, pi_state) in pi_ops:
             if pi_target == target:
-                event_ids = self.machine_states[pi_state][0]
-                #print "Notify PI match:", event_ids, target
-                self.processingInstruction(self.event_ids, node)
+                handlers = self.machine_states[pi_state][0]
+                for handler in handlers:
+                    handler.processingInstruction(node)
 
 # For Dave
 class RulePatternHandler(RuleMachineHandler):
@@ -769,8 +739,8 @@ class RulePatternHandler(RuleMachineHandler):
 def dump_machine_states(machine_states):
     for i, x in enumerate(machine_states):
         print "== INFO FOR", i, "=="
-        event_ids, node_ops, attr_ops, pi_ops, comment_state = x
-        print " EVENTS", event_ids
+        handlers, node_ops, attr_ops, pi_ops, comment_state = x
+        print " HANDLERS", handlers
         print " NODE OPS"
         for node_op in node_ops:
             print node_op
@@ -781,41 +751,72 @@ def dump_machine_states(machine_states):
         for pi_op in pi_ops:
             print pi_op
         print " COMMENT STATE =", comment_state
+
+class PushtreeHandler(object):
+    def startSubtree(self, element):
+        pass
+    def endSubtree(self, element):
+        pass
+    def startElementMatch(self, node):
+        pass
+    def endElementMatch(self, node):
+        pass
+    def attributeMatch(self, node):
+        pass
+    def commentMatch(self, node):
+        pass
+    def processingInstructionMatch(self, node):
+        pass
+
+class VerbosePushtreeHandler(PushtreeHandler):
+    def __init__(self, prefix=None):
+        if prefix is None:
+            prefix = ""
+        else:
+            prefix = "(%s) " % (prefix,)
+        self.prefix = prefix
+    def startSubtree(self, element):
+        print self.prefix+"startSubtree", element
+    def endSubtree(self, element):
+        print self.prefix+"endSubtree", element
+    def startElementMatch(self, node):
+        print self.prefix+"startElementMatch", node
+        
+    def endElementMatch(self, node):
+        print self.prefix+"endElementMatch", node
+    def attributeMatch(self, node):
+        print self.prefix+"attributeMatch", node
+    def commentMatch(self, node):
+        print self.prefix+"commentMatch", node
+    def processingInstructionMatch(self, node):
+        print self.prefix+"processingInstructionMatch", node
+    
     
 if __name__ == '__main__':
-    #1/0
-    print "========="
-    xpm = ExpressionManager(namespaces = {"q": "http://spam.com/"})
-    xpm.add("/a")
-    xpm.add("/a//q:a")
-    xpm.add("processing-instruction('xml-stylesheet')")
-    #xpm.add("/b//c")
-    xpm.add("c/@d")
-    nfa, dfa, numbering = xpm.build_dfa_tables()
-    dfa_dump(dfa, numbering)
+    testxml = """\
+<body>
+<li>Ignore me<b/></li>
+<ul>
+ <li x='1'>This <i>is</i> test</li>
+ <li x='2'><a href='spam'>that</a> was nothing</li>
+ </ul>
+ </body>
+    """
+    manager = PushtreeManager("body/ul/li", VerbosePushtreeHandler("main"))
+    manager.expressions[0]._nfa.dump()
+    manager.add("pre/post", VerbosePushtreeHandler("pre/post"))
+    manager.expressions[1]._nfa.dump()
+    manager.add("//a",  VerbosePushtreeHandler("//a"))
+    manager.expressions[2]._nfa.dump()
+    manager.add("@x",  VerbosePushtreeHandler("@x"))
+    manager.expressions[2]._nfa.dump()
+    #manager.add(".//*")
 
-    print "FINAL"
-    machine_states = build_instructions(nfa, dfa, numbering)
+    machine_states = manager.build_machine_states()
     dump_machine_states(machine_states)
-
-    import cStringIO as StringIO
-    import amara
-
-    def print_node(n):
-        print n
-    
-    hand = RuleMachineHandler(machine_states,print_node)
-    hand = RulePatternHandler("//a",print_node)
-    testdoc = StringIO.StringIO("""\
-    <a xmlns:x='http://spam.com/'>
-    <?xml-stylesheet href='mystyle.css' type='text/css'?>
-    <blah>
-    <x:a b='2'></x:a>
-    </blah>
-    <c d='3'/>
-    </a>
-    """)
-
-    doc = amara.parse(testdoc,rule_handler=hand)
+    hand = RuleMachineHandler(machine_states)
+    import os
+    doc = amara.parse(testxml,rule_handler=hand)
+    os._exit(0)
     
 

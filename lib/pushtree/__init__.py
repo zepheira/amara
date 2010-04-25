@@ -2,7 +2,7 @@
 #
 # Pushtree interface
 
-from pushtree_nfa import RulePatternHandler
+from pushtree_nfa import PushtreeManager, RuleMachineHandler
 from amara.tree import parse
 
 # ------------------------------------------------------------
@@ -11,18 +11,17 @@ from amara.tree import parse
 # ------------------------------------------------------------
 
 def pushtree(obj, pattern, target, uri=None, entity_factory=None, standalone=False, validate=False, namespaces=None):
-
     # Adapter for what Dave uses. FIXME?!
-    # The target is only called on endElement. There are other
-    # handlers for more complex rules, which isn't yet supported.
-    def node_handler(event_ids, node):
-        target(node)
-    def attr_handler(event_ids, pair):
-        target(pair[0]) # the node
+    class Handler(object):
+        def endElementMatch(self, node):
+            target(node)
+        def attributeMatch(self, pair):
+            target(pair[0])
     
     # Create a rule handler object
-    rhand = RulePatternHandler(pattern, node_handler, attr_handler,
-                               namespaces = namespaces)
+    mgr = PushtreeManager(pattern, Handler(),
+                          namespaces = namespaces)
+    rhand = RuleMachineHandler(mgr.build_machine_states())
 
     # Run the parser on the rule handler
     return parse(obj,uri,entity_factory,standalone,validate,rule_handler=rhand)

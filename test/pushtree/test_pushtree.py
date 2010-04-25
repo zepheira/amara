@@ -14,6 +14,8 @@ testdoc = """\
     """
 
 class TestPushTree(unittest.TestCase):
+    def __init__(self):
+        pass
     def setUp(self):
         self.results = []
         self.infile = StringIO(testdoc)
@@ -99,7 +101,9 @@ class TestXPathMatcher(unittest.TestCase):
         self.compare_matches("c")
         
 if __name__ == '__main__':
-    unittest.main()
-
-    
-
+    x = TestPushTree()
+    x.setUp()
+    x.testattribute()
+    x.tearDown()
+    del x
+    #unittest.main()
