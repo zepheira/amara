@@ -26,6 +26,7 @@ extern "C" {
 #define Container_GET_COUNT(op)    (((ContainerObject *)(op))->count)
 #define Container_GET_NODES(op)    (((ContainerObject *)(op))->nodes)
 #define Container_GET_CHILD(op, i) (((ContainerObject *)(op))->nodes[i])
+#define Container_GET_FROZEN(op)   (((ContainerObject *)(op))->frozen)
 
 #ifdef Domlette_BUILDING_MODULE
 
