@@ -14,8 +14,6 @@ testdoc = """\
     """
 
 class TestPushTree(unittest.TestCase):
-    def __init__(self):
-        pass
     def setUp(self):
         self.results = []
         self.infile = StringIO(testdoc)
@@ -24,13 +22,13 @@ class TestPushTree(unittest.TestCase):
     # Callback function trigged on pattern match
     def callback(self,node):
         self.results.append(node)
-#        print node
+        #print node
 
     def testsimpleelement(self):
         pushtree(self.infile,"a",self.callback)
-        self.assertEquals(len(self.results),1)
+        self.assertEquals(len(self.results), 2)
         expected_names = [
-            #(u'http://spam.com/',u'a'), # XXX this should not be expected?
+            (u'http://spam.com/',u'a'), # XXX this should not be expected?
             (None, u'a')
         ]
         for node,ename in zip(self.results,expected_names):
@@ -88,22 +86,19 @@ class TestXPathMatcher(unittest.TestCase):
     def callback(self,node):
         self.results.append(node.xml_attributes["x"])
 
+
     def compare_matches(self, xpath):
         del self.results[:]
-        select_ids = [node.xml_attributes["x"] for node in TREEDOC.xml_select(xpath)]
+        select_ids = set(node.xml_attributes["x"]
+                                for node in TREEDOC.xml_select("//"+xpath))
         pushtree(TREE1, xpath, self.callback)
-        push_ids = self.results
+        push_ids = set(self.results)
         self.assertEquals(select_ids, push_ids)
-
+        
     def test_relative_single(self):
         self.compare_matches("a")
         self.compare_matches("b")
         self.compare_matches("c")
         
 if __name__ == '__main__':
-    x = TestPushTree()
-    x.setUp()
-    x.testattribute()
-    x.tearDown()
-    del x
-    #unittest.main()
+    unittest.main()

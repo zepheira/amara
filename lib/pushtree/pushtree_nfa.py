@@ -631,8 +631,10 @@ class PushtreeManager(object):
     def add(self, xpath, xpath_handler=None):
         return self._add(xpath, xpath_handler)
 
-    def build_machine_states(self):
+    def _build_machine_states(self):
         return nfas_to_machine_states([x._nfa for x in self.expressions])
+    def build_pushtree_handler(self):
+        return RuleMachineHandler(self._build_machine_states())
     
 # Special handler object to bridge with pushbind support in the builder
 # Implemented by beazley.  Note:  This is not a proper SAX handler
@@ -809,10 +811,12 @@ if __name__ == '__main__':
     manager.add("//a",  VerbosePushtreeHandler("//a"))
     manager.expressions[2]._nfa.dump()
     manager.add("@x",  VerbosePushtreeHandler("@x"))
-    manager.expressions[2]._nfa.dump()
+    manager.expressions[3]._nfa.dump()
+    manager.add("a",  VerbosePushtreeHandler("a"))
+    manager.expressions[4]._nfa.dump()
     #manager.add(".//*")
 
-    machine_states = manager.build_machine_states()
+    machine_states = manager._build_machine_states()
     dump_machine_states(machine_states)
     hand = RuleMachineHandler(machine_states)
     import os
