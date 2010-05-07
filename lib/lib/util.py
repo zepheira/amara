@@ -192,6 +192,17 @@ def coroutine(func):
         return coro
     return start
 
+
+def strip_namespaces(node, strip_decls=False):
+    #from amara.lib.util import element_subtree_iter
+    for e in element_subtree_iter(node):
+        e.xml_namespace = None
+        if strip_decls and e.xml_namespaces:
+            for prefix in e.xml_namespaces:
+                del e.xml_namespaces[prefix]
+    return
+
+
 #Loosely based on methods in unittest.py
 
 def assert_(test, obj, msg=None):
