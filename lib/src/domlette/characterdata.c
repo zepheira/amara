@@ -144,6 +144,15 @@ static PyObject *characterdata_repr(CharacterDataObject *self)
   return obj;
 }
 
+static PyObject *characterdata_str(PyObject *self)
+{
+  PyObject *value;
+
+  value = CharacterData_GET_VALUE(self);
+  Py_INCREF(value);
+  return value;
+}
+
 static PyObject *characterdata_new(PyTypeObject *type, PyObject *args,
                                    PyObject *kwds)
 {
@@ -196,7 +205,7 @@ PyTypeObject DomletteCharacterData_Type = {
   /* tp_as_mapping     */ (PyMappingMethods *) 0,
   /* tp_hash           */ (hashfunc) 0,
   /* tp_call           */ (ternaryfunc) 0,
-  /* tp_str            */ (reprfunc) 0,
+  /* tp_str            */ (reprfunc) characterdata_str,
   /* tp_getattro       */ (getattrofunc) 0,
   /* tp_setattro       */ (setattrofunc) 0,
   /* tp_as_buffer      */ (PyBufferProcs *) 0,

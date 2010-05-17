@@ -41,6 +41,7 @@ def U(s, encoding='utf-8', noneok=False):
     >>> U(None)
     u''
     """
+    from amara import tree
     from amara.xpath import datatypes
     #xpath.datatypes.string is a subclass of Unicode object, so it won't fall through
     #the test below into the XPath section proper
@@ -49,6 +50,8 @@ def U(s, encoding='utf-8', noneok=False):
     if isinstance(s, unicode): return s
     #If it's a string, decode it to yield Unicode
     if isinstance(s, str): return s.decode(encoding)
+    #If it's an Amara text node, return its value
+    if isinstance(s, tree.text): return s.xml_value
     #If it's an XPath data type object, apply the equivalent of the XPath string() function
     if isinstance(s, datatypes.xpathobject): return unicode(datatypes.string(s))
     #Specialize datetime object treatment, because the default unicode coercion doesn't go to W3C ISO flavor
