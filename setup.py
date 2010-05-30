@@ -295,6 +295,8 @@ setup(name='Amara',
                 'amara.xslt.tree',
                 'amara.xslt.xpatterns',
                 'amara.xupdate',
+                'amara.thirdparty',
+                'amara.thirdparty.httplib2',
                 # Test support; would be possible to break out into separate
                 # package at some point.
                 'amara.test',

@@ -233,13 +233,45 @@ class feed(bindery.nodes.entity_base):
         '''
         feedxml - an input source with an RSS 2.0 document
         '''
+        #WARNING: Quite broken!  Probably need feedparser to e.g. deal with crap rss 2 dates
         source = bindery.parse(feedxml)#, model=FEED_MODEL)
-        title = html.markup_fragment(str(source.rss.channel.title)).body.xml_encode()
-        updated = unicode(source.rss.channel.pubDate)
+        title = html.markup_fragment(inputsource.text(str(source.rss.channel.title))).xml_encode()
+        #FIXME: bindery modeling FTW!
+        try:
+            updated = unicode(source.rss.channel.pubDate)
+        except AttributeError:
+            updated = None
         link = unicode(source.rss.channel.link)
+        try:
+            summary = html.markup_fragment(inputsource.text(str(source.rss.channel.description))).xml_encode()
+        except AttributeError:
+            summary = None
         f = feed(title=title, updated=updated, id=link)
-        #FIXME: Add description
-        return
+        for item in source.rss.channel.item:
+            title = html.markup_fragment(inputsource.text(str(item.title))).xml_encode()
+            try:
+                summary = html.markup_fragment(inputsource.text(str(item.description))).xml_encode()
+            except AttributeError:
+                summary = None
+            #author is dc:creator?
+            #category is category/@domain?
+            #try:
+            #    authors = [ (u'%s, %s, %s'%(U(metadata[a][u'LastName']), U(metadata[a].get(u'FirstName', [u''])[0]), U(metadata[a][u'Initials'])), None, None) for a in resource.get(u'Author', []) ]
+            #except:
+            #    authors = []
+            links = [
+                #FIXME: self?
+                (U(item.link), u'alternate'),
+            ]
+            f.append(
+                U(item.link),
+                title,
+                updated = unicode(item.pubDate),
+                summary=summary,
+                #authors=authors,
+                links=links,
+            )
+        return f
 
     def append(self, id_, title, updated=None, summary=None, content=None, authors=None, categories=None, links=None, elements=None):
         '''

@@ -73,6 +73,22 @@ def DISABLEDtest_coroutine_with_nsdecls2():
     treecompare.check_xml(result, XMLDECL+EXPECTED)
     return
 
+#
+def test_coroutine_two_ply1():
+    from nose.plugins.skip import SkipTest
+    raise SkipTest('Known failure.  Incompletely developed test')
+    EXPECTED = """<a><b attr1="val1"><c>1<d><e>2</e><e>3</e></d></c></b></a>"""
+    output = structencoder()
+    f = output.cofeed(ROOT(E(u'a', E_CURSOR(u'b', {u'attr1': u'val1'}))))
+    f.send(E(u'c', u'1', E_CURSOR(u'd')))
+    f.send(E(u'e', u'2'))
+    f.send(E(u'e', u'3'))
+    f.close()
+    result = output.read()
+    treecompare.check_xml(result, XMLDECL+EXPECTED)
+    return
+
+
 
 if __name__ == '__main__':
     raise SystemExit("use nosetests")

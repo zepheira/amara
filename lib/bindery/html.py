@@ -265,7 +265,7 @@ def markup_fragment(source):
     
     See also: http://wiki.xml3k.org/Amara2/Tagsoup
     '''
-    doc = html.parse(source)
+    doc = parse(source)
     frag = doc.html.body
     return frag
 
