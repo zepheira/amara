@@ -1,7 +1,17 @@
-import unittest
 import amara
 from amara.pushtree import pushtree
+from amara.lib import treecompare
 from cStringIO import StringIO
+
+XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
+
+def test_1():
+    EXPECTED = """<a x="2"/>"""
+    doc = bindery.parse('<a x="1"/>')
+    doc.a.x = unicode(int(doc.a.x)+1)
+    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    return
+
 
 testdoc = """\
     <a xmlns:x='http://spam.com/'>
@@ -12,6 +22,8 @@ testdoc = """\
     <c d='3'/>
     </a>
     """
+
+import unittest
 
 class TestPushTree(unittest.TestCase):
     def setUp(self):

@@ -403,6 +403,10 @@ class feed(bindery.nodes.entity_base):
             )
 
         def text_construct(self, node):
+            #FIXME: why is this a generator, anyway?
+            if not node:
+                yield u''
+                return
             #FIXME: Need to fix a nasty bug in models before using node.type
             type_ = node.xml_avt(u"{@type}")
             #FIXME: will be None, not u'' when said bug is fixed
