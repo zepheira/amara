@@ -297,6 +297,8 @@ setup(name='Amara',
                 'amara.xupdate',
                 'amara.thirdparty',
                 'amara.thirdparty.httplib2',
+                'amara.thirdparty.html5lib',
+                'amara.thirdparty.html5lib.treebuilders',
                 # Test support; would be possible to break out into separate
                 # package at some point.
                 'amara.test',

@@ -2,6 +2,8 @@
 # amara/xpath/compiler/__init__.py
 """
 XPath expression compiler.
+
+Useful background at: http://eli.thegreenplace.net/2009/11/28/python-internals-working-with-python-asts/
 """
 from __future__ import absolute_import
 import new

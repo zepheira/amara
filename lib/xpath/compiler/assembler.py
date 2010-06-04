@@ -1,7 +1,8 @@
-########################################################################
-# amara/xpath/compiler/__init__.py
+# amara.xpath.compiler.assembler
 """
 A flow graph representation for Python bytecode.
+
+Useful background at: http://eli.thegreenplace.net/2009/11/28/python-internals-working-with-python-asts/
 """
 import dis
 import new

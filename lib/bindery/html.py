@@ -13,7 +13,7 @@ import itertools
 from functools import *
 from itertools import *
 
-import html5lib
+from amara.thirdparty import html5lib
 from amara import tree
 from amara.lib import inputsource
 from amara.bindery import nodes

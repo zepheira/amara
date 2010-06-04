@@ -1,0 +1,12 @@
+
+cd /tmp
+hg clone https://html5lib.googlecode.com/hg/ html5lib-HG
+cd $AMARA/lib/thirdparty/html5lib
+cp -r /tmp/html5lib-HG/python/src/html5lib/* .
+rm -rf serializer treewalkers filters
+
+edit __init__.py and remove lines importing serializer & treewalkers, e.g.
+
+from treewalkers import getTreeWalker
+from serializer import serialize
+

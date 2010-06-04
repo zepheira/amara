@@ -5,13 +5,83 @@ from cStringIO import StringIO
 
 XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
+XML1 = '''<doc>
+  <one><a>0</a><a>1</a></one>
+  <two><a>10</a><a>11</a></two>
+</doc>'''
+
+XML2 = '''<doc xmlns="urn:bogus:x">
+  <one><a>0</a><a>1</a></one>
+  <two><a>10</a><a>11</a></two>
+</doc>'''
+
+XML3 = '''<x:doc xmlns:x="urn:bogus:x">
+  <x:one><x:a>0</x:a><x:a>1</x:a></x:one>
+  <x:two><x:a>10</x:a><x:a>11</x:a></x:two>
+</x:doc>'''
+
+XML4 = '''<doc xmlns:x="urn:bogus:x">
+  <one><x:a>0</x:a><x:a>1</x:a></one>
+  <two><a>10</a><a>11</a></two>
+</doc>'''
+
 def test_1():
-    EXPECTED = """<a x="2"/>"""
-    doc = bindery.parse('<a x="1"/>')
-    doc.a.x = unicode(int(doc.a.x)+1)
-    treecompare.check_xml(doc.xml_encode(), XMLDECL+EXPECTED)
+    EXPECTED = ['<a>0</a>', '<a>1</a>', '<a>10</a>', '<a>11</a>']
+    results = []
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(XML1, u"a", callback)
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
     return
 
+#
+def test_2():
+    EXPECTED = ['<a xmlns="urn:bogus:x">0</a>', '<a xmlns="urn:bogus:x">1</a>', '<a xmlns="urn:bogus:x">10</a>', '<a xmlns="urn:bogus:x">11</a>']
+    results = []
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(XML2, u"a", callback, namespaces = {None: "urn:bogus:x"})
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
+
+    return
+
+#
+def test_3():
+    EXPECTED = ['<x:a xmlns:x="urn:bogus:x">0</x:a>', '<x:a xmlns:x="urn:bogus:x">1</x:a>', '<x:a xmlns:x="urn:bogus:x">10</x:a>', '<x:a xmlns:x="urn:bogus:x">11</x:a>']
+    results = []
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(XML3, u"x:a", callback, namespaces = {"x": "urn:bogus:x"})
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
+
+    return
+
+#
+def test_4():
+    EXPECTED = ['<x:a xmlns:x="urn:bogus:x">0</x:a>', '<x:a xmlns:x="urn:bogus:x">1</x:a>']
+    results = []
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(XML4, u"x:a", callback, namespaces = {"x": "urn:bogus:x"})
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
+
+    return
 
 testdoc = """\
     <a xmlns:x='http://spam.com/'>

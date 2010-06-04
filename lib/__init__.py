@@ -389,7 +389,7 @@ def main(argv=None):
     launch(source, pretty=pretty, validate=validate, standalone=standalone)
     return
 
-from amara.thirdparty import httplib2
+#from amara.thirdparty import httplib2
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

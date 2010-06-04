@@ -10,9 +10,7 @@ from uuid import uuid4
 
 from amara.lib import IriError
 from amara._expat import InputSource
-from amara.lib.iri import is_absolute, os_path_to_uri
 from amara.lib.xmlstring import isxml
-from amara.lib.irihelpers import DEFAULT_RESOLVER
 
 __all__ = [
 '_inputsource', 'XMLSTRING', 'XMLURI', 'XMLFILE',
@@ -47,6 +45,10 @@ class _inputsource(InputSource):
         """
         #do the imports within the function to avoid circular crap
         #from amara._xmlstring import IsXml as isxml
+
+        #These importa are tucked in here because amara.lib.iri is an expensive import
+        from amara.lib.iri import is_absolute, os_path_to_uri
+        from amara.lib.irihelpers import DEFAULT_RESOLVER
         resolver = resolver or DEFAULT_RESOLVER
 
         if isinstance(arg, InputSource):
@@ -93,6 +95,7 @@ class _inputsource(InputSource):
 
     def __init__(self, arg, uri=None, encoding=None, resolver=None, sourcetype=0):
         #uri is set 
+        from amara.lib.irihelpers import DEFAULT_RESOLVER
         self.resolver = resolver or DEFAULT_RESOLVER
 
     @staticmethod
