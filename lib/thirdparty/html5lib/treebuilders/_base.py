@@ -1,4 +1,4 @@
-from html5lib.constants import scopingElements, tableInsertModeElements, namespaces
+from amara.thirdparty.html5lib.constants import scopingElements, tableInsertModeElements, namespaces
 try:
     frozenset
 except NameError:

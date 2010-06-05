@@ -10,3 +10,23 @@ edit __init__.py and remove lines importing serializer & treewalkers, e.g.
 from treewalkers import getTreeWalker
 from serializer import serialize
 
+=======
+
+If html5lib gets updated, here's a way to update amara's version:
+
+cd /tmp
+hg clone https://html5lib.googlecode.com/hg/ html5lib-full
+cp -r html5lib-full/python/src/html5lib html5lib4amara
+cp -r html5lib-full/python/src/html5lib html5lib
+cd html5lib
+rm -rf serializer treewalkers filters
+rm treebuilders/dom.py treebuilders/soup.py treebuilders/simpletree.py  treebuilders/etree*.py
+
+cd html5lib4amara
+rm -rf serializer treewalkers filters
+rm treebuilders/dom.py treebuilders/soup.py treebuilders/simpletree.py  treebuilders/etree*.py
+
+Make the needed edits, then
+
+diff -Naur html5lib html5lib4amara > html5lib4amara.diff
+
