@@ -1,5 +1,5 @@
 import _base
-from html5lib.constants import voidElements, namespaces, prefixes
+from amara.thirdparty.html5lib.constants import voidElements, namespaces, prefixes
 from xml.sax.saxutils import escape
 
 # Really crappy basic implementation of a DOM-core like thing
