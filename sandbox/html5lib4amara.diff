@@ -1,6 +1,6 @@
 diff -Naur html5lib/__init__.py html5lib4amara/__init__.py
 --- html5lib/__init__.py	2010-06-05 15:27:42.000000000 -0600
-+++ html5lib4amara/__init__.py	2010-06-05 15:29:28.000000000 -0600
++++ html5lib4amara/__init__.py	2010-06-05 16:06:12.000000000 -0600
 @@ -3,15 +3,7 @@
  specification. The parser is designed to be compatible with existing
  HTML found in the wild and implements well-defined error recovery that
