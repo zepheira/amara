@@ -26,12 +26,18 @@ from amara.lib import inputsource
 def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False, rule_handler=None):
     '''
     Parse an XML input source and return a tree
-    
-    obj - The XML to be parsed, in the form of a string, Unicode object (only if you really
-          know what you're doing), file-like object (stream), file path, URI or
-          amara.inputsource object
-    uri - optional document URI.  You really should provide this if the input source is a
-          text string or stream
+
+    :param obj: object with "text" to parse
+    :type obj: string, Unicode object (only if you really
+        know what you're doing), file-like object (stream), file path, URI or
+        `amara.inputsource` object
+    :param uri: optional document URI.  You really should provide this if the input source is a
+        text string or stream
+    :type uri: string
+    :return: Parsed tree object
+    :rtype: `amara.tree.entity` instance
+    :raises `amara.ReaderError`: If the XML is not well formed, or there are other core parsing errors
+
     entity_factory - optional factory callable for creating entity nodes.  This is the
                      main lever for customizing the classes used to construct tree nodes
     standalone - similar to the standalone declaration for XML.  Asserts that the XML
@@ -41,6 +47,18 @@ def parse(obj, uri=None, entity_factory=None, standalone=False, validate=False, 
                  from XML core.  In XML core that would be a fatal error)
     validate - whether or not to apply DTD validation
     rule_handler - Handler object used to perform rule matching in incremental processing.
+
+    Examples:
+
+    >>> import amara
+    >>> MONTY_XML = """<monty>
+    ...   <python spam="eggs">What do you mean "bleh"</python>
+    ...   <python ministry="abuse">But I was looking for argument</python>
+    ... </monty>"""
+    >>> doc = amara.parse(MONTY_XML)
+    >>> len(doc.xml_children)
+    1
+
     '''
     if standalone:
         flags = PARSE_FLAGS_STANDALONE

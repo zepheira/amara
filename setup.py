@@ -231,20 +231,26 @@ from distutils.command import sdist as cmdmodule
 cmdmodule.sdist = sdist
 
 def hgversionstamp():
+    #Note: check_call is Python 2.6 or later
     #python -c "from subprocess import *; check_call(['hg -q id'], shell=True)"
     import os
-    from subprocess import Popen, check_call, CalledProcessError, PIPE
-    try:
-        #check_call(['hg -q id'], shell=True)
-        p = Popen(['hg -q id'], stdout=PIPE, shell=True)
-        hgid = p.communicate()[0].strip()
-        hgid_file = os.path.join('lib', '__hgid__.py')
-        open(hgid_file, 'w').write('HGID = \'%s\'\n'%hgid)
-        print >> sys.stderr, 'Setup run from a Mercurial repository, so putting the version ID,', hgid, ', in ', hgid_file
-    except CalledProcessError:
-        pass
+    from subprocess import Popen, CalledProcessError, PIPE
+    #raise RuntimeError('Foo Bar') #Just to test handling failure
+    #check_call(['hg -q id'], shell=True)
+    p = Popen(['hg -q id'], stdout=PIPE, shell=True)
+    hgid = p.communicate()[0].strip()
+    hgid_file = os.path.join('lib', '__hgid__.py')
+    open(hgid_file, 'w').write('HGID = \'%s\'\n'%hgid)
+    print >> sys.stderr, 'Setup run from a Mercurial repository, so putting the version ID,', hgid, ', in ', hgid_file
 
-hgversionstamp()
+try:
+    hgversionstamp()
+except (KeyboardInterrupt, SystemExit):
+    raise
+except Exception as e:
+    print >> sys.stderr, 'Error trying to tag with HG revision:', repr(e)
+    pass
+
 
 # -- end of custimzation ----------------------------------------------
 

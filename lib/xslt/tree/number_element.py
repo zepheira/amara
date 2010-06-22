@@ -8,6 +8,7 @@ from amara import tree
 from amara.namespaces import XSL_NAMESPACE
 from amara.xslt import XsltError, numbers
 from amara.xslt.tree import xslt_element, content_model, attribute_types
+from amara.xpath import datatypes
 
 DEFAULT_LANG = 'en'
 DEFAULT_FORMAT = '1'

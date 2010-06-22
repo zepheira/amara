@@ -4,6 +4,10 @@
 Comparison functions for XML and HTML documents
 (mainly used in the test suites)
 """
+
+#See also: http://bitbucket.org/ianb/formencode/src/tip/formencode/doctest_xml_compare.py#cl-70
+#Thought that is written by people who don't really know XML (e.g. see the make_xml function that generates guaranteed broken XML fiven the illegal "xml" GI)
+
 import re
 import difflib
 import itertools
