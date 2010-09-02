@@ -105,7 +105,11 @@ DEFAULT_SKEL = '''<?xml version="1.0" encoding="UTF-8"?>
 '''
 
 
-slug_from_title = lambda t: OMIT_FROM_SLUG_PAT.sub('_', t).lower().decode('utf-8')[:20]
+def slug_from_title(title, maxlen=None):
+    if maxlen:
+        return OMIT_FROM_SLUG_PAT.sub('_', title).lower().decode('utf-8')[:maxlen]
+    else:
+        return OMIT_FROM_SLUG_PAT.sub('_', title).lower().decode('utf-8')
 
 datetime_from_iso = lambda ds: datetime.strptime(ds, "%Y-%m-%dT%H:%M:%SZ")
 
