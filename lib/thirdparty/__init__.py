@@ -4,7 +4,7 @@
 try:
     #XXX Maybe better to explicitly chck for Python 2.6?
     import json
-except ImportError(e):
+except ImportError, e:
 #except ImportError as e: #Python 2.6+ only
     try:
         import simplejson as json
