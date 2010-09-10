@@ -230,38 +230,17 @@ class sdist(cmdclass):
 from distutils.command import sdist as cmdmodule
 cmdmodule.sdist = sdist
 
-def hgversionstamp():
-    #Note: check_call is Python 2.6 or later
-    #python -c "from subprocess import *; check_call(['hg -q id'], shell=True)"
-    import os
-    from subprocess import Popen, CalledProcessError, PIPE
-    #raise RuntimeError('Foo Bar') #Just to test handling failure
-    #check_call(['hg -q id'], shell=True)
-    p = Popen(['hg -q id'], stdout=PIPE, shell=True)
-    hgid = p.communicate()[0].strip()
-    hgid_file = os.path.join('lib', '__hgid__.py')
-    open(hgid_file, 'w').write('HGID = \'%s\'\n'%hgid)
-    print >> sys.stderr, 'Setup run from a Mercurial repository, so putting the version ID,', hgid, ', in ', hgid_file
-
-try:
-    hgversionstamp()
-except (KeyboardInterrupt, SystemExit):
-    raise
-except Exception, e:
-#except Exception as e: #Python 2.6+ only
-    print >> sys.stderr, 'Error trying to tag with HG revision:', repr(e)
-    pass
-
-
-# -- end of custimzation ----------------------------------------------
+# -- end of customization ----------------------------------------------
 
 from distutils.core import setup, Extension
+
+execfile('lib/version.py')
 
 # add'l setup keywords
 kw = {}
 
 setup(name='Amara',
-      version='2.0a5',
+      version=__version__,
       description="Library for XML processing in Python",
       long_description="Library for XML processing in Python, designed to balance the native idioms of Python with the native character of XML.",
       url='http://wiki.xml3k.org/Amara2',
