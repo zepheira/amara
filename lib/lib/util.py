@@ -256,6 +256,45 @@ def assert_not_equal(other, obj, msg=None):
     return obj
 
 
+DEF_BUFFERSIZE = 1000
+
+# read by specified separator, not newlines
+def readbysep(f, sep, buffersize=DEF_BUFFERSIZE):
+    '''
+from amara.lib.util import readbysep
+import cStringIO
+f = cStringIO.StringIO('a\fb\fc')
+[ x for x in readbysep(f, '\f') ]
+['a', 'b', 'c']
+
+#OK next 2 go in test suite, not docstrings
+f = cStringIO.StringIO('a\fb\fc\f')
+[ x for x in readbysep(f, '\f') ]
+['a', 'b', 'c']
+
+f = cStringIO.StringIO('\fa\fb\fc')
+[ x for x in readbysep(f, '\f') ]
+['a', 'b', 'c']
+
+from amara import parse
+from amara.lib.util import readbysep
+import cStringIO
+f = cStringIO.StringIO('<a/>\f<b/>\f<c/>')
+[ parse(x).xml_select(u'name(*)') for x in readbysep(f, '\f') ]
+    '''
+    leftover = ''
+    while 1:
+        next = f.read(buffersize)
+        if not next: #empty string at EOF
+            yield leftover
+            break
+        chunks = (leftover + next).split(sep)
+        leftover = chunks[-1]
+        for chunk in chunks[:-1]: yield chunk
+    return
+
+
+
 #Though I've found this very hard to reproduce simply, the plain string.Template seems susceptible to Unicode error
 
 #Rest of this file is an adaptation from Python 2.6.1 string.py

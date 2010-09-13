@@ -37,8 +37,9 @@ from operator import *
 
 from amara import tree
 from amara.lib.xmlstring import U
+from amara.lib.util import element_subtree_iter
 from amara.xpath import datatypes
-from amara.xpath.util import named_node_test
+from amara.xpath.util import named_node_test, abspath
 from amara.bindery import BinderyError
 from amara.namespaces import AKARA_NAMESPACE
 from amara.xpath import context, parser
