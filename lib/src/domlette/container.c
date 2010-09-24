@@ -301,7 +301,7 @@ int _Container_FastAppend(NodeObject *self, NodeObject *child)
   /* Add the node to the children array and set the parent*/
   children[newsize-1] = child;
   Container_SET_COUNT(self,newsize);
-  Py_INCREF(child);
+  //  Py_INCREF(child);
   Node_SET_PARENT(child,self);
   Py_INCREF(self);
 
@@ -768,7 +768,7 @@ static int container_clear(PyObject *self)
   if (nodes != NULL) {
     Container_SET_COUNT(self, 0);
     while (--i >= 0) {
-      Py_DECREF(nodes[i]);
+      Py_CLEAR(nodes[i]);
     }
     if (Container_GET_FROZEN(self)) {
       Container_SET_NODES(self,NULL);
