@@ -1,0 +1,32 @@
+<?xml version='1.0'?>
+<!DOCTYPE price-list [
+<!ELEMENT price-list ANY>
+<!ELEMENT item ANY>
+<!ATTLIST item id ID #IMPLIED>
+<!ELEMENT description ANY>
+<!ATTLIST description id ID #IMPLIED>
+<!ELEMENT prices ANY>
+<!ATTLIST prices id ID #IMPLIED>
+]>
+<price-list xml:lang="en-us">
+  <item id="w001">
+    <description id="w001-description">
+      <p>Normal Widget</p>
+    </description>
+    <prices id="w001-prices">
+      <price currency="USD" volume="1+">39.95</price>
+      <price currency="USD" volume="10+">34.95</price>
+      <price currency="USD" volume="100+">29.95</price>
+    </prices>
+  </item>
+  <item id="w002">
+    <description id="w002-description">
+      <p>Super-sized widget with bells <i>and</i> whistles.</p>
+    </description>
+    <prices id="w002-prices">
+      <price currency="USD" volume="1+">59.95</price>
+      <price currency="USD" volume="10+">54.95</price>
+      <price currency="USD" volume="100+">49.95</price>
+    </prices>
+  </item>
+</price-list>

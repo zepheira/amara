@@ -1,0 +1,8 @@
+<!ELEMENT prefix:bar EMPTY>
+<!ELEMENT undeclared-prefix:bar EMPTY>
+<!ELEMENT foo (prefix:bar|undeclared-prefix:bar)>
+<!ATTLIST foo
+    xmlns:prefix          CDATA #IMPLIED
+    prefix:bar            CDATA #IMPLIED
+    undeclared-prefix:bar CDATA #IMPLIED
+>

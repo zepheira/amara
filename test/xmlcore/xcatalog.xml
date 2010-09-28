@@ -1,0 +1,14 @@
+<!DOCTYPE catalog
+  PUBLIC "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+         "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+         prefer="public">
+
+  <uri name="urn:bogus:include1.xml" uri="include1.xml"/>
+  <uri name="urn:bogus:include1-from-parent.xml" uri="Core/include1.xml"/>
+  <public publicId="-//BOGUS//Include 1//EN//XML" uri="include1.xml"/>
+  <public publicId="-//LM Garshol//DTD XML Software Autoupdate 1.0//EN//XML"
+          uri="xsa.dtd"/>
+
+</catalog>
+

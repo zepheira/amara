@@ -1,0 +1,13 @@
+<?xml version = "1.0"?>
+<ADDRBOOK xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="include3.xml#xpointer(/ADDRBOOK/ENTRY)"/>
+  <ENTRY ID="en">
+    <NAME>Emeka Ndubuisi</NAME>
+    <EMAIL>endubuisi@spamtron.com</EMAIL>
+  </ENTRY>
+  <ENTRY ID="vz">
+    <NAME>Vasia Zhugenev</NAME>
+    <EMAIL>vxz@gog.ru</EMAIL>
+  </ENTRY>
+</ADDRBOOK>
+

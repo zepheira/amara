@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-16"?>
+<info>
+  <desc>no BOM, XML declaration, UTF-16 encoding declaration</desc>
+  <actual_encoding>UTF-8</actual_encoding>
+  <expected_result>not well-formed: first 2 bytes of XML decl are interpreted as U+3C3F rather than U+003C U+003F</expected_result>
+</info>
