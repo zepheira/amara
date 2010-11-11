@@ -253,7 +253,7 @@ def parse(source, prefixes=None, model=None, encoding=None, use_xhtml_ns=False):
     #return parser.parse(inputsource(source, None).stream, model)
 
 
-def markup_fragment(source):
+def markup_fragment(source, encoding=None):
     '''
     Parse a fragment if markup in HTML mode, and return a bindery node
     
@@ -265,7 +265,7 @@ def markup_fragment(source):
     
     See also: http://wiki.xml3k.org/Amara2/Tagsoup
     '''
-    doc = parse(source)
+    doc = parse(source, encoding=encoding)
     frag = doc.html.body
     return frag
 
