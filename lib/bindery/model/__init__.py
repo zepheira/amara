@@ -270,15 +270,15 @@ def generate_metadata(root):
 #Singleton/sentinel
 MARK = object()
 
-def metadata_dict(metadata):
-    resources = {}
+def metadata_dict(metadata, nesteddict=True):
+    resources = {} if nesteddict else []
     first_id = MARK
     #Use sorted to ensure grouping by resource IDs
     for rid, row in groupby(sorted(metadata, key=itemgetter(0)), itemgetter(0)):
         if first_id == MARK: first_id = rid
         #entry[u'id'] = eid
         resource = {}
-        #It's all crazy lazy, so use list to consume the iterator
+        #It's all crazy lazy, so use list() to consume the iterator
         for (i, key, val) in row:
             if key in resource:
                 if isinstance(resource[key], list):
@@ -287,7 +287,11 @@ def metadata_dict(metadata):
                     resource[key] = [resource[key], val]
             else:
                 resource[key] = val
-        resources[rid] = resource
+        if nesteddict:
+            resources[rid] = resource
+        else:
+            resources.append((rid, resource))
+    #XXX first_id not really useful if nesteddict=False
     return resources, first_id
 
 

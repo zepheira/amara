@@ -474,7 +474,7 @@ class RAW(object):
     >>> from amara.writers.struct import *
     >>> w = structwriter(indent=u"yes").feed(ROOT(
       E((u'urn:x-bogus1', u'n:a'), {(u'urn:x-bogus1', u'n:x'): u'1'},
-        E((u'urn:x-bogus2', u'b'), u'c'), RAW(u'<test />')
+        E((u'urn:x-bogus2', u'b'), u'c'), RAW('<test />')
       )))
     
     '''

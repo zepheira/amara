@@ -1,7 +1,9 @@
+from cStringIO import StringIO
+
 import amara
 from amara.pushtree import pushtree
 from amara.lib import treecompare
-from cStringIO import StringIO
+from amara.test import KnownFailure
 
 XMLDECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
@@ -110,7 +112,7 @@ class TestPushTree(unittest.TestCase):
         pushtree(self.infile,"a",self.callback)
         self.assertEquals(len(self.results), 2)
         expected_names = [
-            (u'http://spam.com/',u'a'), # XXX this should not be expected?
+            (u'http://spam.com/', u'a'), # XXX this should not be expected?
             (None, u'a')
         ]
         for node,ename in zip(self.results,expected_names):
@@ -181,6 +183,49 @@ class TestXPathMatcher(unittest.TestCase):
         self.compare_matches("a")
         self.compare_matches("b")
         self.compare_matches("c")
-        
+
+
+def test_predicate1():
+    EXPECTED = ['''<b x='4'>
+        <d x='5' />
+        <e x='6' />
+        <d x='7' />
+        <b x='8' />
+        <c x='9' />
+      </b>''']
+    results = []
+    raise KnownFailure("No predicates support.  See: http://trac.xml3k.org/ticket/23")
+
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(TREE1, u"b[x='4']", callback)
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
+    return
+
+
+XML5 = '''<doc>
+  <one><a>0</a><a>1</a></one>
+  <two><a>10</a><a>11</a></two>
+  <one>repeat</one>
+</doc>'''
+
+def test_predicate2():
+    EXPECTED = ['<one>repeat</one>']
+    results = []
+
+    def callback(node):
+        results.append(node)
+
+    pushtree(XML5, u"doc/one[2]", callback)
+
+    for result, expected in zip(results, EXPECTED):
+        treecompare.check_xml(result.xml_encode(), XMLDECL+expected)
+    return
+
+
 if __name__ == '__main__':
     unittest.main()
