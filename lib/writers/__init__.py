@@ -140,7 +140,7 @@ def _xml_write(N, writer=XML_W, stream=None, encoding='UTF-8', **kwargs):
         #for example applying exclusive c14n rules
         kwargs = writer.prepare(N, kwargs)
 
-    v = node._Visitor(writer, **kwargs)
+    v = node._Visitor(writer)
     v.visit(N)
 
 def _xml_encode(N, writer=XML_W, encoding='UTF-8', **kwargs):

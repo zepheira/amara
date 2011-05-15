@@ -271,6 +271,10 @@ def generate_metadata(root):
 MARK = object()
 
 def metadata_dict(metadata, nesteddict=True):
+    #FIXME: add a doctest/example
+    """
+    Convert a list of tuples as returned by amara.bindery.model.generate_metadata into a dict of dicts of the metadata (if nesteddict==True) or a list of dicts
+    """
     resources = {} if nesteddict else []
     first_id = MARK
     #Use sorted to ensure grouping by resource IDs
