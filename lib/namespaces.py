@@ -37,6 +37,7 @@ SVG_NAMESPACE = u"http://www.w3.org/2000/svg"; COMMON_NAMESPACES[SVG_NAMESPACE] 
 RDF_NAMESPACE = u"http://www.w3.org/1999/02/22-rdf-syntax-ns#"; COMMON_NAMESPACES[RDF_NAMESPACE] = u'rdf'
 RDFS_NAMESPACE = u"http://www.w3.org/2000/01/rdf-schema#"; COMMON_NAMESPACES[RDFS_NAMESPACE] = u'rdfs'
 DC_NAMESPACE = u"http://purl.org/dc/elements/1.1/"; COMMON_NAMESPACES[DC_NAMESPACE] = u'dc'
+#Note: some people use the old namespace: <http://www.w3.org/2004/02/skos/core#>
 SKOS_NAMESPACE = u"http://www.w3.org/2008/05/skos#"; COMMON_NAMESPACES[SKOS_NAMESPACE] = u'skos'
 OWL_NAMESPACE = u"http://www.w3.org/2002/07/owl#"; COMMON_NAMESPACES[OWL_NAMESPACE] = u'owl'
 
