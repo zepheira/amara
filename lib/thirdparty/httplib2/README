@@ -2,3 +2,21 @@ Copied from http://code.google.com/p/httplib2/source/browse/#hg%2Fpython2%2Fhttp
 
 Please see README.httplib2 for the original README, including the original license
 
+FOR AMARA CORE DEVELOPERS:
+
+If you update this code from upstream, please remember the following patch:
+
+--- lib/thirdparty/httplib2/__init__.py.orig	2011-06-22 13:27:48.000000000 -0600
++++ lib/thirdparty/httplib2/__init__.py	2011-06-22 13:28:01.000000000 -0600
+@@ -54,10 +54,6 @@
+ from gettext import gettext as _
+ import socket
+ 
+-try:
+-    from httplib2 import socks
+-except ImportError:
+-    socks = None
+ 
+ # Build the appropriate socket wrapper for ssl
+ try:
+
