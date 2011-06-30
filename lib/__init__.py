@@ -3,7 +3,8 @@
 
 from amara.namespaces import XML_NAMESPACE, XMLNS_NAMESPACE
 
-from version import __version__
+from version import version_info
+__version__ = '.'.join(version_info)
 
 #FIXME: Proper i18n soon
 def _(text): return text

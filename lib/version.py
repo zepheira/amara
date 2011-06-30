@@ -1,1 +1,1 @@
-__version__ = '2.0a5'
+version_info = ('2', '0', '0a5')

@@ -235,6 +235,7 @@ cmdmodule.sdist = sdist
 from distutils.core import setup, Extension
 
 execfile('lib/version.py')
+__version__ = '.'.join(version_info)
 
 # add'l setup keywords
 kw = {}
