@@ -10,18 +10,19 @@ import warnings
 try:
     genv = {}
     execfile('lib/version.py', genv)
-    preversion = genv['version_info']
+    PREVERSION = genv['version_info']
 except IOError:
     warnings.warn('The lib/version.py file appears to be missing or inaccessible. Please be sure you are running from the Amara source root')
-    preversion = None
+    PREVERSION = None
 except KeyError:
-    preversion = None
-#preversion = genv['__version__']
+    PREVERSION = None
+#PREVERSION = genv['__version__']
 
 #Can't use Advanced formatting because that's Python 2.6+ http://www.python.org/dev/peps/pep-3101/
 #VERSION_TEMPLATE = "__version__ = '{0},{1},{2}'"
 VERSION_TEMPLATE = "version_info = ('%s', '%s', '%s')\n"
 GIT_DESCRIBE = 'git describe --match "v[0-9]*" HEAD'
+
 
 def tuple_from_git_tag():
     import os
@@ -35,11 +36,24 @@ def tuple_from_git_tag():
 def set_git_version(baseversiontuple=None):
     if not baseversiontuple:
         baseversiontuple = tuple_from_git_tag()
-    vfile = open('lib/version.py', 'w')
-    vfile.write(VERSION_TEMPLATE%baseversiontuple)
+    if PREVERSION != baseversiontuple:
+        vfile = open('lib/version.py', 'w')
+        vfile.write(VERSION_TEMPLATE%baseversiontuple)
+        if not QUIET_FLAG: print >> sys.stderr, 'Version number changed to', '.'.join(baseversiontuple)
+        if not QUIET_FLAG: print >> sys.stderr, 'Please commit and move the corresponding version VCS tag if necessary'
     return
 
-set_git_version()
+
+cmdargs = sys.argv[1:]
+QUIET_FLAG = False
+if '-q' in cmdargs:
+    QUIET_FLAG = True
+    cmdargs.remove('-q')
+
+if not QUIET_FLAG: print >> sys.stderr, 'Previous version number', '.'.join(PREVERSION)
+
+version = tuple(cmdargs[0].split('.')) if len(cmdargs) > 0 else None
+set_git_version(version)
 
 #General, useful info:
 NOTES = '''
