@@ -1,5 +1,10 @@
 include MANIFEST CHANGES LICENSE NOTICE
 
+include setversion.py setversionwrapper.sh doc/manual.rst lib/src/domlette/README
+
+graft lib/thirdparty/html5lib
+graft lib/thirdparty/httplib2
+
 # Add BisonGen source files for XPath
 include lib/xpath/parser/xpath.bgen
 include lib/xpath/parser/xpath_grammar.bgen.frag
@@ -20,3 +25,5 @@ graft sandbox
 # Include Expat licensing requirements
 include lib/src/expat/COPYING
 include lib/src/expat/README
+
+exclude dist/* build/*
