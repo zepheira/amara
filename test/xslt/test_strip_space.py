@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+'''
+These new tests complete the test_basics.py tests
+
+I want to test the xsl:strip-space command that is failing now with Amara
+
+The expected results are the ones I'm getting with saxon.
+'''
+
 import sys
 from nose import with_setup
 
@@ -47,6 +55,9 @@ def setup_blank_text():
 
 @with_setup(setup_blank_text)
 def test_blank_text():
+    '''
+    testing blank text nodes, most by indentations and so.
+    '''
     xslt_proc.append_transform(trans)
     res = xslt_proc.run(source)
     #print >> sys.stderr, res
@@ -87,6 +98,9 @@ Chars: <xsl:value-of select="string-length(text())"/>
 
 @with_setup(setup_blank_node)
 def test_blank_node():
+    '''
+    Testing elment nodes that only have spaces.
+    '''
     xslt_proc.append_transform(trans)
     res = xslt_proc.run(source)
     #print >> sys.stderr, res
