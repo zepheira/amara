@@ -301,6 +301,7 @@ setup(name='Amara',
         'amara.tools.creoletools',
         ],
       package_dir={'amara':'lib', 'amara.test': 'test', 'amara.tools': 'demo'},
+      package_data={'amara.thirdparty.httplib2':['*.txt']},
       ext_modules=[
           Extension('amara._xmlstring',
                     sources=['lib/src/xmlstring.c'],
