@@ -22,7 +22,7 @@ from amara import tree
 from amara.lib.xmlstring import U
 from amara.bindery import BinderyError
 from amara.bindery.model import document_model, constraint, child_element_constraint, named_node_test, NODE_ID_MARKER
-from amara.xpath import datatypes
+from amara.xpath import datatypes, expressions
 from amara.xpath.util import top_namespaces, named_node_test, node_test
 from amara.xpath import context, parser
 
@@ -111,7 +111,7 @@ class examplotron_model(document_model):
                     mod.metadata_rel_expr = parser.parse(u'local-name()')
 
             if mod.metadata_resource_expr not in (NODE_ID_MARKER, None):
-                mod.metadata_resource_expr = parser.parse(mod.metadata_resource_expr)
+                if not isinstance(mod.metadata_resource_expr, expressions.expression): mod.metadata_resource_expr = parser.parse(mod.metadata_resource_expr)
             #if mod.metadata_rel_expr is not None:
             #    mod.metadata_rel_expr = parser.parse(mod.metadata_rel_expr)
             #if mod.metadata_value_expr is not None:

@@ -232,7 +232,9 @@ class treebuilder(html5lib.treebuilders._base.TreeBuilder):
 
 def parse(source, prefixes=None, model=None, encoding=None, use_xhtml_ns=False):
     '''
-    
+    Parse an input source with HTML text into an Amara Bindery tree
+
+    Warning: if you pass a string, you must make sure it's a byte string, not a Unicode object.  You might also want to wrap it with amara.lib.inputsource.text if it's not obviously XML or HTML (for example it could be confused with a file name)
     '''
     from amara.lib.util import set_namespaces
     #from amara.bindery import html; doc = html.parse("http://www.hitimewine.net/istar.asp?a=6&id=161153!1247")
@@ -257,7 +259,7 @@ def markup_fragment(source, encoding=None):
     '''
     Parse a fragment if markup in HTML mode, and return a bindery node
     
-    You might want to wrap source with amara.lib.inputsource.text if it's not obviously XML or HTML
+    Warning: if you pass a string, you must make sure it's a byte string, not a Unicode object.  You might also want to wrap it with amara.lib.inputsource.text if it's not obviously XML or HTML (for example it could be confused with a file name)
     
     from amara.lib import inputsource
     from amara.bindery import html

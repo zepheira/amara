@@ -17,6 +17,8 @@ For other examples see: http://esw.w3.org/topic/RDFa/Examples
 """
 
 import sys
+from itertools import chain
+
 from amara.bindery import html
 from amara.writers.struct import *
 from amara.namespaces import *
@@ -56,6 +58,8 @@ def handle_statement(elem, docuri):
         return ( subject, expand(elem.rel, elem), elem.resource, datatype or None )
     elif elem.xml_select(u'@rel') and elem.xml_select(u'@href'):
         return ( subject, expand(elem.rel, elem), elem.href, datatype or None )
+    elif elem.xml_select(u'@rel'):
+        return ( subject, expand(elem.rel, elem), elem.href, datatype or None )
     else:
         return ()
 
@@ -67,13 +71,40 @@ def rdfascrape(source):
         docuri = doc.html.head.base.href
     except:
         docuri = source.uri
-
-    statement_elems = doc.xml_select(u'//*[@property|@resource|@rel]')
+ 
+    #https://github.com/zepheira/amara/issues/8
+    #statement_elems = doc.xml_select(u'//*[@property|@resource|@rel]')
+    statement_elems = chain(doc.xml_select(u'//*[@property]'), doc.xml_select(u'//*[@resource]'), doc.xml_select(u'//*[@rel]'))
     triples = ( handle_statement(elem, docuri) for elem in statement_elems )
     return triples
 
+RDFA11_EXAMPLE = """\
+<div vocab="http://schema.org/"
+     typeof="Person">
+  <span property="name">Manu Sporny</span>
+  <img rel="image" src="manu.jpg" />
+
+  <span property="jobTitle">CEO</span>
+
+  <div rel="address">
+    <span property="streetAddress">
+     1700 Kraft Drive, Suite 2408
+    </span>
+    ...
+  </div>
+
+  <a rel="url"
+     href="http://manu.sporny.org/">
+       manu.sporny.org
+  </a>
+</div>
+"""
+
 if __name__ == '__main__':
     #doc = html.parse(DOCURI, model=label_model)
+    for triple in rdfascrape(RDFA11_EXAMPLE):
+        print triple
+
     for triple in rdfascrape(sys.argv[1]):
         print triple
 

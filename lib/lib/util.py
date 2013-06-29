@@ -79,6 +79,31 @@ def replace_namespace(node, oldns, newns):
     return
 
 
+def unwrap(e):
+    '''
+    Remove a wrapping tag and graft its children onto its parents
+    Returns the parent (e.xml_parent)
+
+    >>> import amara
+    >>> from amara.lib.util import unwrap
+    >>> doc = amara.parse('<a><b><c/><d/></b></a>')
+    >>> swapped = doc.xml_first_child.xml_first_child #b element
+    >>> swapped = unwrap(swapped)
+    >>> swapped.xml_encode()
+    <a><c/><d/></a>
+    '''
+    children = e.xml_children
+    #e.xml_parent.xml_replace(e, children[0])
+    pos = e.xml_parent.xml_index(e)
+    parent = e.xml_parent
+    parent.xml_remove(e)
+    for c in children:
+        parent.xml_insert(pos, c)
+        pos += 1
+    #Returning the parent facilitates typical logic
+    return parent
+
+
 def first_item(seq, default=None):
     '''
     Return the first item in a sequence, or the default result (None by default),
