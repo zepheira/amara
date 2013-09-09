@@ -8,6 +8,7 @@
 Some utilities for general use in Amara
 """
 
+import re
 from itertools import *
 
 from amara import tree
@@ -107,7 +108,7 @@ def unwrap(e):
 def first_item(seq, default=None):
     '''
     Return the first item in a sequence, or the default result (None by default),
-    or if it can reasonably determine it's not a seqyence, just return the identity
+    or if it can reasonably determine it's not a sequence, just return the identity
     
     This is a useful, blind unpacker tool, e.g. when dealing with XML models that
     sometimes provide scalars and sometimes sequences, which are sometimes empty.
@@ -123,6 +124,23 @@ def first_item(seq, default=None):
     from amara import tree
     if isinstance(seq, basestring) or isinstance(seq, tree.node): return seq
     return chain(seq or (), (default,)).next()
+
+
+def parse_pi_pseudo_attrs(pinode):
+    '''
+    Parse the given processing instruction node in terms of conventional pseudo-attribute
+    structure. Returns a key/value pair dictionary.
+
+    >>> import amara
+    >>> from amara.lib.util import parse_pi_pseudo_attrs
+    >>> X = '<?xml-stylesheet type="text/xml" href="Xml/Xslt/Core/addr_book1.xsl"?><doc/>'
+    >>> doc = amara.parse(X)
+    >>> pi = doc.xml_children[0]
+    >>> parse_pi_pseudo_attrs(pi)
+    {u'href': u'Xml/Xslt/Core/addr_book1.xsl', u'type': u'text/xml'}
+    '''
+    PI_PA_PAT = re.compile('(\w+)\s*=\s*"(.*?)"')
+    return dict(PI_PA_PAT.findall(pinode.xml_data))
 
 
 identity = lambda x: x

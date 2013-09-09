@@ -127,11 +127,11 @@ class examplotron_model(document_model):
 
         if allowed_elements_test:
             parent.xml_model.add_constraint(
-                constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Invalid elements present')
+                constraint(u'count(%s) = count(*)'%u'|'.join(allowed_elements_test), msg=u'Unexpected elements present')
             )
         else:
             parent.xml_model.add_constraint(
-                constraint(u'not(*)', msg=u'Element should be empty')
+                constraint(u'not(*)', msg=u'Element expected to be empty')
             )
         #To do:
         #Add <ak:product ak:name="AVT" ak:value="AVT"/>
