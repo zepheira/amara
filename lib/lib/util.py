@@ -139,7 +139,7 @@ def parse_pi_pseudo_attrs(pinode):
     >>> parse_pi_pseudo_attrs(pi)
     {u'href': u'Xml/Xslt/Core/addr_book1.xsl', u'type': u'text/xml'}
     '''
-    PI_PA_PAT = re.compile('(\w+)\s*=\s*"(.*?)"')
+    PI_PA_PAT = re.compile('(\w+)\s*=\s*"(.*?)"', re.DOTALL)
     return dict(PI_PA_PAT.findall(pinode.xml_data))
 
 
@@ -243,7 +243,7 @@ def strip_namespaces(node, strip_decls=False):
         e.xml_namespace = None
         if strip_decls and e.xml_namespaces:
             for prefix in e.xml_namespaces:
-                del e.xml_namespaces[prefix]
+                del e.xml_namespaces[prefix] #FIXME: Does not work (NotImplementedError: NamespaceMap_DelNode)
     return
 
 
