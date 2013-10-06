@@ -18,6 +18,8 @@ for considered reasons of clarity in use
 import sys
 from itertools import *
 import amara
+from amara.tree import parse_fragment
+from amara.lib import inputsource
 from amara.lib.util import coroutine
 from amara import tree
 from amara.writers import WriterError
@@ -131,10 +133,11 @@ class structwriter(object):
         if isinstance(obj, NS):
             return
         if isinstance(obj, RAW):
-            doc = amara.parse(obj.content)
+            #parse_frag returns an entity
+            ent = parse_fragment(inputsource.text(obj.content))
             from amara.writers._treevisitor import visitor
             v = visitor(printer=self.printer)
-            for child in doc.xml_children:
+            for child in ent.xml_children:
                 v.visit(child)
             return
         if isinstance(obj, E):
@@ -438,6 +441,8 @@ class E(object):
         if attributes:
             self.attributes = {}
             for name, value in attributes.iteritems():
+                #You can set an attr value to None in order to skip it. This provides a way to have optional attributes
+                if value is None: continue
                 if isinstance(name, tuple):
                     ns, qname = imap(U, name)
                 else:
