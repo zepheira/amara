@@ -88,6 +88,8 @@ class Test_attributes(unittest.TestCase):
         # for a few values of K not in attrs.keys(), 'K in attrs' is false.
         for k in attrs.keys():
             self.assertTrue(k in attrs)
+            self.assertEqual(attrs[k], u"")
+            self.assertEqual(getattr(row, k[1]), u"")
         for k in [(None, 'g'), (None, 'h'), (None, 'z')]:
             self.assertFalse(k in attrs)
 
