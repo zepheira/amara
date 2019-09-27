@@ -1,11 +1,9 @@
 ########################################################################
 # amara/xslt/exslt/datetime.py
 """
-EXSLT - Dates an Times (http://www.exslt.org/date/index.html)
+EXSLT - Dates and Times (http://www.exslt.org/date/index.html)
 """
-import re
-import calendar
-
+import re, time, calendar, math
 from amara.xpath import datatypes
 
 EXSL_DATE_TIME_NS = 'http://exslt.org/dates-and-times'
@@ -30,14 +28,10 @@ def date_function(context, date=None):
 
     Implements version 2.
     """
-    if date is None:
-        datetime = _datetime.now()
-    else:
-        try:
-            datetime = _datetime.parse(date.evaluate_as_string(context),
-                                       ('dateTime', 'date'))
-        except ValueError:
-            return datatypes.EMPTY_STRING
+    try:
+        datetime = _coerce(context, date, ('dateTime', 'date'))
+    except ValueError:
+        return datatypes.EMPTY_STRING
     return datatypes.string(u'%-.4d-%02d-%02d%s' % (datetime.year,
                                                     datetime.month,
                                                     datetime.day,
@@ -89,7 +83,7 @@ def leap_year_function(context, date=None):
                                            'gYear'))
     except ValueError:
         return datatypes.NOT_A_NUMBER
-    return datatypes.TRUE if _is_leap(datetime.year) else datatypes.FALSE
+    return datatypes.TRUE if calendar.isleap(datetime.year) else datatypes.FALSE
 
 
 def month_in_year_function(context, date=None):
@@ -160,7 +154,7 @@ def week_in_year_function(context, date=None):
     year, month, day = datetime.year, datetime.month, datetime.day
 
     # Find Jan 1 weekday for Y
-    # _dayOfWeek returns 0=Sun, we need Mon=0
+    # _day_of_week returns 0=Sun, we need Mon=0
     day_of_week_0101 = (_day_of_week(year, 1, 1) + 6) % 7
 
     # Find weekday for Y M D
@@ -170,10 +164,10 @@ def week_in_year_function(context, date=None):
     # Find if Y M D falls in year Y-1, week 52 or 53
     #  (i.e., the first 3 days of the year and DOW is Fri, Sat or Sun)
     if day_of_week_0101 > 3 and day_number <= (7 - day_of_week_0101):
-        week = 52 + (day_of_week_0101 == (4 + _is_leap(year - 1)))
+        week = 52 + (day_of_week_0101 == (4 + calendar.isleap(year - 1)))
     # Find if Y M D falls in Y+1, week 1
     #  (i.e., the last 3 days of the year and DOW is Mon, Tue, or Wed)
-    elif (365 + _is_leap(year) - day_number) < (3 - day_of_week):
+    elif (365 + calendar.isleap(year) - day_number) < (3 - day_of_week):
         week = 1
     else:
         week = (day_number + (6 - day_of_week) + day_of_week_0101) / 7
@@ -370,100 +364,100 @@ def format_date_function(context, datetime, pattern):
             width = len(symbol)
             symbol = symbol[:1]
             if symbol == 'G':           # era designator
-                if dateTime.year is None:
+                if datetime.year is None:
                     rt = u''
-                elif dateTime.year > 0:
+                elif datetime.year > 0:
                     rt = u'AD'
                 else:
                     rt = u'BC'
             elif symbol == 'y':         # year
-                if dateTime.year is None:
+                if datetime.year is None:
                     rt = u''
                 elif width > 2:
-                    rt = u'%0.*d' % (width, dateTime.year)
+                    rt = u'%0.*d' % (width, datetime.year)
                 else:
-                    rt = u'%0.2d' % (dateTime.year % 100)
+                    rt = u'%0.2d' % (datetime.year % 100)
             elif symbol == 'M':         # month in year
-                if dateTime.month is None:
+                if datetime.month is None:
                     rt = u''
                 elif width >= 4:
-                    rt = MonthName(context, dateTime)
+                    rt = month_name_function(context, datetime)
                 elif width == 3:
-                    rt = MonthAbbreviation(context, dateTime)
+                    rt = month_abbreviation_function(context, datetime)
                 else:
-                    rt = u'%0.*d' % (width, dateTime.month)
+                    rt = u'%0.*d' % (width, datetime.month)
             elif symbol == 'd':         # day in month
-                if dateTime.day is None:
+                if datetime.day is None:
                     rt = u''
                 else:
-                    rt = u'%0.*d' % (width, dateTime.day)
+                    rt = u'%0.*d' % (width, datetime.day)
             elif symbol == 'h':         # hour in am/pm (1-12)
-                hours = dateTime.hour
+                hours = datetime.hour
                 if hours > 12:
                     hours -= 12
                 elif hours == 0:
                     hours = 12
                 rt = u'%0.*d' % (width, hours)
             elif symbol == 'H':         # hour in day (0-23)
-                rt = u'%0.*d' % (width, dateTime.hour)
+                rt = u'%0.*d' % (width, datetime.hour)
             elif symbol == 'm':         # minute in hour
-                rt = u'%0.*d' % (width, dateTime.minute)
+                rt = u'%0.*d' % (width, datetime.minute)
             elif symbol =='s':          # second in minute
-                rt = u'%0.*d' % (width, dateTime.second)
+                rt = u'%0.*d' % (width, datetime.second)
             elif symbol == 'S':         # millisecond
-                fraction, second = math.modf(dateTime.second)
+                fraction, second = math.modf(datetime.second)
                 fraction, millisecond = math.modf(fraction * 10**width)
                 rt = u'%0.*d' % (width, millisecond + round(fraction))
             elif symbol == 'E':         # day in week
-                if (dateTime.year is None or
-                    dateTime.month is None or
-                    dateTime.day is None):
+                if (datetime.year is None or
+                    datetime.month is None or
+                    datetime.day is None):
                     rt = u''
                 elif width >= 4:
-                    rt = DayName(context, dateTime)
+                    rt = day_name_function(context, datetime)
                 else:
-                    rt = DayAbbreviation(context, dateTime)
+                    rt = day_abbreviation_function(context, datetime)
             elif symbol == 'D':         # day in year
-                if (dateTime.year is None or
-                    dateTime.month is None or
-                    dateTime.day is None):
+                if (datetime.year is None or
+                    datetime.month is None or
+                    datetime.day is None):
                     rt = u''
                 else:
-                    rt = u'%0.*d' % (width, DayInYear(context, dateTime))
+                    rt = u'%0.*d' % (width, day_in_year_function(context, datetime))
             elif symbol == 'F':         # day of week in month
-                if dateTime.day is None:
+                if datetime.day is None:
                     rt = u''
                 else:
-                    day_of_week = DayOfWeekInMonth(context, dateTime)
+                    day_of_week = day_of_week_in_month_function(context, datetime)
                     rt = u'%0.*d' % (width, day_of_week)
             elif symbol == 'w':         # week in year
-                if (dateTime.year is None or
-                    dateTime.month is None or
-                    dateTime.day is None):
+                if (datetime.year is None or
+                    datetime.month is None or
+                    datetime.day is None):
                     rt = u''
                 else:
-                    rt = u'%0.*d' % (width, WeekInYear(context, dataTime))
+                    rt = u'%0.*d' % (width, week_in_year_function(context, dataTime))
             elif symbol == 'W':         # week in month
-                if (dateTime.year is None or
-                    dateTime.month is None or
-                    dateTime.day is None):
+                if (datetime.year is None or
+                    datetime.month is None or
+                    datetime.day is None):
                     rt = u''
                 else:
-                    rt = u'%0.*d' % (width, WeekInMonth(context, dateTime))
+                    rt = u'%0.*d' % (width, week_in_month_function(context, datetime))
             elif symbol == 'a':
-                if dateTime.hour < 12:
+                if datetime.hour < 12:
                     rt = u'AM'
                 else:
                     rt = u'PM'
             elif symbol == 'k':         # hour in day (1-24)
-                rt = u'%0.*d' % (width, dateTime.hour + 1)
+                rt = u'%0.*d' % (width, datetime.hour + 1)
             elif symbol == 'K':         # hour in am/pm (0-11)
-                hours = dateTime.hour
+                hours = datetime.hour
                 if hours >= 12:
                     hours -= 12
                 rt = u'%0.*d' % (width, hours)
             elif symbol == 'z':
-                rt = dateTime.timezone or u''
+                rt = datetime.timezone or u''
             else:
                 # not reached due to regular expression (supposedly)
                 raise RuntimeException("bad format symbol '%s'" % symbol)
@@ -489,14 +483,14 @@ def week_in_month_function(context, date=None):
     Implements version 3.
     """
     try:
-        dateTime = _coerce(dateTime, ('dateTime', 'date'))
+        datetime = _coerce(context, date, ('dateTime', 'date'))
     except ValueError:
-        return number.nan
-    day_of_week = _dayOfWeek(dateTime.year, dateTime.month, dateTime.day)
-    # _dayOfWeek returns 0=Sun, we need Sun=7
+        return datatypes.NOT_A_NUMBER
+    day_of_week = _day_of_week(datetime.year, datetime.month, datetime.day)
+    # _day_of_week returns 0=Sun, we need Sun=7
     day_of_week = ((day_of_week + 6) % 7) + 1
-    week_offset = dateTime.day - day_of_week
-    return (week_offset / 7) + (week_offset % 7 and 2 or 1)
+    week_offset = datetime.day - day_of_week
+    return datatypes.number((week_offset / 7) + (week_offset % 7 and 2 or 1))
 
 
 def difference_function(context, start, end):
@@ -507,11 +501,11 @@ def difference_function(context, start, end):
     Implements version 1.
     """
     try:
-        start = _coerce(start, ('dateTime', 'date', 'gYearMonth', 'gYear'))
-        end = _coerce(end, ('dateTime', 'date', 'gYearMonth', 'gYear'))
+        start = _coerce(context, start, ('dateTime', 'date', 'gYearMonth', 'gYear'))
+        end = _coerce(context, end, ('dateTime', 'date', 'gYearMonth', 'gYear'))
     except ValueError:
-        return u''
-    return unicode(_difference(start, end))
+        return datatypes.EMPTY_STRING
+    return datatypes.string(_difference(start, end))
 
 
 def add_function(context, date, duration):
@@ -521,11 +515,11 @@ def add_function(context, date, duration):
     Implements version 2.
     """
     try:
-        dateTime = _coerce(dateTime, ('dateTime', 'date', 'gYearMonth',
+        datetime = _coerce(context, date, ('dateTime', 'date', 'gYearMonth',
                                       'gYear'))
-        duration = _Duration.parse(Conversions.StringValue(duration))
+        duration = _Duration.parse(duration.evaluate_as_string(context))
     except ValueError:
-        return u''
+        return datatypes.EMPTY_STRING
 
     result = _datetime()
     # Get the "adjusted" duration values
@@ -544,47 +538,47 @@ def add_function(context, date, duration):
                                                         duration.minutes,
                                                         duration.seconds)
     # Months (may be modified below)
-    months += (dateTime.month or 1)
+    months += (datetime.month or 1)
     carry, result.month = divmod(months - 1, 12)
     result.month += 1
 
     # Years (may be modified below)
-    result.year = dateTime.year + years + carry
+    result.year = datetime.year + years + carry
 
     # Timezone
-    result.timezone = dateTime.timezone
+    result.timezone = datetime.timezone
 
     # Seconds
-    seconds += (dateTime.second or 0)
+    seconds += (datetime.second or 0)
     carry, result.second = divmod(seconds, 60)
 
     # Minutes
-    minutes += (dateTime.minute or 0) + carry
+    minutes += (datetime.minute or 0) + carry
     carry, result.minute = divmod(minutes, 60)
 
     # Hours
-    hours += (dateTime.hour or 0) + carry
+    hours += (datetime.hour or 0) + carry
     carry, result.hour = divmod(hours, 24)
 
     # Days
-    max_day = _daysInMonth(result.year, result.month)
-    if dateTime.day > max_day:
+    max_day = _days_in_month(result.year, result.month)
+    if datetime.day > max_day:
         day = max_day
-    if dateTime.day < 1:
+    if datetime.day < 1:
         day = 1
     else:
-        day = dateTime.day
+        day = datetime.day
     result.day = day + days + carry
     while True:
-        max_day = _daysInMonth(result.year, result.month)
+        max_day = _days_in_month(result.year, result.month)
         if result.day > max_day:
             result.day -= max_day
             carry = 1
         elif result.day < 1:
             if result.month == 1:
-                max_day = _daysInMonth(result.year - 1, 12)
+                max_day = _days_in_month(result.year - 1, 12)
             else:
-                max_day = _daysInMonth(result.year, result.month - 1)
+                max_day = _days_in_month(result.year, result.month - 1)
             result.day += max_day
             carry = -1
         else:
@@ -593,25 +587,25 @@ def add_function(context, date, duration):
         result.month += 1
         result.year += carry
 
-    # Create output representation based in dateTime input
+    # Create output representation based in datetime input
     # xs:gYear
-    if dateTime.month is None:
+    if datetime.month is None:
         result = u'%0.4d%s' % (result.year, result.timezone or '')
 
     # xs:gYearMonth
-    elif dateTime.day is None:
+    elif datetime.day is None:
         result = u'%0.4d-%02d%s' % (result.year, result.month,
                                     result.timezone or '')
 
     # xs:date
-    elif dateTime.hour is None:
+    elif datetime.hour is None:
         result = u'%0.4d-%02d-%02d%s' % (result.year, result.month, result.day,
                                          result.timezone or '')
 
-    # xs:dateTime
+    # xs:datetime
     else:
         result = unicode(result)
-    return result
+    return datatypes.string(result)
 
 
 def add_duration_function(context, duration1, duration2):
@@ -621,16 +615,16 @@ def add_duration_function(context, duration1, duration2):
 
     Implements version 2.
     """
-    duration1 = Conversions.StringValue(duration1)
-    duration2 = Conversions.StringValue(duration2)
+    duration1 = duration1.evaluate_as_string(context)
+    duration2 = duration2.evaluate_as_string(context)
     try:
         duration1 = _Duration.parse(duration1)
         duration2 = _Duration.parse(duration2)
-        duration = _addDurations(duration1, duration2)
+        duration = _add_durations(duration1, duration2)
     except ValueError:
-        return u''
+        return datatypes.EMPTY_STRING
 
-    return unicode(duration)
+    return datatypes.string(duration)
 
 
 def sum_function(context, nodeset):
@@ -641,16 +635,15 @@ def sum_function(context, nodeset):
 
     Implements version 1.
     """
-    if not isinstance(nodeset, XPathTypes.NodesetType):
-        return u''
     try:
-        strings = map(Conversions.StringValue, nodeset)
+        nodeset = nodeset.evaluate_as_nodeset(context)
+        strings = map(datatypes.string, nodeset)
         durations = map(_Duration.parse, strings)
-        duration = _addDurations(*durations)
-    except ValueError:
-        return u''
+        duration = _add_durations(*durations)
+    except (ValueError, TypeError):
+        return datatypes.EMPTY_STRING
 
-    return unicode(duration)
+    return datatypes.string(duration)
 
 
 def seconds_function(context, string=None):
@@ -664,7 +657,7 @@ def seconds_function(context, string=None):
     if string is None:
         string = str(_datetime.now())
     else:
-        string = Conversions.StringValue(string)
+        string = string.evaluate_as_string(context)
 
     try:
         if 'P' in string:
@@ -672,22 +665,22 @@ def seconds_function(context, string=None):
             duration = _Duration.parse(string)
         else:
             # its a dateTime
-            dateTime = _datetime.parse(string, ('dateTime', 'date',
+            datetime = _datetime.parse(string, ('dateTime', 'date',
                                                 'gYearMonth', 'gYear'))
-            duration = _difference(_EPOCH, dateTime)
+            duration = _difference(_EPOCH, datetime)
     except ValueError:
-        return number.nan
+        return datatypes.NOT_A_NUMBER
 
     # The number of years and months must both be equal to zero
     if duration.years or duration.months:
-        return number.nan
+        return datatypes.NOT_A_NUMBER
 
     # Convert the duration to just seconds
     seconds = (duration.days * 86400 + duration.hours * 3600 +
                duration.minutes * 60 + duration.seconds )
     if duration.negative:
         seconds *= -1
-    return seconds
+    return datatypes.number(seconds)
 
 
 def duration_function(context, seconds=None):
@@ -703,17 +696,17 @@ def duration_function(context, seconds=None):
         # The epoch for EXSLT is 1970-01-01T00:00:00Z
         # FIXME: we could code around this, but most (all?) platforms we
         # support have a time() epoch of 1970-01-01, so why bother.
-        if time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0)) != time.timezone:
-            warnings.warn("platform epoch != 1970-01-01", RuntimeWarning)
+        #if time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0)) != time.timezone:
+        #    warnings.warn("platform epoch != 1970-01-01", RuntimeWarning)
         # Don't use fractional seconds to keep with constructed dateTimes
         seconds = int(time.time())
     else:
-        seconds = Conversions.NumberValue(seconds)
-        if not number.finite(seconds):
+        seconds = seconds.evaluate_as_number(context)
+        if not seconds.isfinite():
             # +/-Inf or NaN
-            return u''
+            return datatypes.EMPTY_STRING
     duration = _Duration(negative=(seconds < 0), seconds=abs(seconds))
-    return unicode(duration)
+    return datatypes.string(duration)
 
 
 ## Internals ##########################################################
@@ -904,18 +897,18 @@ class _Duration(object):
         return ''.join(parts)
 
 
-def _coerce(obj, datatypes):
+def _coerce(context, obj, datatypes):
     """
     INTERNAL: converts an XPath object to a `_datetime` instance.
     """
     if obj is None:
         obj = _datetime.now()
     elif not isinstance(obj, _datetime):
-        obj = _datetime.parse(Conversions.StringValue(obj), datatypes)
+        obj = _datetime.parse(obj.evaluate_as_string(context), datatypes)
     return obj
 
 
-def _daysInMonth(year, month):
+def _days_in_month(year, month):
     """
     INTERNAL: calculates the number of days in a month for the given date.
     """
@@ -925,7 +918,7 @@ def _daysInMonth(year, month):
     return days
 
 
-def _dayInYear(year, month, day):
+def _day_in_year(year, month, day):
     """
     INTERNAL: calculates the ordinal date for the given date.
     """
@@ -935,20 +928,20 @@ def _dayInYear(year, month, day):
     return days + day
 
 
-def _julianDay(year, month, day):
+def _julian_day(year, month, day):
     """
     INTERNAL: calculates the Julian day (1-1-1 is day 1) for the given date.
     """
-    date = _dayInYear(year, month, day)
+    date = _day_in_year(year, month, day)
     year -= 1
     return year*365 + (year / 4) - (year / 100) + (year / 400) + date
 
 
-def _dayOfWeek(year, month, day):
+def _day_of_week(year, month, day):
     """
     INTERNAL: calculates the day of week (0=Sun, 6=Sat) for the given date.
     """
-    return _julianDay(year, month, day) % 7
+    return _julian_day(year, month, day) % 7
 
 
 def _difference(start, end):
@@ -973,8 +966,8 @@ def _difference(start, end):
         negative = negative or (start.month > end.month)
         return _Duration(negative=negative, years=years, months=months)
 
-    start_days = _julianDay(start.year, start.month, start.day)
-    end_days = _julianDay(end.year, end.month, end.day)
+    start_days = _julian_day(start.year, start.month, start.day)
+    end_days = _julian_day(end.year, end.month, end.day)
     days = end_days - start_days
     negative = start_days > end_days
 
@@ -999,7 +992,7 @@ def _difference(start, end):
                      minutes=minutes, seconds=seconds)
 
 
-def _addDurations(*durations):
+def _add_durations(*durations):
     """
     INTERNAL: returns a new duration from the sum of the sequence of durations
     """
