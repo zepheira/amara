@@ -262,7 +262,7 @@ OTHER_NODES = {
 
 FULL_NS_FORM = u'*[namespace-uri()="%s" and local-name()="%s"]'
 
-def abspath(node, prefixes=None):
+def abspath(node, prefixes=None, count_cache={}):
     #based on code developed by Florian Bosch on XML-SIG
     #http://mail.python.org/pipermail/xml-sig/2004-August/010423.html
     #Significantly enhanced to use Unicode properly, support more
@@ -281,56 +281,92 @@ def abspath(node, prefixes=None):
     prefixes - optional hint dictionary from prefix to namespace;
                used to reconcile default namespace usage
     """
-    if node.xml_type == tree.element.xml_type:
-        count = 1
-        #Count previous siblings with same node name
-        previous = node.xml_preceding_sibling
-        while previous:
-            if (isinstance(previous, tree.element) and (previous.xml_namespace, previous.xml_local)
-                == (node.xml_namespace, node.xml_local)):
-                count += 1
-            previous = previous.xml_preceding_sibling
-        nametest = node.xml_qname
-        if node.xml_namespace and not node.xml_prefix:
-            _prefixes = node.xml_namespaces.copy()
-            if prefixes is not None:
-                _prefixes.update(prefixes)
-            #nicer code, but maybe slower than iterating items()
-            #nss = dict([(n,p) for (p,n) in prefixes.items()])
-            #must provide a prefix for XPath
-            prefix = None
-            for prefix, ns in _prefixes.iteritems():
-                if node.xml_namespace == ns and prefix:
-                    nametest = prefix + u':' + node.xml_qname
-                    break
+    path = ''
+    item = node
+
+    while True:
+
+        node_type = item.xml_type
+
+        if node_type == element.xml_type:
+            count = 1
+            # check the cache to see if the element already has its position calculated
+            if item.xml_nodeid in count_cache:
+                count = count_cache[item.xml_nodeid]
             else:
-                nametest = FULL_NS_FORM%(node.xml_namespace, node.xml_local)
-        step = u'%s[%i]' % (nametest, count) if count > 1 else u'%s' % (nametest)
-        ancestor = node.xml_parent
-    elif node.xml_type == tree.attribute.xml_type:
-        step = u'@%s' % (node.xml_qname)
-        ancestor = node.xml_parent
-    elif node.xml_type in OTHER_NODES:
-        #Text nodes, comments and PIs
-        count = 1
-        #Count previous siblings of the same node type
-        previous = node.xml_preceding_sibling
-        while previous:
-            if previous.xml_type == node.xml_type: count += 1
-            previous = previous.xml_preceding_sibling
-        test_func = OTHER_NODES[node.xml_type]
-        step = u'%s()[%i]' % (test_func, count)
-        ancestor = node.xml_parent
-    elif not node.xml_parent:
-        #Root node
-        step = u''
-        ancestor = node
-    else:
-        raise TypeError('Unsupported node type for abspath')
-    if ancestor.xml_parent:
-        return abspath(ancestor, prefixes) + u'/' + step
-    else:
-        return u'/' + step
+                # Count previous siblings with same node name
+                previous = item.xml_preceding_sibling
+                while previous:
+                    if (isinstance(previous, element) and (previous.xml_namespace, previous.xml_local)
+                        == (item.xml_namespace, item.xml_local)):
+                        # check the cache to see if the sibling already has its position calculated
+                        if previous.xml_nodeid in count_cache:
+                            count += count_cache[previous.xml_nodeid]
+                            break
+                        count += 1
+                    previous = previous.xml_preceding_sibling
+            count_cache[item.xml_nodeid] = count
+            nametest = item.xml_qname
+            if item.xml_namespace and not item.xml_prefix:
+                _prefixes = item.xml_namespaces.copy()
+                if prefixes is not None:
+                    _prefixes.update(prefixes)
+                #nicer code, but maybe slower than iterating items()
+                #nss = dict([(n,p) for (p,n) in prefixes.items()])
+                #must provide a prefix for XPath
+                prefix = None
+                for prefix, ns in _prefixes.iteritems():
+                    if item.xml_namespace == ns and prefix:
+                        nametest = prefix + u':' + item.xml_qname
+                        break
+                else:
+                    nametest = FULL_NS_FORM%(item.xml_namespace, item.xml_local)
+            step = u'%s[%i]' % (nametest, count) if count > 1 else u'%s' % (nametest)
+            ancestor = item.xml_parent
+        elif node_type == attribute.xml_type:
+            step = u'@%s' % (item.xml_qname)
+            ancestor = item.xml_parent
+        elif node_type in OTHER_NODES:
+            #Text nodes, comments and PIs
+            count = 1
+            #Count previous siblings of the same node type
+            previous = item.xml_preceding_sibling
+            while previous:
+                if previous.xml_type == node_type:
+                    count += 1
+                previous = previous.xml_preceding_sibling
+            test_func = OTHER_NODES[node_type]
+            step = u'%s()[%i]' % (test_func, count)
+            ancestor = item.xml_parent
+        elif not item.xml_parent:
+            #Root node
+            step = u''
+            ancestor = item
+        else:
+            raise TypeError('Unsupported node type for abspath')
+        path = u'/%s%s' % (step, path)
+        item = ancestor
+        if not ancestor.xml_parent:
+            break
+
+    return path
+
+
+def xpatherate(nodes, prefixes=None):
+    """
+    Iterates over nodes and calls abspath on each of them.
+    To be used the same way enumerate() works, for example:
+    for path, element in elements:
+        # do things here
+        print path
+    
+    :param nodes: iterator of nodes
+    :param prefixes: optional hint dictionary from prefix to namespace; used to reconcile default namespace usage.
+    :return: path generator
+    """
+    count_cache = {}
+    for node in nodes:
+        yield abspath(node, prefixes, count_cache), node
 
 
 def named_node_test(exemplar_ns, exemplar_local, context, axis=u''):
